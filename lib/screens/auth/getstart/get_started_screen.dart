@@ -52,9 +52,10 @@ class GetStartedScreen extends StatelessWidget {
                       Text(
                         languageService.tr("onboarding_slide1_description"),
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
                         ),
                       ),
                       SizedBox(height: 50.h),

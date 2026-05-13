@@ -162,6 +162,7 @@ class _LegalDocumentsScreenState extends State<LegalDocumentsScreen> {
               });
             },
             activeColor: AppColors.primary,
+            side: BorderSide(color: AppColors.primary, width: 2),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(4),
             ),

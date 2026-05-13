@@ -320,11 +320,11 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
       // AccountController.setActiveMT5Account() already calls unified.switchAccount()
       // _bindUnifiedMarketWatch() should only bind to the existing stream
 
-      // ✅ Ensure connected - this will connect the channel if not already connected
-      unified.ensureConnected(WebSocketChannelType.marketWatch, account);
+      // ✅ Ensure connected with V2 endpoint - this will connect the channel if not already connected
+      unified.ensureConnected(WebSocketChannelType.marketWatchV2, account);
 
-      // ✅ Create subscription (only on first call)
-      _unifiedMwSub = unified.marketWatchStream().listen(
+      // ✅ Create subscription (only on first call) - use v2 stream
+      _unifiedMwSub = unified.marketWatchV2Stream().listen(
         (message) => _handleSocketMessage(message),
         onError: (_) {
           isConnected.value = false;
@@ -505,8 +505,8 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
         }
       }
 
-      // ✅ Use centralized endpoint helper
-      final wsUrl = WebSocketEndpointHelper.getMarketWatchUrl(activeAccount);
+      // ✅ Use centralized endpoint helper - v2 endpoint with subscribe/unsubscribe support
+      final wsUrl = WebSocketEndpointHelper.getMarketWatchV2Url(activeAccount);
       final accountType = WebSocketEndpointHelper.getAccountType(activeAccount);
 
       print(
@@ -648,6 +648,30 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
         "trading_account": accountNumber,
         "format": "binary", // Request binary format
       });
+    }
+  }
+
+  /// Subscribe to symbols (add to favorites)
+  void subscribeSymbols(List<String> symbols) {
+    if (symbols.isEmpty) return;
+    sendEvent({
+      "action": "subscribe",
+      "symbols": symbols,
+    });
+    if (kDebugMode) {
+      print('Instruments: Subscribing to symbols: $symbols');
+    }
+  }
+
+  /// Unsubscribe from symbols (remove from favorites)
+  void unsubscribeSymbols(List<String> symbols) {
+    if (symbols.isEmpty) return;
+    sendEvent({
+      "action": "unsubscribe",
+      "symbols": symbols,
+    });
+    if (kDebugMode) {
+      print('Instruments: Unsubscribing from symbols: $symbols');
     }
   }
 
@@ -1171,8 +1195,9 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
   // Send event with parameters over WebSocket
   void sendEvent(Map<String, dynamic> event) {
     try {
+      // Use v2 endpoint for subscribe/unsubscribe support
       final unified = Get.find<UnifiedWebSocketService>();
-      unified.sendEvent(WebSocketChannelType.marketWatch, event);
+      unified.sendEvent(WebSocketChannelType.marketWatchV2, event);
     } catch (_) {
       final encoded = jsonEncode(event);
       channel.sink.add(encoded);
@@ -1378,6 +1403,9 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
               ? instrumentSymbol
               : instrumentSymbol + '.c';
 
+      // Check if it's currently a favorite
+      final wasFavorite = isFavorite(instrumentSymbol);
+
       final success = await FavoritesStorageService.instance.toggleFavorite(
         normalizedSymbol,
       );
@@ -1386,6 +1414,20 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
         await _loadFavorites();
         // Update filtered instruments to reflect changes
         _updateFilteredInstruments();
+
+        // Send WebSocket subscribe/unsubscribe based on favorite state
+        // If it was favorite before (wasFavorite = true), we removed it -> unsubscribe
+        // If it was not favorite before (wasFavorite = false), we added it -> subscribe
+        if (wasFavorite) {
+          // User removed from favorites -> unsubscribe
+          unsubscribeSymbols([normalizedSymbol]);
+          print('🔌 Unsubscribed from $normalizedSymbol (removed from favorites)');
+        } else {
+          // User added to favorites -> subscribe
+          subscribeSymbols([normalizedSymbol]);
+          print('🔌 Subscribed to $normalizedSymbol (added to favorites)');
+        }
+
         // print('Toggled favorite for: $normalizedSymbol');
       }
     } catch (e) {

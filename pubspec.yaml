@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.66+63
+version: 1.0.84+81
 
 environment:
   sdk: ^3.7.0
@@ -117,6 +117,7 @@ dependencies:
   confetti: ^0.8.0
   encrypt: ^5.0.3
   fl_chart: ^1.1.1
+  video_player: ^2.11.1
   # local_auth + app_settings are declared above (Local Storage section)
 dev_dependencies:
   flutter_test:
@@ -175,6 +176,7 @@ flutter:
     - assets/svg/copy_trading/bottom_navigation/
     - assets/svg/copy_trading/setting/
     - assets/svg/copy_trading/my_copies/
+    - lib/clients/goldenwolffx/assets/goldenfx_splash_portrait.mp4
 
   #   - images/a_dot_ham.jpeg
 

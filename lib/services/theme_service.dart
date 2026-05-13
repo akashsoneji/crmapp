@@ -2,15 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import 'package:crm_app/flavor_config.dart';
+
 class ThemeService extends GetxService {
   static const FlutterSecureStorage _storage = FlutterSecureStorage();
   static const String _themeKey = 'is_dark_mode';
 
-  // Default to light theme
-  static const bool defaultTheme = false;
+  // Default to dark theme for goldenwolffx, otherwise light theme
+  static bool get defaultTheme => FlavorConfig.isGoldenwolffx() ? true : false;
 
   // Current theme observable
-  final RxBool isDarkMode = defaultTheme.obs;
+  late final RxBool isDarkMode;
 
   // Theme mode getter for ThemeData
   ThemeMode get themeMode => isDarkMode.value ? ThemeMode.dark : ThemeMode.light;
@@ -20,6 +22,7 @@ class ThemeService extends GetxService {
   @override
   void onInit() {
     super.onInit();
+    isDarkMode = defaultTheme.obs;
     _initialization = _initialize();
   }
 

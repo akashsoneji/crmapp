@@ -327,7 +327,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
       countryListTheme: CountryListThemeData(
         flagSize: 25,
         backgroundColor: AppColors.whiteColor,
-        textStyle: const TextStyle(fontSize: 16, color: Colors.black),
+        textStyle: TextStyle(fontSize: 16, color: AppColors.textPrimary),
         bottomSheetHeight: 500,
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(20.0),
@@ -546,6 +546,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                 });
               },
               activeColor: AppColors.primary,
+              side: BorderSide(color: AppColors.primary, width: 2),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(4),
               ),
@@ -744,6 +745,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                 });
               },
               activeColor: AppColors.primary,
+              side: BorderSide(color: AppColors.primary, width: 2),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(4),
               ),

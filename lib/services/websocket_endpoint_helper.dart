@@ -62,6 +62,7 @@ class WebSocketEndpointHelper {
   static const String pendingOrders = '/ws/po';
   static const String symbol = '/ws/symbol';
   static const String marketWatch = '/ws/marketwatch';
+  static const String marketWatchV2 = '/ws/marketwatchv2';
   static const String accountEndpoint = '/ws/account';
 
   // ==================== ENDPOINT GETTERS ====================
@@ -80,6 +81,11 @@ class WebSocketEndpointHelper {
   /// Get market watch endpoint (unified for both MT5 and self-hosted)
   static String getMarketWatchEndpoint(MT5Account? account) {
     return marketWatch; // Always '/ws/marketwatch'
+  }
+
+  /// Get market watch v2 endpoint with subscribe/unsubscribe support
+  static String getMarketWatchV2Endpoint(MT5Account? account) {
+    return marketWatchV2; // Always '/ws/marketwatchv2'
   }
 
   /// Get account endpoint (unified for both MT5 and self-hosted)
@@ -160,6 +166,11 @@ class WebSocketEndpointHelper {
   /// Get full WebSocket URL for market watch
   static String getMarketWatchUrl(MT5Account? account) {
     return getFullUrl(getMarketWatchEndpoint(account));
+  }
+
+  /// Get full WebSocket URL for market watch v2 (with subscribe/unsubscribe support)
+  static String getMarketWatchV2Url(MT5Account? account) {
+    return getFullUrl(getMarketWatchV2Endpoint(account));
   }
 
   /// Get full WebSocket URL for account

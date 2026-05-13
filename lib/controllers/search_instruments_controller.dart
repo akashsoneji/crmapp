@@ -22,21 +22,35 @@ class SearchInstrumentsController extends GetxController {
   }
 
   Future<void> fetchInstruments() async {
-    final activeAccount = _accountController.activeMT5Account;
-    if (activeAccount == null) return;
-
     try {
       isLoading.value = true;
+
+      // Determine account number: use active account number or "0" as fallback
+      String accountNumber = "0";
+      final activeAccount = _accountController.activeMT5Account;
+      if (activeAccount != null) {
+        final accountFromController = activeAccount.metaAccountNumber;
+        if (accountFromController != null &&
+            accountFromController.isNotEmpty &&
+            accountFromController != "0") {
+          accountNumber = accountFromController;
+        }
+      }
+
       final response = await ApiService.get(
-        endpoint: ApiConstants.getInstrumentsByAccount(activeAccount.metaAccountNumber),
+        endpoint: ApiConstants.getInstrumentsByAccount(accountNumber),
       );
 
       if (response.success && response.data != null) {
-        final searchResponse = SearchInstrumentsResponse.fromJson(response.data);
+
+        final searchResponse = SearchInstrumentsResponse.fromJson(
+          response.data,
+        );
+
         if (searchResponse.data != null) {
           allSymbols.assignAll(searchResponse.data!.symbols);
           _updateAvailableCategories();
-          
+
           // Ensure default category exists, otherwise fallback to 'Currency', then 'All'
           if (!availableCategories.contains(currentCategory.value)) {
             if (availableCategories.contains('Currency')) {
@@ -45,7 +59,7 @@ class SearchInstrumentsController extends GetxController {
               currentCategory.value = 'All';
             }
           }
-          
+
           _applyFilter();
         }
       }
@@ -71,7 +85,14 @@ class SearchInstrumentsController extends GetxController {
 
     // Define priority categories in desired order
     // Handling common variations like 'Forex' vs 'Currency' and 'Metal' vs 'Metals'
-    final List<String> priorityOrder = ['All', 'Forex', 'Currency', 'Metal', 'Metals', 'Crypto'];
+    final List<String> priorityOrder = [
+      'All',
+      'Forex',
+      'Currency',
+      'Metal',
+      'Metals',
+      'Crypto',
+    ];
 
     List<String> sortedCategories = [];
 
@@ -107,16 +128,20 @@ class SearchInstrumentsController extends GetxController {
 
     // Apply category filter
     if (currentCategory.value != 'All') {
-      results = results.where((s) => s.categoryName == currentCategory.value).toList();
+      results =
+          results
+              .where((s) => s.categoryName == currentCategory.value)
+              .toList();
     }
 
     // Apply search query filter
     if (searchQuery.value.isNotEmpty) {
       final query = searchQuery.value.toLowerCase();
-      results = results.where((symbol) {
-        return symbol.displaySymbol.toLowerCase().contains(query) ||
-               symbol.categoryName.toLowerCase().contains(query);
-      }).toList();
+      results =
+          results.where((symbol) {
+            return symbol.displaySymbol.toLowerCase().contains(query) ||
+                symbol.categoryName.toLowerCase().contains(query);
+          }).toList();
     }
 
     filteredSymbols.assignAll(results);

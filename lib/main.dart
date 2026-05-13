@@ -45,6 +45,7 @@ import 'services/connectivity/connectivity_overlay.dart';
 import 'services/app_lock_service.dart';
 import 'services/app_lock/app_lock_overlay.dart';
 import 'services/app_lock/app_lock_lifecycle.dart';
+import 'screens/auth/splash/goldenfx_video_splash_screen.dart';
 
 // Firebase Background Message Handler
 @pragma('vm:entry-point')
@@ -414,7 +415,9 @@ class MyGetXApp extends StatelessWidget {
                   darkTheme: _buildDarkTheme(),
                   // initialRoute: AppPages.GET_STARTED,
                   getPages: AppPages.routes,
-                  home: const AuthCheckScreen(),
+                  home: FlavorConfig.isGoldenwolffx() 
+                      ? const GoldenfxVideoSplashScreen() 
+                      : const AuthCheckScreen(),
                 ),
               ),
             ),

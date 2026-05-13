@@ -1,4 +1,4 @@
 <resources>
     <color name="my_splash_color">#5F259E</color> <!-- Orange -->
-	<color name="ic_launcher_background">#D4A843</color>
+	<color name="ic_launcher_background">#000000</color>
 </resources>

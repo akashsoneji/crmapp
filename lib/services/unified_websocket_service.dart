@@ -8,6 +8,7 @@ import 'package:crm_app/services/websocket_endpoint_helper.dart';
 
 enum WebSocketChannelType {
   marketWatch,
+  marketWatchV2,
   symbols,
   openPositions,
   pendingOrders,
@@ -22,6 +23,7 @@ enum WebSocketChannelType {
 class UnifiedWebSocketService extends GetxService {
   // Connection flags
   final RxBool isMarketWatchConnected = false.obs;
+  final RxBool isMarketWatchV2Connected = false.obs;
   final RxBool isSymbolsConnected = false.obs;
   final RxBool isOpenPositionsConnected = false.obs;
   final RxBool isPendingOrdersConnected = false.obs;
@@ -33,6 +35,7 @@ class UnifiedWebSocketService extends GetxService {
 
   // Channels
   WebSocketChannel? _marketWatchChannel;
+  WebSocketChannel? _marketWatchV2Channel;
   WebSocketChannel? _symbolsChannel;
   WebSocketChannel? _opChannel;
   WebSocketChannel? _poChannel;
@@ -40,6 +43,7 @@ class UnifiedWebSocketService extends GetxService {
 
   // Streams
   final _marketWatchCtrl = StreamController<dynamic>.broadcast();
+  final _marketWatchV2Ctrl = StreamController<dynamic>.broadcast();
   final _symbolsCtrl = StreamController<dynamic>.broadcast();
   final _opCtrl = StreamController<dynamic>.broadcast();
   final _poCtrl = StreamController<dynamic>.broadcast();
@@ -47,6 +51,7 @@ class UnifiedWebSocketService extends GetxService {
 
   // Subscriptions
   StreamSubscription? _mwSub;
+  StreamSubscription? _mwV2Sub;
   StreamSubscription? _symSub;
   StreamSubscription? _opSub;
   StreamSubscription? _poSub;
@@ -62,6 +67,7 @@ class UnifiedWebSocketService extends GetxService {
 
   // Public streams
   Stream<dynamic> marketWatchStream() => _marketWatchCtrl.stream;
+  Stream<dynamic> marketWatchV2Stream() => _marketWatchV2Ctrl.stream;
   Stream<dynamic> symbolsStream() => _symbolsCtrl.stream;
   Stream<dynamic> openPositionsStream() => _opCtrl.stream;
   Stream<dynamic> pendingOrdersStream() => _poCtrl.stream;
@@ -78,6 +84,11 @@ class UnifiedWebSocketService extends GetxService {
       case WebSocketChannelType.instruments:
         if (!isMarketWatchConnected.value) {
           await _connectMarketWatch();
+        }
+        break;
+      case WebSocketChannelType.marketWatchV2:
+        if (!isMarketWatchV2Connected.value) {
+          await _connectMarketWatchV2();
         }
         break;
       case WebSocketChannelType.symbols:
@@ -134,21 +145,24 @@ class UnifiedWebSocketService extends GetxService {
       // ✅ STEP 1: Cancel ALL subscriptions to immediately stop all data flow
       print('   STEP 1: Cancelling all subscriptions...');
       _mwSub?.cancel();
+      _mwV2Sub?.cancel();
       _symSub?.cancel();
       _opSub?.cancel();
       _poSub?.cancel();
       _accSub?.cancel();
-      _mwSub = _symSub = _opSub = _poSub = _accSub = null;
+      _mwSub = _mwV2Sub = _symSub = _opSub = _poSub = _accSub = null;
 
       // ✅ STEP 2: Close ALL channels synchronously and set flags to false
       print('   STEP 2: Closing all WebSocket channels...');
       _marketWatchChannel?.sink.close();
+      _marketWatchV2Channel?.sink.close();
       _symbolsChannel?.sink.close();
       _opChannel?.sink.close();
       _poChannel?.sink.close();
       _accountChannel?.sink.close();
-      _marketWatchChannel = _symbolsChannel = _opChannel = _poChannel = _accountChannel = null;
+      _marketWatchChannel = _marketWatchV2Channel = _symbolsChannel = _opChannel = _poChannel = _accountChannel = null;
       isMarketWatchConnected.value = false;
+      isMarketWatchV2Connected.value = false;
       isSymbolsConnected.value = false;
       isOpenPositionsConnected.value = false;
       isPendingOrdersConnected.value = false;
@@ -196,6 +210,19 @@ class UnifiedWebSocketService extends GetxService {
       onError: (_) => isMarketWatchConnected.value = false,
     );
     isMarketWatchConnected.value = true;
+  }
+
+  Future<void> _connectMarketWatchV2() async {
+    // Skip if already connected or if account switch is in progress
+    if (_marketWatchV2Channel != null || _isAccountSwitching) return;
+    final url = WebSocketEndpointHelper.getMarketWatchV2Url(_currentAccount);
+    _marketWatchV2Channel = WebSocketChannel.connect(Uri.parse(url));
+    _mwV2Sub = _marketWatchV2Channel!.stream.listen(
+      _marketWatchV2Ctrl.add,
+      onDone: () => isMarketWatchV2Connected.value = false,
+      onError: (_) => isMarketWatchV2Connected.value = false,
+    );
+    isMarketWatchV2Connected.value = true;
   }
 
   Future<void> _connectSymbols() async {
@@ -259,6 +286,9 @@ class UnifiedWebSocketService extends GetxService {
       case WebSocketChannelType.instruments:
         _marketWatchChannel?.sink.add(event);
         break;
+      case WebSocketChannelType.marketWatchV2:
+        _marketWatchV2Channel?.sink.add(event);
+        break;
       case WebSocketChannelType.symbols:
       case WebSocketChannelType.chart:
         _symbolsChannel?.sink.add(event);
@@ -278,16 +308,19 @@ class UnifiedWebSocketService extends GetxService {
 
   void _disposeAll() {
     _mwSub?.cancel();
+    _mwV2Sub?.cancel();
     _symSub?.cancel();
     _opSub?.cancel();
     _poSub?.cancel();
     _accSub?.cancel();
     _marketWatchChannel?.sink.close();
+    _marketWatchV2Channel?.sink.close();
     _symbolsChannel?.sink.close();
     _opChannel?.sink.close();
     _poChannel?.sink.close();
     _accountChannel?.sink.close();
     _marketWatchCtrl.close();
+    _marketWatchV2Ctrl.close();
     _symbolsCtrl.close();
     _opCtrl.close();
     _poCtrl.close();

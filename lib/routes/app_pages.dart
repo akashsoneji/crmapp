@@ -26,6 +26,7 @@ import '../bindings/tenax_broker_binding.dart';
 import '../screens/auth/broker/tenax_broker_info_screen.dart';
 import '../screens/auth/broker/tenax_broker_selection_screen.dart';
 import '../screens/auth/splash/splash_screen.dart';
+import '../screens/auth/splash/goldenfx_video_splash_screen.dart';
 import '../screens/auth/getstart/get_started_screen.dart';
 import '../screens/auth/getstart/login_screen.dart';
 import '../screens/auth/register/create_account_screen.dart';
@@ -144,11 +145,17 @@ class AppPages {
   static const PMAM_MANAGER_DETAIL = _Paths.PMAM_MANAGER_DETAIL;
   static const PMAM_MANAGER_PLAN_DETAIL = _Paths.PMAM_MANAGER_PLAN_DETAIL;
 
+  static const GOLDENFX_VIDEO_SPLASH = '/goldenfx-video-splash';
+
   static final routes = [
     GetPage(
       name: _Paths.SPLASH,
       page: () => const SplashScreen(),
       binding: SplashBinding(),
+    ),
+    GetPage(
+      name: GOLDENFX_VIDEO_SPLASH,
+      page: () => const GoldenfxVideoSplashScreen(),
     ),
     GetPage(
       name: _Paths.TENAX_BROKER_SELECTION,

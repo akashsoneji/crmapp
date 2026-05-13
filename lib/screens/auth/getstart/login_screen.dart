@@ -157,6 +157,7 @@ class _LoginScreenState extends State<LoginScreen> {
               setState(() => _enableBiometricAfterLogin = true);
             },
             activeColor: AppColors.primary,
+            side: BorderSide(color: AppColors.primary, width: 2),
           ),
         ),
         const SizedBox(width: 10),
@@ -215,9 +216,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                     padding: EdgeInsets.only(top: 70.h),
                                     child: Text(
                                       languageService.tr("welcome_title"),
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 28,
                                         fontWeight: FontWeight.bold,
+                                        color: AppColors.textPrimary,
                                       ),
                                     ),
                                   ),

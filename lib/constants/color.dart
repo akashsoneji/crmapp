@@ -8,7 +8,7 @@ class AppColors {
   static ThemeService? get _themeService => Get.isRegistered<ThemeService>() ? Get.find<ThemeService>() : null;
 
   // Helper to check if dark mode
-  static bool get isDarkMode => _themeService?.isDarkMode.value ?? false;
+  static bool get isDarkMode => (_themeService?.isDarkMode.value ?? false) || FlavorConfig.isGoldenwolffx();
   // Brand Colors - Now using flavor configuration
   static Color get primary => FlavorConfig.instance.primaryColor;
   static Color get secondary => FlavorConfig.instance.secondaryColor;

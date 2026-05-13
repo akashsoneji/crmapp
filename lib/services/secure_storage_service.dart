@@ -26,6 +26,7 @@ class SecureStorageService {
   static const String _tenaxCurrentProfileKey = 'tenax_current_profile_key';
   static const String _biometricEnabledKey = 'biometric_enabled';
   static const String _biometricUserKey = 'biometric_user';
+  static const String _isFirstLaunchKey = 'is_first_launch';
   static const bool _defaultTenaxBrokerSelectionFlag =
       bool.fromEnvironment(
         'TENAX_BROKER_SELECTION_ENABLED',
@@ -260,6 +261,32 @@ class SecureStorageService {
       ]);
     } catch (e) {
       print('SecureStorage: Error clearing biometric state: $e');
+    }
+  }
+
+  // Check if it is the first app launch
+  static Future<bool> isFirstLaunch() async {
+    try {
+      final value = await _storage.read(key: _isFirstLaunchKey);
+      // If the key is not set, it means it's the first launch
+      if (value == null || value.isEmpty) {
+        return true;
+      }
+      return value == 'true';
+    } catch (e) {
+      print('SecureStorage: Error reading first launch flag: $e');
+      return false; // Default to false on error to prevent looping splash screens
+    }
+  }
+
+  // Set first app launch to completed
+  static Future<void> setFirstLaunchCompleted() async {
+    try {
+      // We set it to false, meaning first launch is no longer true
+      await _storage.write(key: _isFirstLaunchKey, value: 'false');
+      print('SecureStorage: First launch flag set to false');
+    } catch (e) {
+      print('SecureStorage: Error saving first launch flag: $e');
     }
   }
 
