@@ -382,7 +382,9 @@ class _TradeScreenState extends State<TradeScreen> {
                         ),
                       );
 
-                      final floatingSummary = _buildFloatingSummary(tradingController);
+                      final floatingSummary = _buildFloatingSummary(
+                        tradingController,
+                      );
 
                       return RefreshIndicator(
                         onRefresh: () async {
@@ -390,81 +392,98 @@ class _TradeScreenState extends State<TradeScreen> {
                             await controller.refreshTradeHistory();
                           }
                         },
-                        child: controller.selectedTab == 2
-                            // History tab: keep the summary cards fixed, only list scrolls below.
-                            ? Column(
-                                children: [
-                                  summaryCard,
-                                  floatingSummary,
-                                  SizedBox(height: 8.h),
-                                  Expanded(
-                                    child: NotificationListener<ScrollNotification>(
-                                      onNotification: (n) {
-                                        controller.notifyUserScrollActivity();
-                                        return false;
-                                      },
-                                      child: CustomScrollView(
-                                        controller: _scrollController,
-                                        slivers: [
-                                          if (positions.isEmpty && !isLoadingHistory)
-                                            SliverFillRemaining(
-                                              hasScrollBody: false,
-                                              child: Center(
-                                                child: Column(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment.center,
-                                                  children: [
-                                                    FutureBuilder<Widget>(
-                                                      future: _emptyStateSvgFuture,
-                                                      builder:
-                                                          (context, snapshot) {
-                                                        if (snapshot.hasData) {
-                                                          return snapshot.data!;
-                                                        }
-                                                        return SizedBox(
-                                                          height: 100.h,
-                                                          width: 100.w,
-                                                        );
-                                                      },
-                                                    ),
-                                                    SizedBox(height: 16.h),
-                                                    SizedBox(height: 8.h),
-                                                    Text(
-                                                      'You have no data',
-                                                      style: AppTextStyles
-                                                          .subheading
-                                                          .copyWith(
-                                                        color: AppColors.textGrey,
+                        child:
+                            controller.selectedTab == 2
+                                // History tab: keep the summary cards fixed, only list scrolls below.
+                                ? Column(
+                                  children: [
+                                    summaryCard,
+                                    floatingSummary,
+                                    SizedBox(height: 8.h),
+                                    Expanded(
+                                      child: NotificationListener<
+                                        ScrollNotification
+                                      >(
+                                        onNotification: (n) {
+                                          controller.notifyUserScrollActivity();
+                                          return false;
+                                        },
+                                        child: CustomScrollView(
+                                          controller: _scrollController,
+                                          slivers: [
+                                            if (positions.isEmpty &&
+                                                !isLoadingHistory)
+                                              SliverFillRemaining(
+                                                hasScrollBody: false,
+                                                child: Center(
+                                                  child: Column(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .center,
+                                                    children: [
+                                                      FutureBuilder<Widget>(
+                                                        future:
+                                                            _emptyStateSvgFuture,
+                                                        builder: (
+                                                          context,
+                                                          snapshot,
+                                                        ) {
+                                                          if (snapshot
+                                                              .hasData) {
+                                                            return snapshot
+                                                                .data!;
+                                                          }
+                                                          return SizedBox(
+                                                            height: 100.h,
+                                                            width: 100.w,
+                                                          );
+                                                        },
                                                       ),
-                                                    ),
-                                                  ],
+                                                      SizedBox(height: 16.h),
+                                                      SizedBox(height: 8.h),
+                                                      Text(
+                                                        'You have no data',
+                                                        style: AppTextStyles
+                                                            .subheading
+                                                            .copyWith(
+                                                              color:
+                                                                  AppColors
+                                                                      .textGrey,
+                                                            ),
+                                                      ),
+                                                    ],
+                                                  ),
                                                 ),
-                                              ),
-                                            )
-                                          else
-                                            SliverPadding(
-                                              padding: EdgeInsets.only(
-                                                left: 16.w,
-                                                right: 16.w,
-                                                bottom: 77.h +
-                                                    MediaQuery.of(context)
-                                                        .padding
-                                                        .bottom,
-                                              ),
-                                              sliver: SliverList(
-                                                delegate:
-                                                    SliverChildBuilderDelegate(
-                                                  (context, index) {
+                                              )
+                                            else
+                                              SliverPadding(
+                                                padding: EdgeInsets.only(
+                                                  left: 16.w,
+                                                  right: 16.w,
+                                                  bottom:
+                                                      77.h +
+                                                      MediaQuery.of(
+                                                        context,
+                                                      ).padding.bottom,
+                                                ),
+                                                sliver: SliverList(
+                                                  delegate: SliverChildBuilderDelegate((
+                                                    context,
+                                                    index,
+                                                  ) {
                                                     final position =
                                                         positions[index];
                                                     return RepaintBoundary(
                                                       child: GetBuilder<
-                                                          TradingController>(
-                                                        id: 'position_${position.orderId}',
-                                                        builder:
-                                                            (innerController) {
+                                                        TradingController
+                                                      >(
+                                                        id:
+                                                            'position_${position.orderId}',
+                                                        builder: (
+                                                          innerController,
+                                                        ) {
                                                           final TradePosition?
-                                                              fresh =
+                                                          fresh =
                                                               innerController
                                                                           .selectedTab ==
                                                                       0
@@ -476,14 +495,14 @@ class _TradeScreenState extends State<TradeScreen> {
                                                                   : (innerController
                                                                               .selectedTab ==
                                                                           1
-                                                                      ? innerController
-                                                                          .getPendingPositionById(
-                                                                            position.orderId,
-                                                                          )
-                                                                      : innerController
-                                                                          .getClosedPositionById(
-                                                                            position.orderId,
-                                                                          ));
+                                                                      ? innerController.getPendingPositionById(
+                                                                        position
+                                                                            .orderId,
+                                                                      )
+                                                                      : innerController.getClosedPositionById(
+                                                                        position
+                                                                            .orderId,
+                                                                      ));
 
                                                           return _buildPositionCard(
                                                             innerController,
@@ -492,121 +511,130 @@ class _TradeScreenState extends State<TradeScreen> {
                                                         },
                                                       ),
                                                     );
-                                                  },
-                                                  childCount: positions.length,
+                                                  }, childCount: positions.length),
                                                 ),
                                               ),
-                                            ),
-                                          if (hasMorePages)
-                                            SliverToBoxAdapter(
-                                              child: Builder(
-                                                builder: (context) {
-                                                  WidgetsBinding.instance
-                                                      .addPostFrameCallback(
-                                                    (_) {
-                                                      if (mounted &&
-                                                          !_isLoadingMore &&
-                                                          !controller
-                                                              .isLoadingHistory) {
-                                                        _loadMoreIfNeeded();
-                                                      }
-                                                    },
-                                                  );
-                                                  return _buildPaginationLoader(
-                                                    controller,
-                                                  );
-                                                },
+                                            if (hasMorePages)
+                                              SliverToBoxAdapter(
+                                                child: Builder(
+                                                  builder: (context) {
+                                                    WidgetsBinding.instance
+                                                        .addPostFrameCallback((
+                                                          _,
+                                                        ) {
+                                                          if (mounted &&
+                                                              !_isLoadingMore &&
+                                                              !controller
+                                                                  .isLoadingHistory) {
+                                                            _loadMoreIfNeeded();
+                                                          }
+                                                        });
+                                                    return _buildPaginationLoader(
+                                                      controller,
+                                                    );
+                                                  },
+                                                ),
                                               ),
-                                            ),
-                                        ],
+                                          ],
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                ],
-                              )
-                            // Market/Pending: current behavior (summary scrolls with list)
-                            : NotificationListener<ScrollNotification>(
-                                onNotification: (n) {
-                                  controller.notifyUserScrollActivity();
-                                  return false;
-                                },
-                                child: CustomScrollView(
-                                  controller: _scrollController,
-                                  slivers: [
-                                    SliverToBoxAdapter(child: summaryCard),
-                                    SliverToBoxAdapter(
-                                      child: SizedBox(height: 8.h),
-                                    ),
-                                    if (positions.isEmpty && !isLoadingHistory)
-                                      SliverFillRemaining(
-                                        hasScrollBody: false,
-                                        child: Center(
-                                          child: Column(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            children: [
-                                              FutureBuilder<Widget>(
-                                                future: _emptyStateSvgFuture,
-                                                builder: (context, snapshot) {
-                                                  if (snapshot.hasData) {
-                                                    return snapshot.data!;
-                                                  }
-                                                  return SizedBox(
-                                                    height: 100.h,
-                                                    width: 100.w,
-                                                  );
-                                                },
-                                              ),
-                                              SizedBox(height: 16.h),
-                                              SizedBox(height: 8.h),
-                                              Text(
-                                                'You have no data',
-                                                style: AppTextStyles.subheading
-                                                    .copyWith(
-                                                  color: AppColors.textGrey,
+                                  ],
+                                )
+                                // Market/Pending: current behavior (summary scrolls with list)
+                                : NotificationListener<ScrollNotification>(
+                                  onNotification: (n) {
+                                    controller.notifyUserScrollActivity();
+                                    return false;
+                                  },
+                                  child: CustomScrollView(
+                                    controller: _scrollController,
+                                    slivers: [
+                                      SliverToBoxAdapter(child: summaryCard),
+                                      SliverToBoxAdapter(
+                                        child: SizedBox(height: 8.h),
+                                      ),
+                                      if (positions.isEmpty &&
+                                          !isLoadingHistory)
+                                        SliverFillRemaining(
+                                          hasScrollBody: false,
+                                          child: Center(
+                                            child: Column(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
+                                                FutureBuilder<Widget>(
+                                                  future: _emptyStateSvgFuture,
+                                                  builder: (context, snapshot) {
+                                                    if (snapshot.hasData) {
+                                                      return snapshot.data!;
+                                                    }
+                                                    return SizedBox(
+                                                      height: 100.h,
+                                                      width: 100.w,
+                                                    );
+                                                  },
                                                 ),
-                                              ),
-                                            ],
+                                                SizedBox(height: 16.h),
+                                                SizedBox(height: 8.h),
+                                                Text(
+                                                  'You have no data',
+                                                  style: AppTextStyles
+                                                      .subheading
+                                                      .copyWith(
+                                                        color:
+                                                            AppColors.textGrey,
+                                                      ),
+                                                ),
+                                              ],
+                                            ),
                                           ),
-                                        ),
-                                      )
-                                    else
-                                      SliverPadding(
-                                        padding: EdgeInsets.only(
-                                          left: 16.w,
-                                          right: 16.w,
-                                          bottom: 77.h +
-                                              MediaQuery.of(context)
-                                                  .padding
-                                                  .bottom,
-                                        ),
-                                        sliver: SliverList(
-                                          delegate:
-                                              SliverChildBuilderDelegate(
-                                            (context, index) {
+                                        )
+                                      else
+                                        SliverPadding(
+                                          padding: EdgeInsets.only(
+                                            left: 16.w,
+                                            right: 16.w,
+                                            bottom:
+                                                77.h +
+                                                MediaQuery.of(
+                                                  context,
+                                                ).padding.bottom,
+                                          ),
+                                          sliver: SliverList(
+                                            delegate: SliverChildBuilderDelegate((
+                                              context,
+                                              index,
+                                            ) {
                                               final position = positions[index];
                                               return RepaintBoundary(
-                                                child:
-                                                    GetBuilder<TradingController>(
-                                                  id: 'position_${position.orderId}',
+                                                child: GetBuilder<
+                                                  TradingController
+                                                >(
+                                                  id:
+                                                      'position_${position.orderId}',
                                                   builder: (innerController) {
                                                     final TradePosition? fresh =
-                                                        innerController.selectedTab ==
+                                                        innerController
+                                                                    .selectedTab ==
                                                                 0
                                                             ? innerController
                                                                 .getMarketPositionById(
-                                                                  position.orderId,
+                                                                  position
+                                                                      .orderId,
                                                                 )
                                                             : (innerController
                                                                         .selectedTab ==
                                                                     1
                                                                 ? innerController
                                                                     .getPendingPositionById(
-                                                                      position.orderId,
+                                                                      position
+                                                                          .orderId,
                                                                     )
                                                                 : innerController
                                                                     .getClosedPositionById(
-                                                                      position.orderId,
+                                                                      position
+                                                                          .orderId,
                                                                     ));
 
                                                     return _buildPositionCard(
@@ -616,14 +644,12 @@ class _TradeScreenState extends State<TradeScreen> {
                                                   },
                                                 ),
                                               );
-                                            },
-                                            childCount: positions.length,
+                                            }, childCount: positions.length),
                                           ),
                                         ),
-                                      ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
-                              ),
                       );
                     },
                   ),
@@ -667,7 +693,7 @@ class _TradeScreenState extends State<TradeScreen> {
                   style: AppTextStyles.label.copyWith(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w400,
-                    color: AppColors.primary,
+                    color: AppColors.textPrimaryLight,
                   ),
                 ),
               )
@@ -838,7 +864,7 @@ class _TradeScreenState extends State<TradeScreen> {
     return Obx(() {
       final currentTab = tradingController.selectedTab;
       final positions = tradingController.getFilteredPositions();
-      
+
       double totalProfitLoss = 0.0;
       bool isPositive = true;
 
@@ -1419,24 +1445,25 @@ class _TradeScreenState extends State<TradeScreen> {
 
     // For huge lists (450+), Dismissible on every row causes jank due to gesture + layout overhead.
     // We keep the same close flow via tap → bottom sheet; swipe-to-close stays enabled for smaller lists.
-    final bool enableSwipeClose = tradingController.marketPositions.length < 350 &&
+    final bool enableSwipeClose =
+        tradingController.marketPositions.length < 350 &&
         tradingController.pendingPositions.length < 350;
 
     final cardChild = GestureDetector(
       onTap: () => _showPositionDetailsBottomSheet(tradingController, position),
       child: Container(
-         margin: EdgeInsets.only(bottom: 6.h),
-            decoration: BoxDecoration(
-              color: AppColors.whiteColor,
-              borderRadius: BorderRadius.circular(12.r),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+        margin: EdgeInsets.only(bottom: 6.h),
+        decoration: BoxDecoration(
+          color: AppColors.whiteColor,
+          borderRadius: BorderRadius.circular(12.r),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
             ),
+          ],
+        ),
         //  margin: EdgeInsets.only(bottom: 6.h),
         //     decoration: BoxDecoration(
         //       color: AppColors.whiteColor,
@@ -1476,7 +1503,10 @@ class _TradeScreenState extends State<TradeScreen> {
         direction: DismissDirection.endToStart,
         dismissThresholds: const {DismissDirection.endToStart: 0.4},
         confirmDismiss: (direction) async {
-          return await _showClosePositionConfirmation(tradingController, position);
+          return await _showClosePositionConfirmation(
+            tradingController,
+            position,
+          );
         },
         onDismissed: (direction) async {
           setState(() {
@@ -1493,7 +1523,11 @@ class _TradeScreenState extends State<TradeScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              Icon(Icons.close_rounded, color: AppColors.whiteColor, size: 24.h),
+              Icon(
+                Icons.close_rounded,
+                color: AppColors.whiteColor,
+                size: 24.h,
+              ),
               SizedBox(width: 8.w),
               Text(
                 'Close',
@@ -1619,7 +1653,7 @@ class _TradeScreenState extends State<TradeScreen> {
         builder: (context, setState) {
           return Container(
             height: 350.h,
-            decoration:   BoxDecoration(
+            decoration: BoxDecoration(
               color: AppColors.whiteColor,
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(20),
@@ -1814,7 +1848,7 @@ class _TradeScreenState extends State<TradeScreen> {
             bottom: MediaQuery.of(Get.context!).viewInsets.bottom,
           ),
           child: Container(
-            decoration:   BoxDecoration(
+            decoration: BoxDecoration(
               color: AppColors.whiteColor,
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(20),
@@ -2103,7 +2137,7 @@ class _TradeScreenState extends State<TradeScreen> {
                               if (selectedFilter != 'custom') {
                                 setState(() {
                                   selectedFilter = 'custom';
-                                  // Don't wipe dates if we're just switching back to custom 
+                                  // Don't wipe dates if we're just switching back to custom
                                   // and they might be loaded from params
                                 });
                               }
@@ -2509,7 +2543,7 @@ class _TradeScreenState extends State<TradeScreen> {
     bool isPositive,
   ) {
     return Container(
-      decoration:   BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.whiteColor,
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(20),
@@ -2918,7 +2952,7 @@ class _TradeScreenState extends State<TradeScreen> {
                   minHeight: 400.h,
                   maxWidth: screenWidth,
                 ),
-                decoration:   BoxDecoration(
+                decoration: BoxDecoration(
                   color: AppColors.whiteColor,
                   borderRadius: BorderRadius.only(
                     topLeft: Radius.circular(20),

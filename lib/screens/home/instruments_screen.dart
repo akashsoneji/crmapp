@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
@@ -13,15 +12,14 @@ import 'package:crm_app/controllers/trading_controller.dart'; // ✅ ADD: For fl
 
 import 'package:crm_app/models/socket_response.dart';
 import 'package:crm_app/services/language_service.dart';
-import 'package:crm_app/utils/trl_helper.dart';
 import 'package:crm_app/utils/precision_helper.dart';
 import 'package:crm_app/utils/svg_color_helper.dart';
 import '../../widgets/account_header_widget.dart';
 import '../../widgets/common_loading_widget.dart';
 import 'chart_screen.dart';
 import 'search_instruments_screen.dart';
-import 'dart:developer' as dev;
-import '../../services/symbol_selection_service.dart';
+import 'package:crm_app/services/symbol_selection_service.dart';
+import 'package:crm_app/services/market_watch_v2_service.dart';
 
 class InstrumentsScreen extends StatefulWidget {
   final Function(String)? onNavigateToChart;
@@ -46,11 +44,38 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
   @override
   void initState() {
     super.initState();
-    // Listen to real-time price updates from instruments controller
     _listenToPriceUpdates();
+    // Explicit `marketwatchv2` WS: this tab opens the session (auth + subscribe when favorites exist).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _ensureMarketWatchV2ForTab();
+    });
 
-    // NOTE: WebSocket lifecycle is managed centrally by AccountController
-    // DO NOT add _listenToAccountChanges() or addPostFrameCallback here
+    // NOTE: Unified legacy market-watch WS lifecycle is still managed by AccountController.
+  }
+
+  /// Opens `ws/marketwatchv2` from this tab: subscribe after a short favorites wait.
+  /// Full REST hydrate runs in [InstrumentsController.startMarketWatchV2Only] (account flow).
+  Future<void> _ensureMarketWatchV2ForTab() async {
+    if (!Get.isRegistered<MarketWatchV2Service>()) return;
+    final ic = _controller;
+    final deadline = DateTime.now().add(const Duration(milliseconds: 400));
+    while (ic.isLoadingFavorites.value && DateTime.now().isBefore(deadline)) {
+      await Future<void>.delayed(const Duration(milliseconds: 16));
+    }
+    final svc = Get.find<MarketWatchV2Service>();
+    final syms =
+        ic.favoriteInstruments
+            .map(MarketWatchV2Service.normalizeSymbol)
+            .where((s) => s.isNotEmpty)
+            .toSet()
+            .toList();
+    try {
+      if (syms.isNotEmpty) {
+        await svc.subscribeSymbols(syms);
+      } else {
+        await svc.ensureAuthenticatedConnection();
+      }
+    } catch (_) {}
   }
 
   @override
@@ -71,9 +96,12 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
             Expanded(
               child: Obx(() {
                 final controller = _controller;
-                // Show loading indicator while WebSocket is connecting and no data yet
-                if (controller.allInstruments.isEmpty &&
-                    !controller.isConnected.value) {
+                final showInitialLoader =
+                    controller.isHydratingInstrumentCatalog.value ||
+                    controller.isLoadingFavorites.value ||
+                    (controller.allInstruments.isEmpty &&
+                        !controller.isConnected.value);
+                if (showInitialLoader) {
                   return Center(
                     child: CommonLoadingWidget(
                       message: 'Loading instruments...',
@@ -89,10 +117,60 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
                 return _buildInstrumentsList(controller.instruments);
               }),
             ),
+            // _buildMarketWatchV2DecodedPanel(),
           ],
         ),
       ),
     );
+  }
+
+  /// `marketwatchv2` WebSocket — outgoing JSON requests + incoming decoded frames.
+  Widget _buildMarketWatchV2DecodedPanel() {
+    if (!Get.isRegistered<MarketWatchV2Service>()) {
+      return const SizedBox.shrink();
+    }
+    final svc = Get.find<MarketWatchV2Service>();
+    return Obx(() {
+      final text = svc.decodedLog.value;
+      return SizedBox(
+        height: 160.h,
+        child: Material(
+          color: Colors.black.withOpacity(0.06),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.max,
+            children: [
+              Padding(
+                padding: EdgeInsets.fromLTRB(8.w, 6.h, 8.w, 2.h),
+                child: Text(
+                  'marketwatchv2 (request / response)',
+                  style: AppTextStyles.subheading.copyWith(
+                    fontSize: 10.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textGrey,
+                  ),
+                ),
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.fromLTRB(8.w, 0, 8.w, 6.h),
+                  child: SelectableText(
+                    text.isEmpty
+                        ? '(no traffic yet — waiting for auth token or network)'
+                        : text,
+                    style: AppTextStyles.subheading.copyWith(
+                      fontSize: 9.sp,
+                      height: 1.25,
+                      color: AppColors.textGrey,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    });
   }
 
   Widget _buildHeader() {
@@ -108,19 +186,24 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
             context: context,
             isScrollControlled: true,
             backgroundColor: Colors.transparent,
-            builder: (context) => Container(
-              height: MediaQuery.of(context).size.height * 0.9,
-              decoration: BoxDecoration(
-                color: AppColors.tradeBackgroundCenterColor,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
-                child: SearchInstrumentsScreen(
-                  onNavigateToChart: widget.onNavigateToChart,
+            builder:
+                (context) => Container(
+                  height: MediaQuery.of(context).size.height * 0.9,
+                  decoration: BoxDecoration(
+                    color: AppColors.tradeBackgroundCenterColor,
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(20.r),
+                    ),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(20.r),
+                    ),
+                    child: SearchInstrumentsScreen(
+                      onNavigateToChart: widget.onNavigateToChart,
+                    ),
+                  ),
                 ),
-              ),
-            ),
           );
         },
         floatingProfit: floatingProfit, // ✅ ADD: Show floating P&L
@@ -245,7 +328,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
                   fontSize: 12.sp,
                   fontWeight: FontWeight.w400,
                   height: 22 / 15,
-                  color: AppColors.primary,
+                  color: AppColors.textPrimaryLight,
                 ),
               ),
               SizedBox(width: 4.w),
@@ -262,10 +345,6 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
   }
 
   Widget _buildInstrumentsList(List<ListElement> instruments) {
-    // ✅ PERFORMANCE OPTIMIZATION: Calculate time ONCE for all items
-    // Instead of calling DateTime.now() 50+ times (once per item)
-    final currentTime = DateFormat('HH:mm:ss').format(DateTime.now());
-
     return NotificationListener<ScrollNotification>(
       onNotification: (n) {
         _controller.notifyUserScrollActivity();
@@ -313,24 +392,25 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
         itemCount: instruments.length,
         itemBuilder: (context, index) {
           final instrument = instruments[index];
-          return _buildInstrumentItem(instrument, currentTime, index);
+          return _buildInstrumentItem(instrument, index);
         },
       ),
     );
   }
 
-  Widget _buildInstrumentItem(
-    ListElement instrument,
-    String currentTime,
-    int index,
-  ) {
+  Widget _buildInstrumentItem(ListElement instrument, int index) {
     final itemContent = RepaintBoundary(
       child: GestureDetector(
         onTap: () {
           _navigateToChartWithSymbol(instrument.symbol);
         },
         child: Container(
-          padding: EdgeInsets.only(left: 12.w, right: 8.w, top: 8.h, bottom: 8.h),
+          padding: EdgeInsets.only(
+            left: 12.w,
+            right: 8.w,
+            top: 8.h,
+            bottom: 8.h,
+          ),
           decoration: BoxDecoration(
             color: AppColors.tradeBackgroundCenterColor,
             border: Border(
@@ -375,15 +455,19 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
                               height: 1.2,
                             ),
                           ),
-                          SizedBox(height: 2.h),
-                          Text(
-                            currentTime,
-                            style: AppTextStyles.subheading.copyWith(
-                              fontSize: 10.sp,
-                              color: AppColors.textGrey,
-                              height: 1.1,
+                          if ((instrument.category ?? '')
+                              .trim()
+                              .isNotEmpty) ...[
+                            SizedBox(height: 2.h),
+                            Text(
+                              instrument.category!.trim(),
+                              style: AppTextStyles.subheading.copyWith(
+                                fontSize: 10.sp,
+                                color: AppColors.textGrey,
+                                height: 1.1,
+                              ),
                             ),
-                          ),
+                          ],
                           SizedBox(height: 2.h),
                           Row(
                             mainAxisSize: MainAxisSize.min,
@@ -473,30 +557,20 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
   }
 
   void _navigateToChartWithSymbol(String symbol) {
-    dev.log('InstrumentsScreen: Navigating to chart with symbol: $symbol');
-
     _symbolSelectionService.setSymbol(symbol);
 
     // Set the selected symbol for the chart screen
     ChartScreen.setSelectedSymbol(symbol);
-    dev.log('InstrumentsScreen: Set selected symbol to: $symbol');
 
     // Navigate to chart screen
     if (widget.onNavigateToChart != null) {
-      dev.log(
-        'InstrumentsScreen: Calling onNavigateToChart callback with symbol: $symbol',
-      );
       widget.onNavigateToChart!(symbol);
-    } else {
-      dev.log('InstrumentsScreen: onNavigateToChart callback is null');
     }
   }
 
   // Listen to price updates from instruments controller
   void _listenToPriceUpdates() {
-    // The instruments controller already handles real-time updates
-    // and updates the instruments list automatically
-    dev.log('InstrumentsScreen: Listening to price updates from controller');
+    // Real-time updates: InstrumentsController + unified market-watch WS.
   }
 
   // NOTE: _listenToAccountChanges() was removed

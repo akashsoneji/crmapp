@@ -76,9 +76,7 @@ class UnifiedWebSocketService extends GetxService {
     switch (type) {
       case WebSocketChannelType.marketWatch:
       case WebSocketChannelType.instruments:
-        if (!isMarketWatchConnected.value) {
-          await _connectMarketWatch();
-        }
+        // Legacy `/ws/marketwatch` removed from unified manager — use [MarketWatchV2Service].
         break;
       case WebSocketChannelType.symbols:
       case WebSocketChannelType.chart:
@@ -177,25 +175,13 @@ class UnifiedWebSocketService extends GetxService {
 
   Future<void> _connectAllChannels() async {
     await Future.wait([
-      _connectMarketWatch(),
+      // Legacy `_connectMarketWatch` intentionally omitted — instruments use `ws/marketwatchv2`
+      // via [MarketWatchV2Service]. Restore `_connectMarketWatch()` here if legacy catalog WS is needed again.
       _connectSymbols(),
       _connectOpenPositions(),
       _connectPendingOrders(),
       _connectAccount(),
     ]);
-  }
-
-  Future<void> _connectMarketWatch() async {
-    // Skip if already connected or if account switch is in progress
-    if (_marketWatchChannel != null || _isAccountSwitching) return;
-    final url = WebSocketEndpointHelper.getMarketWatchUrl(_currentAccount);
-    _marketWatchChannel = WebSocketChannel.connect(Uri.parse(url));
-    _mwSub = _marketWatchChannel!.stream.listen(
-      _marketWatchCtrl.add,
-      onDone: () => isMarketWatchConnected.value = false,
-      onError: (_) => isMarketWatchConnected.value = false,
-    );
-    isMarketWatchConnected.value = true;
   }
 
   Future<void> _connectSymbols() async {

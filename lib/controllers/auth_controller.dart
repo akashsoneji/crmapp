@@ -23,6 +23,7 @@ import 'instruments_controller.dart';
 import 'chart_socket_controller.dart';
 import 'package:crm_app/services/one_click_trading_service.dart';
 import 'package:crm_app/services/account_websocket_service.dart';
+import 'package:crm_app/services/market_watch_v2_service.dart';
 import 'dart:io' show Platform;
 import 'package:crm_app/services/biometric_service.dart';
 import 'package:crm_app/services/app_lock_service.dart';
@@ -887,6 +888,15 @@ class AuthController extends GetxController {
       }
     } catch (e) {
       print('AuthController: Error clearing trading WebSocket service: $e');
+    }
+
+    try {
+      if (Get.isRegistered<MarketWatchV2Service>()) {
+        await Get.find<MarketWatchV2Service>().disconnect();
+        print('AuthController: MarketWatchV2 disconnected');
+      }
+    } catch (e) {
+      print('AuthController: Error disconnecting MarketWatchV2: $e');
     }
 
     // Clear InstrumentsController (has WebSocket)

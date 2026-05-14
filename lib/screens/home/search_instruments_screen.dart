@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -9,7 +8,6 @@ import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/search_instruments_controller.dart';
 import 'package:crm_app/controllers/instruments_controller.dart';
 import 'package:crm_app/models/search_instruments_model.dart';
-import 'package:crm_app/models/socket_response.dart';
 import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/utils/trl_helper.dart';
 import 'package:crm_app/services/symbol_selection_service.dart';
@@ -34,6 +32,8 @@ class _SearchInstrumentsScreenState extends State<SearchInstrumentsScreen> {
   void initState() {
     super.initState();
     _searchController.addListener(_onSearchTextChanged);
+    // Reset each visit: controller may be reused via Get.put with a stale tab.
+    _controller.filterByCategory('Currency');
   }
 
   @override
@@ -234,8 +234,13 @@ class _SearchInstrumentsScreenState extends State<SearchInstrumentsScreen> {
               final instrumentsController = Get.find<InstrumentsController>();
               final isFavorite = instrumentsController.isFavorite(symbol.displaySymbol);
               return GestureDetector(
-                onTap: () {
-                  instrumentsController.toggleFavorite(symbol.displaySymbol);
+                onTap: () async {
+                  final ic = instrumentsController;
+                  await ic.toggleFavorite(symbol.displaySymbol);
+                  await ic.syncMarketWatchV2AfterFavoriteChange(
+                    symbol.displaySymbol,
+                    isFavoriteNow: ic.isFavorite(symbol.displaySymbol),
+                  );
                 },
                 child: Padding(
                   padding: EdgeInsets.only(left: 8.w),
@@ -291,22 +296,6 @@ class _SearchInstrumentsScreenState extends State<SearchInstrumentsScreen> {
       return symbol.substring(0, symbol.lastIndexOf('.'));
     }
     return symbol;
-  }
-
-  String _formatSpreadDiff(double spreadDiff) {
-    String formatted = spreadDiff.toString();
-    if (formatted.contains('.')) {
-      List<String> parts = formatted.split('.');
-      String integerPart = parts[0];
-      String decimalPart = parts[1];
-      if (integerPart == '0') {
-        String trimmedDecimal = decimalPart.replaceFirst(RegExp(r'^0+'), '');
-        return trimmedDecimal.isEmpty ? '0' : trimmedDecimal;
-      } else {
-        return integerPart;
-      }
-    }
-    return formatted;
   }
 
   String _getFlagPath(String symbol) {

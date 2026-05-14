@@ -51,7 +51,6 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
   final RxBool isSymbolsConnected = false.obs;
   bool _isConnectingOpenPositions = false;
   bool _isConnectingPendingOrders = false;
-  bool _isConnectingMarketWatch = false;
   bool _isConnectingSymbols = false;
   bool _loggedFirstMessage = false;
 
@@ -907,73 +906,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     });
   }
 
-  // Connect to market watch endpoint with conditional MT5 prefix
-  void _connectToMarketWatch() {
-    if (_isDisposed || _isConnectingMarketWatch) return;
-
-    final activeAccount = _accountController.activeMT5Account;
-
-    // ✅ Validate account exists before determining endpoint
-    if (activeAccount == null) {
-      return;
-    }
-
-    // ✅ Use centralized endpoint helper
-    final marketWatchUrl = WebSocketEndpointHelper.getMarketWatchUrl(
-      activeAccount,
-    );
-
-    // Check if already connected
-    if (isMarketWatchConnected.value && _marketWatchChannel != null) {
-      _requestMarketWatchData();
-      return;
-    }
-
-    _isConnectingMarketWatch = true;
-    _marketWatchReconnectAttempts = 0;
-
-    try {
-      _marketWatchChannel = WebSocketChannel.connect(Uri.parse(marketWatchUrl));
-      isMarketWatchConnected.value = true;
-
-      // ✅ FIX: Cancel old subscription before creating new one
-      _marketWatchSubscription?.cancel();
-      _marketWatchSubscription = _marketWatchChannel!.stream.listen(
-        (message) => _handleMarketWatchMessage(message),
-        onError: (error) {
-          AppLogger.error(
-            'Trading WS: Market watch connection error',
-            error: error,
-          );
-          isMarketWatchConnected.value = false;
-          _scheduleMarketWatchReconnect();
-        },
-        onDone: () {
-          AppLogger.websocket('Trading WS: Market watch connection closed');
-          isMarketWatchConnected.value = false;
-          if (!_isDisposed) {
-            _scheduleMarketWatchReconnect();
-          }
-        },
-        cancelOnError: false,
-      );
-
-      // Request data immediately to avoid lag on price feed during account switch
-      _requestMarketWatchData();
-      // Quick retry shortly after connect to cover any handshake timing
-      Future.delayed(const Duration(milliseconds: 150), () {
-        if (isMarketWatchConnected.value && !_isDisposed) {
-          _requestMarketWatchData();
-        }
-      });
-
-      _isConnectingMarketWatch = false;
-    } catch (e) {
-      _isConnectingMarketWatch = false;
-      AppLogger.error('Trading WS: Error connecting to market watch', error: e);
-      _scheduleMarketWatchReconnect();
-    }
-  }
+  /// Legacy `/ws/marketwatch` — intentionally not opened; pricing for instruments uses
+  /// [MarketWatchV2Service]. Restore connection logic here if a feature still needs this channel.
+  void _connectToMarketWatch() {}
 
   /// Ensure Symbols WebSocket is connected (lazy loading)
   /// Call this when user opens chart screen to connect on demand
@@ -1136,7 +1071,8 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     });
   }
 
-  // Schedule reconnect for market watch
+  // Schedule reconnect for market watch (legacy channel disabled — kept for reference)
+  // ignore: unused_element
   void _scheduleMarketWatchReconnect() {
     if (_isDisposed || _marketWatchReconnectAttempts >= _maxReconnectAttempts) {
       return;
@@ -1238,7 +1174,8 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     _handleSocketMessage(message, isOpenPositionChannel: true);
   }
 
-  // Request market watch data
+  // Request market watch data (legacy channel disabled — kept for reference)
+  // ignore: unused_element
   void _requestMarketWatchData() async {
     if (_marketWatchChannel == null || _isDisposed) return;
 
@@ -1263,7 +1200,8 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     _sendEventToChannel(_marketWatchChannel, event);
   }
 
-  // Handle market watch messages
+  // Handle market watch messages (legacy channel disabled — kept for reference)
+  // ignore: unused_element
   void _handleMarketWatchMessage(dynamic message) {
     try {
       // ✅ PERFORMANCE: Handle both JSON and binary (MessagePack) formats

@@ -17,6 +17,7 @@ import '../services/account_service.dart';
 import '../services/trading_websocket_service.dart';
 import '../services/account_websocket_service.dart';
 import '../services/unified_websocket_service.dart';
+import '../services/market_watch_v2_service.dart';
 
 class AccountController extends GetxController {
   final AccountService _accountService = Get.find<AccountService>();
@@ -819,17 +820,18 @@ class AccountController extends GetxController {
     // Each startWebSocket() only creates a new subscription on the existing channel
     print('   STEP 4: Binding controllers to new streams...');
 
-    // Instruments - bind to marketWatch stream
+    // Instruments — marketwatchv2 only (see [MarketWatchV2Service], [InstrumentsController.startMarketWatchV2Only]).
     try {
       if (Get.isRegistered<InstrumentsController>()) {
         final instrumentsController = Get.find<InstrumentsController>();
         WebSocketEndpointHelper.logSwitchStep('Instruments bind start');
         instrumentsController.startWebSocket();
-        // Request data after binding
-        Future.delayed(const Duration(milliseconds: 100), () {
-          if (instrumentsController.isConnected.value) {
-            instrumentsController.getSocketdata();
-          }
+        Future.delayed(const Duration(milliseconds: 150), () async {
+          try {
+            if (Get.isRegistered<MarketWatchV2Service>()) {
+              await Get.find<MarketWatchV2Service>().reconnectAndResyncFavorites();
+            }
+          } catch (_) {}
         });
         WebSocketEndpointHelper.logSwitchStep('Instruments bind done');
       }

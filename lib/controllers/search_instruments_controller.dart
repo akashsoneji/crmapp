@@ -13,11 +13,24 @@ class SearchInstrumentsController extends GetxController {
   var filteredSymbols = <SearchSymbol>[].obs;
   var availableCategories = <String>[].obs;
   var searchQuery = ''.obs;
-  var currentCategory = 'All'.obs;
+  /// Chips order: All, Currency, Metals, Crypto, Indices, Energy, Commodities.
+  /// Default tab is Currency (Forex/Currency API names via aliases).
+  var currentCategory = 'Currency'.obs;
+
+  static const List<String> _categoryChipOrder = [
+    'All',
+    'Currency',
+    'Metals',
+    'Crypto',
+    'Indices',
+    'Energy',
+    'Commodities',
+  ];
 
   @override
   void onInit() {
     super.onInit();
+    availableCategories.assignAll(_categoryChipOrder);
     fetchInstruments();
   }
 
@@ -37,10 +50,10 @@ class SearchInstrumentsController extends GetxController {
         final searchResponse = SearchInstrumentsResponse.fromJson(response.data);
         if (searchResponse.data != null) {
           allSymbols.assignAll(searchResponse.data!.symbols);
-          _updateAvailableCategories(searchResponse.data!.categories);
+          _updateAvailableCategories();
 
           if (!availableCategories.contains(currentCategory.value)) {
-            currentCategory.value = 'All';
+            currentCategory.value = 'Currency';
           }
 
           _applyFilter();
@@ -63,61 +76,40 @@ class SearchInstrumentsController extends GetxController {
     _applyFilter();
   }
 
-  void _updateAvailableCategories(
-      [List<InstrumentsDataCategory> apiCategories = const []]) {
-    final symbolCategoryNames = allSymbols.map((s) => s.categoryName).toSet();
+  void _updateAvailableCategories() {
+    // Fixed chip order (not driven by API category list order).
+    availableCategories.assignAll(_categoryChipOrder);
+  }
 
-    if (apiCategories.isNotEmpty) {
-      final sorted = <String>['All'];
-      for (final c in apiCategories) {
-        if (c.name.isEmpty) continue;
-        if (symbolCategoryNames.contains(c.name) &&
-            !sorted.contains(c.name)) {
-          sorted.add(c.name);
-        }
-      }
-      final remaining = symbolCategoryNames
-          .where((n) => !sorted.contains(n))
-          .toList()
-        ..sort();
-      sorted.addAll(remaining);
-      availableCategories.assignAll(sorted);
-      return;
+  /// Maps a symbol's API [categoryName] to the chip bucket [selectedChip], or false if no match.
+  static bool symbolMatchesCategoryChip(String categoryName, String selectedChip) {
+    if (selectedChip == 'All') return true;
+    final name = categoryName.trim();
+    if (name.isEmpty) return false;
+    switch (selectedChip) {
+      case 'Currency':
+        return _equalsAnyInsensitive(name, ['Currency', 'Forex']);
+      case 'Metals':
+        return _equalsAnyInsensitive(name, ['Metals', 'Metal']);
+      case 'Crypto':
+        return _equalsAnyInsensitive(name, ['Crypto']);
+      case 'Indices':
+        return _equalsAnyInsensitive(name, ['Indices']);
+      case 'Energy':
+        return _equalsAnyInsensitive(name, ['Energy', 'Energies']);
+      case 'Commodities':
+        return _equalsAnyInsensitive(name, ['Commodities']);
+      default:
+        return name.toLowerCase() == selectedChip.toLowerCase();
     }
+  }
 
-    final categories = symbolCategoryNames.toList();
-
-    final List<String> priorityOrder = [
-      'All',
-      'Forex',
-      'Currency',
-      'Metal',
-      'Metals',
-      'Crypto',
-      'Indices',
-      'Energies',
-      'Commodities',
-    ];
-
-    final sortedCategories = <String>['All'];
-
-    for (var priority in priorityOrder) {
-      if (priority == 'All') continue;
-
-      final existingCategory = categories.firstWhereOrNull(
-        (c) => c.toLowerCase() == priority.toLowerCase(),
-      );
-
-      if (existingCategory != null) {
-        sortedCategories.add(existingCategory);
-        categories.remove(existingCategory);
-      }
+  static bool _equalsAnyInsensitive(String value, List<String> options) {
+    final v = value.toLowerCase();
+    for (final o in options) {
+      if (v == o.toLowerCase()) return true;
     }
-
-    categories.sort();
-    sortedCategories.addAll(categories);
-
-    availableCategories.assignAll(sortedCategories);
+    return false;
   }
 
   void _applyFilter() {
@@ -125,7 +117,14 @@ class SearchInstrumentsController extends GetxController {
 
     // Apply category filter
     if (currentCategory.value != 'All') {
-      results = results.where((s) => s.categoryName == currentCategory.value).toList();
+      results = results
+          .where(
+            (s) => symbolMatchesCategoryChip(
+                  s.categoryName,
+                  currentCategory.value,
+                ),
+          )
+          .toList();
     }
 
     // Apply search query filter
