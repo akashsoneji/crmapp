@@ -13,7 +13,7 @@ class SearchInstrumentsController extends GetxController {
   var filteredSymbols = <SearchSymbol>[].obs;
   var availableCategories = <String>[].obs;
   var searchQuery = ''.obs;
-  var currentCategory = 'Forex'.obs; // Default to Forex/Currency
+  var currentCategory = 'All'.obs;
 
   @override
   void onInit() {
@@ -23,29 +23,26 @@ class SearchInstrumentsController extends GetxController {
 
   Future<void> fetchInstruments() async {
     final activeAccount = _accountController.activeMT5Account;
-    if (activeAccount == null) return;
+    final rawNumber = activeAccount?.metaAccountNumber;
+    final tradingAccount =
+        (rawNumber != null && rawNumber.trim().isNotEmpty) ? rawNumber : '0';
 
     try {
       isLoading.value = true;
       final response = await ApiService.get(
-        endpoint: ApiConstants.getInstrumentsByAccount(activeAccount.metaAccountNumber),
+        endpoint: ApiConstants.getInstrumentsByAccount(tradingAccount),
       );
 
       if (response.success && response.data != null) {
         final searchResponse = SearchInstrumentsResponse.fromJson(response.data);
         if (searchResponse.data != null) {
           allSymbols.assignAll(searchResponse.data!.symbols);
-          _updateAvailableCategories();
-          
-          // Ensure default category exists, otherwise fallback to 'Currency', then 'All'
+          _updateAvailableCategories(searchResponse.data!.categories);
+
           if (!availableCategories.contains(currentCategory.value)) {
-            if (availableCategories.contains('Currency')) {
-              currentCategory.value = 'Currency';
-            } else {
-              currentCategory.value = 'All';
-            }
+            currentCategory.value = 'All';
           }
-          
+
           _applyFilter();
         }
       }
@@ -66,23 +63,47 @@ class SearchInstrumentsController extends GetxController {
     _applyFilter();
   }
 
-  void _updateAvailableCategories() {
-    final categories = allSymbols.map((s) => s.categoryName).toSet().toList();
+  void _updateAvailableCategories(
+      [List<InstrumentsDataCategory> apiCategories = const []]) {
+    final symbolCategoryNames = allSymbols.map((s) => s.categoryName).toSet();
 
-    // Define priority categories in desired order
-    // Handling common variations like 'Forex' vs 'Currency' and 'Metal' vs 'Metals'
-    final List<String> priorityOrder = ['All', 'Forex', 'Currency', 'Metal', 'Metals', 'Crypto'];
+    if (apiCategories.isNotEmpty) {
+      final sorted = <String>['All'];
+      for (final c in apiCategories) {
+        if (c.name.isEmpty) continue;
+        if (symbolCategoryNames.contains(c.name) &&
+            !sorted.contains(c.name)) {
+          sorted.add(c.name);
+        }
+      }
+      final remaining = symbolCategoryNames
+          .where((n) => !sorted.contains(n))
+          .toList()
+        ..sort();
+      sorted.addAll(remaining);
+      availableCategories.assignAll(sorted);
+      return;
+    }
 
-    List<String> sortedCategories = [];
+    final categories = symbolCategoryNames.toList();
 
-    // 1. Always start with 'All'
-    sortedCategories.add('All');
+    final List<String> priorityOrder = [
+      'All',
+      'Forex',
+      'Currency',
+      'Metal',
+      'Metals',
+      'Crypto',
+      'Indices',
+      'Energies',
+      'Commodities',
+    ];
 
-    // 2. Add other priority items if they exist in the API data
+    final sortedCategories = <String>['All'];
+
     for (var priority in priorityOrder) {
       if (priority == 'All') continue;
 
-      // Find the actual category name that matches (case-insensitive)
       final existingCategory = categories.firstWhereOrNull(
         (c) => c.toLowerCase() == priority.toLowerCase(),
       );
@@ -93,10 +114,7 @@ class SearchInstrumentsController extends GetxController {
       }
     }
 
-    // 3. Sort the remaining categories alphabetically
     categories.sort();
-
-    // 4. Combine everything
     sortedCategories.addAll(categories);
 
     availableCategories.assignAll(sortedCategories);

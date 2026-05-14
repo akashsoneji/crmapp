@@ -23,16 +23,53 @@ class SearchInstrumentsResponse {
 
 class SearchInstrumentsData {
   final List<SearchSymbol> symbols;
+  final List<InstrumentsDataCategory> categories;
+  final String? tradingAccount;
 
-  SearchInstrumentsData({required this.symbols});
+  SearchInstrumentsData({
+    required this.symbols,
+    this.categories = const [],
+    this.tradingAccount,
+  });
 
   factory SearchInstrumentsData.fromJson(Map<String, dynamic> json) {
     return SearchInstrumentsData(
       symbols: (json['symbols'] as List? ?? [])
-          .map((item) => SearchSymbol.fromJson(item))
+          .map((item) => SearchSymbol.fromJson(item as Map<String, dynamic>))
           .toList(),
+      categories: (json['categories'] as List? ?? [])
+          .map((e) =>
+              InstrumentsDataCategory.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      tradingAccount: json['trading_account']?.toString(),
     );
   }
+}
+
+class InstrumentsDataCategory {
+  final int id;
+  final String name;
+
+  InstrumentsDataCategory({required this.id, required this.name});
+
+  factory InstrumentsDataCategory.fromJson(Map<String, dynamic> json) {
+    return InstrumentsDataCategory(
+      id: _parseIntFlexible(json['id']),
+      name: json['name']?.toString() ?? '',
+    );
+  }
+}
+
+int _parseIntFlexible(dynamic value) {
+  if (value == null) return 0;
+  if (value is int) return value;
+  if (value is double) return value.toInt();
+  if (value is String) {
+    final t = value.trim();
+    if (t.isEmpty) return 0;
+    return int.tryParse(t) ?? 0;
+  }
+  return 0;
 }
 
 class SearchSymbol {
@@ -77,8 +114,8 @@ class SearchSymbol {
       contractSize: (json['contract_size'] ?? 0.0).toDouble(),
       isActive: json['is_active'] ?? false,
       isSynced: json['is_synced'] ?? false,
-      lpProviderId: json['lp_provider_id'] ?? 0,
-      groupId: json['group_id'] ?? 0,
+      lpProviderId: _parseIntFlexible(json['lp_provider_id']),
+      groupId: _parseIntFlexible(json['group_id']),
       spreadConfig: SpreadConfig.fromJson(json['spread_config'] ?? {}),
       stopsLevel: json['stops_level'] ?? 0,
     );
