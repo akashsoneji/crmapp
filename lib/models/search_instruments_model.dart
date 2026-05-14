@@ -1,3 +1,27 @@
+/// API may send ints or numeric strings; [group_id] is often `""` when unset.
+int _apiInt(dynamic value, [int fallback = 0]) {
+  if (value == null) return fallback;
+  if (value is int) return value;
+  if (value is num) return value.toInt();
+  if (value is String) {
+    if (value.isEmpty) return fallback;
+    return int.tryParse(value) ?? fallback;
+  }
+  return fallback;
+}
+
+double _apiDouble(dynamic value, [double fallback = 0.0]) {
+  if (value == null) return fallback;
+  if (value is double) return value;
+  if (value is int) return value.toDouble();
+  if (value is num) return value.toDouble();
+  if (value is String) {
+    if (value.isEmpty) return fallback;
+    return double.tryParse(value) ?? fallback;
+  }
+  return fallback;
+}
+
 class SearchInstrumentsResponse {
   final bool status;
   final bool success;
@@ -68,19 +92,19 @@ class SearchSymbol {
 
   factory SearchSymbol.fromJson(Map<String, dynamic> json) {
     return SearchSymbol(
-      symbolId: json['symbol_id'] ?? 0,
+      symbolId: _apiInt(json['symbol_id']),
       displaySymbol: json['display_symbol'] ?? '',
       datafeedSymbol: json['datafeed_symbol'] ?? '',
-      categoryId: json['category_id'] ?? 0,
+      categoryId: _apiInt(json['category_id']),
       categoryName: json['category_name'] ?? '',
-      digits: json['digits'] ?? 0,
-      contractSize: (json['contract_size'] ?? 0.0).toDouble(),
+      digits: _apiInt(json['digits']),
+      contractSize: _apiDouble(json['contract_size']),
       isActive: json['is_active'] ?? false,
       isSynced: json['is_synced'] ?? false,
-      lpProviderId: json['lp_provider_id'] ?? 0,
-      groupId: json['group_id'] ?? 0,
+      lpProviderId: _apiInt(json['lp_provider_id']),
+      groupId: _apiInt(json['group_id']),
       spreadConfig: SpreadConfig.fromJson(json['spread_config'] ?? {}),
-      stopsLevel: json['stops_level'] ?? 0,
+      stopsLevel: _apiInt(json['stops_level']),
     );
   }
 }
