@@ -5,8 +5,8 @@ import '../base_config.dart';
 class GoldenwolffxConfig extends BaseClientConfig {
   const GoldenwolffxConfig()
     : super(
-        brandName: 'Goldenwolffx',
-        appTitle: 'Goldenwolffx',
+        brandName: 'Goldenwolf',
+        appTitle: 'Goldenwolf',
         primaryColor: const Color(0xFFD4A843),
         secondaryColor: const Color(0xFFF8F3FF),
         accentColor: const Color(0xFFFFC93C),

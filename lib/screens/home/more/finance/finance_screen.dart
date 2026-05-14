@@ -28,7 +28,13 @@ class FinanceScreen extends StatelessWidget {
           style: AppTextStyles.screenTitle,
         ),
         leading: IconButton(
-          icon: SvgPicture.asset("assets/svg/trade/arro_back.svg", color: AppColors.textPrimary),
+          icon: SvgPicture.asset(
+            "assets/svg/trade/arro_back.svg",
+            colorFilter: ColorFilter.mode(
+              AppColors.textPrimary,
+              BlendMode.srcIn,
+            ),
+          ),
           onPressed: () => Navigator.of(context).pop(),
         ),
         centerTitle: true,
@@ -62,6 +68,14 @@ class FinanceScreen extends StatelessWidget {
                     label: languageService.tr('internal_transfer'),
                     onTap: () {
                       Get.toNamed(AppPages.INTERNAL_TRANSFER);
+                    },
+                    textColor: AppColors.textPrimary,
+                  ),
+                  MoreMenuTile(
+                    iconName: 'transaction_history',
+                    label: 'Internal Transfer History',
+                    onTap: () {
+                      Get.toNamed(AppPages.INTERNAL_TRANSFER_HISTORY);
                     },
                     textColor: AppColors.textPrimary,
                   ),

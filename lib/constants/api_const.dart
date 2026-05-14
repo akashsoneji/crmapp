@@ -67,6 +67,8 @@ class ApiConstants {
   static const String checkBalance = '${ajax}withdrawal/checkbalance';
   static const String internalTransferRequest =
       '${ajax}internaltransfer/request';
+  static const String internalTransferHistory =
+      '${ajax}internaltransfer/history';
   static const String withdrawalMethods =
       '${ajax}withdrawal/withdrawal-method/';
   static const String bankWithdrawalList =
@@ -155,14 +157,14 @@ class ApiConstants {
 }
 
 // struct APIConstant {
-    
+
 //     // NEW API
 //     static let BaseUrl                          = "https://my.app.com/"
 //     static let API                              =  BaseUrl + "api/"
 //     static var SocketURL                        = "wss://my.app.com:8080"
-            
+
 //     static let AjaxTiles                        = API + "user/"
-        
+
 //     static let LoginAPI                         = AjaxTiles + "login"
 //     static let RegisterAPI                      = AjaxTiles + "register"
 //     static let ForgotPasswordAPI                = AjaxTiles + "password/email"
@@ -170,16 +172,16 @@ class ApiConstants {
 //     static let DashBoardAPI                     = AjaxTiles + "dashboard"
 //     static let LogoutAPI                        = AjaxTiles + "logout"
 //     static let deleteAccountAPI                 = AjaxTiles + "settings/delete-account"
-    
+
 //     static let ProfileAPI                       = AjaxTiles + "settings/profile"
 //     static let GetCountryAPI                    = AjaxTiles + "settings/getCountryDropdown"
 //     static let GetStateAPI                      = AjaxTiles + "settings/getStateDropdown"
 //     static let GetCityAPI                       = AjaxTiles + "settings/getCityDropdown"
-    
+
 //     static let KYCStatusAPI                     = AjaxTiles + "kyc"
 //     static let GetImageFromSlugAPI              = AjaxTiles + "kyc/documents/viewDocument/"
 //     static let KYCUploadAPI                     = AjaxTiles + "kyc/documents/upload"
-    
+
 //     static let GetMT5Account                    = AjaxTiles + "mt5accounts/get"
 //     static let GetMT5LivePackagesAPI            = AjaxTiles + "mt5accounts/plandetails"
 //     static let CreatetMT5AccountAPI             = AjaxTiles + "mt5accounts/create"
@@ -188,14 +190,13 @@ class ApiConstants {
 //     static let changePrimaryAccountMT5API       = AjaxTiles + "mt5accounts/changePrimaryAccount"
 //     static let setDemoAccountBalanceAPI         = AjaxTiles + "mt5accounts/setbalance"
 
-    
 //     static let GetInternalTransferAPI           = AjaxTiles + "internaltransfer"
 //     static let InternalTransferAPI              = AjaxTiles + "internaltransfer/request"
 //     static let TransactionHistoryAPI            = AjaxTiles + "transactions"
-    
+
 //     static let DepositTypeAPI                   = AjaxTiles + "deposit"
 //     static let DepositAmountAPI                 = AjaxTiles + "deposit/depositrequest"
-    
+
 //     static let withdrawalListApi                = AjaxTiles + "withdrawal"
 //     static let getWithdrawalByIDAPI             = AjaxTiles + "withdrawal/withdrawal-method/"
 //     static let WithdrawalRequestAPI             = AjaxTiles + "withdrawal/withdrawalrequest"
@@ -204,21 +205,19 @@ class ApiConstants {
 //     static let CheckBalanceAPI                  = AjaxTiles + "withdrawal/checkbalance"
 
 //     static let GetWalletDetailAPI               = AjaxTiles + "wallet"
-    
+
 //     static let BonusAPI                         = AjaxTiles + "bonus"
 //     static let BonusClaimListAPI                = AjaxTiles + "bonus/bonusClaimList"
 //     static let DepositBonusClaimAPI             = AjaxTiles + "bonus/bonusClaim"
-    
+
 //     static let GetCurrencyListAPI               = AjaxTiles + "utility/currency-list"
 //     static let CheckIFSCCodeAPI                 = AjaxTiles + "utility/ifsc-code"
 //     static let CurrencyRatesAPI                 = AjaxTiles + "utility/currency-rates"
-    
-    
+
 //     static let ChartAPI                         = BaseUrl + "user/chart/"
 
 //     static let Trade                            = AjaxTiles + "trade/"
-    
-    
+
 //     static let TradingAPI                      = Trade + "new-order"
 //     static let ClosePositionAPI                = Trade + "closePositionByPositionId"
 
@@ -227,10 +226,9 @@ class ApiConstants {
 
 //     static let GetTradeHistoryAPI              = Trade + "tradehistory"
 //     static let getSymbolAPI                     = Trade + "symbols" // NEW API
-    
-    
+
 //     // OLD API
-    
+
 //     static let RegisterValidationAPI            = AjaxTiles + "register_validation.php"
 //     static let LoginWithGoogleAPI               = AjaxTiles + "login_with_google.php"
 //     static let AccountListAPI                   = AjaxTiles + "account_list.php"
@@ -238,10 +236,8 @@ class ApiConstants {
 //     static let AddDepositAPI                    = AjaxTiles + "add_deposit.php"
 //     static let AppConfigAPI                     = AjaxTiles + "app_config.php"
 
-
-        
 //     static let RemoveKYCAPI                     = AjaxTiles + "kyc_remove_image.php"
-    
+
 //     static let GetUserPrefrenceAPI              = AjaxTiles + "get_user_prefrence.php"
 
 //     static let SpinWheelClaimAPI                = AjaxTiles + "spin_wheel_claim.php"
@@ -253,19 +249,15 @@ class ApiConstants {
 //     static let IBApplicationStatusAPI           = AjaxTiles + "ib_application_status.php"
 //     static let AddIBApplicationAPI              = AjaxTiles + "add_ibapplication.php"
 //     static let GetDashboardAPI                  = AjaxTiles + "get_dashboard.php"
-    
-    
+
 //     static let PartnershipRequestManageAPI      = AjaxTiles + "partnership_request_manage.php"
 //     static let StructuresManageAPI              = AjaxTiles + "structures_manage.php"
 //     static let MyTradersAPI                     = AjaxTiles + "my_traders.php"
 //     static let SponserMTDataAPI                 = AjaxTiles + "sponser_mt_data_ajax.php"
 //     static let FantasticFourOfferAPI            = AjaxTiles + "fantastic_four_offer.php"
 
-    
-    
-    
 //     static let Database                         = BaseUrl + "datatable/"
-        
+
 //     static let SpinAndWinListAPI                = Database + "spin_and_win_list.php"
 //     static let PartnershipRequestsAPI           = Database + "partnership_requests.php"
 

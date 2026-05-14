@@ -31,6 +31,7 @@ abstract class Routes {
   static const CREATE_TRADING_ACCOUNT = _Paths.CREATE_TRADING_ACCOUNT;
   static const CHOOSE_ACCOUNT = _Paths.CHOOSE_ACCOUNT;
   static const INTERNAL_TRANSFER = _Paths.INTERNAL_TRANSFER;
+  static const INTERNAL_TRANSFER_HISTORY = _Paths.INTERNAL_TRANSFER_HISTORY;
   static const COPY_TRADING_MAIN = _Paths.COPY_TRADING_MAIN;
   static const COPY_TRADING_HUB = _Paths.COPY_TRADING_HUB;
   static const TRADER_DETAILS = _Paths.TRADER_DETAILS;
@@ -96,6 +97,7 @@ abstract class _Paths {
   static const CHOOSE_ACCOUNT = '/choose-account';
   static const CREATE_APP_ACCOUNT = '/create-pipze-account';
   static const INTERNAL_TRANSFER = '/internal-transfer';
+  static const INTERNAL_TRANSFER_HISTORY = '/internal-transfer-history';
   static const CHART = '/chart';
   static const FINANCE = '/finance';
   static const IB_DASHBOARD = '/ib-dashboard';

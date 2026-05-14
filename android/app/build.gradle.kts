@@ -85,7 +85,7 @@ android {
         create("goldenwolffx") {
             dimension = "brand"
             applicationId = "com.goldenwolffx.app"
-            resValue("string", "app_name", "Goldenwolffx")
+            resValue("string", "app_name", "Goldenwolf")
             resValue("color", "primary_color", "#5F259E")
             resValue("color", "secondary_color", "#F8F3FF")
             resValue("color", "accent_color", "#9C27B0")

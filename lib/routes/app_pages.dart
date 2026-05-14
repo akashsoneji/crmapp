@@ -39,6 +39,7 @@ import '../screens/home/change_password_screen.dart';
 import '../screens/home/more/chat_with_us_screen.dart';
 import '../screens/home/more/edit_profile_screen.dart';
 import '../screens/home/more/finance/deposit_screen.dart';
+import '../screens/home/more/finance/internal_transfer_history_screen.dart';
 import '../screens/home/more/finance/internal_transfer_screen.dart';
 import '../screens/home/more/finance/wallet_screen.dart';
 import '../screens/home/more/finance/withdrawal_screen.dart';
@@ -106,6 +107,7 @@ class AppPages {
   static const CREATE_APP_ACCOUNT = _Paths.CREATE_APP_ACCOUNT;
   static const FINANCE = _Paths.FINANCE;
   static const INTERNAL_TRANSFER = _Paths.INTERNAL_TRANSFER;
+  static const INTERNAL_TRANSFER_HISTORY = _Paths.INTERNAL_TRANSFER_HISTORY;
   static const IB_DASHBOARD = _Paths.IB_DASHBOARD;
   static const IB_MAIN = _Paths.IB_MAIN;
   static const COPY_TRADING_MAIN = _Paths.COPY_TRADING_MAIN;
@@ -268,6 +270,10 @@ class AppPages {
     GetPage(
       name: _Paths.INTERNAL_TRANSFER,
       page: () => const InternalTransferScreen(),
+    ),
+    GetPage(
+      name: _Paths.INTERNAL_TRANSFER_HISTORY,
+      page: () => const InternalTransferHistoryScreen(),
     ),
     GetPage(name: _Paths.CHART, page: () => const ChartScreen()),
     GetPage(name: _Paths.FINANCE, page: () => const FinanceScreen()),
