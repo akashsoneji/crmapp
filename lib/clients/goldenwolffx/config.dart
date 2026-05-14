@@ -13,8 +13,8 @@ class GoldenwolffxConfig extends BaseClientConfig {
         logoSvgPath: 'logo.svg',
         splashLogoPath: 'splash_logo.svg',
         appIconPath: 'app_icon.png',
-        apiBaseUrl: 'https://goldenwolffx.alibabafx.com/api/',
-        websocketUrl: 'wss://goldenwolffx.alibabafx.com/trade-engine',
-        chartBaseUrl: 'https://goldenwolffx.alibabafx.com',
+        apiBaseUrl: 'https://portal.goldenwolffx.com/api/',
+        websocketUrl: 'wss://portal.goldenwolffx.com/trade-engine',
+        chartBaseUrl: 'https://portal.goldenwolffx.com',
       );
 }
