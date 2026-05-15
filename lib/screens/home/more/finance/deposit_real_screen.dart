@@ -187,7 +187,7 @@ class _DepositRealScreenState extends State<DepositRealScreen> {
         leading: Padding(
           padding: EdgeInsets.only(left: 10.w),
           child: IconButton(
-            icon: SvgPicture.asset("assets/svg/trade/arro_back.svg"),
+            icon: SvgPicture.asset("assets/svg/trade/arro_back.svg",color: AppColors.textPrimary),
             onPressed: () => NavigationHelper.safeBack(context: context),
           ),
         ),
@@ -195,12 +195,6 @@ class _DepositRealScreenState extends State<DepositRealScreen> {
         title: Text(
           languageService.tr('deposit'),
           style: AppTextStyles.screenTitle,
-        ),
-        shape: Border(
-          bottom: BorderSide(
-            color: AppColors.border, // divider color
-            width: 1, // divider thickness
-          ),
         ),
         centerTitle: true,
       ),
@@ -334,7 +328,11 @@ class _DepositRealScreenState extends State<DepositRealScreen> {
 
   Widget _buildAmountField() {
     return RTLHelper.rtlTextField(
-      style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w400),
+      style: TextStyle(
+        fontSize: 16.sp,
+        fontWeight: FontWeight.w400,
+        color: AppColors.textPrimary,
+      ),
       controller: amountController,
       focusNode: amountFocusNode,
       keyboardType: TextInputType.numberWithOptions(
@@ -401,7 +399,7 @@ class _DepositRealScreenState extends State<DepositRealScreen> {
       width: double.infinity,
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 11.5.h),
       decoration: BoxDecoration(
-        color: AppColors.grey,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -412,7 +410,7 @@ class _DepositRealScreenState extends State<DepositRealScreen> {
             style: TextStyle(
               fontSize: 16.sp,
               fontWeight: FontWeight.w400,
-              color: AppColors.icongrey,
+              color: AppColors.textGrey,
             ),
           ),
           Text(

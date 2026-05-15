@@ -50,7 +50,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
         scrolledUnderElevation: 0,
-        backgroundColor: AppColors.whiteColor,
+        backgroundColor: AppColors.backgroundLight,
         elevation: 0,
         leading: Padding(
           padding: EdgeInsets.only(left: 10.w),
@@ -76,9 +76,6 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
             //   ),
             // ),
           ],
-        ),
-        shape: Border(
-          bottom: BorderSide(color: AppColors.border, width: 1),
         ),
         centerTitle: true,
       ),
@@ -185,12 +182,12 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                               },
                             )
                             : CircleAvatar(
-                              child: Text(name.isNotEmpty ? name[0] : "?"),
+                              child: Text(name.isNotEmpty ? name[0] : "?",style: AppTextStyles.label.copyWith(color: AppColors.whiteColor)),
                             ),
                   ),
-                  title: Text(name),
+                  title: Text(name,style: AppTextStyles.label),
                   // subtitle: Text("Instant up to 1 hour"),
-                  trailing: Icon(Icons.arrow_forward_ios_rounded),
+                  trailing: Icon(Icons.arrow_forward_ios_rounded,color: AppColors.textPrimary),
                 ),
               );
             },
