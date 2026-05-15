@@ -46,11 +46,11 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: AppColors.background,
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
         scrolledUnderElevation: 0,
-        backgroundColor: AppColors.backgroundLight,
+        backgroundColor: AppColors.background,
         elevation: 0,
         leading: Padding(
           padding: EdgeInsets.only(left: 10.w),

@@ -19,17 +19,17 @@ class PromotionalScreen extends StatelessWidget {
     final languageService = Get.find<LanguageService>();
 
     return Scaffold(
-      backgroundColor: AppColors.tradeBackgroundCenterColor,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         scrolledUnderElevation: 0.0,
-        backgroundColor: AppColors.tradeBackgroundCenterColor,
+        backgroundColor: AppColors.background,
         elevation: 0,
         title: Text(
           languageService.tr('general_promotional'),
-          style: AppTextStyles.heading,
+          style: AppTextStyles.screenTitle,
         ),
         leading: IconButton(
-          icon: SvgPicture.asset("assets/svg/trade/arro_back.svg"),
+          icon: SvgPicture.asset("assets/svg/trade/arro_back.svg",color: AppColors.textPrimary),
           onPressed: () => Navigator.of(context).pop(),
         ),
         centerTitle: true,

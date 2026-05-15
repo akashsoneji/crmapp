@@ -858,13 +858,13 @@ class ScratchCardListScreen extends StatelessWidget {
     final controller = Get.put(ScratchCardController());
 
     return Scaffold(
-      backgroundColor: AppColors.tradeBackgroundCenterColor,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.tradeBackgroundCenterColor,
+        backgroundColor: AppColors.background,
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: SvgPicture.asset("assets/svg/trade/arro_back.svg"),
+          icon: SvgPicture.asset("assets/svg/trade/arro_back.svg", color: AppColors.textPrimary),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
@@ -872,13 +872,13 @@ class ScratchCardListScreen extends StatelessWidget {
           style: TextStyle(
             fontSize: 18.sp,
             fontWeight: FontWeight.w700,
-            color: Colors.black,
+            color: AppColors.textPrimary,
           ),
         ),
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.black),
+            icon: Icon(Icons.refresh, color: AppColors.textPrimary),
             onPressed: () => controller.fetchCards(showLoader: false),
             tooltip: 'Refresh',
           ),
@@ -991,7 +991,7 @@ class _ScratchCardsGridState extends State<_ScratchCardsGrid> {
                   style: TextStyle(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w700,
-                    color: Colors.black,
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 const Spacer(),
@@ -1347,7 +1347,7 @@ class _ScratchLotsProgressSection extends StatelessWidget {
               borderRadius: BorderRadius.circular(6.r),
               child: Container(
                 height: 10.h,
-                color: AppColors.accentPurple,
+                color: AppColors.darkThemePrimary,
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: FractionallySizedBox(
@@ -1355,7 +1355,7 @@ class _ScratchLotsProgressSection extends StatelessWidget {
                     child: Container(
                     height: 10.h,
                     decoration: BoxDecoration(
-                      color: AppColors.primary,
+                      color: AppColors.textGrey,
                       borderRadius: BorderRadius.circular(6.r),
                     ),
                   ),
@@ -1873,7 +1873,7 @@ class _ScratchHistoryListState extends State<_ScratchHistoryList> {
                   style: TextStyle(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w700,
-                    color: Colors.black,
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 const Spacer(),
@@ -1903,11 +1903,11 @@ class _ScratchHistoryListState extends State<_ScratchHistoryList> {
                     vertical: 12.h,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.whiteColor,
+                    color: AppColors.cardBackground,
                     borderRadius: BorderRadius.circular(12.r),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.border.withValues(alpha: 0.05),
+                        color: Colors.black.withValues(alpha: 0.05),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),
@@ -1945,7 +1945,7 @@ class _ScratchHistoryListState extends State<_ScratchHistoryList> {
                               style: TextStyle(
                                 fontSize: 13.sp,
                                 fontWeight: FontWeight.w700,
-                                color: Colors.black,
+                                color: AppColors.textPrimary,
                               ),
                             ),
                             SizedBox(height: 2.h),
@@ -2381,14 +2381,14 @@ class _NextCardCountdownBannerState extends State<_NextCardCountdownBanner> {
           children: [
             Row(
               children: [
-                Icon(Icons.schedule, color: Colors.orange.shade700, size: 18.r),
+                Icon(Icons.schedule, color: AppColors.warningText, size: 18.r),
                 SizedBox(width: 8.w),
                 Expanded(
                   child: Text(
                     'Next card available at',
                     style: TextStyle(
                       fontSize: 12.sp,
-                      color: Colors.orange.shade800,
+                      color: AppColors.warningText,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -2414,7 +2414,7 @@ class _NextCardCountdownBannerState extends State<_NextCardCountdownBanner> {
                     vertical: 4.h,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.orange.shade700,
+                    color: AppColors.warningText,
                     borderRadius: BorderRadius.circular(8.r),
                   ),
                   child: Text(
@@ -2436,7 +2436,7 @@ class _NextCardCountdownBannerState extends State<_NextCardCountdownBanner> {
                       Container(
                         height: 6.h,
                         decoration: BoxDecoration(
-                          color: Colors.yellow.shade200,
+                          color: AppColors.warningBorder.withValues(alpha: 0.3),
                           borderRadius: BorderRadius.circular(3.r),
                         ),
                         child: FractionallySizedBox(
@@ -2444,7 +2444,7 @@ class _NextCardCountdownBannerState extends State<_NextCardCountdownBanner> {
                           widthFactor: progress,
                           child: Container(
                             decoration: BoxDecoration(
-                              color: Colors.yellow.shade700,
+                              color: AppColors.warningBorder,
                               borderRadius: BorderRadius.circular(3.r),
                             ),
                           ),
@@ -2455,7 +2455,7 @@ class _NextCardCountdownBannerState extends State<_NextCardCountdownBanner> {
                         'New card arriving...',
                         style: TextStyle(
                           fontSize: 10.sp,
-                          color: Colors.orange.shade600,
+                          color: AppColors.warningText,
                         ),
                       ),
                     ],
@@ -2824,9 +2824,9 @@ class ScratchCardDetailScreen extends StatelessWidget {
     );
 
     return Scaffold(
-      backgroundColor: AppColors.tradeBackgroundCenterColor,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.tradeBackgroundCenterColor,
+        backgroundColor: AppColors.background,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: true,
@@ -2839,7 +2839,7 @@ class ScratchCardDetailScreen extends StatelessWidget {
           ),
         ),
         leading: IconButton(
-          icon: SvgPicture.asset("assets/svg/trade/arro_back.svg"),
+          icon: SvgPicture.asset("assets/svg/trade/arro_back.svg", color: AppColors.textPrimary),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),

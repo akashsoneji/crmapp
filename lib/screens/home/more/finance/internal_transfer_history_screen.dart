@@ -204,7 +204,7 @@ class _InternalTransferHistoryScreenState
                     child: Text(
                       'Apply Filters',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: AppColors.whiteColor,
                         fontSize: 14.sp,
                         fontWeight: FontWeight.w700,
                       ),

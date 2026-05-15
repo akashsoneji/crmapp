@@ -107,8 +107,8 @@ class _LoginScreenState extends State<LoginScreen> {
       context: context,
       builder: (ctx) {
         return AlertDialog(
-          title: Text(languageService.tr('biometric_not_enabled_title')),
-          content: Text(languageService.tr('biometric_not_enabled_message')),
+          title: Text(languageService.tr('biometric_not_enabled_title'),style: TextStyle(color: AppColors.textPrimary),),
+          content: Text(languageService.tr('biometric_not_enabled_message'),style: TextStyle(color: AppColors.textPrimary),),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(),
@@ -157,6 +157,8 @@ class _LoginScreenState extends State<LoginScreen> {
               setState(() => _enableBiometricAfterLogin = true);
             },
             activeColor: AppColors.primary,
+            checkColor: AppColors.whiteColor,
+            side: BorderSide(color: AppColors.textGrey, width: 1.5),
           ),
         ),
         const SizedBox(width: 10),
@@ -176,7 +178,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: AppColors.background,
       body: SafeArea(
         maintainBottomViewPadding: true,
         child: Stack(
@@ -215,9 +217,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                     padding: EdgeInsets.only(top: 70.h),
                                     child: Text(
                                       languageService.tr("welcome_title"),
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 28,
                                         fontWeight: FontWeight.bold,
+                                        color: AppColors.textPrimary,
                                       ),
                                     ),
                                   ),
@@ -261,6 +264,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ),
                                     suffixIcon: IconButton(
                                       icon: SvgPicture.asset(
+                                        color: AppColors.textGrey,
                                         obscureText
                                             ? "assets/svg/eye-slash.svg"
                                             : "assets/svg/eye_icon.svg",
@@ -329,9 +333,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                       ),
                                       child: Text(
                                         languageService.tr("login_button"),
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontSize: 16,
                                           fontWeight: FontWeight.w600,
+                                          color: AppColors.whiteColor,
                                         ),
                                       ),
                                     );
