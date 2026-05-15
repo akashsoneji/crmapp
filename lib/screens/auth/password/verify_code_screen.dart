@@ -120,7 +120,7 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Stack(
           children: [
@@ -161,14 +161,14 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
       height: 40.h,
       width: 40.w,
       decoration: BoxDecoration(
-        color: AppColors.whiteColor,
+        color: AppColors.cardBackground,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: AppColors.border),
       ),
       child: IconButton(
         onPressed: () => Navigator.pop(context),
         icon: Icon(Icons.arrow_back_ios, color: AppColors.textPrimary),
-        iconSize: 17.h,
+                iconSize: 17.h,
         padding: EdgeInsets.only(left: 5.w),
       ),
     );
@@ -228,6 +228,8 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
                 vertical: 13.h,
                 horizontal: 14.w,
               ),
+              filled: true,
+              fillColor: AppColors.surface,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12.r),
                 borderSide: BorderSide(color: AppColors.border),

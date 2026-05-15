@@ -326,7 +326,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
       showPhoneCode: true, // ✅ important: show dial code
       countryListTheme: CountryListThemeData(
         flagSize: 25,
-        backgroundColor: AppColors.whiteColor,
+        backgroundColor: AppColors.cardBackground,
         textStyle: TextStyle(fontSize: 16, color: AppColors.textPrimary),
         bottomSheetHeight: 500,
         borderRadius: const BorderRadius.only(
@@ -336,7 +336,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
         inputDecoration: InputDecoration(
           labelText: 'Search',
           hintText: 'Start typing to search',
-          prefixIcon: const Icon(Icons.search),
+          prefixIcon: Icon(Icons.search, color: AppColors.textGrey),
           border: OutlineInputBorder(
             borderSide: BorderSide(
               color: AppColors.border,
@@ -386,14 +386,17 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
       context: context,
       builder:
           (context) => AlertDialog(
-            backgroundColor: AppColors.backgroundLight,
-            title: Text(_languageService.tr("register_trading_experience")),
+            backgroundColor: AppColors.cardBackground,
+            title: Text(
+              _languageService.tr("register_trading_experience"),
+              style: TextStyle(color: AppColors.textPrimary),
+            ),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children:
                   _tradingExperienceOptions.map((option) {
                     return ListTile(
-                      title: Text(option),
+                      title: Text(option, style: TextStyle(color: AppColors.textPrimary)),
                       onTap: () {
                         Navigator.of(context).pop();
                         setState(() {
@@ -412,7 +415,10 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
-                child: Text(_languageService.tr("cancel")),
+                child: Text(
+                  _languageService.tr("cancel"),
+                  style: TextStyle(color: AppColors.primary),
+                ),
               ),
             ],
           ),
@@ -423,7 +429,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -546,6 +552,8 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                 });
               },
               activeColor: AppColors.primary,
+              checkColor: AppColors.whiteColor,
+              side: BorderSide(color: AppColors.textGrey, width: 1.5),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(4),
               ),
@@ -744,6 +752,8 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                 });
               },
               activeColor: AppColors.primary,
+              checkColor: AppColors.whiteColor,
+              side: BorderSide(color: AppColors.textGrey, width: 1.5),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(4),
               ),
@@ -824,7 +834,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
       height: 40.h,
       width: 40.w,
       decoration: BoxDecoration(
-        color: AppColors.whiteColor,
+        color: AppColors.cardBackground,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: AppColors.border),
       ),
