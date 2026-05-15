@@ -182,9 +182,9 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
         // User must use app bar back button instead
       },
       child: Scaffold(
-        backgroundColor: AppColors.whiteColor,
+        backgroundColor: AppColors.background,
         appBar: AppBar(
-          backgroundColor: AppColors.whiteColor,
+          backgroundColor: AppColors.background,
           scrolledUnderElevation: 0,
           elevation: 0,
           leading: Padding(
@@ -569,11 +569,11 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     return Container(
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
-        color: AppColors.whiteColor,
+        color: AppColors.cardBackground,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: AppColors.border.withValues(alpha: 0.04),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -799,7 +799,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.whiteColor,
+      backgroundColor: AppColors.cardBackground,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -814,7 +814,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                 width: 40.w,
                 height: 4.h,
                 decoration: BoxDecoration(
-                  color: AppColors.border,
+                  color: AppColors.textGrey,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -941,7 +941,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   void _showTransactionTypeDropdown() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.whiteColor,
+      backgroundColor: AppColors.cardBackground,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),

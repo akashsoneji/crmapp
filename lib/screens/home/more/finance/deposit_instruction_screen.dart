@@ -207,14 +207,19 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
   void _showImagePicker(BuildContext context) {
     showModalBottomSheet(
       context: context,
+      backgroundColor: AppColors.cardBackground,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
       builder: (BuildContext ctx) {
         return SafeArea(
           child: Wrap(
             children: <Widget>[
               ListTile(
-                leading: const Icon(Icons.camera_alt),
+                leading: Icon(Icons.camera_alt, color: AppColors.textPrimary),
                 title: Text(
                   languageService.tr('deposit_instruction_take_photo'),
+                  style: TextStyle(color: AppColors.textPrimary),
                 ),
                 onTap: () {
                   Navigator.of(ctx).pop();
@@ -222,9 +227,10 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.photo_library),
+                leading: Icon(Icons.photo_library, color: AppColors.textPrimary),
                 title: Text(
                   languageService.tr('deposit_instruction_choose_from_gallery'),
+                  style: TextStyle(color: AppColors.textPrimary),
                 ),
                 onTap: () {
                   Navigator.of(ctx).pop();
@@ -260,7 +266,7 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
         }
       },
       child: Scaffold(
-        backgroundColor: AppColors.surface,
+        backgroundColor: AppColors.background,
         appBar: AppBar(
           scrolledUnderElevation: 0,
           backgroundColor: AppColors.backgroundLight,
@@ -268,14 +274,11 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
           leading: Padding(
             padding: EdgeInsets.only(left: 10.w),
             child: IconButton(
-              icon: SvgPicture.asset("assets/svg/trade/arro_back.svg"),
+              icon: SvgPicture.asset("assets/svg/trade/arro_back.svg",color: AppColors.textPrimary),
               onPressed: _handleBackNavigation,
             ),
           ),
           title: Text(titleString, style: AppTextStyles.screenTitle),
-          shape: Border(
-            bottom: BorderSide(color: AppColors.border, width: 1),
-          ),
           centerTitle: true,
         ),
         body: Stack(
@@ -992,13 +995,20 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
           margin: const EdgeInsets.only(top: 8, right: 8),
           width: 4,
           height: 4,
-          decoration: const BoxDecoration(
-            color: Colors.black,
+          decoration: BoxDecoration(
+            color: AppColors.textGrey,
             shape: BoxShape.circle,
           ),
         ),
         Expanded(
-          child: Text(text, style: const TextStyle(fontSize: 14, height: 1.4)),
+          child: Text(
+            text,
+            style: TextStyle(
+              fontSize: 14,
+              height: 1.4,
+              color: AppColors.textPrimary,
+            ),
+          ),
         ),
       ],
     );
