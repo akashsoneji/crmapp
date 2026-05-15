@@ -422,7 +422,10 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
         ),
         centerTitle: true,
         // leading: IconButton(
-        //   icon: SvgPicture.asset("assets/svg/trade/arro_back.svg"),
+        //   icon: SvgPicture.asset(
+        //     "assets/svg/trade/arro_back.svg",
+        //     colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn),
+        //   ),
         //   onPressed: () => Navigator.of(context).pop(),
         // ),
       ),
@@ -955,15 +958,15 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
     return Container(
       padding: EdgeInsets.all(6.w),
       decoration: BoxDecoration(
-        color: isHighlighted ? Colors.green.shade50 : AppColors.whiteColor,
+        color: isHighlighted ? AppColors.successBg : AppColors.whiteColor,
         borderRadius: BorderRadius.circular(8.r),
         border:
             isHighlighted
-                ? Border.all(color: Colors.green.shade700, width: 1.5)
+                ? Border.all(color: AppColors.green, width: 1.5)
                 : Border.all(color: AppColors.border.withOpacity(0.3)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: AppColors.textPrimary.withValues(alpha: 0.05),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -1002,7 +1005,7 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
                   fontWeight: FontWeight.w600,
                   color:
                       isHighlighted
-                          ? Colors.green.shade700
+                          ? AppColors.green
                           : AppColors.textPrimary,
                 ),
                 maxLines: 1,
@@ -1675,7 +1678,7 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
                     style: TextStyle(
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w600,
-                      color: isProfit ? Colors.green : Colors.red,
+                      color: isProfit ? AppColors.green : AppColors.error,
                     ),
                   ),
                   SizedBox(width: 8.w),
@@ -1719,7 +1722,7 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
                     Container(
                       padding: EdgeInsets.all(8.w),
                       decoration: BoxDecoration(
-                        color: Colors.green.withOpacity(0.1),
+                        color: AppColors.green.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(6.r),
                       ),
                       child: Row(
@@ -1730,14 +1733,14 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
                               Icon(
                                 Icons.arrow_downward,
                                 size: 16.sp,
-                                color: Colors.green,
+                                color: AppColors.green,
                               ),
                               SizedBox(width: 4.w),
                               Text(
                                 'Deposit',
                                 style: TextStyle(
                                   fontSize: 12.sp,
-                                  color: Colors.green,
+                                  color: AppColors.green,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -1748,7 +1751,7 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
                             style: TextStyle(
                               fontSize: 12.sp,
                               fontWeight: FontWeight.w600,
-                              color: Colors.green,
+                              color: AppColors.green,
                             ),
                           ),
                         ],
@@ -1759,7 +1762,7 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
                     Container(
                       padding: EdgeInsets.all(8.w),
                       decoration: BoxDecoration(
-                        color: Colors.red.withOpacity(0.1),
+                        color: AppColors.error.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(6.r),
                       ),
                       child: Row(
@@ -1770,14 +1773,14 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
                               Icon(
                                 Icons.arrow_upward,
                                 size: 16.sp,
-                                color: Colors.red,
+                                color: AppColors.error,
                               ),
                               SizedBox(width: 4.w),
                               Text(
                                 'Withdrawal',
                                 style: TextStyle(
                                   fontSize: 12.sp,
-                                  color: Colors.red,
+                                  color: AppColors.error,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -1788,7 +1791,7 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
                             style: TextStyle(
                               fontSize: 12.sp,
                               fontWeight: FontWeight.w600,
-                              color: Colors.red,
+                              color: AppColors.error,
                             ),
                           ),
                         ],

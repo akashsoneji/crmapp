@@ -68,12 +68,12 @@ class MasterPlanDetailScreen extends StatelessWidget {
 
           final status = d.status.toLowerCase();
           final statusColor = status == 'approved'
-              ? const Color(0xFF22C55E)
+              ? AppColors.green
               : status.contains('inactive')
-                  ? const Color(0xFF94A3B8)
+                  ? AppColors.textGrey
                   : status.contains('pending')
-                      ? const Color(0xFFF59E0B)
-                      : const Color(0xFFEF4444);
+                      ? AppColors.warning
+                      : AppColors.error;
 
           return DefaultTabController(
             length: 2,
@@ -541,7 +541,7 @@ class _TradeHistoryCardState extends State<_TradeHistoryCard> {
     final dir = t.direction.toLowerCase();
     final isBuy = dir == 'buy';
     final profit = t.masterProfit.toDouble();
-    final profitColor = profit >= 0 ? const Color(0xFF16A34A) : const Color(0xFFEF4444);
+    final profitColor = profit >= 0 ? AppColors.green : AppColors.error;
     final status = t.status.isNotEmpty ? t.status : '—';
 
     return GestureDetector(
@@ -565,7 +565,7 @@ class _TradeHistoryCardState extends State<_TradeHistoryCard> {
                 // Container(
                 //   padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
                 //   decoration: BoxDecoration(
-                //     color: (isBuy ? const Color(0xFF22C55E) : const Color(0xFFEF4444)).withOpacity(0.12),
+                //     color: (isBuy ? AppColors.green : AppColors.error).withOpacity(0.12),
                 //     borderRadius: BorderRadius.circular(10.r),
                 //   ),
                 //   child: Text(
@@ -573,7 +573,7 @@ class _TradeHistoryCardState extends State<_TradeHistoryCard> {
                 //     style: TextStyle(
                 //       fontSize: 11.sp,
                 //       fontWeight: FontWeight.w800,
-                //       color: isBuy ? const Color(0xFF16A34A) : const Color(0xFFDC2626),
+                //       color: isBuy ? AppColors.green : AppColors.error,
                 //       letterSpacing: 0.2,
                 //     ),
                 //   ),
@@ -593,7 +593,7 @@ class _TradeHistoryCardState extends State<_TradeHistoryCard> {
                           Container(
                   padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
                   decoration: BoxDecoration(
-                    color: (isBuy ? const Color(0xFF22C55E) : const Color(0xFFEF4444)).withOpacity(0.12),
+                    color: (isBuy ? AppColors.green : AppColors.error).withOpacity(0.12),
                     borderRadius: BorderRadius.circular(10.r),
                   ),
                   child: Text(
@@ -601,7 +601,7 @@ class _TradeHistoryCardState extends State<_TradeHistoryCard> {
                     style: TextStyle(
                       fontSize: 11.sp,
                       fontWeight: FontWeight.w800,
-                      color: isBuy ? const Color(0xFF16A34A) : const Color(0xFFDC2626),
+                      color: isBuy ? AppColors.green : AppColors.error,
                       letterSpacing: 0.2,
                     ),
                   ),
@@ -684,9 +684,9 @@ class _CommissionHistoryCardState extends State<_CommissionHistoryCard> {
   Widget build(BuildContext context) {
     final x = widget.item;
     final credited = x.masterCommissionCredited.toDouble();
-    final creditedColor = credited >= 0 ? const Color(0xFF16A34A) : const Color(0xFFEF4444);
+    final creditedColor = credited >= 0 ? AppColors.green : AppColors.error;
     final inGrace = x.inGracePeriod;
-    final pillColor = inGrace ? const Color(0xFFF59E0B) : const Color(0xFF22C55E);
+    final pillColor = inGrace ? AppColors.warning : AppColors.green;
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,

@@ -968,7 +968,7 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                     icon: 'logout',
                     label: languageService.tr('more_logout'),
                     onTap: () => _showLogoutDialog(authController),
-                    color: AppColors.red,
+                    color: AppColors.error,
                     showArrow: false,
                   ),
                 ],
@@ -1157,7 +1157,7 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                         borderSide: BorderSide(
                           color:
                               _isPasswordEmpty.value
-                                  ? Colors.red
+                                  ? AppColors.error
                                   : AppColors.textGrey,
                         ),
                       ),
@@ -1166,7 +1166,7 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                         borderSide: BorderSide(
                           color:
                               _isPasswordEmpty.value
-                                  ? Colors.red
+                                  ? AppColors.error
                                   : AppColors.textGrey,
                         ),
                       ),
@@ -1175,7 +1175,7 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                         borderSide: BorderSide(
                           color:
                               _isPasswordEmpty.value
-                                  ? Colors.red
+                                  ? AppColors.error
                                   : AppColors.primary,
                         ),
                       ),

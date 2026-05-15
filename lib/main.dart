@@ -197,8 +197,9 @@ ThemeData _buildLightTheme() {
       secondary: FlavorConfig.instance.secondaryColor,
       surface: AppColors.whiteColor,
       onPrimary: AppColors.whiteColor,
-      onSecondary: Colors.black,
-      onSurface: Colors.black,
+      // Light [ThemeData] — use light palette tokens (not [AppColors.textPrimary] getter).
+      onSecondary: AppColors.textPrimaryLight,
+      onSurface: AppColors.textPrimaryLight,
     ),
     useMaterial3: true,
     scaffoldBackgroundColor: AppColors.whiteColor,
@@ -267,11 +268,13 @@ ThemeData _buildLightTheme() {
     ),
     appBarTheme: AppBarTheme(
       backgroundColor: AppColors.whiteColor,
-      foregroundColor: Colors.black,
+      foregroundColor: AppColors.textPrimaryLight,
       elevation: 0,
     ),
-    iconTheme: const IconThemeData(color: Colors.black),
-    textTheme: const TextTheme(bodyLarge: TextStyle(color: Colors.black)),
+    iconTheme: IconThemeData(color: AppColors.textPrimaryLight),
+    textTheme: TextTheme(
+      bodyLarge: TextStyle(color: AppColors.textPrimaryLight),
+    ),
   );
 }
 
@@ -354,11 +357,13 @@ ThemeData _buildDarkTheme() {
     ),
     appBarTheme: AppBarTheme(
       backgroundColor: AppColors.surfaceDarkTheme,
-      foregroundColor: AppColors.textPrimary,
+      foregroundColor: AppColors.textPrimaryDark,
       elevation: 0,
     ),
-    iconTheme: IconThemeData(color: AppColors.textPrimary),
-    textTheme: TextTheme(bodyLarge: TextStyle(color: AppColors.textPrimary)),
+    iconTheme: IconThemeData(color: AppColors.textPrimaryDark),
+    textTheme: TextTheme(
+      bodyLarge: TextStyle(color: AppColors.textPrimaryDark),
+    ),
   );
 }
 

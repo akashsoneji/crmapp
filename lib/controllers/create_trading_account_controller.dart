@@ -7,6 +7,7 @@ import 'package:crm_app/widgets/custom_toast.dart' show CustomToastService;
 import '../widgets/congratulations_dialog.dart';
 import '../controllers/account_controller.dart';
 import '../controllers/app_notification_controller.dart';
+import 'package:crm_app/constants/color.dart';
 
 class CreateTradingAccountController extends GetxController {
   var selectedAccountType = '${FlavorConfig.instance.appName} Demo'.obs;
@@ -340,7 +341,7 @@ class CreateTradingAccountController extends GetxController {
     //     'Error',
     //     'Failed to create account. Please try again.',
     //     snackPosition: SnackPosition.BOTTOM,
-    //     backgroundColor: Colors.red,
+    //     backgroundColor: AppColors.error,
     //     colorText: AppColors.whiteColor,
     //   );
     // } finally {

@@ -657,7 +657,7 @@ class _SubscriptionCardState extends State<_SubscriptionCard> {
                         child: Text(
                           _getInitials(displayName),
                           style: TextStyle(
-                            color: Colors.white,
+                            color: AppColors.onColoredBackground,
                             fontSize: 15.sp,
                             fontWeight: FontWeight.w700,
                           ),

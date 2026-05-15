@@ -62,10 +62,11 @@ class _WalletScreenState extends State<WalletScreen> {
           padding: EdgeInsets.only(left: 10.w),
           child: IconButton(
             icon: SvgPicture.asset(
-              "assets/svg/trade/arro_back.svg",
+            "assets/svg/trade/arro_back.svg",
               height: 24.h,
               width: 24.w,
-            ),
+            colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn),
+          ),
             onPressed: () => NavigationHelper.safeBack(context: context),
           ),
         ),

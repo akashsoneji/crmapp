@@ -112,7 +112,7 @@ class _LegalDocumentsScreenState extends State<LegalDocumentsScreen> {
             ),
             child: IconButton(
               onPressed: () => Navigator.pop(context),
-              icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
+              icon: Icon(Icons.arrow_back_ios, color: AppColors.textPrimary),
               iconSize: 17.h,
               padding: EdgeInsets.only(left: 5.w),
             ),

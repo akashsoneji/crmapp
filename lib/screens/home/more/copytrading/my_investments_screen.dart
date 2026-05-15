@@ -148,7 +148,7 @@ class _MyInvestmentsScreenState extends State<MyInvestmentsScreen>
                     ),
                     indicatorSize: TabBarIndicatorSize.tab,
                     dividerColor: Colors.transparent,
-                    labelColor: Colors.white,
+                    labelColor: AppColors.onColoredBackground,
                     unselectedLabelColor: AppColors.textGrey,
                     labelStyle: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w600),
                     unselectedLabelStyle: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w500),
@@ -565,7 +565,7 @@ class _InvestmentRow extends StatelessWidget {
                       ),
                       child: Center(
                         child: Text(_getInitials(item.masterName.isNotEmpty ? item.masterName : item.masterCode),
-                          style: TextStyle(color: Colors.white, fontSize: 13.sp, fontWeight: FontWeight.w700)),
+                          style: TextStyle(color: AppColors.onColoredBackground, fontSize: 13.sp, fontWeight: FontWeight.w700)),
                       ),
                     ),
                     SizedBox(width: 10.w),
@@ -598,8 +598,8 @@ style: AppTextStyles.black16600.copyWith(fontWeight: FontWeight.w600,color: item
                               if (item.serverType.isNotEmpty)
                                 Container(
                                   padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 1.h),
-                                  decoration: BoxDecoration(color: Colors.blue.withOpacity(0.1), borderRadius: BorderRadius.circular(4.r)),
-                                  child: Text(item.serverType.toUpperCase(), style: TextStyle(fontSize: 10.sp, fontWeight: FontWeight.w600, color: Colors.blue)),
+                                  decoration: BoxDecoration(color: AppColors.blue.withOpacity(0.1), borderRadius: BorderRadius.circular(4.r)),
+                                  child: Text(item.serverType.toUpperCase(), style: TextStyle(fontSize: 10.sp, fontWeight: FontWeight.w600, color: AppColors.blue)),
                                 ),
                               if (item.planName.isNotEmpty) ...[
                                 SizedBox(width: 5.w),
@@ -982,7 +982,7 @@ class _EmptyInvestmentsState extends StatelessWidget {
               label: Text('Explore Masters', style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
+                foregroundColor: AppColors.onColoredBackground,
                 padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
               ),

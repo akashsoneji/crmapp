@@ -17,13 +17,13 @@ class IdUploadScreen extends StatelessWidget {
         backgroundColor: AppColors.whiteColor,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back, color: AppColors.textPrimary),
           onPressed: () => Get.back(closeOverlays: true),
         ),
         title: Text(
           'ID/Aadhar card',
           style: TextStyle(
-            color: Colors.black,
+            color: AppColors.textPrimary,
             fontSize: 18,
             fontWeight: FontWeight.w500,
           ),
@@ -164,7 +164,7 @@ class IdUploadScreen extends StatelessWidget {
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.green,
+                            color: AppColors.green,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
@@ -192,7 +192,7 @@ class IdUploadScreen extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, color: isPositive ? Colors.green : Colors.red, size: 20),
+        Icon(icon, color: isPositive ? AppColors.green : AppColors.error, size: 20),
         SizedBox(width: 12),
         Expanded(
           child: Text(

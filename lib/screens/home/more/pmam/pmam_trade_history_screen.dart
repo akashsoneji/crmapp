@@ -334,7 +334,7 @@ class _PmamTradeHistoryScreenState extends State<PmamTradeHistoryScreen> {
                           metric(
                             'Net P&L:',
                             '${netPos ? '+' : ''}\$${net.abs().toStringAsFixed(2)}',
-                            netPos ? AppColors.green : AppColors.red,
+                            netPos ? AppColors.green : AppColors.error,
                           ),
                         ],
                       ),
@@ -344,13 +344,13 @@ class _PmamTradeHistoryScreenState extends State<PmamTradeHistoryScreen> {
                           metric(
                             'Commission:',
                             '${commPos ? '+' : ''}\$${comm.abs().toStringAsFixed(2)}',
-                            commPos ? AppColors.green : AppColors.red,
+                            commPos ? AppColors.green : AppColors.error,
                           ),
                           SizedBox(width: 10.w),
                           metric(
                             'Settled P&L (this period):',
                             '${settledPos ? '+' : ''}\$${settled.abs().toStringAsFixed(2)}',
-                            settledPos ? AppColors.green : AppColors.red,
+                            settledPos ? AppColors.green : AppColors.error,
                           ),
                         ],
                       ),
@@ -466,12 +466,12 @@ class _PmamTradeHistoryScreenState extends State<PmamTradeHistoryScreen> {
 
                       final isBuy = type.toLowerCase() == 'buy';
                       final pnlPos = profit >= 0;
-                      final pnlColor = pnlPos ? AppColors.green : AppColors.red;
+                      final pnlColor = pnlPos ? AppColors.green : AppColors.error;
                       final typeBg =
                           isBuy
-                              ? AppColors.green.withOpacity(0.12)
-                              : AppColors.red.withOpacity(0.12);
-                      final typeFg = isBuy ? AppColors.green : AppColors.red;
+                              ? AppColors.green.withValues(alpha: 0.12)
+                              : AppColors.error.withValues(alpha: 0.12);
+                      final typeFg = isBuy ? AppColors.green : AppColors.error;
 
                       Widget kv(String k, String v, {Color? vColor}) {
                         return Expanded(
@@ -592,7 +592,7 @@ class _PmamTradeHistoryScreenState extends State<PmamTradeHistoryScreen> {
                                   vColor:
                                       comm >= 0
                                           ? AppColors.green
-                                          : AppColors.red,
+                                          : AppColors.error,
                                 ),
                               ],
                             ),

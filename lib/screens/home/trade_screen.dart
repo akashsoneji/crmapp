@@ -349,7 +349,7 @@ class _TradeScreenState extends State<TradeScreen> {
                 DashedUnderline(
                   dashWidth: 10,
                   dashSpace: 0,
-                  color: AppColors.grey,
+                  color: AppColors.textGrey,
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 0.0),
@@ -733,7 +733,7 @@ class _TradeScreenState extends State<TradeScreen> {
         // borderRadius: BorderRadius.circular(12.r),
         // boxShadow: [
         //   BoxShadow(
-        //     color: Colors.black.withValues(alpha: 0.05),
+        //     color: AppColors.textPrimary.withValues(alpha: 0.05),
         //     blurRadius: 10,
         //     offset: const Offset(0, 2),
         //   ),
@@ -957,7 +957,10 @@ class _TradeScreenState extends State<TradeScreen> {
                             padding: EdgeInsets.symmetric(horizontal: 10),
                             child: Icon(
                               Icons.calendar_today,
-                              color: AppColors.primary,
+                              color:
+                                  hasDateFilter
+                                      ? AppColors.primary
+                                      : AppColors.textGreyLight,
                               size: 20,
                             ),
                           ),
@@ -1026,7 +1029,10 @@ class _TradeScreenState extends State<TradeScreen> {
                             angle: 1.55,
                             child: SvgPicture.asset(
                               "assets/svg/bottom_navigation/candle_bold.svg",
-                              color: AppColors.primary,
+                              color:
+                                  isInstrumentFilterActive
+                                      ? AppColors.primary
+                                      : AppColors.textGreyLight,
                             ),
                           ),
                         ),
@@ -1097,7 +1103,7 @@ class _TradeScreenState extends State<TradeScreen> {
                             color:
                                 isFilterActive
                                     ? AppColors.primary
-                                    : AppColors.primary,
+                                    : AppColors.textGreyLight,
                           ),
                         ),
                         // Badge showing count when filter is active
@@ -1302,7 +1308,7 @@ class _TradeScreenState extends State<TradeScreen> {
               borderRadius: BorderRadius.circular(12.r),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
+                  color: AppColors.textPrimary.withValues(alpha: 0.05),
                   blurRadius: 10,
                   offset: const Offset(0, 2),
                 ),
@@ -1364,7 +1370,7 @@ class _TradeScreenState extends State<TradeScreen> {
                                               (position.action.toLowerCase() ==
                                                       'buy')
                                                   ? AppColors.green
-                                                  : AppColors.red,
+                                                  : AppColors.error,
                                         ),
                                       ),
                                     ],
@@ -1407,7 +1413,7 @@ class _TradeScreenState extends State<TradeScreen> {
                                     color:
                                         isPositive
                                             ? AppColors.green
-                                            : AppColors.red,
+                                            : AppColors.error,
                                   ),
                                 ),
                               ],
@@ -1458,7 +1464,7 @@ class _TradeScreenState extends State<TradeScreen> {
           borderRadius: BorderRadius.circular(12.r),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
+              color: AppColors.textPrimary.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 2),
             ),
@@ -1470,7 +1476,7 @@ class _TradeScreenState extends State<TradeScreen> {
         //       borderRadius: BorderRadius.circular(12.r),
         //       boxShadow: [
         //         BoxShadow(
-        //           color: Colors.black.withValues(alpha: 0.05),
+        //           color: AppColors.textPrimary.withValues(alpha: 0.05),
         //           blurRadius: 10,
         //           offset: const Offset(0, 2),
         //         ),
@@ -1586,7 +1592,7 @@ class _TradeScreenState extends State<TradeScreen> {
               style: AppTextStyles.heading.copyWith(
                 fontSize: 16.sp,
                 fontWeight: FontWeight.w800,
-                color: isPositive ? AppColors.green : AppColors.red,
+                color: isPositive ? AppColors.green : AppColors.error,
               ),
             );
 
@@ -1618,7 +1624,7 @@ class _TradeScreenState extends State<TradeScreen> {
                       color:
                           (position.action.toLowerCase() == 'buy')
                               ? AppColors.green
-                              : AppColors.red,
+                              : AppColors.error,
                     ),
                   ),
                 ],
@@ -2008,7 +2014,7 @@ class _TradeScreenState extends State<TradeScreen> {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
+                    color: AppColors.textPrimary.withValues(alpha: 0.1),
                     blurRadius: 10,
                     offset: Offset(0, -2),
                   ),
@@ -3228,7 +3234,14 @@ class _TradeScreenState extends State<TradeScreen> {
                   groupValue: isSelected ? value : null,
                   onChanged:
                       hasPositions ? (newValue) => onChanged(newValue!) : null,
-                  activeColor: AppColors.primary,
+                  fillColor: WidgetStateProperty.resolveWith<Color?>((
+                    states,
+                  ) {
+                    if (states.contains(WidgetState.selected)) {
+                      return AppColors.primary;
+                    }
+                    return AppColors.textGreyLight;
+                  }),
                 );
               }),
             ],
@@ -3351,7 +3364,7 @@ class _TradeScreenState extends State<TradeScreen> {
 
     final result = await Get.dialog<bool>(
       barrierDismissible: true, // Allow dismissal by tapping outside
-      barrierColor: Colors.black54, // Semi-transparent background
+      barrierColor: AppColors.scrim, // Semi-transparent background
       Dialog(
         backgroundColor: AppColors.backgroundLight,
         shape: RoundedRectangleBorder(
@@ -3532,7 +3545,7 @@ class _TradeScreenState extends State<TradeScreen> {
 
     final result = await Get.dialog<bool>(
       barrierDismissible: true,
-      barrierColor: Colors.black54,
+      barrierColor: AppColors.scrim,
       Dialog(
         backgroundColor: AppColors.backgroundLight,
         shape: RoundedRectangleBorder(
@@ -3790,24 +3803,24 @@ class _TradeScreenState extends State<TradeScreen> {
   ) {
     if (accountInfo != null) {
       if (key == 'trade_metric_balance' && accountInfo.balance < 0) {
-        return AppColors.red;
+        return AppColors.error;
       }
       if (key == 'trade_metric_free_margin' && accountInfo.marginFree < 0) {
-        return AppColors.red;
+        return AppColors.error;
       }
       if (key == 'trade_metric_margin_level' && accountInfo.marginLevel < 90) {
-        return AppColors.red;
+        return AppColors.error;
       }
     }
     if (totals != null) {
       if (key == 'trade_metric_balance' && totals.balance < 0) {
-        return AppColors.red;
+        return AppColors.error;
       }
     }
 
     if (totals != null) {
       if (key == 'trade_metric_profit' && totals.profit < 0) {
-        return AppColors.red;
+        return AppColors.error;
       }
     }
     return null;

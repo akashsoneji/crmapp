@@ -124,7 +124,7 @@ class _CommissionGroupFormScreenState extends State<CommissionGroupFormScreen> {
         'Error',
         'Please enter a group name',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
+        backgroundColor: AppColors.error,
         colorText: AppColors.whiteColor,
       );
       return;
@@ -175,7 +175,7 @@ class _CommissionGroupFormScreenState extends State<CommissionGroupFormScreen> {
         'Error',
         'Failed to save group: $e',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
+        backgroundColor: AppColors.error,
         colorText: AppColors.whiteColor,
       );
     } finally {

@@ -49,7 +49,7 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        shape: Border(bottom: BorderSide(color: AppColors.grey)),
+        shape: Border(bottom: BorderSide(color: AppColors.textGrey)),
         scrolledUnderElevation: 0.0,
         backgroundColor: AppColors.backgroundLight,
         leading: IconButton(
@@ -66,14 +66,17 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
               Get.back(closeOverlays: true);
             }
           },
-          icon: SvgPicture.asset("assets/svg/trade/arro_back.svg"),
+          icon: SvgPicture.asset(
+            "assets/svg/trade/arro_back.svg",
+            colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn),
+          ),
         ),
         title: Text(
           languageService.tr('choose_account_title'),
           style: AppTextStyles.heading,
         ),
       ),
-      // backgroundColor: AppAppColors.whiteColorColor,
+      // backgroundColor: AppColors.whiteColor,
       backgroundColor: AppColors.backgroundLight,
       body: SafeArea(
         child: Column(
@@ -327,7 +330,7 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
 
   Widget _buildDivider() {
     return DashedUnderline();
-    // return Container(height: 1, color: Colors.grey[200]);
+    // return Container(height: 1, color: AppColors.textGrey);
   }
 
   void _onOpenAccount(PlanModel accountType) {

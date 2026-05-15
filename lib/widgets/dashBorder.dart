@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:crm_app/constants/color.dart';
 
 class DashedUnderline extends StatelessWidget {
   final double dashWidth;
@@ -9,7 +10,7 @@ class DashedUnderline extends StatelessWidget {
     super.key,
     this.dashWidth = 5,
     this.dashSpace = 3,
-    this.color = Colors.grey,
+    this.color = AppColors.icongrey,
   });
 
   @override

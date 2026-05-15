@@ -49,7 +49,7 @@ class KycScaffold extends StatelessWidget {
               onPressed: onClose ?? _showExitConfirmation,
             ),
           ],
-          shape: Border(bottom: BorderSide(color: AppColors.grey)),
+          shape: Border(bottom: BorderSide(color: AppColors.textGrey)),
         ),
         body: body,
       ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/services/connectivity/connectivity_controller.dart';
 import 'package:crm_app/services/connectivity/no_internet_screen.dart';
+import 'package:crm_app/constants/color.dart';
 
 /// Global overlay widget that shows a "No Internet" screen
 /// whenever the device loses connectivity.
@@ -26,7 +27,7 @@ class ConnectivityOverlay extends StatelessWidget {
       if (disconnected) {
         return Positioned.fill(
           child: Material(
-            color: Colors.white,
+            color: AppColors.onColoredBackground,
             child: const NoInternetScreen(),
           ),
         );

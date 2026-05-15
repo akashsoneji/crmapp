@@ -149,13 +149,16 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
         scrolledUnderElevation: 0,
         shape: Border(
           bottom: BorderSide(
-            color: AppColors.grey, // divider color
+            color: AppColors.textGrey, // divider color
             width: 1, // divider thickness
           ),
         ),
         elevation: 0,
         leading: IconButton(
-          icon: SvgPicture.asset("assets/svg/trade/arro_back.svg"),
+          icon: SvgPicture.asset(
+            "assets/svg/trade/arro_back.svg",
+            colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn),
+          ),
           onPressed: () => NavigationHelper.safeBack(context: context),
         ),
         title: Text(

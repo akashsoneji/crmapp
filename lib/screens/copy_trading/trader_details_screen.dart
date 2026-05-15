@@ -96,7 +96,10 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: SvgPicture.asset('assets/svg/trade/arro_back.svg'),
+          icon: SvgPicture.asset(
+            'assets/svg/trade/arro_back.svg',
+            colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn),
+          ),
           onPressed: () => Get.back(),
         ),
       ),
@@ -289,7 +292,7 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
                                   color:
                                       trade.type == 'BUY'
                                           ? AppColors.green
-                                          : Colors.red,
+                                          : AppColors.error,
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
@@ -498,7 +501,7 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.amber,
+                  color: AppColors.accentStatic,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Text(
@@ -529,7 +532,7 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
                   ),
                 ],
               ),
-              const Icon(
+              Icon(
                 Icons.info_outline,
                 color: AppColors.icongrey,
                 size: 16,
@@ -601,13 +604,13 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
                         children: [
                           Icon(
                             Icons.arrow_upward,
-                            color: Colors.green,
+                            color: AppColors.green,
                             size: 14,
                           ),
                           Text(
                             '35',
                             style: TextStyle(
-                              color: Colors.green,
+                              color: AppColors.green,
                               fontWeight: FontWeight.w600,
                               fontSize: 16,
                             ),
@@ -775,7 +778,7 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
                 fontWeight: FontWeight.w400,
               ),
             ),
-            const Icon(Icons.info_outline, color: AppColors.icongrey, size: 16),
+            Icon(Icons.info_outline, color: AppColors.icongrey, size: 16),
           ],
         ),
         const SizedBox(height: 4),

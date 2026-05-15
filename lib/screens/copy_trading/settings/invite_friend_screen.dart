@@ -164,7 +164,7 @@ class _StatisticItem extends StatelessWidget {
           ),
           onTap: onTap,
         ),
-        // Divider(height: 1, color: Colors.grey.withOpacity(0.05)),
+        // Divider(height: 1, color: AppColors.textGrey.withValues(alpha: 0.05)),
       ],
     );
   }

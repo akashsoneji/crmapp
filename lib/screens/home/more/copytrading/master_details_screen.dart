@@ -178,7 +178,7 @@ class _MasterHeroCard extends StatelessWidget {
                           width: 7.r,
                           height: 7.r,
                           decoration: const BoxDecoration(
-                            color: Color(0xFF22C55E),
+                            color: AppColors.green,
                             shape: BoxShape.circle,
                           ),
                         ),
@@ -472,10 +472,10 @@ class _PerformanceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final gainColor =
-        profile.totalGainPercent >= 0 ? AppColors.green : AppColors.red;
-    final pnlColor = profile.totalPnl >= 0 ? AppColors.green : AppColors.red;
+        profile.totalGainPercent >= 0 ? AppColors.green : AppColors.error;
+    final pnlColor = profile.totalPnl >= 0 ? AppColors.green : AppColors.error;
     final ddColor =
-        profile.maxDrawdown > 0 ? AppColors.red : AppColors.textPrimary;
+        profile.maxDrawdown > 0 ? AppColors.error : AppColors.textPrimary;
     return Obx(() {
       if (controller.isPlanOrTimeframeLoading.value) {
         return Container(
@@ -810,7 +810,7 @@ class _OrderCardState extends State<_OrderCard> {
     final item = widget.item;
     final isBuy = item.side.toUpperCase() == 'BUY';
     final isProfit = item.profit >= 0;
-    final sideColor = isBuy ? AppColors.green : AppColors.red;
+    final sideColor = isBuy ? AppColors.green : AppColors.error;
 
     return GestureDetector(
       onTap: () => setState(() => _expanded = !_expanded),
@@ -892,7 +892,7 @@ class _OrderCardState extends State<_OrderCard> {
                       style: TextStyle(
                         fontSize: 14.sp,
                         fontWeight: FontWeight.w700,
-                        color: isProfit ? AppColors.green : AppColors.red,
+                        color: isProfit ? AppColors.green : AppColors.error,
                       ),
                     ),
                   ],
@@ -1054,7 +1054,7 @@ class _ErrorState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.error_outline, size: 40.r, color: AppColors.red),
+            Icon(Icons.error_outline, size: 40.r, color: AppColors.error),
             SizedBox(height: 10.h),
             Text(
               message,

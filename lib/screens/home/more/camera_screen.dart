@@ -11,7 +11,7 @@ class CameraScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AppColors.cameraBackground,
       body: Stack(
         children: [
           // Camera Preview
@@ -22,7 +22,7 @@ class CameraScreen extends StatelessWidget {
                 : Center(
               child: CommonLoadingWidget(
                 size: 40.0,
-                color: AppColors.whiteColor,
+                color: AppColors.onColoredBackground,
               ),
             ),
           ),
@@ -43,13 +43,13 @@ class CameraScreen extends StatelessWidget {
               child: Container(
                 padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 decoration: BoxDecoration(
-                  color: Colors.black54,
+                  color: AppColors.scrim,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Obx(() => Text(
                   'Position ${controller.currentSide.value} side of your ID within the frame',
                   style: TextStyle(
-                    color: AppColors.whiteColor,
+                    color: AppColors.onColoredBackground,
                     fontSize: 16,
                   ),
                 )),
@@ -70,12 +70,12 @@ class CameraScreen extends StatelessWidget {
                   width: 50,
                   height: 50,
                   decoration: BoxDecoration(
-                    color: AppColors.whiteColor.withOpacity(0.24),
+                    color: AppColors.onColoredBackground.withOpacity(0.24),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     Icons.photo_library,
-                    color: AppColors.whiteColor,
+                    color: AppColors.onColoredBackground,
                     size: 24,
                   ),
                 ),
@@ -89,10 +89,10 @@ class CameraScreen extends StatelessWidget {
                     width: 80,
                     height: 80,
                     decoration: BoxDecoration(
-                      color: AppColors.whiteColor,
+                      color: AppColors.onColoredBackground,
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: AppColors.whiteColor,
+                        color: AppColors.onColoredBackground,
                         width: 4,
                       ),
                     ),
@@ -100,13 +100,13 @@ class CameraScreen extends StatelessWidget {
                         ? Center(
                       child: CommonLoadingWidget(
                         size: 30.0,
-                        color: Colors.black,
+                        color: AppColors.textPrimary,
                       ),
                     )
                         : Container(
                       margin: EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: AppColors.whiteColor,
+                        color: AppColors.onColoredBackground,
                         shape: BoxShape.circle,
                       ),
                     ),
@@ -118,12 +118,12 @@ class CameraScreen extends StatelessWidget {
                   width: 50,
                   height: 50,
                   decoration: BoxDecoration(
-                    color: AppColors.whiteColor.withOpacity(0.24),
+                    color: AppColors.onColoredBackground.withOpacity(0.24),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     Icons.flip_camera_ios,
-                    color: AppColors.whiteColor,
+                    color: AppColors.onColoredBackground,
                     size: 24,
                   ),
                 ),
@@ -146,7 +146,7 @@ class IdCardOverlayPainter extends CustomPainter {
       ..style = PaintingStyle.stroke;
 
     final backgroundPaint = Paint()
-      ..color = Colors.black.withOpacity(0.5);
+      ..color = AppColors.textPrimary.withValues(alpha: 0.5);
 
     // Draw dark overlay
     canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), backgroundPaint);

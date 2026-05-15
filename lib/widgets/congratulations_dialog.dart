@@ -92,7 +92,7 @@ class CongratulationsDialog extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 16.sp,
                                 fontWeight: FontWeight.w500,
-                                color: Colors.black,
+                                color: AppColors.textPrimary,
                               ),
                               textAlign: TextAlign.center,
                             ),
@@ -110,7 +110,7 @@ class CongratulationsDialog extends StatelessWidget {
                                   width: 23,
                                   height: 23,
                                   decoration: BoxDecoration(
-                                    color: Color(0xffA1A1A1),
+                                    color: AppColors.textGrey,
                                     shape: BoxShape.circle,
                                   ),
                                   child: Icon(
@@ -165,7 +165,7 @@ class CongratulationsDialog extends StatelessWidget {
                                         style: TextStyle(
                                           fontSize: 16.sp,
                                           fontWeight: FontWeight.w500,
-                                          color: Colors.black,
+                                          color: AppColors.textPrimary,
                                         ),
                                         overflow: TextOverflow.ellipsis,
                                       ),
@@ -189,7 +189,7 @@ class CongratulationsDialog extends StatelessWidget {
                                       },
                                       child: Icon(
                                         Icons.copy,
-                                        color: Colors.grey[600],
+                                        color: AppColors.textGrey,
                                         size: 24,
                                       ),
                                     ),
@@ -220,7 +220,7 @@ class CongratulationsDialog extends StatelessWidget {
                                       style: TextStyle(
                                         fontSize: 16.sp,
                                         fontWeight: FontWeight.w500,
-                                        color: Colors.black,
+                                        color: AppColors.textPrimary,
                                       ),
                                     ),
                                   ],

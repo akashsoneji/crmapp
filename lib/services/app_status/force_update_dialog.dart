@@ -40,7 +40,7 @@ class ForceUpdateDialog extends StatelessWidget {
               borderRadius: BorderRadius.circular(24.r),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black26,
+                  color: AppColors.scrimLight,
                   blurRadius: 16.r,
                   offset: const Offset(0.0, 8.0),
                 ),
@@ -89,7 +89,7 @@ class ForceUpdateDialog extends StatelessWidget {
                     width: double.infinity,
                     padding: EdgeInsets.all(14.w),
                     decoration: BoxDecoration(
-                      color: AppColors.grey.withOpacity(0.1),
+                      color: AppColors.textGrey.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12.r),
                     ),
                     child: Text(

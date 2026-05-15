@@ -204,7 +204,7 @@ class _InternalTransferHistoryScreenState
                     child: Text(
                       'Apply Filters',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: AppColors.onColoredBackground,
                         fontSize: 14.sp,
                         fontWeight: FontWeight.w700,
                       ),
@@ -621,7 +621,7 @@ class _InternalTransferHistoryScreenState
           data: Theme.of(context).copyWith(
             colorScheme: ColorScheme.light(
               primary: AppColors.primary,
-              onPrimary: Colors.white,
+              onPrimary: AppColors.onColoredBackground,
               onSurface: AppColors.textPrimary,
             ),
           ),

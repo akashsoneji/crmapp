@@ -75,10 +75,10 @@ class _WebViewScreenState extends State<WebViewScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title, style: const TextStyle(color: Colors.black)),
+        title: Text(widget.title, style: TextStyle(color: AppColors.textPrimary)),
         backgroundColor: AppColors.whiteColor,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black),
+        iconTheme: IconThemeData(color: AppColors.textPrimary),
       ),
       body: Stack(
         children: [

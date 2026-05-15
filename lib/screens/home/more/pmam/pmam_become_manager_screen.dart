@@ -85,7 +85,10 @@ class _PmamBecomeManagerScreenState extends State<PmamBecomeManagerScreen> {
         backgroundColor: AppColors.tradeBackgroundCenterColor,
         elevation: 0,
         leading: IconButton(
-          icon: SvgPicture.asset('assets/svg/trade/arro_back.svg'),
+          icon: SvgPicture.asset(
+            'assets/svg/trade/arro_back.svg',
+            colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn),
+          ),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text('Become a Manager', style: AppTextStyles.heading),
@@ -283,7 +286,7 @@ class _StepCard extends StatelessWidget {
       padding: EdgeInsets.all(12.w),
       decoration: BoxDecoration(
         border: Border.all(
-          color: done ? AppColors.primary : const Color(0xFFE0E0E0),
+          color: done ? AppColors.primary : AppColors.neutralTrack,
           width: 1.2,
         ),
         borderRadius: BorderRadius.circular(12.r),
@@ -300,7 +303,7 @@ class _StepCard extends StatelessWidget {
                 width: 24.w,
                 height: 24.w,
                 decoration: BoxDecoration(
-                  color: done ? AppColors.primary : const Color(0xFFD0D0D0),
+                  color: done ? AppColors.primary : AppColors.neutralTrackMuted,
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -326,7 +329,7 @@ class _StepCard extends StatelessWidget {
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
                 decoration: BoxDecoration(
-                  color: done ? AppColors.primary : const Color(0xFFBDBDBD),
+                  color: done ? AppColors.primary : AppColors.neutralTrackSoft,
                   borderRadius: BorderRadius.circular(6.r),
                 ),
                 child: Text(

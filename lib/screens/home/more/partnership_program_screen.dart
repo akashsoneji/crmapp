@@ -38,7 +38,10 @@ class _PartnershipProgramScreenState extends State<PartnershipProgramScreen> {
           style: AppTextStyles.screenTitle,
         ),
         leading: IconButton(
-          icon: SvgPicture.asset("assets/svg/trade/arro_back.svg"),
+          icon: SvgPicture.asset(
+            "assets/svg/trade/arro_back.svg",
+            colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn),
+          ),
           onPressed: () => Navigator.of(context).pop(),
         ),
         centerTitle: true,
@@ -199,7 +202,7 @@ class _PartnershipProgramScreenState extends State<PartnershipProgramScreen> {
                             isCompleted
                                 ? AppColors.primary
                                 : isPending
-                                ? Colors.orange
+                                ? AppColors.warning
                                 : AppColors.textGrey,
                         shape: BoxShape.circle,
                         border: Border.all(color: AppColors.whiteColor, width: 2),

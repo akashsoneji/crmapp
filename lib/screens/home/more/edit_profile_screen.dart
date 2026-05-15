@@ -490,7 +490,7 @@ class _EditProfileState extends State<EditProfile> {
               style: AppTextStyles.screenTitle,
             ),
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.black),
+              icon: Icon(Icons.arrow_back, color: AppColors.textPrimary),
               onPressed: () => Navigator.of(context).pop(),
             ),
           ),
@@ -517,13 +517,13 @@ class _EditProfileState extends State<EditProfile> {
                         Icon(
                           Icons.error_outline,
                           size: 48.h,
-                          color: AppColors.red,
+                          color: AppColors.error,
                         ),
                         SizedBox(height: 16.h),
                         Text(
                           controller.errorMessage.value,
                           style: AppTextStyles.subheading.copyWith(
-                            color: AppColors.red,
+                            color: AppColors.error,
                           ),
                           textAlign: TextAlign.center,
                         ),

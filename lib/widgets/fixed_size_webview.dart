@@ -76,13 +76,13 @@
 //                 child: Column(
 //                   mainAxisAlignment: MainAxisAlignment.center,
 //                   children: [
-//                     Icon(Icons.error_outline, size: 48.h, color: Colors.grey),
+//                     Icon(Icons.error_outline, size: 48.h, color: AppColors.textGrey),
 //                     SizedBox(height: 16.h),
 //                     Text(
 //                       'Failed to load chart',
 //                       style: TextStyle(
 //                         fontSize: 16.sp,
-//                         color: Colors.grey[600],
+//                         color: AppColors.textGrey,
 //                       ),
 //                     ),
 //                     SizedBox(height: 8.h),
@@ -193,13 +193,13 @@ class FallbackChartPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final paint =
         Paint()
-          ..color = Colors.grey[300]!
+          ..color = AppColors.textGrey!
           ..strokeWidth = 1.0
           ..style = PaintingStyle.stroke;
 
     final fillPaint =
         Paint()
-          ..color = Colors.grey[200]!.withOpacity(0.3)
+          ..color = AppColors.textGrey!.withOpacity(0.3)
           ..style = PaintingStyle.fill;
 
     // Draw grid lines
@@ -237,7 +237,7 @@ class FallbackChartPainter extends CustomPainter {
 
     final trendPaint =
         Paint()
-          ..color = Colors.blue[300]!.withOpacity(0.6)
+          ..color = AppColors.blue.withOpacity(0.6)
           ..strokeWidth = 2.0
           ..style = PaintingStyle.stroke;
 
@@ -904,7 +904,7 @@ class FixedSizeWebViewState extends State<FixedSizeWebView>
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Colors.grey[50]!, Colors.grey[100]!],
+          colors: [AppColors.textGrey!, AppColors.textGrey!],
         ),
       ),
       child: CustomPaint(
@@ -973,7 +973,7 @@ class FixedSizeWebViewState extends State<FixedSizeWebView>
                       decoration: BoxDecoration(
                         color: AppColors.whiteColor.withOpacity(0.9),
                         borderRadius: BorderRadius.circular(12.r),
-                        border: Border.all(color: Colors.grey.withOpacity(0.3)),
+                        border: Border.all(color: AppColors.textGrey.withValues(alpha: 0.3)),
                       ),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
@@ -981,7 +981,7 @@ class FixedSizeWebViewState extends State<FixedSizeWebView>
                           Icon(
                             Icons.error_outline,
                             size: 48.h,
-                            color: Colors.grey,
+                            color: AppColors.textGrey,
                           ),
                           SizedBox(height: 16.h),
                           Text(
@@ -990,7 +990,7 @@ class FixedSizeWebViewState extends State<FixedSizeWebView>
                                 : 'Chart loading failed',
                             style: TextStyle(
                               fontSize: 16.sp,
-                              color: Colors.grey[600],
+                              color: AppColors.textGrey,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -999,7 +999,7 @@ class FixedSizeWebViewState extends State<FixedSizeWebView>
                             'Check your internet connection',
                             style: TextStyle(
                               fontSize: 12.sp,
-                              color: Colors.grey[500],
+                              color: AppColors.textGrey,
                             ),
                           ),
                           if (_retryCount > 0) ...[
@@ -1008,7 +1008,7 @@ class FixedSizeWebViewState extends State<FixedSizeWebView>
                               'Attempt $_retryCount/$_maxRetries',
                               style: TextStyle(
                                 fontSize: 12.sp,
-                                color: Colors.grey[500],
+                                color: AppColors.textGrey,
                               ),
                             ),
                           ],
@@ -1037,7 +1037,7 @@ class FixedSizeWebViewState extends State<FixedSizeWebView>
                                   color:
                                       _retryCount < _maxRetries
                                           ? AppColors.whiteColor
-                                          : Colors.grey,
+                                          : AppColors.textGrey,
                                 ),
                               ),
                             ),

@@ -65,7 +65,10 @@ class KycVerificationScreen extends StatelessWidget {
             child: Row(
               children: [
                 IconButton(
-                  icon: SvgPicture.asset("assets/svg/trade/arro_back.svg"),
+                  icon: SvgPicture.asset(
+            "assets/svg/trade/arro_back.svg",
+            colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn),
+          ),
                   onPressed: () => Get.back(closeOverlays: true),
                 ),
 
@@ -433,13 +436,13 @@ class KycVerificationScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
               child: Column(
                 children: [
-                  const Text(
+                  Text(
                     'Choose\nDocument Type',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w700,
-                      color: Colors.black,
+                      color: AppColors.textPrimary,
                       height: 1.2,
                     ),
                   ),

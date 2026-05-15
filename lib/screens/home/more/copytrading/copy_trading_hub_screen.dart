@@ -54,21 +54,21 @@ class CopyTradingHubScreen extends StatelessWidget {
                   icon: Icons.access_time,
                   label: 'Pending Review',
                   subtitle: code.isEmpty ? null : 'Code: $code',
-                  trailing: _StatusPill(text: 'Pending', color: const Color(0xFFF59E0B)),
+                  trailing: _StatusPill(text: 'Pending', color: AppColors.warning),
                   onTap: () => Get.to(() => _PendingReviewScreen(masterCode: code)),
                 ),
               CopyTradingMasterApplicationStatus.approved => _HubMenuItem(
                   icon: Icons.verified,
                   label: 'Master Dashboard',
                   subtitle: code.isEmpty ? null : 'Code: $code',
-                  trailing: _StatusPill(text: 'Active', color: const Color(0xFF22C55E)),
+                  trailing: _StatusPill(text: 'Active', color: AppColors.green),
                   onTap: () => Get.to(() => MasterDashboardScreen(masterCode: code)),
                 ),
               CopyTradingMasterApplicationStatus.rejected => _HubMenuItem(
                   icon: Icons.error_outline,
                   label: 'Become a Master',
                   subtitle: 'Application rejected — apply again',
-                  trailing: _StatusPill(text: 'Rejected', color: const Color(0xFFEF4444)),
+                  trailing: _StatusPill(text: 'Rejected', color: AppColors.error),
                   onTap: () => Get.to(() => const _BecomeMasterScreen()),
                 ),
               CopyTradingMasterApplicationStatus.unknown => _HubMenuItem(
@@ -92,13 +92,13 @@ class CopyTradingHubScreen extends StatelessWidget {
                     margin: EdgeInsets.only(bottom: 12.h),
                     padding: EdgeInsets.all(12.r),
                     decoration: BoxDecoration(
-                      color: Colors.red.withOpacity(0.06),
+                      color: AppColors.error.withValues(alpha: 0.06),
                       borderRadius: BorderRadius.circular(12.r),
-                      border: Border.all(color: Colors.red.withOpacity(0.15)),
+                      border: Border.all(color: AppColors.error.withValues(alpha: 0.15)),
                     ),
                     child: Text(
                       controller.errorMessage.value,
-                      style: TextStyle(color: Colors.red.shade700, fontSize: 12.sp),
+                      style: TextStyle(color: AppColors.errorText, fontSize: 12.sp),
                     ),
                   ),
 
@@ -115,8 +115,8 @@ class CopyTradingHubScreen extends StatelessWidget {
                       label: status == CopyTradingMasterApplicationStatus.approved ? 'My Copies' : 'My Investments',
                       trailing:
                           hasSubs
-                              ? const _StatusPill(text: 'Active', color: Color(0xFF22C55E))
-                              : const _StatusPill(text: 'None', color: Color(0xFF94A3B8)),
+                              ? _StatusPill(text: 'Active', color: AppColors.green)
+                              : _StatusPill(text: 'None', color: AppColors.textGrey),
                       onTap: () {
                         if (status == CopyTradingMasterApplicationStatus.approved) {
                           Get.to(() => const MyCopiesScreen());
@@ -294,7 +294,7 @@ class _PendingReviewScreen extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.access_time, size: 42.r, color: const Color(0xFFF59E0B)),
+              Icon(Icons.access_time, size: 42.r, color: AppColors.warning),
               SizedBox(height: 10.h),
               Text(
                 'Your master application is under review.',
@@ -506,9 +506,9 @@ class _BecomeMasterScreenState extends State<_BecomeMasterScreen> {
                         : null,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
+                      foregroundColor: AppColors.onColoredBackground,
                       disabledBackgroundColor: AppColors.textGrey.withOpacity(0.35),
-                      disabledForegroundColor: Colors.white.withOpacity(0.85),
+                      disabledForegroundColor: AppColors.onColoredBackground.withOpacity(0.85),
                       padding: EdgeInsets.zero,
                       minimumSize: Size(double.infinity, 44.h),
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -518,7 +518,7 @@ class _BecomeMasterScreenState extends State<_BecomeMasterScreen> {
                         ? SizedBox(
                             width: 20.r,
                             height: 20.r,
-                            child: const CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            child: const CircularProgressIndicator(strokeWidth: 2, color: AppColors.onColoredBackground),
                           )
                         : Text('Apply', style: AppTextStyles.button),
                   ),

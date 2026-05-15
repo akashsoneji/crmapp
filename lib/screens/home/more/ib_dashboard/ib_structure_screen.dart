@@ -73,7 +73,7 @@ class _IBStructureScreenState extends State<IBStructureScreen> {
             onPressed: () => Get.back(result: true),
             child: Text(
               'Delete',
-              style: TextStyle(color: Colors.red),
+              style: TextStyle(color: AppColors.error),
             ),
           ),
         ],

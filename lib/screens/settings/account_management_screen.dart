@@ -163,15 +163,15 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
                               value: 'delete',
                               child: Row(
                                 children: [
-                                  const Icon(
+                                  Icon(
                                     Icons.delete,
                                     size: 16,
-                                    color: Colors.red,
+                                    color: AppColors.error,
                                   ),
                                   const SizedBox(width: 8),
                                   const Text(
                                     'Delete',
-                                    style: TextStyle(color: Colors.red),
+                                    style: TextStyle(color: AppColors.error),
                                   ),
                                 ],
                               ),
@@ -220,7 +220,7 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
               Get.back(closeOverlays: true);
               accountController.deleteAccount(account.id);
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
             child: Text(
               languageService.tr('account_management_delete'),
               style: TextStyle(color: AppColors.whiteColor),

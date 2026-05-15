@@ -81,7 +81,7 @@ class TraderCard extends StatelessWidget {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.amber,
+                      color: AppColors.accentStatic,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(

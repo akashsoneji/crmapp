@@ -93,7 +93,10 @@ class _PmamCreatePlanScreenState extends State<PmamCreatePlanScreen> {
         elevation: 0,
         leading: IconButton(
           onPressed: () => Get.back(),
-          icon: SvgPicture.asset('assets/svg/trade/arro_back.svg'),
+          icon: SvgPicture.asset(
+            'assets/svg/trade/arro_back.svg',
+            colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn),
+          ),
         ),
 
         // leading: GestureDetector(
@@ -177,7 +180,7 @@ class _PmamCreatePlanScreenState extends State<PmamCreatePlanScreen> {
                             vertical: 4.h,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.green.withOpacity(0.15),
+                            color: AppColors.green.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(6.r),
                           ),
                           child: Text(
@@ -435,7 +438,7 @@ class _FormLabel extends StatelessWidget {
                 ),
               ),
             if (required)
-              TextSpan(text: ' *', style: TextStyle(color: AppColors.red)),
+              TextSpan(text: ' *', style: TextStyle(color: AppColors.error)),
           ],
         ),
       ),
@@ -483,7 +486,7 @@ class _StyledTextField extends StatelessWidget {
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10.r),
-          borderSide: BorderSide(color: AppColors.red),
+          borderSide: BorderSide(color: AppColors.error),
         ),
       ),
     );

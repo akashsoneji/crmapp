@@ -191,7 +191,7 @@ class _MasterCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final gain = item.totalGain.toStringAsFixed(2);
-    final gainColor = item.totalGain >= 0 ? AppColors.green : AppColors.red;
+    final gainColor = item.totalGain >= 0 ? AppColors.green : AppColors.error;
 
     return InkWell(
       onTap: onTap,
@@ -257,16 +257,16 @@ class _MasterCard extends StatelessWidget {
                   Container(
                     padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF22C55E).withOpacity(0.12),
+                      color: AppColors.green.withOpacity(0.12),
                       borderRadius: BorderRadius.circular(999),
-                      border: Border.all(color: const Color(0xFF22C55E).withOpacity(0.25)),
+                      border: Border.all(color: AppColors.green.withOpacity(0.25)),
                     ),
                     child: Text(
                       'Enrolled',
                       style: TextStyle(
                         fontSize: 11.sp,
                         fontWeight: FontWeight.w600,
-                        color: const Color(0xFF22C55E),
+                        color: AppColors.green,
                       ),
                     ),
                   ),
@@ -441,7 +441,7 @@ class _ErrorState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.error_outline, size: 40.r, color: AppColors.red),
+            Icon(Icons.error_outline, size: 40.r, color: AppColors.error),
             SizedBox(height: 10.h),
             Text(message, textAlign: TextAlign.center, style: TextStyle(color: AppColors.textGrey)),
             SizedBox(height: 12.h),

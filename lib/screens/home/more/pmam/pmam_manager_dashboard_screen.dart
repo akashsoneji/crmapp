@@ -376,7 +376,7 @@ class _DashboardStatCard extends StatelessWidget {
       if (positive == true)
         mainColor = AppColors.green;
       else if (positive == false)
-        mainColor = AppColors.red;
+        mainColor = AppColors.error;
     }
 
     return Container(
@@ -543,7 +543,7 @@ class _PlanCard extends StatelessWidget {
       case 'approved':
         return AppColors.green;
       case 'pending_admin':
-        return const Color(0xFFF59E0B);
+        return AppColors.warning;
       case 'inactive':
         return AppColors.textGrey;
       default:
@@ -653,7 +653,7 @@ class _PlanCard extends StatelessWidget {
                   child: OutlinedButton(
                     onPressed: onInactivate,
                     style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: AppColors.red.withOpacity(0.5)),
+                      side: BorderSide(color: AppColors.error.withValues(alpha: 0.5)),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8.r),
                       ),
@@ -662,7 +662,7 @@ class _PlanCard extends StatelessWidget {
                     child: Text(
                       'Inactivate',
                       style: TextStyle(
-                        color: AppColors.red,
+                        color: AppColors.error,
                         fontSize: 13.sp,
                         fontWeight: FontWeight.w600,
                       ),
@@ -751,7 +751,7 @@ class _EmptyState extends StatelessWidget {
       padding: EdgeInsets.symmetric(vertical: 40.h),
       child: Column(
         children: [
-          Icon(icon, size: 48.sp, color: AppColors.grey),
+          Icon(icon, size: 48.sp, color: AppColors.textGrey),
           SizedBox(height: 12.h),
           Text(
             message,

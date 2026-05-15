@@ -90,7 +90,7 @@ class AccountCreatedScreen extends StatelessWidget {
       future: SvgColorHelper.loadSvgWithTwoColors(
         assetPath: 'assets/svg/welcom_withstr_icon.svg',
         targetColor1: AppColors.primary,
-        targetColor2: Colors.black,
+        targetColor2: AppColors.textPrimary,
         colorToReplace1: '#5F259E',
         colorToReplace2: '#3D126C',
 

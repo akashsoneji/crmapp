@@ -160,7 +160,7 @@ class KycDocsScreen extends StatelessWidget {
           backgroundColor: AppColors.whiteColor,
           title: Text(Get.find<LanguageService>().tr('kyc_upload_documents')),
           leading: IconButton(
-            icon: Icon(Icons.arrow_back),
+            icon: Icon(Icons.arrow_back, color: AppColors.textPrimary),
             onPressed: () => Get.back(closeOverlays: true),
           ),
         ),
@@ -168,7 +168,7 @@ class KycDocsScreen extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.error_outline, size: 64, color: Colors.red),
+              Icon(Icons.error_outline, size: 64, color: AppColors.error),
               SizedBox(height: 16),
               Text(
                 Get.find<LanguageService>().tr('kyc_error_loading'),
@@ -210,13 +210,13 @@ class KycDocsScreen extends StatelessWidget {
             decoration: BoxDecoration(
               color:
                   isSelected
-                      ? Colors.green.withAlpha(30)
+                      ? AppColors.green.withAlpha(30)
                       : (required || isActive)
                       ? AppColors.primary.withAlpha(30)
                       : AppColors.whiteColor,
               borderRadius: BorderRadius.circular(12),
               border:
-                  isSelected ? Border.all(color: Colors.green, width: 2) : null,
+                  isSelected ? Border.all(color: AppColors.green, width: 2) : null,
             ),
             child: Stack(
               children: [
@@ -276,7 +276,7 @@ class KycDocsScreen extends StatelessWidget {
                                 fontSize: 12.sp,
                                 fontWeight: FontWeight.w500,
                                 color:
-                                    isSelected ? Colors.green : AppColors.textPrimary,
+                                    isSelected ? AppColors.green : AppColors.textPrimary,
                               ),
                               textAlign: TextAlign.center,
                             ),
@@ -307,7 +307,7 @@ class KycDocsScreen extends StatelessWidget {
                     child: Container(
                       padding: EdgeInsets.all(4),
                       decoration: BoxDecoration(
-                        color: Colors.green,
+                        color: AppColors.green,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(Icons.check, color: AppColors.whiteColor, size: 16),
@@ -334,11 +334,11 @@ class KycDocsScreen extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.error_outline, color: Colors.red, size: 32),
+                Icon(Icons.error_outline, color: AppColors.error, size: 32),
                 SizedBox(height: 8),
                 Text(
                   'Error',
-                  style: TextStyle(color: Colors.red, fontSize: 12),
+                  style: TextStyle(color: AppColors.error, fontSize: 12),
                 ),
               ],
             ),
@@ -400,15 +400,15 @@ class KycDocsScreen extends StatelessWidget {
     String text;
     switch (status) {
       case 'approved':
-        bg = Colors.green;
+        bg = AppColors.green;
         text = 'Approved';
         break;
       case 'rejected':
-        bg = Colors.red;
+        bg = AppColors.error;
         text = 'Rejected - re-upload';
         break;
       default:
-        bg = Colors.orange;
+        bg = AppColors.warning;
         text = 'Under review';
     }
 

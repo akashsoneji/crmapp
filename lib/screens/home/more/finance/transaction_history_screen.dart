@@ -190,7 +190,10 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
           leading: Padding(
             padding: EdgeInsets.only(left: 0.w),
             child: IconButton(
-              icon: SvgPicture.asset("assets/svg/trade/arro_back.svg"),
+              icon: SvgPicture.asset(
+            "assets/svg/trade/arro_back.svg",
+            colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn),
+          ),
               onPressed: () {
                 final fromTab =
                     Get.arguments != null && Get.arguments['from'] != null
@@ -551,7 +554,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   Widget _buildTransactionCard(Data transaction) {
     final bool isDeposit = (transaction.transactionType?.toLowerCase() ?? '')
         .contains('deposit');
-    final Color amountColor = isDeposit ? Colors.green : Colors.red;
+    final Color amountColor = isDeposit ? AppColors.green : AppColors.error;
     final String amountPrefix = isDeposit ? '' : '-';
     final String statusText = (transaction.status ?? '').trim().toLowerCase();
     final bool isApproved = [
@@ -561,9 +564,9 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     ].contains(statusText);
 
     Color _statusColor() {
-      if (isApproved) return Colors.green;
-      if (statusText == 'rejected' || statusText == 'failed') return Colors.red;
-      return Colors.orange;
+      if (isApproved) return AppColors.green;
+      if (statusText == 'rejected' || statusText == 'failed') return AppColors.error;
+      return AppColors.warning;
     }
 
     return Container(
@@ -573,13 +576,13 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: AppColors.textPrimary.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
         ],
         border: Border.all(
-          color: isApproved ? Colors.green : Colors.red,
+          color: isApproved ? AppColors.green : AppColors.error,
           width: 1.5,
         ),
       ),
@@ -600,8 +603,8 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                     decoration: BoxDecoration(
                       color:
                           isDeposit
-                              ? Colors.green.withOpacity(0.1)
-                              : Colors.red.withOpacity(0.1),
+                              ? AppColors.green.withValues(alpha: 0.1)
+                              : AppColors.error.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: SvgPicture.asset(
@@ -611,7 +614,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                       width: 20,
                       height: 20,
                       colorFilter: ColorFilter.mode(
-                        isDeposit ? Colors.green : Colors.red,
+                        isDeposit ? AppColors.green : AppColors.error,
                         BlendMode.srcIn,
                       ),
                     ),
@@ -688,9 +691,9 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                           (transaction.paymentMethod ??
                               transaction.transactionType) ??
                           '',
-                      border: Colors.blueGrey.shade300,
-                      bg: Colors.blueGrey.withOpacity(0.06),
-                      fg: Colors.blueGrey.shade700,
+                      border: AppColors.border,
+                      bg: AppColors.textGrey.withValues(alpha: 0.06),
+                      fg: AppColors.textGrey,
                     ),
                   ],
 
@@ -699,9 +702,9 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                     _buildChip(
                       text:
                           '${_formatType(transaction.type)}: ${transaction.mt5AccountId}',
-                      border: Colors.indigo.shade300,
-                      bg: Colors.indigo.withOpacity(0.06),
-                      fg: Colors.indigo.shade700,
+                      border: AppColors.border,
+                      bg: AppColors.textGrey.withValues(alpha: 0.06),
+                      fg: AppColors.textGrey,
                     ),
                   ],
 

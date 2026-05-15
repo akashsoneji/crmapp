@@ -864,7 +864,10 @@ class ScratchCardListScreen extends StatelessWidget {
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: SvgPicture.asset("assets/svg/trade/arro_back.svg"),
+          icon: SvgPicture.asset(
+            "assets/svg/trade/arro_back.svg",
+            colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn),
+          ),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
@@ -872,13 +875,13 @@ class ScratchCardListScreen extends StatelessWidget {
           style: TextStyle(
             fontSize: 18.sp,
             fontWeight: FontWeight.w700,
-            color: Colors.black,
+            color: AppColors.textPrimary,
           ),
         ),
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.black),
+            icon: Icon(Icons.refresh, color: AppColors.textPrimary),
             onPressed: () => controller.fetchCards(showLoader: false),
             tooltip: 'Refresh',
           ),
@@ -991,7 +994,7 @@ class _ScratchCardsGridState extends State<_ScratchCardsGrid> {
                   style: TextStyle(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w700,
-                    color: Colors.black,
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 const Spacer(),
@@ -1550,7 +1553,7 @@ class _ScratchLotsProgressSection extends StatelessWidget {
                       height: 42,
                       backgroundColor:
                           canConvert ? AppColors.primary : AppColors.border,
-                      foregroundColor: Colors.white,
+                      foregroundColor: AppColors.onColoredBackground,
                       isLoading: controller.isConverting.value,
                       onPressed:
                           canConvert
@@ -1873,7 +1876,7 @@ class _ScratchHistoryListState extends State<_ScratchHistoryList> {
                   style: TextStyle(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w700,
-                    color: Colors.black,
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 const Spacer(),
@@ -1945,7 +1948,7 @@ class _ScratchHistoryListState extends State<_ScratchHistoryList> {
                               style: TextStyle(
                                 fontSize: 13.sp,
                                 fontWeight: FontWeight.w700,
-                                color: Colors.black,
+                                color: AppColors.textPrimary,
                               ),
                             ),
                             SizedBox(height: 2.h),
@@ -2381,14 +2384,14 @@ class _NextCardCountdownBannerState extends State<_NextCardCountdownBanner> {
           children: [
             Row(
               children: [
-                Icon(Icons.schedule, color: Colors.orange.shade700, size: 18.r),
+                Icon(Icons.schedule, color: AppColors.warningText, size: 18.r),
                 SizedBox(width: 8.w),
                 Expanded(
                   child: Text(
                     'Next card available at',
                     style: TextStyle(
                       fontSize: 12.sp,
-                      color: Colors.orange.shade800,
+                      color: AppColors.warningText,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -2414,7 +2417,7 @@ class _NextCardCountdownBannerState extends State<_NextCardCountdownBanner> {
                     vertical: 4.h,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.orange.shade700,
+                    color: AppColors.warningText,
                     borderRadius: BorderRadius.circular(8.r),
                   ),
                   child: Text(
@@ -2436,7 +2439,7 @@ class _NextCardCountdownBannerState extends State<_NextCardCountdownBanner> {
                       Container(
                         height: 6.h,
                         decoration: BoxDecoration(
-                          color: Colors.yellow.shade200,
+                          color: AppColors.accentYellow,
                           borderRadius: BorderRadius.circular(3.r),
                         ),
                         child: FractionallySizedBox(
@@ -2444,7 +2447,7 @@ class _NextCardCountdownBannerState extends State<_NextCardCountdownBanner> {
                           widthFactor: progress,
                           child: Container(
                             decoration: BoxDecoration(
-                              color: Colors.yellow.shade700,
+                              color: AppColors.warningText,
                               borderRadius: BorderRadius.circular(3.r),
                             ),
                           ),
@@ -2455,7 +2458,7 @@ class _NextCardCountdownBannerState extends State<_NextCardCountdownBanner> {
                         'New card arriving...',
                         style: TextStyle(
                           fontSize: 10.sp,
-                          color: Colors.orange.shade600,
+                          color: AppColors.warningText,
                         ),
                       ),
                     ],
@@ -2557,7 +2560,7 @@ class _LockedScratchCardGridItemState
         //       backgroundColor: AppColors.tradeBackgroundCenterColor,
         //       title: Row(
         //         children: [
-        //           Icon(Icons.lock_clock, color: Colors.orange.shade700, size: 22.r),
+        //           Icon(Icons.lock_clock, color: AppColors.warningText, size: 22.r),
         //           SizedBox(width: 8.w),
         //           Text(
         //             'Card Locked',
@@ -2584,20 +2587,20 @@ class _LockedScratchCardGridItemState
         //           Container(
         //             padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
         //             decoration: BoxDecoration(
-        //               color: Colors.orange.shade50,
+        //               color: AppColors.warning.shade50,
         //               borderRadius: BorderRadius.circular(10.r),
-        //               border: Border.all(color: Colors.orange.shade200),
+        //               border: Border.all(color: AppColors.warningBg),
         //             ),
         //             child: Row(
         //               children: [
-        //                 Icon(Icons.schedule, color: Colors.orange.shade700, size: 18.r),
+        //                 Icon(Icons.schedule, color: AppColors.warningText, size: 18.r),
         //                 SizedBox(width: 8.w),
         //                 Text(
         //                   widget.summary.nextCardLabel,
         //                   style: TextStyle(
         //                     fontSize: 15.sp,
         //                     fontWeight: FontWeight.w700,
-        //                     color: Colors.orange.shade800,
+        //                     color: AppColors.warningText,
         //                   ),
         //                 ),
         //               ],
@@ -2839,7 +2842,10 @@ class ScratchCardDetailScreen extends StatelessWidget {
           ),
         ),
         leading: IconButton(
-          icon: SvgPicture.asset("assets/svg/trade/arro_back.svg"),
+          icon: SvgPicture.asset(
+            "assets/svg/trade/arro_back.svg",
+            colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn),
+          ),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
@@ -3313,7 +3319,7 @@ class _RewardContent extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 40.sp,
                     fontWeight: FontWeight.w600,
-                    color: Colors.yellow.shade300,
+                    color: AppColors.accentYellow,
                     shadows: [
                       Shadow(
                         blurRadius: 12,
@@ -3408,7 +3414,7 @@ class _RevealedCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 40.sp,
                         fontWeight: FontWeight.w600,
-                        color: Colors.yellow.shade300,
+                        color: AppColors.accentYellow,
                         shadows: [
                           Shadow(
                             blurRadius: 12,
@@ -3597,7 +3603,7 @@ class _CreditStatusBadge extends StatelessWidget {
       return Container(
         padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
         decoration: BoxDecoration(
-          color: Colors.red.shade400.withOpacity(0.25),
+          color: AppColors.error.withValues(alpha: 0.25),
           borderRadius: BorderRadius.circular(10.r),
         ),
         child: Row(
@@ -3605,7 +3611,7 @@ class _CreditStatusBadge extends StatelessWidget {
           children: [
             Icon(
               Icons.warning_amber,
-              color: Colors.orange.shade200,
+              color: AppColors.warningBg,
               size: 16.r,
             ),
             SizedBox(width: 6.w),
@@ -3614,7 +3620,7 @@ class _CreditStatusBadge extends StatelessWidget {
                 'Credit failed: ${reveal.creditError.isNotEmpty ? reveal.creditError : 'Please contact support'}',
                 style: TextStyle(
                   fontSize: 11.sp,
-                  color: Colors.orange.shade200,
+                  color: AppColors.warningBg,
                 ),
               ),
             ),
@@ -3898,12 +3904,12 @@ class _CreateScratchAccountDialogState
               SizedBox(height: 10.h),
               Row(
                 children: [
-                  Icon(Icons.error_outline, color: Colors.red, size: 14.r),
+                  Icon(Icons.error_outline, color: AppColors.error, size: 14.r),
                   SizedBox(width: 6.w),
                   Expanded(
                     child: Text(
                       _error!,
-                      style: TextStyle(fontSize: 12.sp, color: Colors.red),
+                      style: TextStyle(fontSize: 12.sp, color: AppColors.error),
                     ),
                   ),
                 ],

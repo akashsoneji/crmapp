@@ -25,7 +25,10 @@ class CloseOrderScreen extends StatelessWidget {
         elevation: 0,
         leading: IconButton(
           onPressed: () => Get.back(closeOverlays: true),
-          icon: SvgPicture.asset('assets/svg/trade/arro_back.svg'),
+          icon: SvgPicture.asset(
+            'assets/svg/trade/arro_back.svg',
+            colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn),
+          ),
         ),
         title: Text(
           languageService.tr('order_history_close_order'),
@@ -245,7 +248,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
         shadowColor: Colors.transparent,
         leading: IconButton(
           onPressed: () => Get.back(closeOverlays: true),
-          icon: SvgPicture.asset('assets/svg/trade/arro_back.svg'),
+          icon: SvgPicture.asset(
+            'assets/svg/trade/arro_back.svg',
+            colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn),
+          ),
         ),
         title: Text(
           languageService.tr('order_history_history'),

@@ -94,7 +94,7 @@ class TenaxBrokerSelectionController extends GetxController {
         'Error',
         'Unable to load broker information. Please try again.',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red.withValues(alpha: 0.85),
+        backgroundColor: AppColors.error.withValues(alpha: 0.85),
         colorText: AppColors.whiteColor,
       );
     } finally {

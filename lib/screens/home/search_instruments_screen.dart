@@ -89,7 +89,7 @@ class _SearchInstrumentsScreenState extends State<SearchInstrumentsScreen> {
                 child: Icon(
                   Icons.arrow_back,
                   size: 24.h,
-                  color: AppColors.textGrey,
+                  color: AppColors.textPrimary,
                 ),
               ),
               SizedBox(width: 12.w),
