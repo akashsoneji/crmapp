@@ -275,7 +275,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
                       decoration: BoxDecoration(
                         color:
                             isSelected
-                                ? AppColors.primary
+                                ? AppColors.selectedChipBackground
                                 : AppColors.tradeBackgroundCenterColor,
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
@@ -292,7 +292,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
                           height: 22 / 15,
                           color:
                               isSelected
-                                  ? AppColors.whiteColor
+                                  ? AppColors.selectedChipForeground
                                   : AppColors.primary,
                           fontWeight:
                               isSelected ? FontWeight.w600 : FontWeight.w400,
@@ -538,7 +538,15 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
           alignment: Alignment.centerRight,
           padding: EdgeInsets.symmetric(horizontal: 20.w),
           color: AppColors.red.withOpacity(0.8),
-          child: Icon(Icons.delete_outline, color: AppColors.whiteColor, size: 28.h),
+          child: SvgPicture.asset(
+            'assets/svg/delete.svg',
+            width: 28.w,
+            height: 28.h,
+            colorFilter: ColorFilter.mode(
+              AppColors.onColoredBackground,
+              BlendMode.srcIn,
+            ),
+          ),
         ),
         onDismissed: (direction) {
           // Remove from local list immediately to satisfy Dismissible requirements
@@ -652,7 +660,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
                 width: 40.w,
                 height: 4.h,
                 decoration: BoxDecoration(
-                  color: AppColors.grey,
+                  color: AppColors.sheetHandle,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -696,7 +704,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
                               Navigator.pop(context);
                             },
                           ),
-                          Divider(color: AppColors.grey, height: 1.h),
+                          Divider(color: AppColors.border, height: 1.h),
                         ],
                       );
                     }).toList(),

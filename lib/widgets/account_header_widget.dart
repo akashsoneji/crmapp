@@ -63,6 +63,10 @@ class AccountHeaderWidget extends StatelessWidget {
                   "assets/svg/menu.svg",
                   height: 24.h,
                   width: 24.w,
+                  colorFilter: ColorFilter.mode(
+                    AppColors.textPrimary,
+                    BlendMode.srcIn,
+                  ),
                 ),
               ),
               SizedBox(width: 6.w),
@@ -276,12 +280,12 @@ class AccountHeaderWidget extends StatelessWidget {
                   width: 32.w,
                   height: 32.h,
                   decoration: BoxDecoration(
-                    color: AppColors.primary,
+                    color: AppColors.brandPrimary,
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     Icons.add,
-                    color: Colors.white,
+                    color: AppColors.onColoredBackground,
                     size: 20.h,
                   ),
                 ),
@@ -294,14 +298,17 @@ class AccountHeaderWidget extends StatelessWidget {
   }
 
   // ✅ FIX: Updated to use primary account (MT5Account) instead of AccountController
+  // Uses brandPrimary so demo/live badges stay visible in dark mode (AppColors.primary is white).
   Color _getAccountTypeColor(MT5Account? primaryAccount) {
     if (primaryAccount != null) {
       final accountType = primaryAccount.accountType;
       return accountType.toLowerCase() == 'demo'
-          ? AppColors.primary.withOpacity(0.2)
-          : AppColors.accent;
+          ? AppColors.brandPrimary.withValues(
+              alpha: AppColors.isDarkMode ? 0.28 : 0.2,
+            )
+          : AppColors.brandPrimary;
     }
-    return AppColors.accent;
+    return AppColors.brandPrimary;
   }
 
   String _getAccountTypeText(MT5Account? primaryAccount) {
@@ -323,10 +330,10 @@ class AccountHeaderWidget extends StatelessWidget {
   Color _getAccountTypeTextColor(MT5Account? primaryAccount) {
     if (primaryAccount != null) {
       return primaryAccount.accountType.toLowerCase() == 'demo'
-          ? AppColors.primary
-          : AppColors.whiteColor;
+          ? AppColors.brandPrimary
+          : AppColors.onColoredBackground;
     }
-    return AppColors.whiteColor;
+    return AppColors.onColoredBackground;
   }
 
   String _getAccountNumber(MT5Account? primaryAccount) {
@@ -373,7 +380,7 @@ class AccountHeaderWidget extends StatelessWidget {
             child: Container(
               height: dynamicHeight,
               decoration: BoxDecoration(
-                color: AppColors.whiteColor,
+                color: AppColors.bottomSheetSurface,
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(20.r),
                   topRight: Radius.circular(20.r),
@@ -388,7 +395,7 @@ class AccountHeaderWidget extends StatelessWidget {
                     width: 40.w,
                     height: 4.h,
                     decoration: BoxDecoration(
-                      color: AppColors.grey,
+                      color: AppColors.sheetHandle,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -430,16 +437,23 @@ class AccountHeaderWidget extends StatelessWidget {
                                     .activeMT5Account
                                     ?.metaAccountNumber ==
                                 account.metaAccountNumber;
+                            final isDemo =
+                                account.accountType.toLowerCase() == 'demo';
+                            final leadingBg =
+                                AppColors.accountSheetLeadingBackground(
+                                  isDemo: isDemo,
+                                );
+                            final leadingIconColor =
+                                AppColors.accountSheetLeadingIcon(
+                                  isDemo: isDemo,
+                                );
+
                             return Container(
                               child: ListTile(
                                 leading: Container(
                                   padding: EdgeInsets.all(8.w),
                                   decoration: BoxDecoration(
-                                    color:
-                                        account.accountType.toLowerCase() ==
-                                                'demo'
-                                            ? AppColors.primary.withOpacity(0.2)
-                                            : AppColors.primary,
+                                    color: leadingBg,
                                     borderRadius: BorderRadius.circular(8.r),
                                   ),
                                   child: SvgPicture.asset(
@@ -447,10 +461,7 @@ class AccountHeaderWidget extends StatelessWidget {
                                     height: 20.h,
                                     width: 20.h,
                                     colorFilter: ColorFilter.mode(
-                                      account.accountType.toLowerCase() ==
-                                              'demo'
-                                          ? AppColors.primary
-                                          : AppColors.whiteColor,
+                                      leadingIconColor,
                                       BlendMode.srcIn,
                                     ),
                                   ),
@@ -483,7 +494,7 @@ class AccountHeaderWidget extends StatelessWidget {
                                           style: AppTextStyles.label.copyWith(
                                             fontSize: 8.sp,
                                             fontWeight: FontWeight.w600,
-                                            color: AppColors.whiteColor,
+                                            color: AppColors.onColoredBackground,
                                           ),
                                         ),
                                       ),
@@ -539,11 +550,11 @@ class AccountHeaderWidget extends StatelessWidget {
                                       }
                                     }
                                   },
-                                  activeColor: AppColors.primary,
+                                  activeColor: AppColors.controlActive,
                                 ),
                                 tileColor:
                                     isActive
-                                        ? AppColors.primary.withOpacity(0.1)
+                                        ? AppColors.accountSheetSelectedTile
                                         : null,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8.r),

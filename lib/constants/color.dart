@@ -10,20 +10,65 @@ class AppColors {
   // Helper to check if dark mode (isDarkMode is now a getter, not RxBool)
   static bool get isDarkMode => _themeService?.isDarkMode ?? false;
 
+  /// Single literal white — only defined here; use semantic getters below in UI code.
+  static const Color fixedWhite = Color(0xFFFFFFFF);
+
   /// Flavor brand color — unchanged in dark mode (logos, splash glow).
   static Color get brandPrimary => FlavorConfig.instance.primaryColor;
 
   /// Primary accent for UI (icons, chips, nav). White in dark mode except goldenwolffx.
   static Color get primary {
     if (isDarkMode && !FlavorConfig.isGoldenwolffx()) {
-      return Colors.white;
+      return fixedWhite;
     }
     return brandPrimary;
   }
 
   /// Material dark theme primary — same rules as [primary] but stable when building ThemeData.
   static Color get darkThemePrimary =>
-      FlavorConfig.isGoldenwolffx() ? brandPrimary : Colors.white;
+      FlavorConfig.isGoldenwolffx() ? brandPrimary : fixedWhite;
+
+  /// Text/icon on brand, success, or other saturated backgrounds (ACTIVE badge, LIVE pill).
+  static const Color onColoredBackground = fixedWhite;
+
+  /// Label on selected filter/chip tabs.
+  static const Color selectedChipForeground = onColoredBackground;
+
+  /// Foreground on [darkThemePrimary] filled buttons (ThemeData / elevated buttons).
+  static Color get darkThemeOnPrimary =>
+      FlavorConfig.isGoldenwolffx() ? onColoredBackground : textPrimaryDark;
+
+  /// Radio / checkbox active tint — follows [primary] (white in dark, brand in light).
+  static Color get controlActive => isDarkMode ? primary : brandPrimary;
+
+  /// Bottom sheet drag handle.
+  static Color get sheetHandle =>
+      isDarkMode ? icongrey.withValues(alpha: 0.5) : grey;
+
+  /// Modal / dropdown bottom sheet surface.
+  static Color get bottomSheetSurface => card;
+
+  /// Selected filter/chip tab background — light gray in dark mode, brand in light.
+  static Color get selectedChipBackground =>
+      isDarkMode ? const Color(0xFF4F535D) : brandPrimary;
+
+  /// Account sheet: leading icon tile background.
+  static Color accountSheetLeadingBackground({required bool isDemo}) =>
+      isDarkMode
+          ? selectedChipBackground
+          : (isDemo
+              ? brandPrimary.withValues(alpha: 0.2)
+              : brandPrimary);
+
+  /// Account sheet: wallet icon on leading tile.
+  static Color accountSheetLeadingIcon({required bool isDemo}) =>
+      isDarkMode ? primary : (isDemo ? brandPrimary : onColoredBackground);
+
+  /// Account sheet: selected list row background.
+  static Color get accountSheetSelectedTile =>
+      isDarkMode
+          ? selectedChipBackground
+          : brandPrimary.withValues(alpha: 0.1);
 
   static Color get secondary => FlavorConfig.instance.secondaryColor;
   static Color get accent => FlavorConfig.instance.accentColor;
