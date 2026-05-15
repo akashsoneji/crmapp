@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:crm_app/constants/color.dart';
-import 'package:crm_app/flavor_config.dart';
 import 'package:crm_app/services/theme_service.dart';
 import 'package:crm_app/services/language_service.dart';
 
@@ -143,7 +142,7 @@ class _ThemeOption extends StatelessWidget {
               height: 40.w,
               decoration: BoxDecoration(
                 color: isSelected
-                    ? FlavorConfig.instance.primaryColor.withValues(alpha: 0.1)
+                    ? AppColors.primary.withValues(alpha: 0.1)
                     : AppColors.surface,
                 shape: BoxShape.circle,
               ),
@@ -152,7 +151,7 @@ class _ThemeOption extends StatelessWidget {
                   icon,
                   size: 20.sp,
                   color: isSelected
-                      ? FlavorConfig.instance.primaryColor
+                      ? AppColors.primary
                       : AppColors.textGrey,
                 ),
               ),
@@ -172,7 +171,7 @@ class _ThemeOption extends StatelessWidget {
               Icon(
                 Icons.check_circle_rounded,
                 size: 22.sp,
-                color: FlavorConfig.instance.primaryColor,
+                color: AppColors.primary,
               )
             else
               Icon(

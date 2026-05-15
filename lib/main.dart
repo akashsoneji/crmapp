@@ -277,13 +277,18 @@ ThemeData _buildLightTheme() {
 
 /// Build dark theme
 ThemeData _buildDarkTheme() {
+  final darkPrimary = AppColors.darkThemePrimary;
+  final darkOnPrimary = FlavorConfig.isGoldenwolffx()
+      ? Colors.white
+      : AppColors.textPrimaryDark;
+
   return ThemeData(
-    primaryColor: FlavorConfig.instance.primaryColor,
+    primaryColor: darkPrimary,
     colorScheme: ColorScheme.dark(
-      primary: FlavorConfig.instance.primaryColor,
+      primary: darkPrimary,
       secondary: FlavorConfig.instance.secondaryColor,
       surface: AppColors.surfaceDarkTheme,
-      onPrimary: AppColors.whiteColor,
+      onPrimary: darkOnPrimary,
       onSecondary: AppColors.whiteColor,
       onSurface: AppColors.whiteColor,
     ),
@@ -301,7 +306,7 @@ ThemeData _buildDarkTheme() {
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide(
-          color: FlavorConfig.instance.primaryColor,
+          color: darkPrimary,
           width: 2,
         ),
       ),
@@ -314,8 +319,8 @@ ThemeData _buildDarkTheme() {
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-        backgroundColor: FlavorConfig.instance.primaryColor,
-        foregroundColor: AppColors.whiteColor,
+        backgroundColor: darkPrimary,
+        foregroundColor: darkOnPrimary,
         minimumSize: Size(double.infinity, 40.h),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         elevation: 0,
@@ -347,7 +352,7 @@ ThemeData _buildDarkTheme() {
     ),
     bottomNavigationBarTheme: BottomNavigationBarThemeData(
       backgroundColor: AppColors.surfaceDarkTheme,
-      selectedItemColor: FlavorConfig.instance.primaryColor,
+      selectedItemColor: darkPrimary,
       unselectedItemColor: AppColors.textGreyDark,
       type: BottomNavigationBarType.fixed,
       elevation: 8,
@@ -375,6 +380,7 @@ class MyGetXApp extends StatelessWidget {
         return Obx(() {
           final languageService = Get.find<LanguageService>();
           final themeService = Get.find<ThemeService>();
+          final _ = themeService.currentMode.value;
           final isRTL = languageService.isRTL();
           // Access brandingUpdateIndex to trigger reactive rebuild when broker/branding changes
           // Strictly gated: only listen if multi-broker is enabled for Tenax flavor

@@ -4,7 +4,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 enum ThemeServiceMode { light, dark, system }
 
-class ThemeService extends GetxService {
+class ThemeService extends GetxService with WidgetsBindingObserver {
   static const FlutterSecureStorage _storage = FlutterSecureStorage();
   static const String _themeKey = 'theme_mode';
 
@@ -42,7 +42,21 @@ class ThemeService extends GetxService {
   @override
   void onInit() {
     super.onInit();
+    WidgetsBinding.instance.addObserver(this);
     _initialization = _initialize();
+  }
+
+  @override
+  void onClose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.onClose();
+  }
+
+  @override
+  void didChangePlatformBrightness() {
+    if (currentMode.value == ThemeServiceMode.system) {
+      Get.forceAppUpdate();
+    }
   }
 
   Future<void> _initialize() async {

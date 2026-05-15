@@ -9,8 +9,22 @@ class AppColors {
 
   // Helper to check if dark mode (isDarkMode is now a getter, not RxBool)
   static bool get isDarkMode => _themeService?.isDarkMode ?? false;
-  // Brand Colors - Now using flavor configuration
-  static Color get primary => FlavorConfig.instance.primaryColor;
+
+  /// Flavor brand color — unchanged in dark mode (logos, splash glow).
+  static Color get brandPrimary => FlavorConfig.instance.primaryColor;
+
+  /// Primary accent for UI (icons, chips, nav). White in dark mode except goldenwolffx.
+  static Color get primary {
+    if (isDarkMode && !FlavorConfig.isGoldenwolffx()) {
+      return Colors.white;
+    }
+    return brandPrimary;
+  }
+
+  /// Material dark theme primary — same rules as [primary] but stable when building ThemeData.
+  static Color get darkThemePrimary =>
+      FlavorConfig.isGoldenwolffx() ? brandPrimary : Colors.white;
+
   static Color get secondary => FlavorConfig.instance.secondaryColor;
   static Color get accent => FlavorConfig.instance.accentColor;
 
