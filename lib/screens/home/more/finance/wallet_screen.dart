@@ -53,16 +53,17 @@ class _WalletScreenState extends State<WalletScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.whiteColor,
+      backgroundColor: AppColors.background,
       resizeToAvoidBottomInset: false,
       appBar: AppBar(
-        backgroundColor: AppColors.whiteColor,
+        backgroundColor: AppColors.background,
         elevation: 0,
         leading: Padding(
           padding: EdgeInsets.only(left: 10.w),
           child: IconButton(
             icon: SvgPicture.asset(
               "assets/svg/trade/arro_back.svg",
+              color: AppColors.textPrimary,
               height: 24.h,
               width: 24.w,
             ),
@@ -161,7 +162,7 @@ class _WalletScreenState extends State<WalletScreen> {
                   controller.wallet.value?.walletId ?? '',
                   style: TextStyle(
                     fontSize: 16.sp,
-                    color: AppColors.icongrey,
+                    color: AppColors.textGrey,
                     fontWeight: FontWeight.w400,
                   ),
                 ),
@@ -192,7 +193,7 @@ class _WalletScreenState extends State<WalletScreen> {
                   '\$${controller.balance.value}',
                   style: TextStyle(
                     fontSize: 16.sp,
-                    color: AppColors.icongrey,
+                    color: AppColors.textPrimary,
                     fontWeight: FontWeight.w400,
                   ),
                 ),
@@ -211,7 +212,7 @@ class _WalletScreenState extends State<WalletScreen> {
   void _showAccountSelectionSheet() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: AppColors.cardBackground,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -221,7 +222,10 @@ class _WalletScreenState extends State<WalletScreen> {
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
-                child: Text(languageService.tr('common_no_accounts')),
+                child: Text(
+                  languageService.tr('common_no_accounts'),
+                  style: TextStyle(color: AppColors.textPrimary),
+                ),
               ),
             );
           }
@@ -234,9 +238,15 @@ class _WalletScreenState extends State<WalletScreen> {
               return ListTile(
                 title: Text(
                   "${account.metaAccountName} (${account.metaAccountNumber})",
-                  style: TextStyle(fontWeight: FontWeight.w500),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
-                subtitle: Text("\$ ${account.balance}"),
+                subtitle: Text(
+                  "\$ ${account.balance}",
+                  style: TextStyle(color: AppColors.textGrey),
+                ),
                 onTap: () {
                   controller.selectedFromAccount.value = account;
                   controller.transferFromAccount.value =
@@ -264,7 +274,7 @@ class _WalletScreenState extends State<WalletScreen> {
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: AppColors.cardBackground,
       isScrollControlled: true,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
