@@ -41,7 +41,7 @@ class TradingBottomNavigation extends StatelessWidget {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.15),
+                      color: AppColors.textPrimary.withValues(alpha: 0.15),
                       blurRadius: 16,
                       offset: const Offset(0, 8),
                     ),
@@ -118,7 +118,7 @@ class TradingBottomNavigation extends StatelessWidget {
               isSelected ? iconBold : icon,
               height: isSelected ? 22.h : 18.h,
               width: isSelected ? 22.w : 18.w,
-              color: isSelected ? AppColors.primary : AppColors.textGrey,
+              color: isSelected ? AppColors.primary : AppColors.textGreyLight,
             ),
             // if (isSelected) ...[
             SizedBox(height: 1.w),
@@ -126,7 +126,7 @@ class TradingBottomNavigation extends StatelessWidget {
               label,
               style: AppTextStyles.subheading.copyWith(
                 fontSize: 11.sp,
-                color: isSelected ? AppColors.primary : AppColors.textGrey,
+                color: isSelected ? AppColors.primary : AppColors.textGreyLight,
                 fontWeight: FontWeight.w600,
               ),
             ),

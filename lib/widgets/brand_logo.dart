@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'dart:io';
+import 'package:crm_app/constants/color.dart';
 
 class BrandLogo extends StatelessWidget {
   final String source;
@@ -39,7 +40,7 @@ class BrandLogo extends StatelessWidget {
             (context, error, stackTrace) => Icon(
               Icons.image_not_supported_outlined,
               size: height ?? width ?? 24,
-              color: Colors.grey,
+              color: AppColors.textGrey,
             ),
       );
     }
@@ -54,7 +55,7 @@ class BrandLogo extends StatelessWidget {
             (context, error, stackTrace) => Icon(
               Icons.image_not_supported_outlined,
               size: height ?? width ?? 24,
-              color: Colors.grey,
+              color: AppColors.textGrey,
             ),
       );
     }

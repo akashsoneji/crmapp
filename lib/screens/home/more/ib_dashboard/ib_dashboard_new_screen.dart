@@ -188,7 +188,7 @@ class _IbDashboardNewScreenState extends State<IbDashboardNewScreen> {
         borderRadius: BorderRadius.circular(12.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
+            color: AppColors.textPrimary.withValues(alpha: 0.1),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -241,7 +241,7 @@ class _IbDashboardNewScreenState extends State<IbDashboardNewScreen> {
                     onTap: () => _onShare(referenceLink),
                     child: Row(
                       children: [
-                        Icon(Icons.share, color: AppColors.red, size: 16),
+                        Icon(Icons.share, color: AppColors.error, size: 16),
                         // SvgPicture.asset(
                         //   "assets/svg/ib_dashboard/copy.svg",
                         //   height: 18,
@@ -252,7 +252,7 @@ class _IbDashboardNewScreenState extends State<IbDashboardNewScreen> {
                           style: TextStyle(
                             fontSize: 12.sp,
                             fontWeight: FontWeight.w400,
-                            color: AppColors.red,
+                            color: AppColors.error,
                             height: 1.4.h,
                           ),
                         ),
@@ -356,7 +356,7 @@ class _IbDashboardNewScreenState extends State<IbDashboardNewScreen> {
         borderRadius: BorderRadius.circular(12.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
+            color: AppColors.textPrimary.withValues(alpha: 0.1),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -499,7 +499,7 @@ class _IbDashboardNewScreenState extends State<IbDashboardNewScreen> {
           borderRadius: BorderRadius.circular(12.r),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
+              color: AppColors.textPrimary.withValues(alpha: 0.1),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -542,10 +542,10 @@ class _IbDashboardNewScreenState extends State<IbDashboardNewScreen> {
     //       color: AppColors.whiteColor,
     //       borderRadius: BorderRadius.circular(12.r),
     //       border:
-    //           isHighlighted ? Border.all(color: Colors.green, width: 2) : null,
+    //           isHighlighted ? Border.all(color: AppColors.green, width: 2) : null,
     //       boxShadow: [
     //         BoxShadow(
-    //           color: Colors.black.withValues(alpha: 0.1),
+    //           color: AppColors.textPrimary.withValues(alpha: 0.1),
     //           blurRadius: 8,
     //           offset: const Offset(0, 2),
     //         ),

@@ -24,7 +24,7 @@ class TenaxBrokerSelectionScreen
           leading:
               allowBack
                   ? IconButton(
-                    icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                    icon: Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textPrimary),
                     onPressed: () => Get.back(),
                   )
                   : null,

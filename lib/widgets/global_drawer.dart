@@ -121,8 +121,8 @@ class GlobalDrawer extends StatelessWidget {
                   _buildDrawerItem(
                     icon: Icons.logout,
                     title: languageService.tr('logout'),
-                    iconColor: Colors.red,
-                    textColor: Colors.red,
+                    iconColor: AppColors.error,
+                    textColor: AppColors.error,
                     onTap: () {
                       Get.back(closeOverlays: true);
                       _showLogoutDialog(authController, languageService);
@@ -175,7 +175,7 @@ class GlobalDrawer extends StatelessWidget {
               Get.back(closeOverlays: true);
               authController.logout();
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
             child: Text(
               languageService.tr('logout'),
               style:   TextStyle(color: AppColors.whiteColor),

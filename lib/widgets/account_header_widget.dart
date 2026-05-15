@@ -207,7 +207,7 @@ class AccountHeaderWidget extends StatelessWidget {
                             //             width: 8.w,
                             //             height: 8.h,
                             //             decoration: BoxDecoration(
-                            //               color: AppColors.red,
+                            //               color: AppColors.error,
                             //               shape: BoxShape.circle,
                             //             ),
                             //           ),

@@ -171,7 +171,10 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
         leading: Padding(
           padding: EdgeInsets.only(left: 10.w),
           child: IconButton(
-            icon: SvgPicture.asset("assets/svg/trade/arro_back.svg"),
+            icon: SvgPicture.asset(
+            "assets/svg/trade/arro_back.svg",
+            colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn),
+          ),
             onPressed: () => NavigationHelper.safeBack(context: context),
           ),
         ),
@@ -1091,19 +1094,19 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
         margin: EdgeInsets.only(bottom: 16.h),
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
         decoration: BoxDecoration(
-          color: Colors.red.withOpacity(0.1),
+          color: AppColors.error.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(8.r),
-          border: Border.all(color: Colors.red, width: 1),
+          border: Border.all(color: AppColors.error, width: 1),
         ),
         child: Row(
           children: [
-            Icon(Icons.error_outline, color: Colors.red, size: 20.w),
+            Icon(Icons.error_outline, color: AppColors.error, size: 20.w),
             SizedBox(width: 8.w),
             Expanded(
               child: Text(
                 _validationMessage.value,
                 style: TextStyle(
-                  color: Colors.red,
+                  color: AppColors.error,
                   fontSize: 14.sp,
                   fontWeight: FontWeight.w500,
                 ),

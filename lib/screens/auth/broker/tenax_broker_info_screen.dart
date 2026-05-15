@@ -21,16 +21,16 @@ class TenaxBrokerInfoScreen extends StatelessWidget {
         backgroundColor: AppColors.whiteColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: Color(0xFF21242C),
+            color: AppColors.textPrimary,
           ),
           onPressed: () => Get.back(),
         ),
         title: Text(
           'Broker Information',
           style: TextStyle(
-            color: const Color(0xFF21242C),
+            color: AppColors.textPrimary,
             fontSize: 17.sp,
             fontWeight: FontWeight.w700,
           ),
@@ -38,7 +38,7 @@ class TenaxBrokerInfoScreen extends StatelessWidget {
         centerTitle: true,
         bottom: PreferredSize(
           preferredSize: Size.fromHeight(1.h),
-          child: Divider(height: 1.h, color: const Color(0xFFE5E7EB)),
+          child: Divider(height: 1.h, color: AppColors.border),
         ),
       ),
       body: Column(
@@ -49,7 +49,7 @@ class TenaxBrokerInfoScreen extends StatelessWidget {
               separatorBuilder:
                   (_, __) => Divider(
                     height: 1.h,
-                    color: const Color(0xFFE5E7EB),
+                    color: AppColors.border,
                     indent: 20.w,
                     endIndent: 20.w,
                   ),
@@ -187,7 +187,7 @@ class TenaxBrokerInfoScreen extends StatelessWidget {
                   'To report a problem to the broker, you need to have a trading account with it.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: const Color(0xFF21242C),
+                    color: AppColors.textPrimary,
                     fontSize: 14.sp,
                     height: 1.5,
                   ),
@@ -245,7 +245,7 @@ class _InfoRow extends StatelessWidget {
           Text(
             value,
             style: TextStyle(
-              color: const Color(0xFF21242C),
+              color: AppColors.textPrimary,
               fontSize: 15.sp,
               fontWeight: FontWeight.w600,
               height: 1.4,
@@ -255,7 +255,7 @@ class _InfoRow extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              color: const Color(0xFF9CA3AF),
+              color: AppColors.textGrey,
               fontSize: 12.sp,
               fontWeight: FontWeight.w400,
             ),

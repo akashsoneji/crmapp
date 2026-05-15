@@ -76,7 +76,10 @@ class _PmamManagerPlanDetailScreenState
         elevation: 0,
         leading: IconButton(
           onPressed: () => Get.back(),
-          icon: SvgPicture.asset('assets/svg/trade/arro_back.svg'),
+          icon: SvgPicture.asset(
+            'assets/svg/trade/arro_back.svg',
+            colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn),
+          ),
         ),
         title: Obx(() {
           final planName =
@@ -922,7 +925,7 @@ class _AllocCardState extends State<_AllocCard> {
             widget.buildCardRow(
               'P&L',
               widget.fmtMoney(widget.pnl),
-              color: widget.pnl >= 0 ? AppColors.green : AppColors.red,
+              color: widget.pnl >= 0 ? AppColors.green : AppColors.error,
               isHighlighted: false,
             ),
             if (isExpanded) ...[
@@ -956,7 +959,7 @@ class _AllocCardState extends State<_AllocCard> {
                 (widget.alloc['status'] ?? '').toString().capitalizeFirst ?? '',
                 color:
                     widget.alloc['status'] == 'closed'
-                        ? AppColors.red
+                        ? AppColors.error
                         : AppColors.green,
                 isHighlighted: true,
               ),

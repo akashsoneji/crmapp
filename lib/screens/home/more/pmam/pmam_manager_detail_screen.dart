@@ -279,7 +279,7 @@ class _PmamManagerDetailScreenState extends State<PmamManagerDetailScreen> {
                                       color:
                                           isBalanceEnough
                                               ? AppColors.green
-                                              : AppColors.red,
+                                              : AppColors.error,
                                     ),
                                   ),
                                 ],
@@ -296,7 +296,7 @@ class _PmamManagerDetailScreenState extends State<PmamManagerDetailScreen> {
                           'Insufficient balance for this plan.',
                           style: TextStyle(
                             fontSize: 11.sp,
-                            color: AppColors.red,
+                            color: AppColors.error,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -379,7 +379,10 @@ class _PmamManagerDetailScreenState extends State<PmamManagerDetailScreen> {
         elevation: 0,
         leading: IconButton(
           onPressed: () => Get.back(),
-          icon: SvgPicture.asset('assets/svg/trade/arro_back.svg'),
+          icon: SvgPicture.asset(
+            'assets/svg/trade/arro_back.svg',
+            colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn),
+          ),
         ),
         title: Text('Manager Detail', style: AppTextStyles.heading),
         centerTitle: true,
@@ -505,7 +508,7 @@ class _PmamManagerDetailScreenState extends State<PmamManagerDetailScreen> {
                     label: 'GAIN',
                     value: '${gain >= 0 ? '+' : ''}${gain.toStringAsFixed(2)}%',
                     icon: Icons.trending_up_rounded,
-                    color: gain >= 0 ? AppColors.green : AppColors.red,
+                    color: gain >= 0 ? AppColors.green : AppColors.error,
                   ),
                   SizedBox(width: 8.w),
                   _DetailStatCard(

@@ -170,7 +170,7 @@ class _TradeHistoryCardState extends State<_TradeHistoryCard> {
                               color:
                                   data.type == 'BUY'
                                       ? AppColors.green
-                                      : Colors.red,
+                                      : AppColors.error,
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(

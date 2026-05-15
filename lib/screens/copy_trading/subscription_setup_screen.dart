@@ -81,7 +81,10 @@ class _SubscriptionSetupScreenState extends State<SubscriptionSetupScreen> {
         scrolledUnderElevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: SvgPicture.asset('assets/svg/trade/arro_back.svg'),
+          icon: SvgPicture.asset(
+            'assets/svg/trade/arro_back.svg',
+            colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn),
+          ),
           onPressed: () => Get.back(),
         ),
         title: Text(
@@ -290,7 +293,7 @@ class _SubscriptionSetupScreenState extends State<SubscriptionSetupScreen> {
                                 (v) => setState(() => _supportFundsEnabled = v),
                             activeThumbColor: AppColors.primary,
                             inactiveThumbColor: AppColors.whiteColor,
-                            inactiveTrackColor: const Color(0xffDCDCDC),
+                            inactiveTrackColor: AppColors.switchTrackOff,
                             overlayColor: MaterialStateProperty.all(
                               Colors.transparent,
                             ),
@@ -360,7 +363,7 @@ class _SubscriptionSetupScreenState extends State<SubscriptionSetupScreen> {
                         '39% of the required investment.',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.green,
+                          color: AppColors.green,
                           fontWeight: FontWeight.w500,
                         ),
                       ),

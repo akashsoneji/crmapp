@@ -53,13 +53,16 @@ class KycIntroScreen extends StatelessWidget {
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
         centerTitle: true,
-        shape: Border(bottom: BorderSide(color: AppColors.grey)),
+        shape: Border(bottom: BorderSide(color: AppColors.textGrey)),
         scrolledUnderElevation: 0.0,
         backgroundColor: AppColors.backgroundLight,
         leading: IconButton(
           color: AppColors.backgroundLight,
           onPressed: () => Get.back(closeOverlays: true),
-          icon: SvgPicture.asset("assets/svg/trade/arro_back.svg"),
+          icon: SvgPicture.asset(
+            "assets/svg/trade/arro_back.svg",
+            colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn),
+          ),
         ),
       ),
       body: SafeArea(
@@ -112,7 +115,7 @@ class KycIntroScreen extends StatelessWidget {
                           stageCompletion?.mobileVerified != null &&
                                   stageCompletion?.emailVerified != null &&
                                   stageCompletion?.personalDetails == true
-                              ? const Color(0xFFE8F5E8) // Light green
+                              ? AppColors.successBg
                               : AppColors.primary.withOpacity(
                                 0.1,
                               ), // Light purple
@@ -120,13 +123,13 @@ class KycIntroScreen extends StatelessWidget {
                           stageCompletion?.mobileVerified != null &&
                                   stageCompletion?.emailVerified != null &&
                                   stageCompletion?.personalDetails == true
-                              ? Colors.green
+                              ? AppColors.green
                               : AppColors.primary,
                       textColor:
                           stageCompletion?.mobileVerified != null &&
                                   stageCompletion?.emailVerified != null &&
                                   stageCompletion?.personalDetails == true
-                              ? Colors.green
+                              ? AppColors.green
                               : AppColors.primary,
                       features: [
                         'Deposit up to \$2000 within 14 days',
@@ -155,7 +158,7 @@ class KycIntroScreen extends StatelessWidget {
                       backgroundColor:
                           stageCompletion?.identityVerified == true &&
                                   stageCompletion?.addressProofVerified == true
-                              ? const Color(0xFFE8F5E8) // Light green
+                              ? AppColors.successBg
                               : (stageCompletion?.mobileVerified != null &&
                                   stageCompletion?.emailVerified != null &&
                                   stageCompletion?.personalDetails == true)
@@ -164,12 +167,12 @@ class KycIntroScreen extends StatelessWidget {
                       iconColor:
                           stageCompletion?.identityVerified == true &&
                                   stageCompletion?.addressProofVerified == true
-                              ? Colors.green
+                              ? AppColors.green
                               : AppColors.textGrey!,
                       textColor:
                           stageCompletion?.identityVerified == true &&
                                   stageCompletion?.addressProofVerified == true
-                              ? Colors.green
+                              ? AppColors.green
                               : (stageCompletion?.mobileVerified != null &&
                                   stageCompletion?.emailVerified != null &&
                                   stageCompletion?.personalDetails == true)
@@ -199,19 +202,19 @@ class KycIntroScreen extends StatelessWidget {
                               : 'Locked',
                       textColor:
                           stageCompletion?.addressProofVerified == true
-                              ? Colors.green
+                              ? AppColors.green
                               : stageCompletion?.identityVerified == true
                               ? AppColors.primary
                               : AppColors.textGrey!,
                       backgroundColor:
                           stageCompletion?.addressProofVerified == true
-                              ? const Color(0xFFE8F5E8) // Light green
+                              ? AppColors.successBg
                               : stageCompletion?.identityVerified == true
-                              ? const Color(0xFFF8F3FF) // Light purple
+                              ? AppColors.cardBackGround
                               : AppColors.whiteColor,
                       iconColor:
                           stageCompletion?.addressProofVerified == true
-                              ? Colors.green
+                              ? AppColors.green
                               : stageCompletion?.identityVerified == true
                               ? AppColors.primary
                               : AppColors.textGrey!,
@@ -320,7 +323,7 @@ class KycIntroScreen extends StatelessWidget {
           border:
               isActive
                   ? Border.all(color: AppColors.primary, width: 1)
-                  : Border.all(color: const Color(0xFFE3E7EF), width: 1),
+                  : Border.all(color: AppColors.border, width: 1),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,

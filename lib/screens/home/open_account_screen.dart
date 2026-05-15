@@ -37,12 +37,15 @@ class _OpenAccountScreenState extends State<OpenAccountScreen> {
         elevation: 0,
         leading: IconButton(
           onPressed: () => Get.back(closeOverlays: true),
-          icon: SvgPicture.asset('assets/svg/trade/arro_back.svg'),
+          icon: SvgPicture.asset(
+            'assets/svg/trade/arro_back.svg',
+            colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn),
+          ),
         ),
         title: Text(
           'Open Account',
           style: TextStyle(
-            color: Colors.black,
+            color: AppColors.textPrimary,
             fontSize: 18,
             fontWeight: FontWeight.w600,
           ),

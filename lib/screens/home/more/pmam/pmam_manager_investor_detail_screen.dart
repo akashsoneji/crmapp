@@ -203,9 +203,9 @@ class _PmamManagerInvestorDetailScreenState
 
   Widget _settlementCard(PmamDistribution d) {
     final net = d.netProfitCredited;
-    final netColor = net >= 0 ? AppColors.green : AppColors.red;
+    final netColor = net >= 0 ? AppColors.green : AppColors.error;
     final grossColor =
-        d.grossProfitShare >= 0 ? AppColors.green : AppColors.red;
+        d.grossProfitShare >= 0 ? AppColors.green : AppColors.error;
     return Container(
       decoration: _cardDecoration(),
       padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
@@ -417,7 +417,10 @@ class _PmamManagerInvestorDetailScreenState
         elevation: 0,
         leading: IconButton(
           onPressed: () => Get.back(),
-          icon: SvgPicture.asset('assets/svg/trade/arro_back.svg'),
+          icon: SvgPicture.asset(
+            'assets/svg/trade/arro_back.svg',
+            colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn),
+          ),
         ),
         title: Text(  'Investor: ${widget.investorName}', style: AppTextStyles.heading),
         centerTitle: true,
@@ -439,7 +442,7 @@ class _PmamManagerInvestorDetailScreenState
                           _error!,
                           style: TextStyle(
                             fontSize: 13.sp,
-                            color: AppColors.red,
+                            color: AppColors.error,
                             fontWeight: FontWeight.w600,
                           ),
                         ),

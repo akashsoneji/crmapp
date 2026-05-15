@@ -12,6 +12,7 @@ import 'package:crm_app/utils/app_logger.dart';
 import 'account_controller.dart';
 import 'package:crm_app/services/trading_websocket_service.dart';
 import 'package:crm_app/services/audio_service.dart';
+import 'package:crm_app/constants/color.dart';
 
 // Trade Position Model
 class TradePosition {
@@ -66,7 +67,7 @@ class TradePosition {
   // Getters for compatibility
   String get openPrice => entryPrice;
   Color get actionColor =>
-      action.toLowerCase() == 'buy' ? Colors.green : Colors.red;
+      action.toLowerCase() == 'buy' ? AppColors.green : AppColors.error;
 
   // ✅ OPTIMIZATION: copyWith for efficient in-place updates
   TradePosition copyWith({

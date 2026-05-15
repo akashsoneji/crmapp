@@ -449,7 +449,7 @@ class _EnhancedPendingOrderContentState
               child: ElevatedButton(
                 onPressed: _placeBuyOrder,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
+                  backgroundColor: AppColors.green,
                   padding: EdgeInsets.symmetric(vertical: 16.h),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8.r),
@@ -458,7 +458,7 @@ class _EnhancedPendingOrderContentState
                 child: Text(
                   'BUY',
                   style: TextStyle(
-                    color: AppColors.whiteColor,
+                    color: AppColors.onColoredBackground,
                     fontSize: 16.sp,
                     fontWeight: FontWeight.bold,
                   ),
@@ -472,7 +472,7 @@ class _EnhancedPendingOrderContentState
               child: ElevatedButton(
                 onPressed: _placeSellOrder,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
+                  backgroundColor: AppColors.error,
                   padding: EdgeInsets.symmetric(vertical: 16.h),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8.r),
@@ -481,7 +481,7 @@ class _EnhancedPendingOrderContentState
                 child: Text(
                   'SELL',
                   style: TextStyle(
-                    color: AppColors.whiteColor,
+                    color: AppColors.onColoredBackground,
                     fontSize: 16.sp,
                     fontWeight: FontWeight.bold,
                   ),

@@ -365,25 +365,25 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
             icon: Icons.people_outline,
             label: 'Total Clients',
             value: (stats.totalClients ?? 0).toString(),
-            color: Colors.blue,
+            color: AppColors.blue,
           ),
           _buildStatCard(
             icon: Icons.arrow_downward,
             label: 'Total Deposit',
             value: '\$${(stats.totalDeposited ?? 0).toStringAsFixed(2)}',
-            color: Colors.green,
+            color: AppColors.green,
           ),
           _buildStatCard(
             icon: Icons.arrow_upward,
             label: 'Total Withdraw',
             value: '\$${(stats.totalWithdrawal ?? 0).toStringAsFixed(2)}',
-            color: Colors.orange,
+            color: AppColors.warning,
           ),
           _buildStatCard(
             icon: Icons.account_balance_wallet,
             label: 'Available Rebate',
             value: '\$${stats.availableRebate ?? '0.00'}',
-            color: Colors.purple,
+            color: AppColors.quickActionPurple,
           ),
         ],
       ),
@@ -930,7 +930,7 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
                         child: Container(
                           padding: EdgeInsets.all(4.w),
                           decoration: BoxDecoration(
-                            color: Colors.amber,
+                            color: AppColors.accentStatic,
                             shape: BoxShape.circle,
                             border: Border.all(color: AppColors.whiteColor, width: 2),
                           ),
@@ -1091,8 +1091,8 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
                     decoration: BoxDecoration(
                       color:
                           isProfit
-                              ? Colors.green.withOpacity(0.1)
-                              : Colors.red.withOpacity(0.1),
+                              ? AppColors.green.withValues(alpha: 0.1)
+                              : AppColors.error.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
                     child: Center(
@@ -1101,7 +1101,7 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
                         style: TextStyle(
                           fontSize: 16.sp,
                           fontWeight: FontWeight.w700,
-                          color: isProfit ? Colors.green : Colors.red,
+                          color: isProfit ? AppColors.green : AppColors.error,
                         ),
                       ),
                     ),
@@ -1144,7 +1144,7 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
                         style: TextStyle(
                           fontSize: 16.sp,
                           fontWeight: FontWeight.w700,
-                          color: isProfit ? Colors.green : Colors.red,
+                          color: isProfit ? AppColors.green : AppColors.error,
                         ),
                       ),
                       SizedBox(height: 4.h),

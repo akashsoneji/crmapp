@@ -8,6 +8,8 @@ import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/trading_controller.dart';
 import 'package:crm_app/controllers/chart_socket_controller.dart';
 import 'package:crm_app/controllers/account_controller.dart';
+import 'package:crm_app/widgets/app_switch_tile.dart';
+import 'package:crm_app/widgets/app_svg_back_button.dart';
 import 'package:crm_app/widgets/chart_inapp_webview.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
 import 'package:crm_app/utils/precision_helper.dart';
@@ -537,14 +539,10 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
         elevation: 0,
         toolbarHeight: 72.h,
         centerTitle: false,
-        leading: IconButton(
+        leading: AppSvgBackButton(
           onPressed: () => Get.back(closeOverlays: true),
-          icon: SvgPicture.asset(
-            'assets/svg/trade/arro_back.svg',
-            width: 30.w,
-            height: 30.h,
-            color: AppColors.textPrimary
-          ),
+          iconWidth: 30.w,
+          iconHeight: 30.h,
         ),
         //we give extrawidth
         titleSpacing: 0,
@@ -725,45 +723,24 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
       height: showChart ? MediaQuery.of(context).size.height * 0.4 : 64.h,
       child: Column(
         children: [
-          // Chart Header with Toggle
-          Container(
+          Padding(
             padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Chart',
-                  style: AppTextStyles.label.copyWith(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                Row(
-                  children: [
-                    // Chart On/Off Toggle
-                    Transform.scale(
-                      scale: 0.9,
-                      child: Switch(
-                        value: showChart,
-                        onChanged: (value) {
-                          setState(() {
-                            showChart = value;
-                          });
-                        },
-                        activeColor: AppColors.primary,
-                        activeTrackColor: AppColors.primary.withOpacity(0.3),
-                        inactiveThumbColor: AppColors.whiteColor,
-                        inactiveTrackColor: AppColors.icongrey.withAlpha(55),
-                        trackOutlineColor: WidgetStateProperty.all(
-                          Colors.transparent,
-                        ),
-                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+              decoration: BoxDecoration(
+                color: AppColors.whiteColor,
+                borderRadius: BorderRadius.circular(8.r),
+                border: Border.all(color: AppColors.border),
+              ),
+              child: AppSwitchTile(
+                title: 'Chart',
+                value: showChart,
+                onChanged: (value) {
+                  setState(() {
+                    showChart = value;
+                  });
+                },
+              ),
             ),
           ),
           // Chart WebView (only when chart is enabled)
@@ -867,6 +844,6 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
         ? _datafeedSymbolForSelected
         : displaySymbol;
 
-    return '${FlavorConfig.instance.chartBaseUrl}/mobile-chart?symbol=$effectiveDatafeedSymbol&theme=light';
+    return '${FlavorConfig.instance.chartBaseUrl}/mobile-chart?symbol=$effectiveDatafeedSymbol&theme=${AppColors.chartTheme}';
   }
 }

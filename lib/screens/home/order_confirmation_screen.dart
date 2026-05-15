@@ -241,7 +241,7 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
                     child: Icon(
                       Icons.arrow_back,
                       size: 24.h,
-                      color: AppColors.textGrey,
+                      color: AppColors.textPrimary,
                     ),
                   ),
                   SizedBox(width: 12.w),
@@ -257,7 +257,7 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
                               style: TextStyle(
                                 fontSize: 18.sp,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.black,
+                                color: AppColors.textPrimary,
                               ),
                             ),
                             SizedBox(width: 4.w),
@@ -298,7 +298,7 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
                             child: CircularProgressIndicator(
                               strokeWidth: 3,
                               valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.blue,
+                                AppColors.blue,
                               ),
                             ),
                           )
@@ -343,7 +343,7 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 16.sp,
-                            color: Colors.green[600],
+                            color: AppColors.green,
                             fontWeight: FontWeight.w500,
                           ),
                         ),

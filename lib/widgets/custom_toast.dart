@@ -36,7 +36,7 @@ class CustomToast extends StatelessWidget {
         borderRadius: BorderRadius.circular(16.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.15),
+            color: AppColors.textPrimary.withValues(alpha: 0.15),
             blurRadius: 15,
             offset: const Offset(0, 4),
             spreadRadius: 0,
@@ -216,7 +216,7 @@ class CustomToastService {
           title ?? 'Error',
           message,
           snackPosition: position,
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.error,
           colorText: AppColors.whiteColor,
           duration: duration,
         );

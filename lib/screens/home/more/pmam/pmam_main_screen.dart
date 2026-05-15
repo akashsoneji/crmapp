@@ -44,7 +44,10 @@ class _PmamMainScreenState extends State<PmamMainScreen> {
         elevation: 0,
         leading: IconButton(
           onPressed: () => Get.back(),
-          icon: SvgPicture.asset('assets/svg/trade/arro_back.svg'),
+          icon: SvgPicture.asset(
+            'assets/svg/trade/arro_back.svg',
+            colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn),
+          ),
         ),
 
         // leading: GestureDetector(
@@ -220,16 +223,16 @@ class _PmamMainScreenState extends State<PmamMainScreen> {
         decoration: BoxDecoration(
           color: AppColors.errorBg,
           borderRadius: BorderRadius.circular(14.r),
-          border: Border.all(color: AppColors.red.withOpacity(0.4), width: 1.2),
+          border: Border.all(color: AppColors.error.withValues(alpha: 0.4), width: 1.2),
         ),
         child: Row(
           children: [
-            Icon(Icons.cancel_rounded, color: AppColors.red, size: 22.sp),
+            Icon(Icons.cancel_rounded, color: AppColors.error, size: 22.sp),
             SizedBox(width: 12.w),
             Expanded(
               child: Text(
                 'Your manager application was rejected. Contact support for more info.',
-                style: TextStyle(fontSize: 13.sp, color: AppColors.red),
+                style: TextStyle(fontSize: 13.sp, color: AppColors.error),
               ),
             ),
           ],

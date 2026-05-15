@@ -39,7 +39,10 @@ class _BankListScreenState extends State<BankListScreen> {
         elevation: 0,
         leading: IconButton(
           onPressed: () => Get.back(closeOverlays: true),
-          icon: SvgPicture.asset('assets/svg/trade/arro_back.svg'),
+          icon: SvgPicture.asset(
+            'assets/svg/trade/arro_back.svg',
+            colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn),
+          ),
         ),
         title: Text(
           'Withdrawal Method',
@@ -281,16 +284,16 @@ class _BankListScreenState extends State<BankListScreen> {
     Color badgeColor;
     switch (status?.toLowerCase()) {
       case 'approved':
-        badgeColor = const Color(0xFF4CAF50);
+        badgeColor = AppColors.success;
         break;
       case 'rejected':
-        badgeColor = const Color(0xFFF44336);
+        badgeColor = AppColors.error;
         break;
       case 'pending':
-        badgeColor = const Color(0xFFFF9800);
+        badgeColor = AppColors.warning;
         break;
       default:
-        badgeColor = const Color(0xFF9E9E9E);
+        badgeColor = AppColors.textGrey;
     }
 
     return Container(

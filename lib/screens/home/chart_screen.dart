@@ -8,6 +8,7 @@ import 'package:get/get.dart';
 import 'package:crm_app/controllers/chart_controller.dart';
 import 'package:crm_app/models/instrument.dart';
 import 'package:crm_app/models/socket_response.dart';
+import 'package:crm_app/widgets/app_switch_tile.dart';
 import 'package:crm_app/widgets/chart_inapp_webview.dart';
 import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/flavor_config.dart';
@@ -212,7 +213,7 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
     }
 
     // Decide color (example rule)
-    // Color color = price % 2 == 0 ? Colors.green : Colors.red;
+    // Color color = price % 2 == 0 ? AppColors.green : AppColors.error;
 
     return [
       TextSpan(
@@ -677,7 +678,7 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
       // Determine order type based on current selection from the dropdown/selector
       OrderType orderType;
       final orderTypeName = _selectedOrderType.value;
-      
+
       if (!_whenPriceIsEnabled.value) {
         // Market orders
         if (_selectedPendingOrderType.value == 0) {
@@ -708,9 +709,10 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
             break;
           default:
             // Fallback based on simple toggle
-            orderType = _selectedPendingOrderType.value == 0 
-                ? OrderType.sellLimit 
-                : OrderType.buyLimit;
+            orderType =
+                _selectedPendingOrderType.value == 0
+                    ? OrderType.sellLimit
+                    : OrderType.buyLimit;
         }
       }
 
@@ -731,14 +733,24 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
       String? stopLimitPrice;
 
       if (_whenPriceIsEnabled.value) {
-        if (orderType == OrderType.buyStopLimit || orderType == OrderType.sellStopLimit) {
+        if (orderType == OrderType.buyStopLimit ||
+            orderType == OrderType.sellStopLimit) {
           // Trigger Price comes from openPrice notifier
-          price = PrecisionHelper.formatPrice(_openPrice.value, decimals: decimals);
+          price = PrecisionHelper.formatPrice(
+            _openPrice.value,
+            decimals: decimals,
+          );
           // Limit Price comes from limitPrice notifier
-          stopLimitPrice = PrecisionHelper.formatPrice(_limitPrice.value, decimals: decimals);
+          stopLimitPrice = PrecisionHelper.formatPrice(
+            _limitPrice.value,
+            decimals: decimals,
+          );
         } else {
           // For all other pending orders, use the limitPrice notifier
-          price = PrecisionHelper.formatPrice(_limitPrice.value, decimals: decimals);
+          price = PrecisionHelper.formatPrice(
+            _limitPrice.value,
+            decimals: decimals,
+          );
         }
       }
 
@@ -1070,7 +1082,7 @@ Placing Order:
                       'Market Price (Alert): ${PrecisionHelper.formatPrice(marketPrice, decimals: _getCurrentDigits())}',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: Colors.blue,
+                        color: AppColors.blue,
                       ),
                     ),
                     SizedBox(height: 16),
@@ -1129,7 +1141,7 @@ Placing Order:
                               }
                             },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blue,
+                              backgroundColor: AppColors.blue,
                             ),
                             child: Text(
                               'Add Test Alert\n(1.80950 above)',
@@ -1153,7 +1165,7 @@ Placing Order:
                               );
                             },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.orange,
+                              backgroundColor: AppColors.warning,
                             ),
                             child: Text(
                               'Test Trigger\nNow',
@@ -1182,7 +1194,7 @@ Placing Order:
                               }
                             },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green,
+                              backgroundColor: AppColors.green,
                             ),
                             child: Text(
                               'Test Notification\nSystem',
@@ -1216,7 +1228,7 @@ Placing Order:
                               }
                             },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.purple,
+                              backgroundColor: AppColors.quickActionPurple,
                             ),
                             child: Text(
                               'Fix WebSocket\nConnection',
@@ -1653,7 +1665,7 @@ Placing Order:
             //         width: 8.w,
             //         height: 8.h,
             //         decoration: BoxDecoration(
-            //           color: AppColors.red,
+            //           color: AppColors.error,
             //           shape: BoxShape.circle,
             //         ),
             //       ),
@@ -1841,7 +1853,7 @@ Placing Order:
         // Removed ValueKey to allow didUpdateWidget to handle symbol changes
         // This enables JavaScript-based updates instead of full widget recreation
         url:
-            '${FlavorConfig.instance.chartBaseUrl}/mobile-chart?symbol=$effectiveDatafeedSymbol&theme=light',
+            '${FlavorConfig.instance.chartBaseUrl}/mobile-chart?symbol=$effectiveDatafeedSymbol&theme=${AppColors.chartTheme}',
       ),
     );
   }
@@ -2094,7 +2106,7 @@ Placing Order:
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(7.r),
-                color: AppColors.primary,
+                color: AppColors.primary.withOpacity(0.1),
               ),
               child: Text(
                 languageService.tr('chart_pending_order_header'),
@@ -2136,7 +2148,7 @@ Placing Order:
           //     alignment: Alignment.center,
           //     decoration: BoxDecoration(
           //       borderRadius: BorderRadius.circular(7.r),
-          //       color: Colors.blue,
+          //       color: AppColors.blue,
           //     ),
           //     child: Icon(Icons.info, color: AppColors.whiteColor, size: 20.sp),
           //   ),
@@ -2153,7 +2165,7 @@ Placing Order:
           //     alignment: Alignment.center,
           //     decoration: BoxDecoration(
           //       borderRadius: BorderRadius.circular(7.r),
-          //       color: Colors.orange,
+          //       color: AppColors.warning,
           //     ),
           //     child: Icon(Icons.bug_report, color: AppColors.whiteColor, size: 20.sp),
           //   ),
@@ -2417,6 +2429,7 @@ Placing Order:
                               style: AppTextStyles.button.copyWith(
                                 fontSize: isSmallScreen ? 12.sp : 16.sp,
                                 fontWeight: FontWeight.w700,
+                                color: AppColors.onColoredBackground,
                               ),
                             ),
                             Text(
@@ -2424,6 +2437,7 @@ Placing Order:
                               style: AppTextStyles.button.copyWith(
                                 fontSize: isSmallScreen ? 12.sp : 12.sp,
                                 fontWeight: FontWeight.w500,
+                                color: AppColors.onColoredBackground,
                               ),
                             ),
                           ],
@@ -2649,6 +2663,7 @@ Placing Order:
                               style: AppTextStyles.button.copyWith(
                                 fontSize: isSmallScreen ? 12.sp : 16.sp,
                                 fontWeight: FontWeight.w700,
+                                color: AppColors.onColoredBackground,
                               ),
                             ),
                             Text(
@@ -2656,6 +2671,7 @@ Placing Order:
                               style: AppTextStyles.button.copyWith(
                                 fontSize: isSmallScreen ? 12.sp : 12.sp,
                                 fontWeight: FontWeight.w500,
+                                color: AppColors.onColoredBackground,
                               ),
                             ),
                           ],
@@ -2884,7 +2900,7 @@ Placing Order:
                           width: 30.w,
                           height: 5.h,
                           decoration: BoxDecoration(
-                            color: AppColors.grey,
+                            color: AppColors.textGrey,
                             borderRadius: BorderRadius.circular(10.r),
                           ),
                         ),
@@ -2900,7 +2916,7 @@ Placing Order:
                       Container(
                         height: 1.h,
                         width: double.infinity,
-                        color: AppColors.grey,
+                        color: AppColors.textGrey,
                       ),
                       Expanded(
                         child: SingleChildScrollView(
@@ -2968,7 +2984,7 @@ Placing Order:
           width: double.infinity,
           padding: EdgeInsets.all(12.w),
           decoration: BoxDecoration(
-            color: AppColors.grey,
+            color: AppColors.textGrey,
             borderRadius: BorderRadius.circular(10.r),
           ),
           child: Row(
@@ -3795,7 +3811,11 @@ Placing Order:
       child: Column(
         children: [
           _buildVolumeInputScreen(context, false),
-          Container(width: double.maxFinite, height: 2, color: AppColors.grey),
+          Container(
+            width: double.maxFinite,
+            height: 2,
+            color: AppColors.textGrey,
+          ),
           SizedBox(height: 6.h),
 
           Padding(
@@ -4089,7 +4109,11 @@ Placing Order:
                   onPressed: () {
                     if (price > 0.01) priceNotifier.value = price - 0.01;
                   },
-                  icon: Icon(Icons.remove, size: 16.h, color: AppColors.textGrey),
+                  icon: Icon(
+                    Icons.remove,
+                    size: 16.h,
+                    color: AppColors.textGrey,
+                  ),
                   padding: EdgeInsets.zero,
                   constraints: BoxConstraints(),
                 ),
@@ -4142,44 +4166,10 @@ Placing Order:
     return ValueListenableBuilder<bool>(
       valueListenable: valueNotifier,
       builder: (context, value, child) {
-        return Container(
-          width: double.infinity,
-          padding: EdgeInsets.symmetric(vertical: 10.h),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                title,
-                textAlign: TextAlign.start,
-                style: AppTextStyles.label.copyWith(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.textGrey,
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(right: 16.0),
-                child: SizedBox(
-                  height: 20.h,
-                  width: 25.w,
-                  child: Transform.scale(
-                    scale: 0.8, // Adjust this scale to control total size
-                    child: Switch(
-                      value: value,
-                      onChanged: onChanged,
-                      activeColor: AppColors.primary,
-                      activeTrackColor: AppColors.primary.withOpacity(0.3),
-                      inactiveThumbColor: AppColors.whiteColor,
-                      inactiveTrackColor: AppColors.icongrey.withAlpha(55),
-                      trackOutlineColor: WidgetStateProperty.all(
-                        Colors.transparent,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
+        return AppSwitchTile(
+          title: title,
+          value: value,
+          onChanged: onChanged,
         );
       },
     );
@@ -4617,7 +4607,7 @@ Placing Order:
             //       height: 32.h,
             //       decoration: BoxDecoration(
             //         shape: BoxShape.circle,
-            //         border: Border.all(color: Colors.grey[400]!),
+            //         border: Border.all(color: AppColors.textGrey!),
             //       ),
             //       child: IconButton(
             //         onPressed: () {
@@ -4626,7 +4616,7 @@ Placing Order:
             //         icon: Icon(
             //           Icons.remove,
             //           size: 16.h,
-            //           color: Colors.grey[600],
+            //           color: AppColors.textGrey,
             //         ),
             //         padding: EdgeInsets.zero,
             //         constraints: BoxConstraints(),

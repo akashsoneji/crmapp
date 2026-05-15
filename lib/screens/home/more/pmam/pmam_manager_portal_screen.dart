@@ -55,7 +55,7 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
       case 'active':
         return AppColors.green;
       case 'rejected':
-        return AppColors.red;
+        return AppColors.error;
       case 'pending':
         return AppColors.warningText;
       default:
@@ -73,7 +73,10 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
         elevation: 0,
         leading: IconButton(
           onPressed: () => Get.back(),
-          icon: SvgPicture.asset('assets/svg/trade/arro_back.svg'),
+          icon: SvgPicture.asset(
+            'assets/svg/trade/arro_back.svg',
+            colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn),
+          ),
         ),
         title: Text('Manager Portal', style: AppTextStyles.heading),
         centerTitle: true,
@@ -195,7 +198,7 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
                 _StatPill(
                   label: 'Rejected',
                   value: '${counts['rejected']}',
-                  color: AppColors.red,
+                  color: AppColors.error,
                 ),
               ],
             ),
@@ -430,7 +433,7 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
                                           valueColor:
                                               pnlIsPos
                                                   ? AppColors.green
-                                                  : AppColors.red,
+                                                  : AppColors.error,
                                         ),
                                       ),
                                     ],
@@ -480,7 +483,7 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
                                                     }
                                                   },
                                           style: OutlinedButton.styleFrom(
-                                            side: BorderSide(color: AppColors.red),
+                                            side: BorderSide(color: AppColors.error),
                                             shape: RoundedRectangleBorder(
                                               borderRadius: BorderRadius.circular(
                                                 10.r,
@@ -497,13 +500,13 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
                                                 width: 16.h,
                                                 child: CircularProgressIndicator(
                                                   strokeWidth: 2,
-                                                  color: AppColors.red,
+                                                  color: AppColors.error,
                                                 ),
                                               )
                                               : Text(
                                                 'Reject',
                                                 style: TextStyle(
-                                                  color: AppColors.red,
+                                                  color: AppColors.error,
                                                   fontSize: 13.sp,
                                                   fontWeight: FontWeight.w700,
                                                 ),
@@ -760,7 +763,7 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
                           child: ElevatedButton(
                             onPressed: () => _ctrl.inactivatePlan(p['id'] ?? 0),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.red.withOpacity(0.1),
+                              backgroundColor: AppColors.error.withValues(alpha: 0.1),
                               elevation: 0,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8.r),
@@ -770,7 +773,7 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
                             child: Text(
                               'Inactivate',
                               style: TextStyle(
-                                color: AppColors.red,
+                                color: AppColors.error,
                                 fontSize: 13.sp,
                                 fontWeight: FontWeight.w600,
                               ),

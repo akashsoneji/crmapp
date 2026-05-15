@@ -147,7 +147,10 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: SvgPicture.asset('assets/svg/trade/arro_back.svg'),
+          icon: SvgPicture.asset(
+            'assets/svg/trade/arro_back.svg',
+            colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn),
+          ),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text('Your Investment', style: AppTextStyles.screenTitle),
@@ -347,7 +350,7 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
                   rightLabel: r'$0',
                   value: 0.0,
                   leftColor: AppColors.green,
-                  rightColor: AppColors.red,
+                  rightColor: AppColors.error,
                 ),
 
                 SizedBox(height: 14.h),
@@ -404,9 +407,9 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
                 _SummaryRow(
                   'Average Daily',
                   '0.00%',
-                  valueColor: AppColors.red,
+                  valueColor: AppColors.error,
                 ),
-                _SummaryRow('This Month', '0.00%', valueColor: AppColors.red),
+                _SummaryRow('This Month', '0.00%', valueColor: AppColors.error),
               ],
             ),
           ),
@@ -462,7 +465,7 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
                   value: value,
                   minHeight: 6.h,
                   backgroundColor: AppColors.dashLineColor,
-                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.red),
+                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.error),
                 ),
               ),
             ),
@@ -519,7 +522,7 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
               rightLabel,
               style: TextStyle(
                 fontSize: 14.sp,
-                color: AppColors.red,
+                color: AppColors.error,
                 fontWeight: FontWeight.w400,
               ),
             ),
@@ -537,7 +540,7 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
                   value: value,
                   minHeight: 6.h,
                   backgroundColor: AppColors.dashLineColor,
-                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.red),
+                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.error),
                 ),
               ),
             ),
@@ -664,7 +667,7 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
                         (val) => setState(() => _notificationsEnabled = val),
                     activeThumbColor: AppColors.primary,
                     inactiveThumbColor: AppColors.whiteColor,
-                    inactiveTrackColor: const Color(0xffDCDCDC),
+                    inactiveTrackColor: AppColors.switchTrackOff,
                     overlayColor: MaterialStateProperty.all(Colors.transparent),
 
                     // Border removal when inactive (from previous fix)
@@ -891,7 +894,7 @@ class _TradeExpandableCardState extends State<_TradeExpandableCard> {
                                   color:
                                       t.type == 'BUY'
                                           ? AppColors.green
-                                          : Colors.red,
+                                          : AppColors.error,
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(

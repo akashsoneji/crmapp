@@ -150,9 +150,9 @@ class _AppLockOverlayState extends State<AppLockOverlay> {
                                   } catch (_) {}
                                 },
                                 style: OutlinedButton.styleFrom(
-                                  foregroundColor: AppColors.red,
+                                  foregroundColor: AppColors.error,
                                   side: BorderSide(
-                                    color: AppColors.red.withValues(
+                                    color: AppColors.error.withValues(
                                       alpha: 0.45,
                                     ),
                                   ),

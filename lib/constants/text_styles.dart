@@ -70,18 +70,18 @@ class AppTextStyles {
     color: AppColors.textPrimary,
   );
 
-  // Button Style (for buttons on dark backgrounds)
+  // Button Style (for buttons on brand / saturated backgrounds)
   static TextStyle get button => TextStyle(
     fontSize: 16.sp,
     fontWeight: FontWeight.w600,
-    color: AppColors.whiteColor,  // Theme-aware: white in light, dark in dark
+    color: AppColors.onColoredBackground,
   );
 
   // Label On Trade Button Style
   static TextStyle get labelOnTradeButton => TextStyle(
     fontSize: 15.sp,
     fontWeight: FontWeight.w400,
-    color: AppColors.whiteColor,  // Theme-aware
+    color: AppColors.onColoredBackground,
     letterSpacing: 2.sp,
   );
 

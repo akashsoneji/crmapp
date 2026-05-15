@@ -92,11 +92,11 @@ class _MyStructureScreenState extends State<MyStructureScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.error_outline, size: 64.sp, color: Colors.red),
+                      Icon(Icons.error_outline, size: 64.sp, color: AppColors.error),
                       SizedBox(height: 16.h),
                       Text(
                         controller.errorMessage.value,
-                        style: TextStyle(fontSize: 16.sp, color: Colors.red),
+                        style: TextStyle(fontSize: 16.sp, color: AppColors.error),
                         textAlign: TextAlign.center,
                       ),
                       SizedBox(height: 16.h),

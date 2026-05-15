@@ -167,8 +167,8 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
       ),
       child: IconButton(
         onPressed: () => Navigator.pop(context),
-        icon:  Icon(Icons.arrow_back_ios, color: AppColors.textPrimary),
-        iconSize: 17.h,
+        icon: Icon(Icons.arrow_back_ios, color: AppColors.textPrimary),
+                iconSize: 17.h,
         padding: EdgeInsets.only(left: 5.w),
       ),
     );

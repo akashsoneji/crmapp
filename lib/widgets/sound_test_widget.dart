@@ -12,7 +12,7 @@ class SoundTestWidget extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Sound Test'),
-        backgroundColor: Colors.blue,
+        backgroundColor: AppColors.blue,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -48,7 +48,7 @@ class SoundTestWidget extends StatelessWidget {
                 }
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
+                backgroundColor: AppColors.error,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 30,
                   vertical: 15,

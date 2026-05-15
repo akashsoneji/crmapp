@@ -1403,7 +1403,7 @@ class _MiniPresetChip extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary : const Color(0xFFF3F4F6),
+          color: selected ? AppColors.primary : AppColors.chipSurface,
           borderRadius: BorderRadius.circular(8.r),
           border: Border.all(color: selected ? AppColors.primary : AppColors.border.withValues(alpha: 0.18)),
         ),
@@ -1434,7 +1434,7 @@ class _ModeChip extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary : const Color(0xFFF3F4F6),
+          color: selected ? AppColors.primary : AppColors.chipSurface,
           borderRadius: BorderRadius.circular(12.r),
           border: Border.all(color: selected ? AppColors.primary : AppColors.border.withValues(alpha: 0.18)),
         ),
@@ -1544,7 +1544,7 @@ class _Card extends StatelessWidget {
         border: Border.all(color: AppColors.border.withValues(alpha: 0.15)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(clamped),
+            color: AppColors.textPrimary.withValues(alpha: clamped),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
@@ -1568,7 +1568,7 @@ class _ErrorState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.error_outline, size: 40.r, color: AppColors.red),
+            Icon(Icons.error_outline, size: 40.r, color: AppColors.error),
             SizedBox(height: 10.h),
             Text(message, textAlign: TextAlign.center, style: TextStyle(color: AppColors.textGrey)),
             SizedBox(height: 12.h),
@@ -1855,7 +1855,7 @@ class _BottomBar extends StatelessWidget {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
                     ),
                     child: loading
-                        ? SizedBox(width: 18.r, height: 18.r, child: const CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                        ? SizedBox(width: 18.r, height: 18.r, child: const CircularProgressIndicator(strokeWidth: 2, color: AppColors.onColoredBackground))
                         : Text(
                             isEditMode ? 'Save' : (s == 0 ? 'Next' : 'Subscribe'),
                             style: AppTextStyles.button,
@@ -1889,13 +1889,13 @@ class _Pill extends StatelessWidget {
       border = AppColors.primary.withOpacity(0.22);
       fg = AppColors.primary;
     } else if (tone == _PillTone.success) {
-      bg = const Color(0xFF22C55E).withOpacity(0.12);
-      border = const Color(0xFF22C55E).withOpacity(0.25);
-      fg = const Color(0xFF22C55E);
+      bg = AppColors.green.withOpacity(0.12);
+      border = AppColors.green.withOpacity(0.25);
+      fg = AppColors.green;
     } else {
-      bg = const Color(0xFFF59E0B).withOpacity(0.12);
-      border = const Color(0xFFF59E0B).withOpacity(0.25);
-      fg = const Color(0xFFF59E0B);
+      bg = AppColors.warning.withOpacity(0.12);
+      border = AppColors.warning.withOpacity(0.25);
+      fg = AppColors.warning;
     }
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),

@@ -339,10 +339,9 @@ class DashboardScreen extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
-                        color:
-                            account.accountType == 'live'
-                                ? AppColors.whiteColor
-                                : AppColors.primary,
+                        color: _accountTypeBadgeTextColor(
+                          account.accountType,
+                        ),
                       ),
                     ),
                   ),
@@ -519,7 +518,7 @@ class DashboardScreen extends StatelessWidget {
                 child: _buildActionButton(
                   color:
                       account.accountType.toLowerCase() == 'live'
-                          ? AppColors.red
+                          ? AppColors.error
                           : AppColors.primary,
                   isSvg: true,
                   svg:
@@ -685,6 +684,15 @@ class DashboardScreen extends StatelessWidget {
   }
 }
 
+Color _accountTypeBadgeTextColor(String accountType) {
+  if (accountType.toLowerCase() == 'live') {
+    return AppColors.onColoredBackground;
+  }
+  return AppColors.isDarkMode
+      ? AppColors.textPrimary
+      : AppColors.brandPrimary;
+}
+
 class AccountInfoBottomSheet extends StatelessWidget {
   final MT5Account account;
 
@@ -767,10 +775,9 @@ class AccountInfoBottomSheet extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 10.sp,
                               fontWeight: FontWeight.w600,
-                              color:
-                                  account.accountType == 'live'
-                                      ? AppColors.whiteColor
-                                      : AppColors.primary,
+                              color: _accountTypeBadgeTextColor(
+                                account.accountType,
+                              ),
                             ),
                           ),
                         ),
@@ -936,7 +943,7 @@ class AccountInfoBottomSheet extends StatelessWidget {
                     ? Expanded(
                       child: _buildActionButton(
                         isSvg: true,
-                        color: AppColors.red,
+                        color: AppColors.error,
                         svg: 'assets/svg/deshboard/money-send.svg',
                         icon: Icons.arrow_downward,
                         label: languageService.tr('dashboard_withdraw'),
@@ -1433,7 +1440,7 @@ class AccountMenuBottomSheet extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 16.sp,
                     fontWeight: FontWeight.w500,
-                    color: AppColors.red,
+                    color: AppColors.error,
                   ),
                 ),
               ),
@@ -1606,7 +1613,7 @@ class OpenAccountBottomSheet extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w500,
-                        color: Colors.red,
+                        color: AppColors.error,
                       ),
                     ),
                   ),

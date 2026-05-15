@@ -61,9 +61,9 @@ class _ThemeBottomSheet extends StatelessWidget {
                 child: Container(
                   width: 28.w,
                   height: 28.w,
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Color(0xFFE1E1E1),
+                    color: AppColors.border,
                   ),
                   child: Icon(
                     Icons.close,

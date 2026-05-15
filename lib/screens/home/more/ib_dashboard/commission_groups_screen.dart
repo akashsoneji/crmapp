@@ -71,7 +71,7 @@ class _CommissionGroupsScreenState extends State<CommissionGroupsScreen> {
           ),
           TextButton(
             onPressed: () => Get.back(result: true),
-            child: Text('Delete', style: TextStyle(color: Colors.red)),
+            child: Text('Delete', style: TextStyle(color: AppColors.error)),
           ),
         ],
       ),
@@ -413,7 +413,7 @@ class _CommissionGroupsScreenState extends State<CommissionGroupsScreen> {
             width: 24.w,
             height: 24.w,
             decoration: BoxDecoration(
-              color: Colors.black,
+              color: AppColors.textPrimary,
               shape: BoxShape.circle,
             ),
           ),

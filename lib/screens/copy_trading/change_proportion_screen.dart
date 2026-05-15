@@ -28,7 +28,10 @@ class _ChangeProportionScreenState extends State<ChangeProportionScreen> {
         backgroundColor: AppColors.tradeBackgroundCenterColor,
         elevation: 0,
         leading: IconButton(
-          icon: SvgPicture.asset('assets/svg/trade/arro_back.svg'),
+          icon: SvgPicture.asset(
+            'assets/svg/trade/arro_back.svg',
+            colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn),
+          ),
           onPressed: () => Get.back(),
         ),
         title: Text('Change Copy Proportion', style: AppTextStyles.heading),

@@ -47,11 +47,11 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
   Color _getStatusColor(String? status) {
     switch (status?.toLowerCase()) {
       case 'inreview':
-        return Colors.orange;
+        return AppColors.warning;
       case 'approved':
-        return Colors.green;
+        return AppColors.green;
       case 'rejected':
-        return Colors.red;
+        return AppColors.error;
       default:
         return AppColors.textGrey;
     }
@@ -98,11 +98,11 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
   Color _getKycColor(String? kycStatus) {
     switch (kycStatus?.toLowerCase()) {
       case 'verified':
-        return Colors.green;
+        return AppColors.green;
       case 'unverified':
-        return Colors.orange;
+        return AppColors.warning;
       case 'rejected':
-        return Colors.red;
+        return AppColors.error;
       default:
         return AppColors.textGrey;
     }
@@ -725,7 +725,7 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
           color: AppColors.textPrimary,
         ),
         children: const [
-          TextSpan(text: '*', style: TextStyle(color: Colors.red)),
+          TextSpan(text: '*', style: TextStyle(color: AppColors.error)),
         ],
       ),
     );

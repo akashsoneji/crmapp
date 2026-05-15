@@ -74,7 +74,10 @@ class _DepositScreenState extends State<DepositScreen> {
         leading: Padding(
           padding: EdgeInsets.only(left: 10.w),
           child: IconButton(
-            icon: SvgPicture.asset("assets/svg/trade/arro_back.svg"),
+            icon: SvgPicture.asset(
+            "assets/svg/trade/arro_back.svg",
+            colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn),
+          ),
             onPressed: () => NavigationHelper.safeBack(context: context),
           ),
         ),

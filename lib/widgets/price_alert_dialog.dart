@@ -111,7 +111,7 @@ class _PriceAlertDialogState extends State<PriceAlertDialog> {
                   padding: EdgeInsets.only(top: 2.h, bottom: 6.h),
                   child: Container(
                     decoration: BoxDecoration(
-                      color: AppColors.grey,
+                      color: AppColors.textGrey,
                       borderRadius: BorderRadius.circular(10.r),
                     ),
                     width: 30.w,

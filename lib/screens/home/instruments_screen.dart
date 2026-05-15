@@ -544,7 +544,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
         background: Container(
           alignment: Alignment.centerRight,
           padding: EdgeInsets.symmetric(horizontal: 20.w),
-          color: AppColors.red.withOpacity(0.8),
+          color: AppColors.error.withValues(alpha: 0.8),
           child: _buildSwipeDeleteIcon(),
         ),
         onDismissed: (direction) {
@@ -874,7 +874,7 @@ class _BidPriceColumn extends StatelessWidget {
           final bid = controller.priceRx(symbol).value.bid;
           return RichText(
             text: TextSpan(
-              children: _buildPriceTextSpans(bid, AppColors.red, digits),
+              children: _buildPriceTextSpans(bid, AppColors.error, digits),
             ),
           );
         }),

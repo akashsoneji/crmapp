@@ -239,7 +239,7 @@ class _KycBankScreenState extends State<KycBankScreen> {
                         controller.isLoading.value
                             ? CommonLoadingWidget(
                               message: '',
-                              backgroundColor: Colors.black.withOpacity(0.5),
+                              backgroundColor: AppColors.textPrimary.withValues(alpha: 0.5),
                               isFullScreen: true,
                             )
                             : SizedBox.shrink(),
@@ -256,7 +256,10 @@ class _KycBankScreenState extends State<KycBankScreen> {
               elevation: 0,
               leading: IconButton(
                 onPressed: () => _handleBackNavigation(),
-                icon: SvgPicture.asset('assets/svg/trade/arro_back.svg'),
+                icon: SvgPicture.asset(
+            'assets/svg/trade/arro_back.svg',
+            colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn),
+          ),
               ),
               title: Text(
                 'Add Withdrawal Method',
@@ -345,7 +348,7 @@ class _KycBankScreenState extends State<KycBankScreen> {
                         controller.isLoading.value
                             ? CommonLoadingWidget(
                               message: 'Submitting withdrawal request...',
-                              backgroundColor: Colors.black.withOpacity(0.5),
+                              backgroundColor: AppColors.textPrimary.withValues(alpha: 0.5),
                               isFullScreen: true,
                             )
                             : SizedBox.shrink(),
@@ -363,7 +366,7 @@ class _KycBankScreenState extends State<KycBankScreen> {
           backgroundColor: AppColors.whiteColor,
           title: Text(languageService.tr('kyc_withdrawal_title')),
           leading: IconButton(
-            icon: Icon(Icons.arrow_back),
+            icon: Icon(Icons.arrow_back, color: AppColors.textPrimary),
             onPressed: () => Get.back(closeOverlays: true),
           ),
         ),
@@ -371,7 +374,7 @@ class _KycBankScreenState extends State<KycBankScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.error_outline, size: 64, color: Colors.red),
+              Icon(Icons.error_outline, size: 64, color: AppColors.error),
               SizedBox(height: 16),
               Text(
                 languageService.tr('kyc_error_loading'),
@@ -430,7 +433,7 @@ class _KycBankScreenState extends State<KycBankScreen> {
         child: Center(
           child: Text(
             'Error loading account type field',
-            style: TextStyle(color: Colors.red),
+            style: TextStyle(color: AppColors.error),
           ),
         ),
       );
@@ -478,7 +481,7 @@ class _KycBankScreenState extends State<KycBankScreen> {
         child: Center(
           child: Text(
             'Error loading currency field',
-            style: TextStyle(color: Colors.red),
+            style: TextStyle(color: AppColors.error),
           ),
         ),
       );
@@ -505,7 +508,7 @@ class _KycBankScreenState extends State<KycBankScreen> {
             'Error loading form fields',
             style: TextStyle(
               fontSize: 14.sp,
-              color: Colors.red,
+              color: AppColors.error,
               fontStyle: FontStyle.italic,
             ),
             textAlign: TextAlign.center,
@@ -1115,7 +1118,7 @@ class _KycBankScreenState extends State<KycBankScreen> {
         child: Center(
           child: Text(
             'Error loading fields',
-            style: TextStyle(color: Colors.red),
+            style: TextStyle(color: AppColors.error),
           ),
         ),
       );
@@ -1450,33 +1453,33 @@ class _KycBankScreenState extends State<KycBankScreen> {
             labelStyle: TextStyle(color: AppColors.textGrey),
             floatingLabelStyle: TextStyle(
               color:
-                  _showValidationError.value ? Colors.red : AppColors.primary,
+                  _showValidationError.value ? AppColors.error : AppColors.primary,
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(
                 color:
-                    _showValidationError.value ? Colors.red : AppColors.border,
+                    _showValidationError.value ? AppColors.error : AppColors.border,
               ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(
                 color:
-                    _showValidationError.value ? Colors.red : AppColors.border,
+                    _showValidationError.value ? AppColors.error : AppColors.border,
               ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(
                 color:
-                    _showValidationError.value ? Colors.red : AppColors.primary,
+                    _showValidationError.value ? AppColors.error : AppColors.primary,
                 width: 2,
               ),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.red),
+              borderSide: BorderSide(color: AppColors.error),
             ),
           ),
         ),
