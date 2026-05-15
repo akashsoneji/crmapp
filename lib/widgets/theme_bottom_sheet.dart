@@ -12,13 +12,16 @@ void showThemeBottomSheet(BuildContext context) {
     context: context,
     backgroundColor: Colors.transparent,
     isScrollControlled: true,
-    builder: (context) => TweenAnimationBuilder<double>(
-      duration: const Duration(milliseconds: 260),
-      curve: Curves.easeOutCubic,
-      tween: Tween(begin: 0.95, end: 1),
-      builder: (context, value, child) => Transform.scale(scale: value, child: child),
-      child: const _ThemeBottomSheet(),
-    ),
+    builder:
+        (context) => TweenAnimationBuilder<double>(
+          duration: const Duration(milliseconds: 260),
+          curve: Curves.easeOutCubic,
+          tween: Tween(begin: 0.95, end: 1),
+          builder:
+              (context, value, child) =>
+                  Transform.scale(scale: value, child: child),
+          child: const _ThemeBottomSheet(),
+        ),
   );
 }
 
@@ -62,7 +65,11 @@ class _ThemeBottomSheet extends StatelessWidget {
                     shape: BoxShape.circle,
                     color: Color(0xFFE1E1E1),
                   ),
-                  child: Icon(Icons.close, size: 18.sp, color: AppColors.textPrimary),
+                  child: Icon(
+                    Icons.close,
+                    size: 18.sp,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
               ),
             ],
@@ -77,37 +84,42 @@ class _ThemeBottomSheet extends StatelessWidget {
             ),
           ),
           Divider(height: 20.h, color: AppColors.border),
-          Obx(() => Column(
-            children: [
-              _ThemeOption(
-                icon: Icons.brightness_auto_rounded,
-                label: languageService.tr('settings_theme_system'),
-                isSelected: themeService.currentMode.value == ThemeServiceMode.system,
-                onTap: () {
-                  themeService.selectTheme(ThemeServiceMode.system);
-                  Navigator.pop(context);
-                },
-              ),
-              _ThemeOption(
-                icon: Icons.light_mode_rounded,
-                label: languageService.tr('settings_theme_light'),
-                isSelected: themeService.currentMode.value == ThemeServiceMode.light,
-                onTap: () {
-                  themeService.selectTheme(ThemeServiceMode.light);
-                  Navigator.pop(context);
-                },
-              ),
-              _ThemeOption(
-                icon: Icons.dark_mode_rounded,
-                label: languageService.tr('settings_theme_dark'),
-                isSelected: themeService.currentMode.value == ThemeServiceMode.dark,
-                onTap: () {
-                  themeService.selectTheme(ThemeServiceMode.dark);
-                  Navigator.pop(context);
-                },
-              ),
-            ],
-          )),
+          Obx(
+            () => Column(
+              children: [
+                _ThemeOption(
+                  icon: Icons.brightness_auto_rounded,
+                  label: languageService.tr('settings_theme_system'),
+                  isSelected:
+                      themeService.currentMode.value == ThemeServiceMode.system,
+                  onTap: () {
+                    themeService.selectTheme(ThemeServiceMode.system);
+                    Navigator.pop(context);
+                  },
+                ),
+                _ThemeOption(
+                  icon: Icons.light_mode_rounded,
+                  label: languageService.tr('settings_theme_light'),
+                  isSelected:
+                      themeService.currentMode.value == ThemeServiceMode.light,
+                  onTap: () {
+                    themeService.selectTheme(ThemeServiceMode.light);
+                    Navigator.pop(context);
+                  },
+                ),
+                _ThemeOption(
+                  icon: Icons.dark_mode_rounded,
+                  label: languageService.tr('settings_theme_dark'),
+                  isSelected:
+                      themeService.currentMode.value == ThemeServiceMode.dark,
+                  onTap: () {
+                    themeService.selectTheme(ThemeServiceMode.dark);
+                    Navigator.pop(context);
+                  },
+                ),
+              ],
+            ),
+          ),
           SizedBox(height: 8.h),
         ],
       ),
@@ -141,18 +153,17 @@ class _ThemeOption extends StatelessWidget {
               width: 40.w,
               height: 40.w,
               decoration: BoxDecoration(
-                color: isSelected
-                    ? AppColors.primary.withValues(alpha: 0.1)
-                    : AppColors.surface,
+                color:
+                    isSelected
+                        ? AppColors.primary.withValues(alpha: 0.1)
+                        : AppColors.surface,
                 shape: BoxShape.circle,
               ),
               child: Center(
                 child: Icon(
                   icon,
                   size: 20.sp,
-                  color: isSelected
-                      ? AppColors.primary
-                      : AppColors.textGrey,
+                  color: isSelected ? AppColors.primary : AppColors.textGrey,
                 ),
               ),
             ),

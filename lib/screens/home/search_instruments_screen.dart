@@ -137,7 +137,9 @@ class _SearchInstrumentsScreenState extends State<SearchInstrumentsScreen> {
                   child: Container(
                     padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
                     decoration: BoxDecoration(
-                      color: isSelected ? AppColors.primary : Colors.transparent,
+                      color: isSelected
+                          ? AppColors.selectedChipBackground
+                          : Colors.transparent,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
                         color: AppColors.primary,
@@ -149,7 +151,9 @@ class _SearchInstrumentsScreenState extends State<SearchInstrumentsScreen> {
                         category,
                         style: AppTextStyles.input.copyWith(
                           fontSize: 12.sp,
-                          color: isSelected ? Colors.white : AppColors.primary,
+                          color: isSelected
+                              ? AppColors.selectedChipForeground
+                              : AppColors.primary,
                           fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                         ),
                       ),

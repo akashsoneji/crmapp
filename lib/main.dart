@@ -278,9 +278,7 @@ ThemeData _buildLightTheme() {
 /// Build dark theme
 ThemeData _buildDarkTheme() {
   final darkPrimary = AppColors.darkThemePrimary;
-  final darkOnPrimary = FlavorConfig.isGoldenwolffx()
-      ? Colors.white
-      : AppColors.textPrimaryDark;
+  final darkOnPrimary = AppColors.darkThemeOnPrimary;
 
   return ThemeData(
     primaryColor: darkPrimary,
@@ -359,11 +357,11 @@ ThemeData _buildDarkTheme() {
     ),
     appBarTheme: AppBarTheme(
       backgroundColor: AppColors.surfaceDarkTheme,
-      foregroundColor: AppColors.whiteColor,
+      foregroundColor: AppColors.textPrimary,
       elevation: 0,
     ),
-    iconTheme: IconThemeData(color: AppColors.whiteColor),
-    textTheme: TextTheme(bodyLarge: TextStyle(color: AppColors.whiteColor)),
+    iconTheme: IconThemeData(color: AppColors.textPrimary),
+    textTheme: TextTheme(bodyLarge: TextStyle(color: AppColors.textPrimary)),
   );
 }
 
