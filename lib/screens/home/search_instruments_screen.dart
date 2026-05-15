@@ -19,13 +19,17 @@ class SearchInstrumentsScreen extends StatefulWidget {
   const SearchInstrumentsScreen({super.key, this.onNavigateToChart});
 
   @override
-  State<SearchInstrumentsScreen> createState() => _SearchInstrumentsScreenState();
+  State<SearchInstrumentsScreen> createState() =>
+      _SearchInstrumentsScreenState();
 }
 
 class _SearchInstrumentsScreenState extends State<SearchInstrumentsScreen> {
   final TextEditingController _searchController = TextEditingController();
-  final SearchInstrumentsController _controller = Get.put(SearchInstrumentsController());
-  final SymbolSelectionService _symbolSelectionService = Get.find<SymbolSelectionService>();
+  final SearchInstrumentsController _controller = Get.put(
+    SearchInstrumentsController(),
+  );
+  final SymbolSelectionService _symbolSelectionService =
+      Get.find<SymbolSelectionService>();
   final LanguageService languageService = Get.find<LanguageService>();
 
   @override
@@ -116,8 +120,9 @@ class _SearchInstrumentsScreenState extends State<SearchInstrumentsScreen> {
 
   Widget _buildCategoryFilters() {
     return Obx(() {
-      if (_controller.availableCategories.isEmpty) return const SizedBox.shrink();
-      
+      if (_controller.availableCategories.isEmpty)
+        return const SizedBox.shrink();
+
       return Container(
         height: 50.h,
         padding: EdgeInsets.symmetric(vertical: 8.h),
@@ -127,7 +132,7 @@ class _SearchInstrumentsScreenState extends State<SearchInstrumentsScreen> {
           itemCount: _controller.availableCategories.length,
           itemBuilder: (context, index) {
             final category = _controller.availableCategories[index];
-            
+
             return Obx(() {
               final isSelected = category == _controller.currentCategory.value;
               return Padding(
@@ -135,26 +140,29 @@ class _SearchInstrumentsScreenState extends State<SearchInstrumentsScreen> {
                 child: GestureDetector(
                   onTap: () => _controller.filterByCategory(category),
                   child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 16.w,
+                      vertical: 4.h,
+                    ),
                     decoration: BoxDecoration(
-                      color: isSelected
-                          ? AppColors.selectedChipBackground
-                          : Colors.transparent,
+                      color:
+                          isSelected
+                              ? AppColors.selectedChipBackground
+                              : Colors.transparent,
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: AppColors.primary,
-                        width: 1,
-                      ),
+                      border: Border.all(color: AppColors.primary, width: 1),
                     ),
                     child: Center(
                       child: Text(
                         category,
                         style: AppTextStyles.input.copyWith(
                           fontSize: 12.sp,
-                          color: isSelected
-                              ? AppColors.selectedChipForeground
-                              : AppColors.primary,
-                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                          color:
+                              isSelected
+                                  ? AppColors.selectedChipForeground
+                                  : AppColors.primary,
+                          fontWeight:
+                              isSelected ? FontWeight.w600 : FontWeight.w400,
                         ),
                       ),
                     ),
@@ -173,9 +181,7 @@ class _SearchInstrumentsScreenState extends State<SearchInstrumentsScreen> {
 
     return ListView.builder(
       // itemExtent: 56.h,
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).padding.bottom,
-      ),
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom),
       itemCount: symbols.length,
       itemBuilder: (context, index) {
         final symbol = symbols[index];
@@ -236,7 +242,9 @@ class _SearchInstrumentsScreenState extends State<SearchInstrumentsScreen> {
             ),
             Obx(() {
               final instrumentsController = Get.find<InstrumentsController>();
-              final isFavorite = instrumentsController.isFavorite(symbol.displaySymbol);
+              final isFavorite = instrumentsController.isFavorite(
+                symbol.displaySymbol,
+              );
               return GestureDetector(
                 onTap: () async {
                   final ic = instrumentsController;
@@ -251,7 +259,10 @@ class _SearchInstrumentsScreenState extends State<SearchInstrumentsScreen> {
                   child: Icon(
                     isFavorite ? Icons.check_circle : Icons.add_circle_outline,
                     size: 24.h,
-                    color: isFavorite ? AppColors.primary : AppColors.textGrey.withOpacity(0.5),
+                    color:
+                        isFavorite
+                            ? AppColors.primary
+                            : AppColors.textGrey.withOpacity(0.5),
                   ),
                 ),
               );
@@ -265,7 +276,7 @@ class _SearchInstrumentsScreenState extends State<SearchInstrumentsScreen> {
   void _navigateToChartWithSymbol(String symbol) {
     _symbolSelectionService.setSymbol(symbol);
     ChartScreen.setSelectedSymbol(symbol);
-    
+
     if (widget.onNavigateToChart != null) {
       widget.onNavigateToChart!(symbol);
       Get.back(); // Go back to main screen which then switches tab
@@ -303,7 +314,10 @@ class _SearchInstrumentsScreenState extends State<SearchInstrumentsScreen> {
   }
 
   String _getFlagPath(String symbol) {
-    String cleanSymbol = symbol.contains('.') ? symbol.substring(0, symbol.lastIndexOf('.')) : symbol;
+    String cleanSymbol =
+        symbol.contains('.')
+            ? symbol.substring(0, symbol.lastIndexOf('.'))
+            : symbol;
     return 'assets/svg/flags/${cleanSymbol.toLowerCase()}.svg';
   }
 

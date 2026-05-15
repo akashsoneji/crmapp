@@ -47,7 +47,7 @@ class AccountHeaderWidget extends StatelessWidget {
             padding ?? EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
         child: Row(
           children: [
-            if (showMenuIcon) ...[              
+            if (showMenuIcon) ...[
               InkWell(
                 onTap:
                     onMenuTap ??
@@ -259,7 +259,8 @@ class AccountHeaderWidget extends StatelessWidget {
                               SizedBox(width: 10.w), // 10px space as requested
                               Icon(
                                 Icons.arrow_drop_down,
-                                size: 20.h, // Increased size (approx 25% larger than 16.h)
+                                size:
+                                    20.h, // Increased size (approx 25% larger than 16.h)
                                 color: AppColors.textGrey,
                               ),
                             ],
@@ -304,8 +305,8 @@ class AccountHeaderWidget extends StatelessWidget {
       final accountType = primaryAccount.accountType;
       return accountType.toLowerCase() == 'demo'
           ? AppColors.brandPrimary.withValues(
-              alpha: AppColors.isDarkMode ? 0.28 : 0.2,
-            )
+            alpha: AppColors.isDarkMode ? 0.28 : 0.2,
+          )
           : AppColors.brandPrimary;
     }
     return AppColors.brandPrimary;
@@ -494,7 +495,8 @@ class AccountHeaderWidget extends StatelessWidget {
                                           style: AppTextStyles.label.copyWith(
                                             fontSize: 8.sp,
                                             fontWeight: FontWeight.w600,
-                                            color: AppColors.onColoredBackground,
+                                            color:
+                                                AppColors.onColoredBackground,
                                           ),
                                         ),
                                       ),

@@ -303,10 +303,7 @@ ThemeData _buildDarkTheme() {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(
-          color: darkPrimary,
-          width: 2,
-        ),
+        borderSide: BorderSide(color: darkPrimary, width: 2),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),

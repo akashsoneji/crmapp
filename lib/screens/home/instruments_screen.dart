@@ -38,12 +38,19 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
   final SymbolSelectionService _symbolSelectionService =
       Get.find<SymbolSelectionService>();
 
+  late final Future<Widget> _swipeDeleteIconFuture;
+
   @override
   bool get wantKeepAlive => true;
 
   @override
   void initState() {
     super.initState();
+    _swipeDeleteIconFuture = SvgColorHelper.loadSvgWithColor(
+      assetPath: 'assets/svg/delete.svg',
+      targetColor: AppColors.onColoredBackground,
+      colorToReplace: '#000000',
+    );
     _listenToPriceUpdates();
     // Explicit `marketwatchv2` WS: this tab opens the session (auth + subscribe when favorites exist).
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -538,15 +545,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
           alignment: Alignment.centerRight,
           padding: EdgeInsets.symmetric(horizontal: 20.w),
           color: AppColors.red.withOpacity(0.8),
-          child: SvgPicture.asset(
-            'assets/svg/delete.svg',
-            width: 28.w,
-            height: 28.h,
-            colorFilter: ColorFilter.mode(
-              AppColors.onColoredBackground,
-              BlendMode.srcIn,
-            ),
-          ),
+          child: _buildSwipeDeleteIcon(),
         ),
         onDismissed: (direction) {
           // Remove from local list immediately to satisfy Dismissible requirements
@@ -574,6 +573,23 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
     if (widget.onNavigateToChart != null) {
       widget.onNavigateToChart!(symbol);
     }
+  }
+
+  /// Swipe-delete affordance — uses [assets/svg/delete.svg] tinted white.
+  Widget _buildSwipeDeleteIcon() {
+    return FutureBuilder<Widget>(
+      future: _swipeDeleteIconFuture,
+      builder: (context, snapshot) {
+        if (snapshot.hasData) {
+          return SizedBox(
+            width: 28.w,
+            height: 28.h,
+            child: snapshot.data,
+          );
+        }
+        return SizedBox(width: 28.w, height: 28.h);
+      },
+    );
   }
 
   // Listen to price updates from instruments controller
