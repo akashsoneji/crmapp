@@ -190,7 +190,7 @@ class _MenuItem extends StatelessWidget {
           child: Divider(
             height: 1,
             thickness: 0.5,
-            color: Colors.grey.withOpacity(0.2),
+            color: AppColors.border.withValues(alpha: 0.2),
           ),
         ),
       ],

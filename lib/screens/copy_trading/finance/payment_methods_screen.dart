@@ -138,7 +138,7 @@ class _PaymentMethodTile extends StatelessWidget {
             decoration: BoxDecoration(
               color: AppColors.whiteColor,
               borderRadius: BorderRadius.circular(8.r),
-              border: Border.all(color: Colors.grey.withOpacity(0.1)),
+              border: Border.all(color: AppColors.border.withValues(alpha: 0.1)),
             ),
             child: Icon(icon, color: iconColor, size: 24.r),
           ),
@@ -157,11 +157,11 @@ class _PaymentMethodTile extends StatelessWidget {
           trailing: Icon(
             Icons.arrow_forward_ios,
             size: 14.r,
-            color: Colors.grey.withOpacity(0.5),
+            color: AppColors.textGrey.withValues(alpha: 0.5),
           ),
           onTap: () {},
         ),
-        Divider(height: 1, color: Colors.grey.withOpacity(0.05)),
+        Divider(height: 1, color: AppColors.border.withValues(alpha: 0.05)),
       ],
     );
   }

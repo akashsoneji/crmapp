@@ -231,7 +231,7 @@ class _PmamTradeHistoryScreenState extends State<PmamTradeHistoryScreen> {
                         decoration: BoxDecoration(
                           color: AppColors.whiteColor,
                           borderRadius: BorderRadius.circular(10.r),
-                          border: Border.all(color: const Color(0xFFEAEAEA)),
+                          border: Border.all(color: AppColors.border),
                         ),
                         child: Row(
                           children: [
@@ -277,7 +277,7 @@ class _PmamTradeHistoryScreenState extends State<PmamTradeHistoryScreen> {
                         decoration: BoxDecoration(
                           color: AppColors.whiteColor,
                           borderRadius: BorderRadius.circular(10.r),
-                          border: Border.all(color: const Color(0xFFEAEAEA)),
+                          border: Border.all(color: AppColors.border),
                         ),
                         child: Row(
                           children: [
@@ -319,7 +319,7 @@ class _PmamTradeHistoryScreenState extends State<PmamTradeHistoryScreen> {
                   decoration: BoxDecoration(
                     color: AppColors.tradeBackgroundCenterColor,
                     borderRadius: BorderRadius.circular(12.r),
-                    border: Border.all(color: const Color(0xFFEAEAEA)),
+                    border: Border.all(color: AppColors.border),
                   ),
                   child: Column(
                     children: [
@@ -507,10 +507,10 @@ class _PmamTradeHistoryScreenState extends State<PmamTradeHistoryScreen> {
                         decoration: BoxDecoration(
                           color: AppColors.whiteColor,
                           borderRadius: BorderRadius.circular(12.r),
-                          border: Border.all(color: const Color(0xFFEAEAEA)),
+                          border: Border.all(color: AppColors.border),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.04),
+                              color: AppColors.border.withValues(alpha: 0.04),
                               blurRadius: 10,
                               offset: const Offset(0, 3),
                             ),

@@ -576,7 +576,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                 width: iconSize,
                 height: iconSize,
                 decoration: BoxDecoration(
-                  color: Colors.grey[300],
+                  color: AppColors.border,
                   borderRadius: BorderRadius.circular(4.r),
                 ),
                 child: Image.asset(
@@ -1251,9 +1251,9 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
       width: double.infinity,
       padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(6.r),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(color: AppColors.surface!),
       ),
       child: Row(
         children: [
@@ -1262,7 +1262,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
             height: 20.h,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.grey[400]!),
+              border: Border.all(color: AppColors.textGrey!),
             ),
             child: IconButton(
               onPressed: () {
@@ -1277,7 +1277,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                   _pnlCalculationKey++;
                 });
               },
-              icon: Icon(Icons.remove, size: 10.h, color: Colors.grey[600]),
+              icon: Icon(Icons.remove, size: 10.h, color: AppColors.textGrey),
               padding: EdgeInsets.zero,
               constraints: BoxConstraints(),
             ),

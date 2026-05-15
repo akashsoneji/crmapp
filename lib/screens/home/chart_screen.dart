@@ -1098,7 +1098,7 @@ Placing Order:
                     ] else
                       Text(
                         'No active alerts',
-                        style: TextStyle(color: Colors.grey),
+                        style: TextStyle(color: AppColors.textGrey),
                       ),
                     SizedBox(height: 16),
                     Text(
@@ -1365,7 +1365,7 @@ Placing Order:
                 width: 32.w,
                 height: 32.h,
                 decoration: BoxDecoration(
-                  color: Colors.grey[300],
+                  color: AppColors.border,
                   borderRadius: BorderRadius.circular(4.r),
                 ),
                 child: Image.asset(
@@ -4069,9 +4069,9 @@ Placing Order:
       width: double.infinity,
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(8.r),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(color: AppColors.border),
       ),
       child: ValueListenableBuilder<double>(
         valueListenable: priceNotifier,
@@ -4083,13 +4083,13 @@ Placing Order:
                 height: 32.h,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(color: Colors.grey[400]!),
+                  border: Border.all(color: AppColors.textGrey),
                 ),
                 child: IconButton(
                   onPressed: () {
                     if (price > 0.01) priceNotifier.value = price - 0.01;
                   },
-                  icon: Icon(Icons.remove, size: 16.h, color: Colors.grey[600]),
+                  icon: Icon(Icons.remove, size: 16.h, color: AppColors.textGrey),
                   padding: EdgeInsets.zero,
                   constraints: BoxConstraints(),
                 ),

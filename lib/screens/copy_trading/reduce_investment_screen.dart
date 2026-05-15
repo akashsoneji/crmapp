@@ -117,7 +117,7 @@ class _ReduceInvestmentScreenState extends State<ReduceInvestmentScreen> {
       elevation: 0.8,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.grey.shade200),
+        side: BorderSide(color: AppColors.surface),
       ),
       child: Padding(
         padding: EdgeInsets.all(10.0),

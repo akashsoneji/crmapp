@@ -151,7 +151,7 @@ class _PartnershipProgramScreenState extends State<PartnershipProgramScreen> {
         borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1), // 10% opacity
+            color: AppColors.border.withValues(alpha: 0.1), // 10% opacity
             blurRadius: 6, // matches Figma blur
             offset: const Offset(0, 0), // X: 0, Y: 0
             spreadRadius: 0,
@@ -200,7 +200,7 @@ class _PartnershipProgramScreenState extends State<PartnershipProgramScreen> {
                                 ? AppColors.primary
                                 : isPending
                                 ? Colors.orange
-                                : Colors.grey,
+                                : AppColors.textGrey,
                         shape: BoxShape.circle,
                         border: Border.all(color: AppColors.whiteColor, width: 2),
                       ),
@@ -269,7 +269,7 @@ class _PartnershipProgramScreenState extends State<PartnershipProgramScreen> {
         backgroundColor:
             _isApplicationSubmitted || canSubmit
                 ? AppColors.primary
-                : Colors.grey,
+                : AppColors.textGrey,
         foregroundColor: AppColors.whiteColor,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12.r),

@@ -198,7 +198,7 @@ class _DepositRealScreenState extends State<DepositRealScreen> {
         ),
         shape: Border(
           bottom: BorderSide(
-            color: Colors.grey.shade300, // divider color
+            color: AppColors.border, // divider color
             width: 1, // divider thickness
           ),
         ),
@@ -306,7 +306,7 @@ class _DepositRealScreenState extends State<DepositRealScreen> {
         onTap: () => _showAccountDropdown(),
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 14.w),
-          child: RTLHelper.rtlIcon(Icons.arrow_drop_down, color: Colors.grey),
+          child: RTLHelper.rtlIcon(Icons.arrow_drop_down, color: AppColors.textGrey),
         ),
       ),
       decoration: InputDecoration(
@@ -509,7 +509,7 @@ class _DepositRealScreenState extends State<DepositRealScreen> {
             shrinkWrap: true,
             itemCount: accounts.length,
             separatorBuilder:
-                (_, __) => Divider(height: 1, color: Colors.grey.shade300),
+                (_, __) => Divider(height: 1, color: AppColors.border),
             itemBuilder: (context, index) {
               final account = accounts[index];
 
@@ -556,7 +556,7 @@ class _DepositRealScreenState extends State<DepositRealScreen> {
                           style: TextStyle(
                             fontSize: 15.sp,
                             fontWeight: FontWeight.w600,
-                            color: Colors.black87,
+                            color: AppColors.textPrimary,
                           ),
                         ),
                       ),
@@ -567,7 +567,7 @@ class _DepositRealScreenState extends State<DepositRealScreen> {
                         style: TextStyle(
                           fontSize: 14.sp,
                           fontWeight: FontWeight.w500,
-                          color: Colors.grey.shade700,
+                          color: AppColors.textGrey,
                         ),
                       ),
                     ],

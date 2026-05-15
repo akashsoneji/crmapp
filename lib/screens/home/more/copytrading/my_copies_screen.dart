@@ -316,7 +316,7 @@ class _SearchBox extends StatelessWidget {
         color: AppColors.card,
         borderRadius: BorderRadius.circular(14.r),
         border: Border.all(color: AppColors.textGrey.withOpacity(0.18)),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))],
+        boxShadow: [BoxShadow(color: AppColors.border.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 4))],
       ),
       child: AppTextField(
         controller: controller,
@@ -625,7 +625,7 @@ class _SubscriptionCardState extends State<_SubscriptionCard> {
         borderRadius: BorderRadius.circular(16.r),
         border: Border.all(color: AppColors.textGrey.withOpacity(0.14)),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 12, offset: const Offset(0, 4)),
+          BoxShadow(color: AppColors.border.withValues(alpha: 0.05), blurRadius: 12, offset: const Offset(0, 4)),
         ],
       ),
       clipBehavior: Clip.antiAlias,

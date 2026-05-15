@@ -121,7 +121,7 @@ class ChatWithUsScreen extends StatelessWidget {
                       message.sender!,
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.grey[600],
+                        color: AppColors.textGrey,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -137,7 +137,7 @@ class ChatWithUsScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: AppColors.border.withValues(alpha: 0.05),
                         blurRadius: 5,
                         offset: const Offset(0, 2),
                       ),
@@ -147,7 +147,7 @@ class ChatWithUsScreen extends StatelessWidget {
                     message.text,
                     style: TextStyle(
                       fontSize: 15,
-                      color: message.isUser ? AppColors.whiteColor : Colors.black87,
+                      color: message.isUser ? AppColors.whiteColor : AppColors.textPrimary,
                       height: 1.4,
                     ),
                   ),
@@ -163,10 +163,10 @@ class ChatWithUsScreen extends StatelessWidget {
               width: 32,
               height: 32,
               decoration: BoxDecoration(
-                color: Colors.grey[300],
+                color: AppColors.border,
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.person, color: Colors.grey[600], size: 18),
+              child: Icon(Icons.person, color: AppColors.textGrey, size: 18),
             ),
           ],
         ],
@@ -183,7 +183,7 @@ class ChatWithUsScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.grey[100],
+              color: AppColors.surface,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Column(
@@ -191,7 +191,7 @@ class ChatWithUsScreen extends StatelessWidget {
               children: [
                 Text(
                   "Please select the department where you want to get assistance.",
-                  style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                  style: TextStyle(fontSize: 14, color: AppColors.textGrey),
                 ),
                 const SizedBox(height: 12),
 
@@ -234,7 +234,7 @@ class ChatWithUsScreen extends StatelessWidget {
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: AppColors.border.withValues(alpha: 0.05),
                   blurRadius: 5,
                   offset: const Offset(0, 2),
                 ),
@@ -267,7 +267,7 @@ class ChatWithUsScreen extends StatelessWidget {
             width: 8,
             height: 8,
             decoration: BoxDecoration(
-              color: Colors.grey[400],
+              color: AppColors.textGrey,
               shape: BoxShape.circle,
             ),
           ),
@@ -286,7 +286,7 @@ class ChatWithUsScreen extends StatelessWidget {
         color: AppColors.whiteColor,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: AppColors.border.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, -2),
           ),
@@ -299,14 +299,14 @@ class ChatWithUsScreen extends StatelessWidget {
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.grey[100],
+                  color: AppColors.surface,
                   borderRadius: BorderRadius.circular(25),
                 ),
                 child: TextField(
                   controller: controller.messageController,
                   decoration: InputDecoration(
                     hintText: 'Ask me anything...',
-                    hintStyle: TextStyle(color: Colors.grey[500], fontSize: 15),
+                    hintStyle: TextStyle(color: AppColors.textGrey, fontSize: 15),
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 20,
                       vertical: 12,
@@ -318,7 +318,7 @@ class ChatWithUsScreen extends StatelessWidget {
                         IconButton(
                           icon: Icon(
                             Icons.mic,
-                            color: Colors.grey[600],
+                            color: AppColors.textGrey,
                             size: 20,
                           ),
                           onPressed: controller.openVoiceInput,
@@ -326,7 +326,7 @@ class ChatWithUsScreen extends StatelessWidget {
                         IconButton(
                           icon: Icon(
                             Icons.attach_file,
-                            color: Colors.grey[600],
+                            color: AppColors.textGrey,
                             size: 20,
                           ),
                           onPressed: controller.openAttachment,

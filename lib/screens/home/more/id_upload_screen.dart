@@ -39,7 +39,7 @@ class IdUploadScreen extends StatelessWidget {
               'The document you are providing must be valid at least 30 days and contain all of the following details:',
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey[600],
+                color: AppColors.textGrey,
                 height: 1.5,
               ),
             ),
@@ -124,9 +124,9 @@ class IdUploadScreen extends StatelessWidget {
       child: Container(
         height: 140,
         decoration: BoxDecoration(
-          color: Colors.grey[100],
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey[300]!),
+          border: Border.all(color: AppColors.border!),
         ),
         child:
             imagePath.isEmpty
@@ -136,12 +136,12 @@ class IdUploadScreen extends StatelessWidget {
                     Icon(
                       Icons.cloud_upload_outlined,
                       size: 40,
-                      color: Colors.grey[400],
+                      color: AppColors.textGrey,
                     ),
                     SizedBox(height: 8),
                     Text(
                       title,
-                      style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+                      style: TextStyle(fontSize: 14, color: AppColors.textGrey),
                     ),
                   ],
                 )
@@ -199,7 +199,7 @@ class IdUploadScreen extends StatelessWidget {
             text,
             style: TextStyle(
               fontSize: 13,
-              color: Colors.grey[700],
+              color: AppColors.textGrey,
               height: 1.4,
             ),
           ),

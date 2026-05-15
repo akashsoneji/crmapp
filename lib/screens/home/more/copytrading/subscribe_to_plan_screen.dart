@@ -1035,10 +1035,10 @@ class _AdvancedSettingsCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(14.r),
-        border: Border.all(color: Colors.grey.withOpacity(0.15)),
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.15)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.10),
+            color: AppColors.border.withValues(alpha: 0.10),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
@@ -1066,10 +1066,10 @@ class _AdvancedSettingsCard extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.tradeBackgroundCenterColor.withOpacity(0.22),
                 borderRadius: BorderRadius.circular(14.r),
-                border: Border.all(color: Colors.grey.withOpacity(0.12)),
+                border: Border.all(color: AppColors.border.withValues(alpha: 0.12)),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: AppColors.border.withValues(alpha: 0.05),
                     blurRadius: 14,
                     offset: const Offset(0, 6),
                   ),
@@ -1146,7 +1146,7 @@ class _AdvancedSettingsCard extends StatelessWidget {
                           style: AppTextStyles.caption,
                         ),
                         SizedBox(height: 14.h),
-                        Divider(color: Colors.grey.withOpacity(0.16), height: 1),
+                        Divider(color: AppColors.border.withValues(alpha: 0.16), height: 1),
                         SizedBox(height: 14.h),
                       ],
                     );
@@ -1374,7 +1374,7 @@ class _SmallChoiceChip extends StatelessWidget {
         decoration: BoxDecoration(
           color: selected ? AppColors.primary : AppColors.whiteColor,
           borderRadius: BorderRadius.circular(10.r),
-          border: Border.all(color: selected ? AppColors.primary : Colors.grey.withOpacity(0.18)),
+          border: Border.all(color: selected ? AppColors.primary : AppColors.border.withValues(alpha: 0.18)),
         ),
         child: Text(
           label,
@@ -1405,7 +1405,7 @@ class _MiniPresetChip extends StatelessWidget {
         decoration: BoxDecoration(
           color: selected ? AppColors.primary : const Color(0xFFF3F4F6),
           borderRadius: BorderRadius.circular(8.r),
-          border: Border.all(color: selected ? AppColors.primary : Colors.grey.withOpacity(0.18)),
+          border: Border.all(color: selected ? AppColors.primary : AppColors.border.withValues(alpha: 0.18)),
         ),
         child: Text(
           label,
@@ -1436,7 +1436,7 @@ class _ModeChip extends StatelessWidget {
         decoration: BoxDecoration(
           color: selected ? AppColors.primary : const Color(0xFFF3F4F6),
           borderRadius: BorderRadius.circular(12.r),
-          border: Border.all(color: selected ? AppColors.primary : Colors.grey.withOpacity(0.18)),
+          border: Border.all(color: selected ? AppColors.primary : AppColors.border.withValues(alpha: 0.18)),
         ),
         child: Text(
           label,
@@ -1470,7 +1470,7 @@ class _SelectTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: Colors.grey.withOpacity(0.15)),
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.15)),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
@@ -1541,7 +1541,7 @@ class _Card extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(14.r),
-        border: Border.all(color: Colors.grey.withOpacity(0.15)),
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.15)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(clamped),
@@ -1599,7 +1599,7 @@ class _PlanInfoCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(14.r),
-        border: Border.all(color: Colors.grey.withOpacity(0.15)),
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.15)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1646,7 +1646,7 @@ class _PlanDropdown extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: Colors.grey.withOpacity(0.15)),
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.15)),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<int?>(
@@ -1704,14 +1704,14 @@ class _AccountListPicker extends StatelessWidget {
           decoration: BoxDecoration(
             color: AppColors.whiteColor,
             borderRadius: BorderRadius.circular(12.r),
-            border: Border.all(color: Colors.grey.withOpacity(0.15)),
+            border: Border.all(color: AppColors.border.withValues(alpha: 0.15)),
           ),
           child: ListView.separated(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             padding: EdgeInsets.zero,
             itemCount: accounts.length,
-            separatorBuilder: (_, __) => Divider(height: 1, color: Colors.grey.withOpacity(0.12)),
+            separatorBuilder: (_, __) => Divider(height: 1, color: AppColors.border.withValues(alpha: 0.12)),
             itemBuilder: (context, index) {
               final a = accounts[index];
               final belowMin = _isBelowMin(a);
@@ -1801,7 +1801,7 @@ class _BottomBar extends StatelessWidget {
       padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 16.h),
       decoration: BoxDecoration(
         color: AppColors.tradeBackgroundCenterColor,
-        border: Border(top: BorderSide(color: Colors.grey.withOpacity(0.15))),
+        border: Border(top: BorderSide(color: AppColors.border.withValues(alpha: 0.15))),
       ),
       child: Obx(() {
         final s = step.value;

@@ -118,7 +118,7 @@ class _MasterProfileCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(14.r),
-        border: Border.all(color: Colors.grey.withOpacity(0.15)),
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.15)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -135,7 +135,7 @@ class _MasterProfileCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: AppColors.tradeBackgroundCenterColor.withOpacity(0.35),
                     borderRadius: BorderRadius.circular(12.r),
-                    border: Border.all(color: Colors.grey.withOpacity(0.12)),
+                    border: Border.all(color: AppColors.border.withValues(alpha: 0.12)),
                   ),
                   child: Text(masterCode, style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w400, color: AppColors.textPrimary)),
                 ),
@@ -213,7 +213,7 @@ class _StatCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: highlight ? const Color(0xFF22C55E).withOpacity(0.08) : AppColors.whiteColor,
         borderRadius: BorderRadius.circular(14.r),
-        border: Border.all(color: highlight ? const Color(0xFF16A34A) : Colors.grey.withOpacity(0.15)),
+        border: Border.all(color: highlight ? const Color(0xFF16A34A) : AppColors.border.withValues(alpha: 0.15)),
       ),
       child: Row(
         children: [
@@ -255,7 +255,7 @@ class _EmptyPlans extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(14.r),
-        border: Border.all(color: Colors.grey.withOpacity(0.15)),
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.15)),
       ),
       child: Column(
         children: [
@@ -306,8 +306,8 @@ class _PlanTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(14.r),
-        border: Border.all(color: Colors.grey.withOpacity(0.15)),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))],
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.15)),
+        boxShadow: [BoxShadow(color: AppColors.border.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 4))],
       ),
       child: Theme(
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
@@ -500,7 +500,7 @@ class _CreatePlanSheetState extends State<_CreatePlanSheet> {
         isDark ? AppColors.backgroundDarkTheme : AppColors.tradeBackgroundCenterColor;
     final cardBg = isDark ? AppColors.surfaceDarkTheme : AppColors.whiteColor;
     final borderColor =
-        isDark ? AppColors.borderDark : Colors.grey.withOpacity(0.15);
+        isDark ? AppColors.borderDark : AppColors.border.withValues(alpha: 0.15);
     final mutedText = isDark ? AppColors.textGreyDark : AppColors.textGrey;
     return Container(
       padding: EdgeInsets.only(bottom: bottom),
@@ -800,7 +800,7 @@ class _CreatePlanSheetState extends State<_CreatePlanSheet> {
                         decoration: BoxDecoration(
                           color: (isDark ? AppColors.backgroundDarkTheme : AppColors.tradeBackgroundCenterColor).withOpacity(0.35),
                           borderRadius: BorderRadius.circular(14.r),
-                          border: Border.all(color: isDark ? AppColors.borderDark : Colors.grey.withOpacity(0.12)),
+                          border: Border.all(color: isDark ? AppColors.borderDark : AppColors.border.withValues(alpha: 0.12)),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,

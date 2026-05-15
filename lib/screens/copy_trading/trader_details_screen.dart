@@ -83,10 +83,10 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
     return Scaffold(
       backgroundColor: AppColors.whiteColor, // theme-aware
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           "Master's Performance",
           style: TextStyle(
-            color: Colors.black,
+            color: AppColors.textPrimary,
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
@@ -168,7 +168,7 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
       elevation: 0.8,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.grey.shade200),
+        side: BorderSide(color: AppColors.border),
       ),
       child: Padding(
         padding: EdgeInsets.all(10.0),
@@ -256,7 +256,7 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
           margin: const EdgeInsets.only(bottom: 10),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
-            side: BorderSide(color: Colors.grey.shade200),
+            side: BorderSide(color: AppColors.border),
           ),
           child: InkWell(
             onTap: () {
@@ -365,7 +365,7 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
                   // Expanded Details
                   if (isExpanded) ...[
                     const SizedBox(height: 14),
-                    const Divider(height: 1, thickness: 1, color: Colors.grey),
+                    Divider(height: 1, thickness: 1, color: AppColors.border),
                     const SizedBox(height: 10),
                     _buildDetailRow('Master name', trade.masterName),
                     _buildDetailRow('Open time', trade.openTime),
@@ -392,20 +392,20 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
         children: [
           Text(
             label,
-            style: TextStyle(fontSize: 13.5, color: Colors.grey[700]),
+            style: TextStyle(fontSize: 13.5, color: AppColors.textGrey),
           ),
           Expanded(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10),
-              child: Divider(height: 1, thickness: 1, color: Colors.grey[300]),
+              child: Divider(height: 1, thickness: 1, color: AppColors.border),
             ),
           ),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13.5,
               fontWeight: FontWeight.w500,
-              color: Colors.black87,
+              color: AppColors.textPrimary,
             ),
           ),
         ],
@@ -416,19 +416,19 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
   Widget _buildTradeDetailRow(String label, String value) {
     return Row(
       children: [
-        Text(label, style: const TextStyle(color: Colors.grey, fontSize: 13)),
+        Text(label, style: TextStyle(color: AppColors.textGrey, fontSize: 12)),
         const SizedBox(width: 4),
         Expanded(
           child: Text(
             ' . ' * 20,
             maxLines: 1,
             overflow: TextOverflow.clip,
-            style: TextStyle(color: Colors.grey.shade300, fontSize: 13),
+            style: TextStyle(color: AppColors.border, fontSize: 13),
             textAlign: TextAlign.center,
           ),
         ),
         const SizedBox(width: 4),
-        Text(value, style: const TextStyle(color: Colors.grey, fontSize: 13)),
+        Text(value, style: TextStyle(color: AppColors.textGrey, fontSize: 13)),
       ],
     );
   }
@@ -475,9 +475,9 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
   Widget _buildChartYAxisRow(String label) {
     return Row(
       children: [
-        Text(label, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+        Text(label, style: TextStyle(color: AppColors.textGrey, fontSize: 12)),
         const SizedBox(width: 8),
-        Expanded(child: Container(height: 1, color: Colors.grey.shade200)),
+        Expanded(child: Container(height: 1, color: AppColors.border)),
       ],
     );
   }
@@ -506,7 +506,7 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
                   style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
                 ),
               ),
-              const Icon(Icons.info_outline, color: Colors.grey, size: 16),
+              Icon(Icons.info_outline, color: AppColors.textGrey, size: 16),
             ],
           ),
           const SizedBox(height: 8),
@@ -546,18 +546,18 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
             ],
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Strategy Description',
             style: TextStyle(
-              color: Colors.black87,
+              color: AppColors.textPrimary,
               fontSize: 14,
               fontWeight: FontWeight.w400,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'welcome to Pipze (A group expert traders.) We are providing safe and secure trading strategies to make profit for our copiers, stay with us and make safe profit.',
-            style: TextStyle(color: Colors.grey, fontSize: 12, height: 1.4),
+            style: TextStyle(color: AppColors.textGrey, fontSize: 12, height: 1.4),
           ),
         ],
       ),
@@ -651,7 +651,7 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
           Container(
             height: 2,
             width: double.infinity,
-            color: Colors.grey.shade200,
+            color: AppColors.border,
             alignment: Alignment.centerLeft,
             child: Container(width: 80, height: 2, color: AppColors.primary),
           ),
@@ -684,7 +684,7 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
       child: Text(
         label,
         style: TextStyle(
-          color: isSelected ? AppColors.whiteColor : Colors.black87,
+          color: isSelected ? AppColors.whiteColor : AppColors.textPrimary,
           fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
           fontSize: 12,
         ),
@@ -712,7 +712,7 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
         Text(
           value,
           style: TextStyle(
-            color: isPrimaryValue ? AppColors.primary : Colors.black87,
+            color: isPrimaryValue ? AppColors.primary : AppColors.textPrimary,
             fontWeight: FontWeight.w600,
             fontSize: 16,
           ),
@@ -730,7 +730,7 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
       elevation: 0.8,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.grey.shade200),
+        side: BorderSide(color: AppColors.border),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -812,14 +812,14 @@ class SteppedActivityChart extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Padding(
+        Padding(
           padding: EdgeInsets.only(left: 16, top: 16, bottom: 8),
           child: Text(
             'Activity',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
-              color: Colors.black87,
+              color: AppColors.textPrimary,
             ),
           ),
         ),
@@ -869,7 +869,7 @@ class SteppedActivityChart extends StatelessWidget {
                           '\$${value.toStringAsFixed(0)}',
                           style: TextStyle(
                             fontSize: 13,
-                            color: Colors.grey.shade800,
+                            color: AppColors.textGrey,
                           ),
                         ),
                       );

@@ -20,10 +20,10 @@ import 'package:crm_app/screens/home/more/one_click_trading_disclaimer_screen.da
 import 'package:crm_app/controllers/ib_controller.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
 import 'package:crm_app/widgets/brand_logo.dart';
+import 'package:crm_app/widgets/theme_bottom_sheet.dart';
 import 'package:crm_app/services/secure_storage_service.dart';
-import 'package:crm_app/services/theme_service.dart';
-import 'package:crm_app/services/biometric_service.dart';
 import 'package:crm_app/services/app_lock_service.dart';
+import 'package:crm_app/services/biometric_service.dart';
 
 class MoreScreen extends StatefulWidget {
   const MoreScreen({super.key});
@@ -234,16 +234,16 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                         child: Container(
                           width: 28.w,
                           height: 28.w,
-                          decoration: const BoxDecoration(
+                          decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: Color(0xFFE1E1E1),
+                            color: AppColors.border,
                           ),
                           child: const Icon(Icons.close, size: 18),
                         ),
                       ),
                     ],
                   ),
-                  Divider(height: 20.h, color: const Color(0xFFE6E6E6)),
+                  Divider(height: 20.h, color: AppColors.border),
                   if (_tenaxProfiles.isEmpty)
                     Padding(
                       padding: EdgeInsets.symmetric(vertical: 20.h),
@@ -302,8 +302,8 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
       },
       child: Container(
         padding: EdgeInsets.symmetric(vertical: 10.h),
-        decoration: const BoxDecoration(
-          border: Border(bottom: BorderSide(color: Color(0xFFE6E6E6))),
+        decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: AppColors.border)),
         ),
         child: Row(
           children: [
@@ -351,7 +351,7 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
               height: 22.w,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: isSelected ? AppColors.primary : const Color(0xFFD9D9D9),
+                color: isSelected ? AppColors.primary : AppColors.textGrey,
               ),
               child:
                   isSelected
@@ -723,7 +723,7 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                   borderRadius: BorderRadius.circular(16.r),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.04),
+                      color: AppColors.border.withValues(alpha: 0.04),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -847,7 +847,7 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                   _QuickActionButton(
                     icon: 'deposit',
                     label: languageService.tr('general_deposit'),
-                    color: const Color(0xFF4CAF50), // Green
+                    color: AppColors.quickActionGreen, // Green
                     onTap:
                         () => Get.to(
                           () => PaymentMethodsScreen(accountNumber: ''),
@@ -856,19 +856,19 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                   _QuickActionButton(
                     icon: 'withdrawal',
                     label: languageService.tr('general_withdraw'),
-                    color: const Color(0xFFFF9800), // Orange
+                    color: AppColors.quickActionOrange, // Orange
                     onTap: () => Get.toNamed(AppPages.WITHDRAWAL),
                   ),
                   _QuickActionButton(
                     icon: 'internal-transfer',
                     label: languageService.tr('general_transfer'),
-                    color: const Color(0xFF2196F3), // Blue
+                    color: AppColors.quickActionBlue, // Blue
                     onTap: () => Get.toNamed(AppPages.INTERNAL_TRANSFER),
                   ),
                   _QuickActionButton(
                     icon: 'clock',
                     label: languageService.tr('general_history'),
-                    color: const Color(0xFF9C27B0), // Purple
+                    color: AppColors.quickActionPurple, // Purple
                     onTap: () => Get.toNamed(AppPages.TRANSACTION_HISTORY),
                   ),
                 ],
@@ -952,13 +952,13 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
               ),
               _CardGroup(
                 children: [
+                  _ThemeMenuItem(),
                   const _BiometricLoginMenuItem(),
                   _MenuItem(
                     icon: 'change_password',
                     label: languageService.tr('change_password'),
                     onTap: () => Get.toNamed(AppPages.CHANGE_PASSWORD),
                   ),
-                  // const _ThemeToggleMenuItem(),
                   _MenuItem(
                     icon: 'personal_info',
                     label: languageService.tr('delete_account'),
@@ -1634,7 +1634,7 @@ class _OneClickTradingMenuItemState extends State<_OneClickTradingMenuItem> {
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
+                        color: AppColors.border.withValues(alpha: 0.1),
                         blurRadius: 4,
                         offset: const Offset(0, 1),
                       ),
@@ -1817,7 +1817,7 @@ class _BiometricLoginMenuItemState extends State<_BiometricLoginMenuItem> {
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
+                          color: AppColors.border.withValues(alpha: 0.1),
                           blurRadius: 4,
                           offset: const Offset(0, 1),
                         ),
@@ -1834,103 +1834,59 @@ class _BiometricLoginMenuItemState extends State<_BiometricLoginMenuItem> {
   }
 }
 
-class _ThemeToggleMenuItem extends StatefulWidget {
-  const _ThemeToggleMenuItem();
-
-  @override
-  State<_ThemeToggleMenuItem> createState() => _ThemeToggleMenuItemState();
-}
-
-class _ThemeToggleMenuItemState extends State<_ThemeToggleMenuItem> {
-  late final ThemeService _themeService;
-  bool _isDarkMode = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _themeService = Get.find<ThemeService>();
-    _isDarkMode = _themeService.isDarkMode.value;
-  }
+class _ThemeMenuItem extends StatelessWidget {
+  const _ThemeMenuItem();
 
   @override
   Widget build(BuildContext context) {
-    return Obx(() {
-      final isDark = _themeService.isDarkMode.value;
-      return Padding(
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 11.h),
-        child: Row(
-          children: [
-            Container(
-              width: 34.w,
-              height: 34.w,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.08),
-                shape: BoxShape.circle,
-              ),
-              child: Center(
-                child: Icon(
-                  isDark ? Icons.dark_mode : Icons.light_mode,
-                  size: 18.sp,
-                  color: AppColors.primary,
-                ),
-              ),
-            ),
-            SizedBox(width: 14.w),
-            Expanded(
-              child: Text(
-                isDark ? 'Dark Mode' : 'Light Mode',
-                style: TextStyle(
-                  fontFamily: 'Roboto',
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w400,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-            ),
-            GestureDetector(
-              onTap: () async {
-                await _themeService.toggleTheme();
-              },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                width: 44.w,
-                height: 24.h,
+    final languageService = Get.find<LanguageService>();
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => showThemeBottomSheet(context),
+        borderRadius: BorderRadius.circular(18.r),
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 11.h),
+          child: Row(
+            children: [
+              Container(
+                width: 34.w,
+                height: 34.w,
                 decoration: BoxDecoration(
-                  color:
-                      isDark
-                          ? AppColors.primary
-                          : AppColors.icongrey.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(20.r),
+                  color: AppColors.primary.withValues(alpha: 0.08),
+                  shape: BoxShape.circle,
                 ),
-                child: AnimatedAlign(
-                  duration: const Duration(milliseconds: 200),
-                  alignment:
-                      isDark ? Alignment.centerRight : Alignment.centerLeft,
-                  curve: Curves.easeOut,
-                  child: Container(
-                    padding: EdgeInsets.all(2.w),
-                    margin: EdgeInsets.symmetric(horizontal: 4.w),
-                    width: 16.w,
-                    height: 16.w,
-                    decoration: BoxDecoration(
-                      color: AppColors.whiteColor,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 4,
-                          offset: const Offset(0, 1),
-                        ),
-                      ],
-                    ),
+                child: Center(
+                  child: Icon(
+                    Icons.palette_outlined,
+                    size: 18.sp,
+                    color: AppColors.primary,
                   ),
                 ),
               ),
-            ),
-          ],
+              SizedBox(width: 14.w),
+              Expanded(
+                child: Text(
+                  languageService.tr('settings_theme'),
+                  style: TextStyle(
+                    fontFamily: 'Roboto',
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w400,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 16.sp,
+                color: AppColors.icongrey.withValues(alpha: 0.6),
+              ),
+            ],
+          ),
         ),
-      );
-    });
+      ),
+    );
   }
 }
 
@@ -2082,7 +2038,7 @@ class VerifyAccountCard extends StatelessWidget {
                         child: LinearProgressIndicator(
                           value: completion / 100,
                           minHeight: 3,
-                          backgroundColor: Colors.grey[300],
+                          backgroundColor: AppColors.border,
                           valueColor: AlwaysStoppedAnimation<Color>(
                             AppColors.primary,
                           ),

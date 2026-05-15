@@ -213,7 +213,7 @@ class _EnhancedPendingOrderContentState
           decoration: BoxDecoration(
             color: AppColors.whiteColor,
             borderRadius: BorderRadius.circular(8.r),
-            border: Border.all(color: Colors.grey[300]!),
+            border: Border.all(color: AppColors.border!),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -222,7 +222,7 @@ class _EnhancedPendingOrderContentState
                 orderType.displayName,
                 style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w500),
               ),
-              Icon(Icons.keyboard_arrow_down, color: Colors.grey[600]),
+              Icon(Icons.keyboard_arrow_down, color: AppColors.textGrey),
             ],
           ),
         ),
@@ -326,7 +326,7 @@ class _EnhancedPendingOrderContentState
                 children: [
                   Text(
                     'Stop Loss',
-                    style: TextStyle(fontSize: 12.sp, color: Colors.grey[600]),
+                    style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey),
                   ),
                   SizedBox(height: 4.h),
                   Row(
@@ -366,7 +366,7 @@ class _EnhancedPendingOrderContentState
                 children: [
                   Text(
                     'Take Profit',
-                    style: TextStyle(fontSize: 12.sp, color: Colors.grey[600]),
+                    style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey),
                   ),
                   SizedBox(height: 4.h),
                   Row(

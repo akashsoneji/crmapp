@@ -94,7 +94,7 @@ class CopyTradingInternalTransferScreen extends StatelessWidget {
           decoration: InputDecoration(
             hintText: value.isEmpty ? 'Enter $label' : value,
             filled: true,
-            fillColor: Colors.grey.withOpacity(0.05),
+            fillColor: AppColors.border.withValues(alpha: 0.05),
             contentPadding: EdgeInsets.symmetric(
               horizontal: 16.w,
               vertical: 14.h,

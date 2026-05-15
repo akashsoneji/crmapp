@@ -296,7 +296,7 @@ class DashboardScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: AppColors.border.withValues(alpha: 0.08),
             blurRadius: 10,
             offset: Offset(0, 2),
           ),
@@ -316,7 +316,7 @@ class DashboardScreen extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: Colors.black,
+                      color: AppColors.textPrimary,
                       height: 1.4,
                     ),
                   ),
@@ -383,7 +383,7 @@ class DashboardScreen extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
-                              color: Colors.black,
+                              color: AppColors.textPrimary,
                               height: 1.4,
                             ),
                           ),
@@ -723,7 +723,7 @@ class AccountInfoBottomSheet extends StatelessWidget {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: Colors.grey[300],
+              color: AppColors.border,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -1332,7 +1332,7 @@ class AccountMenuBottomSheet extends StatelessWidget {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: Colors.grey[300],
+              color: AppColors.border,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -1456,7 +1456,7 @@ class AccountMenuBottomSheet extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.symmetric(vertical: 16, horizontal: 20),
         decoration: BoxDecoration(
-          color: Colors.grey[50],
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -1508,7 +1508,7 @@ class OpenAccountBottomSheet extends StatelessWidget {
                 width: 40.w,
                 height: 4.h,
                 decoration: BoxDecoration(
-                  color: Colors.grey[300],
+                  color: AppColors.border,
                   borderRadius: BorderRadius.circular(2.r),
                 ),
               ),
@@ -1521,7 +1521,7 @@ class OpenAccountBottomSheet extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 20.sp,
                   fontWeight: FontWeight.w600,
-                  color: Colors.black,
+                  color: AppColors.textPrimary,
                 ),
               ),
 
@@ -1535,7 +1535,7 @@ class OpenAccountBottomSheet extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 14.sp,
-                    color: Colors.grey[600],
+                    color: AppColors.textGrey,
                     height: 1.4,
                   ),
                 ),
@@ -1585,7 +1585,7 @@ class OpenAccountBottomSheet extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 16.sp,
                           fontWeight: FontWeight.w500,
-                          color: Colors.black87,
+                          color: AppColors.textPrimary,
                         ),
                       ),
                     ),

@@ -57,7 +57,7 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
       case 'rejected':
         return AppColors.red;
       case 'pending':
-        return const Color(0xFFF59E0B);
+        return AppColors.warningText;
       default:
         return AppColors.textGrey;
     }
@@ -165,7 +165,7 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
               borderRadius: BorderRadius.circular(12.r),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
+                  color: AppColors.border.withValues(alpha: 0.04),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -325,7 +325,7 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
                               borderRadius: BorderRadius.circular(12.r),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.04),
+                                  color: AppColors.border.withValues(alpha: 0.04),
                                   blurRadius: 8,
                                   offset: const Offset(0, 2),
                                 ),
@@ -649,7 +649,7 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
                 statusColor = AppColors.green;
                 break;
               case 'pending_admin':
-                statusColor = const Color(0xFFF59E0B);
+                statusColor = AppColors.warningText;
                 break;
               default:
                 statusColor = AppColors.textGrey;
@@ -661,7 +661,7 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
                 borderRadius: BorderRadius.circular(12.r),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
+                    color: AppColors.border.withValues(alpha: 0.04),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -829,7 +829,7 @@ class _StatPill extends StatelessWidget {
 class _VertDivider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Container(height: 28.h, width: 1, color: const Color(0xFFEEEEEE));
+    return Container(height: 28.h, width: 1, color: AppColors.border);
   }
 }
 
@@ -856,7 +856,7 @@ class _PortalFilterChip extends StatelessWidget {
           color: selected ? AppColors.primary : AppColors.whiteColor,
           borderRadius: BorderRadius.circular(20.r),
           border: Border.all(
-            color: selected ? AppColors.primary : const Color(0xFFDDDDDD),
+            color: selected ? AppColors.primary : AppColors.border,
           ),
           boxShadow:
               selected

@@ -162,7 +162,7 @@ class _OneClickTradingDisclaimerScreenState
                         Navigator.of(context).pop();
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.grey.shade200,
+                        backgroundColor: AppColors.surface,
                         foregroundColor: AppColors.textPrimary,
                         padding: EdgeInsets.symmetric(vertical: 14.h),
                         shape: RoundedRectangleBorder(
@@ -199,9 +199,9 @@ class _OneClickTradingDisclaimerScreenState
                         backgroundColor:
                             _isAccepted
                                 ? AppColors.primary
-                                : Colors.grey.shade300,
+                                : AppColors.border,
                         foregroundColor:
-                            _isAccepted ? AppColors.whiteColor : Colors.grey.shade600,
+                            _isAccepted ? AppColors.whiteColor : AppColors.textGrey,
                         padding: EdgeInsets.symmetric(vertical: 14.h),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8.r),

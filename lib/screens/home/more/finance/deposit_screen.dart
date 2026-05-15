@@ -85,7 +85,7 @@ class _DepositScreenState extends State<DepositScreen> {
         ),
         shape: Border(
           bottom: BorderSide(
-            color: Colors.grey.shade300, // divider color
+            color: AppColors.border, // divider color
             width: 1, // divider thickness
           ),
         ),
@@ -225,7 +225,7 @@ class _DepositScreenState extends State<DepositScreen> {
                   width: 40.w,
                   height: 4.h,
                   decoration: BoxDecoration(
-                    color: Colors.grey[300],
+                    color: AppColors.border,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -321,7 +321,7 @@ class _DepositScreenState extends State<DepositScreen> {
                   width: 40.w,
                   height: 4.h,
                   decoration: BoxDecoration(
-                    color: Colors.grey[300],
+                    color: AppColors.border,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),

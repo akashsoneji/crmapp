@@ -403,7 +403,7 @@ class _CommissionGroupsScreenState extends State<CommissionGroupsScreen> {
     return Container(
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
-        color: Colors.grey[100],
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(8.r),
       ),
       child: Row(
@@ -458,7 +458,7 @@ class _CommissionGroupsScreenState extends State<CommissionGroupsScreen> {
           borderRadius: BorderRadius.circular(12.r),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: AppColors.border.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -583,7 +583,7 @@ class _CommissionGroupsScreenState extends State<CommissionGroupsScreen> {
                             child: TextButton(
                               onPressed: () => _navigateToEditGroup(group),
                               style: TextButton.styleFrom(
-                                backgroundColor: Colors.grey[200],
+                                backgroundColor: AppColors.surface,
                                 padding: EdgeInsets.symmetric(
                                   horizontal: 8.w,
                                   vertical: 6.h,
@@ -608,7 +608,7 @@ class _CommissionGroupsScreenState extends State<CommissionGroupsScreen> {
                             child: TextButton(
                               onPressed: () => _deleteGroup(group),
                               style: TextButton.styleFrom(
-                                backgroundColor: Colors.grey[200],
+                                backgroundColor: AppColors.surface,
                                 padding: EdgeInsets.symmetric(
                                   horizontal: 8.w,
                                   vertical: 6.h,

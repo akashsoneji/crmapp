@@ -298,7 +298,7 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
                     vertical: 10.h,
                   ),
                   decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey.shade300),
+                    border: Border.all(color: AppColors.border),
                     borderRadius: BorderRadius.circular(8.r),
                   ),
                   child: Row(
@@ -383,7 +383,7 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
                 ),
 
                 SizedBox(height: 16.h),
-                Divider(color: Colors.grey.shade200),
+                Divider(color: AppColors.surface),
                 SizedBox(height: 8.h),
 
                 _SummaryRow(
@@ -695,7 +695,7 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
   }
 
   Widget _divider() =>
-      Divider(height: 1, color: Colors.grey.shade200, indent: 36.w);
+      Divider(height: 1, color: AppColors.surface, indent: 36.w);
 
   void _showStopCopyingDialog() {
     showDialog(
@@ -863,7 +863,7 @@ class _TradeExpandableCardState extends State<_TradeExpandableCard> {
       decoration: BoxDecoration(
         color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(10.r),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: AppColors.surface),
       ),
       child: Column(
         children: [
@@ -989,7 +989,7 @@ class _TradeExpandableCardState extends State<_TradeExpandableCard> {
   Widget _buildDetails(_TradeItem t) {
     return Column(
       children: [
-        Divider(height: 1, color: Colors.grey.shade200),
+        Divider(height: 1, color: AppColors.surface),
         Padding(
           padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
           child: Column(
@@ -1031,7 +1031,7 @@ class _TradeExpandableCardState extends State<_TradeExpandableCard> {
             ],
           ),
         ),
-        if (!isLast) Divider(height: 1, color: Colors.grey.shade100),
+        if (!isLast) Divider(height: 1, color: AppColors.surface),
       ],
     );
   }
@@ -1100,10 +1100,10 @@ class _SummaryCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: AppColors.surface),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: AppColors.border.withValues(alpha: 0.04),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),

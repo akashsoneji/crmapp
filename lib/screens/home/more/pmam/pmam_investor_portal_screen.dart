@@ -163,7 +163,7 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
               borderRadius: BorderRadius.circular(16.r),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
+                  color: AppColors.border.withValues(alpha: 0.08),
                   blurRadius: 18,
                   offset: const Offset(0, 10),
                 ),
@@ -222,11 +222,11 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                     fillColor: AppColors.tradeBackgroundCenterColor,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12.r),
-                      borderSide: const BorderSide(color: Color(0xFFEAEAEA)),
+                      borderSide: BorderSide(color: AppColors.border),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12.r),
-                      borderSide: const BorderSide(color: Color(0xFFEAEAEA)),
+                      borderSide: BorderSide(color: AppColors.border),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12.r),
@@ -245,7 +245,7 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                       child: OutlinedButton(
                         onPressed: () => Navigator.of(ctx).pop(),
                         style: OutlinedButton.styleFrom(
-                          side: BorderSide(color: const Color(0xFFDDDDDD)),
+                          side: BorderSide(color: AppColors.border),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10.r),
                           ),
@@ -475,7 +475,7 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                                   color: AppColors.whiteColor,
                                   borderRadius: BorderRadius.circular(10.r),
                                   border: Border.all(
-                                    color: const Color(0xFFEAEAEA),
+                                    color: AppColors.border,
                                   ),
                                 ),
                                 child: Row(
@@ -523,7 +523,7 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                                   color: AppColors.whiteColor,
                                   borderRadius: BorderRadius.circular(10.r),
                                   border: Border.all(
-                                    color: const Color(0xFFEAEAEA),
+                                    color: AppColors.border,
                                   ),
                                 ),
                                 child: Row(
@@ -807,7 +807,7 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                                       ),
                                       Container(
                                         height: 1,
-                                        color: const Color(0xFFEAEAEA),
+                                        color: AppColors.border,
                                       ),
                                       Expanded(
                                         child: ListView.builder(
@@ -852,10 +852,10 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                                               padding: EdgeInsets.symmetric(
                                                 vertical: 10.h,
                                               ),
-                                              decoration: const BoxDecoration(
+                                              decoration: BoxDecoration(
                                                 border: Border(
                                                   bottom: BorderSide(
-                                                    color: Color(0xFFEFEFEF),
+                                                    color: AppColors.border,
                                                   ),
                                                 ),
                                               ),
@@ -1017,7 +1017,7 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
               borderRadius: BorderRadius.circular(12.r),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.06),
+                  color: AppColors.border.withValues(alpha: 0.06),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -1125,7 +1125,7 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                         borderRadius: BorderRadius.circular(12.r),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.04),
+                            color: AppColors.border.withValues(alpha: 0.04),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),
@@ -1398,7 +1398,7 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                     status == 'active'
                         ? AppColors.green
                         : status == 'pending'
-                        ? const Color(0xFFB7791F)
+                        ? AppColors.warningText
                         : AppColors.textGrey;
                 return Container(
                   padding: EdgeInsets.all(14.w),
@@ -1407,7 +1407,7 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                     borderRadius: BorderRadius.circular(12.r),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.04),
+                        color: AppColors.border.withValues(alpha: 0.04),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -1580,7 +1580,7 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
               borderRadius: BorderRadius.circular(12.r),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
+                  color: AppColors.border.withValues(alpha: 0.04),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -1704,7 +1704,7 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                             ),
                             Container(
                               height: 1,
-                              color: const Color(0xFFEAEAEA),
+                              color: AppColors.border,
                             ),
                             ...fundEntries.asMap().entries.expand((entry) {
                               final idx = entry.key;
@@ -1790,7 +1790,7 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                                 if (idx != fundEntries.length - 1)
                                   Container(
                                     height: 1,
-                                    color: const Color(0xFFEFEFEF),
+                                    color: AppColors.border,
                                   ),
                               ];
                             }),
@@ -1810,7 +1810,7 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                 borderRadius: BorderRadius.circular(12.r),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
+                    color: AppColors.border.withValues(alpha: 0.04),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -2007,7 +2007,7 @@ class _SummaryChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(12.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: AppColors.border.withValues(alpha: 0.04),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -2054,7 +2054,7 @@ class _SmallFilterChip extends StatelessWidget {
           color: selected ? AppColors.primary : AppColors.whiteColor,
           borderRadius: BorderRadius.circular(20.r),
           border: Border.all(
-            color: selected ? AppColors.primary : const Color(0xFFDDDDDD),
+            color: selected ? AppColors.primary : AppColors.border,
           ),
         ),
         child: Text(

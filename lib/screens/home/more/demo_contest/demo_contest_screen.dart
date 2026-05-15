@@ -110,10 +110,10 @@ class _MenuItem extends StatelessWidget {
         decoration: BoxDecoration(
           border: Border(
             top: showTopBorder
-                ? BorderSide(color: Colors.grey.shade300, width: 1)
+                ? BorderSide(color: AppColors.border, width: 1)
                 : BorderSide.none,
             bottom: showBottomBorder
-                ? BorderSide(color: Colors.grey.shade300, width: 1)
+                ? BorderSide(color: AppColors.border, width: 1)
                 : BorderSide.none,
           ),
         ),

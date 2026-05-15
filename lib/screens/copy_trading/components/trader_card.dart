@@ -34,7 +34,7 @@ class TraderCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 12.0),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
-          side: BorderSide(color: Colors.grey.shade200),
+          side: BorderSide(color: AppColors.surface),
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
@@ -63,10 +63,10 @@ class TraderCard extends StatelessWidget {
                               fontSize: 16,
                             ),
                           ),
-                          const Text(
+                          Text(
                             'High Achiever',
                             style: TextStyle(
-                              color: Colors.grey,
+                              color: AppColors.textGrey,
                               fontWeight: FontWeight.w400,
                               fontSize: 10,
                             ),
@@ -86,8 +86,8 @@ class TraderCard extends StatelessWidget {
                     ),
                     child: Text(
                       badge,
-                      style: const TextStyle(
-                        color: Colors.black,
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
                         fontWeight: FontWeight.w600,
                         fontSize: 10,
                       ),
@@ -113,9 +113,9 @@ class TraderCard extends StatelessWidget {
               const SizedBox(height: 8),
 
               // Profit and Loss Row
-              const Text(
+              Text(
                 'Profit and Loss',
-                style: TextStyle(color: Colors.grey, fontSize: 12),
+                style: TextStyle(color: AppColors.textGrey, fontSize: 12),
               ),
               const SizedBox(height: 4),
               Row(
@@ -144,7 +144,7 @@ class TraderCard extends StatelessWidget {
                 child: SizedBox(
                   height: 3, // very thin
                   child: LinearProgressIndicator(
-                    backgroundColor: Colors.grey.shade200, // light background
+                    backgroundColor: AppColors.surface, // light background
                     color: AppColors.primary, // solid purple
                     // Or use gradient (more modern look):
                     value: 0.2,
@@ -167,7 +167,7 @@ class TraderCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+        Text(label, style: TextStyle(color: AppColors.textGrey, fontSize: 12)),
         const SizedBox(height: 4),
         Text(
           value,

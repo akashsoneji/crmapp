@@ -60,7 +60,7 @@ class _OpenAccountScreenState extends State<OpenAccountScreen> {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey[600],
+                color: AppColors.textGrey,
                 height: 1.4,
               ),
             ),
@@ -86,7 +86,7 @@ class _OpenAccountScreenState extends State<OpenAccountScreen> {
                           color:
                               selectedAccountType == 'real'
                                   ? AppColors.primary
-                                  : Colors.grey[300]!,
+                                  : AppColors.border!,
                           width: selectedAccountType == 'real' ? 2 : 1,
                         ),
                         borderRadius: BorderRadius.circular(12),
@@ -112,7 +112,7 @@ class _OpenAccountScreenState extends State<OpenAccountScreen> {
                               color:
                                   selectedAccountType == 'real'
                                       ? AppColors.primary
-                                      : Colors.black87,
+                                      : AppColors.textPrimary,
                             ),
                           ),
                         ],
@@ -138,7 +138,7 @@ class _OpenAccountScreenState extends State<OpenAccountScreen> {
                           color:
                               selectedAccountType == 'demo'
                                   ? AppColors.primary
-                                  : Colors.grey[300]!,
+                                  : AppColors.border!,
                           width: selectedAccountType == 'demo' ? 2 : 1,
                         ),
                         borderRadius: BorderRadius.circular(12),
@@ -164,7 +164,7 @@ class _OpenAccountScreenState extends State<OpenAccountScreen> {
                               color:
                                   selectedAccountType == 'demo'
                                       ? AppColors.primary
-                                      : Colors.black87,
+                                      : AppColors.textPrimary,
                             ),
                           ),
                         ],
@@ -190,7 +190,7 @@ class _OpenAccountScreenState extends State<OpenAccountScreen> {
                   color:
                       selectedAccountType != null
                           ? AppColors.primary
-                          : Colors.grey[400],
+                          : AppColors.textGrey,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Center(

@@ -205,7 +205,7 @@ class _WalletScreenState extends State<WalletScreen> {
   }
 
   Widget _buildDivider() {
-    return Container(height: 1, color: Colors.grey[200]);
+    return Container(height: 1, color: AppColors.border);
   }
 
   void _showAccountSelectionSheet() {
@@ -464,7 +464,7 @@ class _WalletScreenState extends State<WalletScreen> {
               padding: EdgeInsets.symmetric(horizontal: 14.w),
               child: RTLHelper.rtlIcon(
                 Icons.arrow_drop_down,
-                color: Colors.grey,
+                color: AppColors.textGrey,
               ),
             ),
           ),
@@ -729,11 +729,11 @@ class _WalletScreenState extends State<WalletScreen> {
         isDense: true,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: Colors.grey[300]!),
+          borderSide: BorderSide(color: AppColors.border),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: Colors.grey[300]!),
+          borderSide: BorderSide(color: AppColors.border),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
@@ -815,11 +815,11 @@ class _WalletScreenState extends State<WalletScreen> {
             isDense: true,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey[300]!),
+              borderSide: BorderSide(color: AppColors.border),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey[300]!),
+              borderSide: BorderSide(color: AppColors.border),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
@@ -887,11 +887,11 @@ class _WalletScreenState extends State<WalletScreen> {
               isDense: true,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.grey[300]!),
+                borderSide: BorderSide(color: AppColors.border),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.grey[300]!),
+                borderSide: BorderSide(color: AppColors.border),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),

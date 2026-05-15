@@ -152,7 +152,7 @@ class CopyTradingHubScreen extends StatelessWidget {
 
   Widget _divider() => Padding(
         padding: EdgeInsets.symmetric(horizontal: 16.w),
-        child: Divider(height: 1, thickness: 0.5, color: AppColors.textGrey.withOpacity(0.22)),
+        child: Divider(height: 1, thickness: 0.5, color: AppColors.border.withValues(alpha: 0.22)),
       );
 }
 
@@ -166,10 +166,10 @@ class _SectionCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.card,
         borderRadius: BorderRadius.circular(14.r),
-        border: Border.all(color: AppColors.textGrey.withOpacity(0.18)),
+        border: Border.all(color: AppColors.border),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: AppColors.border.withValues(alpha: 0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -289,7 +289,7 @@ class _PendingReviewScreen extends StatelessWidget {
           decoration: BoxDecoration(
             color: AppColors.card,
             borderRadius: BorderRadius.circular(14.r),
-            border: Border.all(color: AppColors.textGrey.withOpacity(0.18)),
+            border: Border.all(color: AppColors.border),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -380,7 +380,7 @@ class _BecomeMasterScreenState extends State<_BecomeMasterScreen> {
             decoration: BoxDecoration(
               color: AppColors.card,
               borderRadius: BorderRadius.circular(14.r),
-              border: Border.all(color: AppColors.textGrey.withOpacity(0.18)),
+              border: Border.all(color: AppColors.border),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -415,7 +415,7 @@ class _BecomeMasterScreenState extends State<_BecomeMasterScreen> {
                     decoration: BoxDecoration(
                       color: AppColors.whiteColor,
                       borderRadius: BorderRadius.circular(12.r),
-                      border: Border.all(color: Colors.grey.withOpacity(0.15)),
+                      border: Border.all(color: AppColors.border),
                     ),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<int?>(

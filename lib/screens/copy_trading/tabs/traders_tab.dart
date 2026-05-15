@@ -58,9 +58,9 @@ class _TradersTabState extends State<TradersTab> {
                         onPressed: () {},
                       ),
                       IconButton(
-                        icon: const Icon(
+                        icon: Icon(
                           Icons.filter_alt_outlined,
-                          color: Colors.grey,
+                          color: AppColors.textGrey,
                         ),
                         onPressed: _navigateToFilterScreen,
                       ),
@@ -78,7 +78,7 @@ class _TradersTabState extends State<TradersTab> {
                 shadowColor: AppColors.icongrey,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
-                  side: BorderSide(color: Colors.grey.shade200),
+                  side: BorderSide(color: AppColors.surface),
                 ),
                 child: Theme(
                   data: Theme.of(
@@ -106,10 +106,10 @@ class _TradersTabState extends State<TradersTab> {
                         children: [
                           Padding(
                             padding: const EdgeInsets.only(left: 15),
-                            child: const Text(
+                            child: Text(
                               'Whom to show first',
                               style: TextStyle(
-                                color: Colors.grey,
+                                color: AppColors.textGrey,
                                 fontSize: 12,
                               ),
                             ),
@@ -146,10 +146,10 @@ class _TradersTabState extends State<TradersTab> {
                           const SizedBox(height: 8),
                           Padding(
                             padding: const EdgeInsets.only(left: 15),
-                            child: const Text(
+                            child: Text(
                               'For what time',
                               style: TextStyle(
-                                color: Colors.grey,
+                                color: AppColors.textGrey,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w400,
                                 height: 1.4,

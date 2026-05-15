@@ -2,18 +2,40 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+enum ThemeServiceMode { light, dark, system }
+
 class ThemeService extends GetxService {
   static const FlutterSecureStorage _storage = FlutterSecureStorage();
-  static const String _themeKey = 'is_dark_mode';
+  static const String _themeKey = 'theme_mode';
 
-  // Default to light theme
-  static const bool defaultTheme = false;
+  // Default to system theme
+  static const ThemeServiceMode defaultMode = ThemeServiceMode.system;
 
-  // Current theme observable
-  final RxBool isDarkMode = defaultTheme.obs;
+  // Current theme observable — stores the enum value
+  final Rx<ThemeServiceMode> currentMode = defaultMode.obs;
 
-  // Theme mode getter for ThemeData
-  ThemeMode get themeMode => isDarkMode.value ? ThemeMode.dark : ThemeMode.light;
+  // Theme mode getter for ThemeData — converts enum to Flutter ThemeMode
+  ThemeMode get themeMode {
+    switch (currentMode.value) {
+      case ThemeServiceMode.light:
+        return ThemeMode.light;
+      case ThemeServiceMode.dark:
+        return ThemeMode.dark;
+      case ThemeServiceMode.system:
+        return ThemeMode.system;
+    }
+  }
+
+  // Convenience getter — true when dark mode is effectively active
+  // (dark mode selected OR system mode with dark system preference)
+  bool get isDarkMode {
+    if (currentMode.value == ThemeServiceMode.dark) return true;
+    if (currentMode.value == ThemeServiceMode.system) {
+      return WidgetsBinding.instance.platformDispatcher.platformBrightness ==
+          Brightness.dark;
+    }
+    return false;
+  }
 
   late final Future<void> _initialization;
 
@@ -32,46 +54,52 @@ class ThemeService extends GetxService {
   /// Load saved theme preference from secure storage
   Future<void> _loadSavedTheme() async {
     try {
-      final savedTheme = await _storage.read(key: _themeKey);
-      if (savedTheme != null) {
-        isDarkMode.value = savedTheme == 'true';
+      final savedMode = await _storage.read(key: _themeKey);
+      if (savedMode != null) {
+        currentMode.value = ThemeServiceMode.values.firstWhere(
+          (e) => e.name == savedMode,
+          orElse: () => defaultMode,
+        );
       }
     } catch (e) {
-      print('ThemeService: Error loading saved theme: $e');
-      // Fallback to default
-      isDarkMode.value = defaultTheme;
+      currentMode.value = defaultMode;
     }
   }
 
-  /// Toggle between dark and light theme
-  Future<void> toggleTheme() async {
-    isDarkMode.value = !isDarkMode.value;
-    await _saveTheme(isDarkMode.value);
-    // Trigger UI update
-    Get.forceAppUpdate();
-  }
-
-  /// Set specific theme mode
-  Future<void> setDarkMode(bool value) async {
-    if (isDarkMode.value != value) {
-      isDarkMode.value = value;
-      await _saveTheme(value);
+  /// Select a specific theme mode (Light / Dark / System)
+  Future<void> selectTheme(ThemeServiceMode mode) async {
+    if (currentMode.value != mode) {
+      currentMode.value = mode;
+      await _saveTheme(mode);
       Get.forceAppUpdate();
     }
   }
 
+  /// Legacy toggle — switches between light and dark only (system defaults to light)
+  Future<void> toggleTheme() async {
+    final target = currentMode.value == ThemeServiceMode.dark
+        ? ThemeServiceMode.light
+        : ThemeServiceMode.dark;
+    await selectTheme(target);
+  }
+
+  /// Legacy setter — kept for backward compatibility
+  Future<void> setDarkMode(bool value) async {
+    await selectTheme(value ? ThemeServiceMode.dark : ThemeServiceMode.light);
+  }
+
   /// Save theme preference to secure storage
-  Future<void> _saveTheme(bool isDark) async {
+  Future<void> _saveTheme(ThemeServiceMode mode) async {
     try {
-      await _storage.write(key: _themeKey, value: isDark.toString());
+      await _storage.write(key: _themeKey, value: mode.name);
     } catch (e) {
       print('ThemeService: Error saving theme: $e');
     }
   }
 
-  /// Get current theme mode
-  bool getCurrentTheme() => isDarkMode.value;
+  /// Check if dark mode is effectively active
+  bool isDark() => isDarkMode;
 
-  /// Check if dark mode is enabled
-  bool isDark() => isDarkMode.value;
+  /// Get current theme mode
+  ThemeServiceMode getCurrentMode() => currentMode.value;
 }

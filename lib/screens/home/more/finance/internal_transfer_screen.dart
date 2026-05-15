@@ -231,7 +231,7 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
                   _isSubmitting.value
                       ? Positioned.fill(
                         child: Container(
-                          color: Colors.black.withOpacity(0.15),
+                          color: AppColors.border.withValues(alpha: 0.15),
                           alignment: Alignment.center,
                           child: const CommonLoadingWidget(isFullScreen: true),
                         ),
@@ -286,7 +286,7 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
                     padding: EdgeInsets.symmetric(horizontal: 14.w),
                     child: RTLHelper.rtlIcon(
                       Icons.arrow_drop_down,
-                      color: Colors.grey,
+                      color: AppColors.textGrey,
                     ),
                   ),
                 ),
@@ -336,7 +336,7 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
                     padding: EdgeInsets.symmetric(horizontal: 14.w),
                     child: RTLHelper.rtlIcon(
                       Icons.arrow_drop_down,
-                      color: Colors.grey,
+                      color: AppColors.textGrey,
                     ),
                   ),
                 ),
@@ -595,7 +595,7 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
             shrinkWrap: true,
             itemCount: accountItems.length,
             separatorBuilder:
-                (_, __) => Divider(height: 1, color: Colors.grey.shade300),
+                (_, __) => Divider(height: 1, color: AppColors.border),
             itemBuilder: (context, index) {
               final item = accountItems[index];
               final accountType = item['type'] as String;
@@ -695,7 +695,7 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
                             fontSize: 15.sp,
                             fontWeight: FontWeight.w600,
                             color:
-                                isSelected ? AppColors.primary : Colors.black87,
+                                isSelected ? AppColors.primary : AppColors.textPrimary,
                           ),
                         ),
                       ),
@@ -710,7 +710,7 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
                           color:
                               isSelected
                                   ? AppColors.primary
-                                  : Colors.grey.shade700,
+                                  : AppColors.textGrey,
                         ),
                       ),
                       if (isSelected) ...[
@@ -807,7 +807,7 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
             shrinkWrap: true,
             itemCount: accountItems.length,
             separatorBuilder:
-                (_, __) => Divider(height: 1, color: Colors.grey.shade300),
+                (_, __) => Divider(height: 1, color: AppColors.border),
             itemBuilder: (context, index) {
               final item = accountItems[index];
               final accountType = item['type'] as String;
@@ -902,7 +902,7 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
                             fontSize: 15.sp,
                             fontWeight: FontWeight.w600,
                             color:
-                                isSelected ? AppColors.primary : Colors.black87,
+                                isSelected ? AppColors.primary : AppColors.textPrimary,
                           ),
                         ),
                       ),
@@ -917,7 +917,7 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
                           color:
                               isSelected
                                   ? AppColors.primary
-                                  : Colors.grey.shade700,
+                                  : AppColors.textGrey,
                         ),
                       ),
                       if (isSelected) ...[
@@ -959,11 +959,11 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
         isDense: true,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: Colors.grey[300]!),
+          borderSide: BorderSide(color: AppColors.border!),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: Colors.grey[300]!),
+          borderSide: BorderSide(color: AppColors.border!),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
@@ -1040,11 +1040,11 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
             isDense: true,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey[300]!),
+              borderSide: BorderSide(color: AppColors.border!),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey[300]!),
+              borderSide: BorderSide(color: AppColors.border!),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
@@ -1112,11 +1112,11 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
               isDense: true,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.grey[300]!),
+                borderSide: BorderSide(color: AppColors.border!),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.grey[300]!),
+                borderSide: BorderSide(color: AppColors.border!),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),

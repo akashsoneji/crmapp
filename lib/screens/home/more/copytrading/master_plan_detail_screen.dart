@@ -88,8 +88,8 @@ class MasterPlanDetailScreen extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: AppColors.whiteColor,
                           borderRadius: BorderRadius.circular(14.r),
-                          border: Border.all(color: Colors.grey.withOpacity(0.15)),
-                          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))],
+                          border: Border.all(color: AppColors.border.withValues(alpha: 0.15)),
+                          boxShadow: [BoxShadow(color: AppColors.border.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 4))],
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -178,7 +178,7 @@ class MasterPlanDetailScreen extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: AppColors.whiteColor,
                             borderRadius: BorderRadius.circular(12.r),
-                            border: Border.all(color: Colors.grey.withOpacity(0.12)),
+                            border: Border.all(color: AppColors.border.withValues(alpha: 0.12)),
                           ),
                           child: TabBar(
                             indicatorSize: TabBarIndicatorSize.tab,
@@ -231,7 +231,7 @@ class _EmptyCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(14.r),
-        border: Border.all(color: Colors.grey.withOpacity(0.15)),
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.15)),
       ),
       child: Text(message, style: AppTextStyles.caption),
     );
@@ -466,7 +466,7 @@ class _DropdownFilter extends StatelessWidget {
         decoration: BoxDecoration(
           color: enabled ? AppColors.whiteColor : AppColors.whiteColor.withOpacity(0.65),
           borderRadius: BorderRadius.circular(12.r),
-          border: Border.all(color: Colors.grey.withOpacity(0.18)),
+          border: Border.all(color: AppColors.border.withValues(alpha: 0.18)),
         ),
         child: Row(
           children: [
@@ -553,8 +553,8 @@ class _TradeHistoryCardState extends State<_TradeHistoryCard> {
         decoration: BoxDecoration(
           color: AppColors.whiteColor,
           borderRadius: BorderRadius.circular(14.r),
-          border: Border.all(color: Colors.grey.withOpacity(0.15)),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))],
+          border: Border.all(color: AppColors.border.withValues(alpha: 0.15)),
+          boxShadow: [BoxShadow(color: AppColors.border.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 4))],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -643,7 +643,7 @@ class _TradeHistoryCardState extends State<_TradeHistoryCard> {
             ),
             if (_expanded) ...[
               SizedBox(height: 12.h),
-              Divider(color: Colors.grey.withOpacity(0.12), height: 1),
+              Divider(color: AppColors.border.withValues(alpha: 0.12), height: 1),
               SizedBox(height: 12.h),
               _KVRow(label: 'Trade ID', value: '#${t.id}'),
               _KVRow(label: 'Open time', value: _formatTime(t.openTime)),
@@ -697,8 +697,8 @@ class _CommissionHistoryCardState extends State<_CommissionHistoryCard> {
         decoration: BoxDecoration(
           color: AppColors.whiteColor,
           borderRadius: BorderRadius.circular(14.r),
-          border: Border.all(color: Colors.grey.withOpacity(0.15)),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))],
+          border: Border.all(color: AppColors.border.withValues(alpha: 0.15)),
+          boxShadow: [BoxShadow(color: AppColors.border.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 4))],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -777,7 +777,7 @@ class _CommissionHistoryCardState extends State<_CommissionHistoryCard> {
             ),
             if (_expanded) ...[
               SizedBox(height: 12.h),
-              Divider(color: Colors.grey.withOpacity(0.12), height: 1),
+              Divider(color: AppColors.border.withValues(alpha: 0.12), height: 1),
               SizedBox(height: 12.h),
               _KVRow(label: 'Commission ID', value: '#${x.id}'),
               _KVRow(label: 'Status', value: x.status.isNotEmpty ? x.status : '—'),

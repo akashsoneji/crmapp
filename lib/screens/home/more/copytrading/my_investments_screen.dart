@@ -540,7 +540,7 @@ class _InvestmentRow extends StatelessWidget {
         color: AppColors.card,
         borderRadius: BorderRadius.circular(14.r),
         border: Border.all(color: AppColors.textGrey.withOpacity(0.14)),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 2))],
+        boxShadow: [BoxShadow(color: AppColors.border.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2))],
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(

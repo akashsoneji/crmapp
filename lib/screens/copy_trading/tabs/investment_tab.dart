@@ -143,10 +143,10 @@ class _InvestmentTabState extends State<InvestmentTab> {
       decoration: BoxDecoration(
         color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: AppColors.surface),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: AppColors.border.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -249,10 +249,10 @@ class _MasterCardState extends State<_MasterCard> {
         decoration: BoxDecoration(
           color: AppColors.whiteColor,
           borderRadius: BorderRadius.circular(12.r),
-          border: Border.all(color: Colors.grey.shade200),
+          border: Border.all(color: AppColors.surface),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: AppColors.border.withValues(alpha: 0.04),
               blurRadius: 6,
               offset: const Offset(0, 2),
             ),
@@ -293,7 +293,7 @@ class _MasterCardState extends State<_MasterCard> {
               ),
             ),
 
-            Divider(height: 1, color: Colors.grey.shade100),
+            Divider(height: 1, color: AppColors.surface),
 
             // ── 2x2 stats grid ──
             Padding(

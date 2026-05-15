@@ -305,7 +305,7 @@ class _CreateCrmAppAccountScreenState extends State<CreateCrmAppAccountScreen> {
             padding: EdgeInsets.symmetric(horizontal: 14.w),
             child: RTLHelper.rtlIcon(
               Icons.keyboard_arrow_down_outlined,
-              color: Colors.grey,
+              color: AppColors.textGrey,
             ),
           ),
         ),
@@ -361,7 +361,7 @@ class _CreateCrmAppAccountScreenState extends State<CreateCrmAppAccountScreen> {
                       showPassword
                           ? Icons.visibility
                           : Icons.visibility_off,
-                      color: Colors.grey[600],
+                      color: AppColors.textGrey,
                       size: 20,
                     ),
                   ),
@@ -417,7 +417,7 @@ class _CreateCrmAppAccountScreenState extends State<CreateCrmAppAccountScreen> {
                 : controller.createAccount,
         style: ElevatedButton.styleFrom(
           backgroundColor:
-              controller.isLoading.value ? Colors.grey : AppColors.primary,
+              controller.isLoading.value ? AppColors.textGrey : AppColors.primary,
           foregroundColor: AppColors.whiteColor,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8.r),
@@ -473,7 +473,7 @@ class _CreateCrmAppAccountScreenState extends State<CreateCrmAppAccountScreen> {
                     Spacer(),
                     IconButton(
                       onPressed: () => Navigator.pop(context),
-                      icon: Icon(Icons.close, color: Colors.grey),
+                      icon: Icon(Icons.close, color: AppColors.textGrey),
                     ),
                   ],
                 ),
@@ -569,7 +569,7 @@ class _AccountRadio extends StatelessWidget {
           // selected circle color
           if (states.contains(MaterialState.selected)) return purple;
           // unselected border color
-          return Colors.grey.shade500;
+          return AppColors.textGrey;
         }),
         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
         visualDensity: const VisualDensity(horizontal: -4, vertical: -4),

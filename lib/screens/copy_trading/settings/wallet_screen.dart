@@ -68,10 +68,10 @@ class CopyTradingWalletScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.whiteColor,
                 borderRadius: BorderRadius.circular(16.r),
-                border: Border.all(color: Colors.grey.withOpacity(0.1)),
+                border: Border.all(color: AppColors.border.withValues(alpha: 0.1)),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.02),
+                    color: AppColors.border.withValues(alpha: 0.02),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -191,7 +191,7 @@ class CopyTradingWalletScreen extends StatelessWidget {
                 width: 40.w,
                 height: 4.h,
                 decoration: BoxDecoration(
-                  color: Colors.grey[300],
+                  color: AppColors.border,
                   borderRadius: BorderRadius.circular(2.r),
                 ),
               ),
@@ -295,7 +295,7 @@ class CopyTradingWalletScreen extends StatelessWidget {
                 width: 40.w,
                 height: 4.h,
                 decoration: BoxDecoration(
-                  color: Colors.grey[300],
+                  color: AppColors.border,
                   borderRadius: BorderRadius.circular(2.r),
                 ),
               ),
@@ -404,7 +404,7 @@ class CopyTradingWalletScreen extends StatelessWidget {
                 color:
                     isSelected
                         ? AppColors.primary
-                        : Colors.grey.withOpacity(0.3),
+                        : AppColors.border.withValues(alpha: 0.3),
               ),
             ),
             child: Text(
@@ -463,7 +463,7 @@ class _HistoryItem extends StatelessWidget {
           borderRadius: BorderRadius.circular(12.r),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.01),
+              color: AppColors.border.withValues(alpha: 0.01),
               blurRadius: 4,
               offset: const Offset(0, 2),
             ),
@@ -543,7 +543,7 @@ class _HistoryItem extends StatelessWidget {
             ),
             if (isExpanded) ...[
               SizedBox(height: 16.h),
-              Divider(height: 1, color: Colors.grey.withOpacity(0.1)),
+              Divider(height: 1, color: AppColors.border.withValues(alpha: 0.1)),
               SizedBox(height: 12.h),
               _DetailRow(label: 'Status', value: transaction.status),
               _DetailRow(label: 'Request ID', value: transaction.requestId),
@@ -627,7 +627,7 @@ class _DetailRow extends StatelessWidget {
                 '..........................................................................................................................................',
                 maxLines: 1,
                 overflow: TextOverflow.clip,
-                style: TextStyle(color: Colors.grey.withOpacity(0.3)),
+                style: TextStyle(color: AppColors.border.withValues(alpha: 0.3)),
               ),
             ),
           ),
@@ -766,7 +766,7 @@ class _ActionItem extends StatelessWidget {
           ),
           onTap: onTap,
         ),
-        Divider(height: 1, color: Colors.grey.withOpacity(0.1)),
+        Divider(height: 1, color: AppColors.border.withValues(alpha: 0.1)),
       ],
     );
   }

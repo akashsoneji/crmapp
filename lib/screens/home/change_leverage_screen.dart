@@ -91,7 +91,7 @@ class _ChangeLeverageScreenState extends State<ChangeLeverageScreen> {
                         Spacer(),
                         IconButton(
                           onPressed: () => Navigator.pop(context),
-                          icon: Icon(Icons.close, color: Colors.grey),
+                          icon: Icon(Icons.close, color: AppColors.textGrey),
                           padding: EdgeInsets.zero,
                           constraints: BoxConstraints(),
                         ),
@@ -259,7 +259,7 @@ class _ChangeLeverageScreenState extends State<ChangeLeverageScreen> {
                   padding: EdgeInsets.symmetric(horizontal: 14.w),
                   child: RTLHelper.rtlIcon(
                     Icons.keyboard_arrow_down_outlined,
-                    color: Colors.grey,
+                    color: AppColors.textGrey,
                   ),
                 ),
               ),

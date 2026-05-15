@@ -264,7 +264,7 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
                             Icon(
                               Icons.keyboard_arrow_down,
                               size: 18.sp,
-                              color: Colors.grey[600],
+                              color: AppColors.textGrey,
                             ),
                           ],
                         ),
@@ -272,7 +272,7 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
                           _getSymbolDescription(),
                           style: TextStyle(
                             fontSize: 12.sp,
-                            color: Colors.grey[600],
+                            color: AppColors.textGrey,
                           ),
                         ),
                       ],
@@ -320,7 +320,7 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 16.sp,
-                          color: Colors.black87,
+                          color: AppColors.textPrimary,
                           height: 1.5,
                         ),
                       ),
@@ -332,7 +332,7 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
                         style: TextStyle(
                           fontSize: 24.sp,
                           fontWeight: FontWeight.bold,
-                          color: widget.isPlacing ? Colors.grey : Colors.black,
+                          color: widget.isPlacing ? AppColors.textGrey : AppColors.textPrimary,
                         ),
                       ),
                       if (!widget.isPlacing) ...[
@@ -354,7 +354,7 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 12.sp,
-                            color: Colors.grey[600],
+                            color: AppColors.textGrey,
                           ),
                         ),
                       ],

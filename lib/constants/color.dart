@@ -7,8 +7,8 @@ class AppColors {
   // Get ThemeService instance if available
   static ThemeService? get _themeService => Get.isRegistered<ThemeService>() ? Get.find<ThemeService>() : null;
 
-  // Helper to check if dark mode
-  static bool get isDarkMode => _themeService?.isDarkMode.value ?? false;
+  // Helper to check if dark mode (isDarkMode is now a getter, not RxBool)
+  static bool get isDarkMode => _themeService?.isDarkMode ?? false;
   // Brand Colors - Now using flavor configuration
   static Color get primary => FlavorConfig.instance.primaryColor;
   static Color get secondary => FlavorConfig.instance.secondaryColor;
@@ -65,7 +65,27 @@ class AppColors {
   static Color get background => isDarkMode ? backgroundDarkTheme : backgroundLightTheme;
   static Color get card => isDarkMode ? cardDarkTheme : cardLightTheme;
 
-  // Status Colors
+  // Status Colors — context-aware for backgrounds
+  static Color get successBg => isDarkMode ? const Color(0xFF1A3D2A) : const Color(0xFFEDF7EE);
+  static Color get successText => isDarkMode ? const Color(0xFF6EE7A0) : const Color(0xFF2A7D3F);
+
+  static Color get warningBg => isDarkMode ? const Color(0xFF3D2A1A) : const Color(0xFFFFF8E1);
+  static Color get warningText => isDarkMode ? const Color(0xFFFFCC02) : const Color(0xFFB7791F);
+  static Color get warningBorder => isDarkMode ? const Color(0xFF92400E) : const Color(0xFFFFCC02);
+
+  static Color get errorBg => isDarkMode ? const Color(0xFF3D1A1A) : const Color(0xFFFEF2F2);
+  static Color get errorText => isDarkMode ? const Color(0xFFEF9999) : const Color(0xFFD32F2F);
+
+  // Quick action button colors — kept bright and brand-aware
+  static const Color quickActionGreen = Color(0xFF4CAF50);
+  static const Color quickActionOrange = Color(0xFFFF9800);
+  static const Color quickActionBlue = Color(0xFF2196F3);
+  static const Color quickActionPurple = Color(0xFF9C27B0);
+
+  // Accent colors for cards (scratch card, special screens)
+  static Color get accentPurple => isDarkMode ? const Color(0xFF3D2A4A) : const Color(0xFFF0E0F8);
+  static Color get accentYellow => isDarkMode ? const Color(0xFF3D3A1A) : const Color(0xFFFFF8D4);
+  static const Color scratchOverlay = Color(0xFF0F1E2D);
   static const Color success = Color(0xFF4CAF50);
   static const Color warning = Color(0xFFFF9800);
   static const Color error = Color(0xFFF44336);

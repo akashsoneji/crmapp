@@ -506,7 +506,7 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
                 width: iconSize,
                 height: iconSize,
                 decoration: BoxDecoration(
-                  color: Colors.grey[300],
+                  color: AppColors.border,
                   borderRadius: BorderRadius.circular(4.r),
                 ),
                 child: Image.asset(

@@ -213,7 +213,7 @@ class BrandTestScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 color: color,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.grey.shade300),
+                border: Border.all(color: AppColors.border),
               ),
             ),
             const SizedBox(width: 16),
@@ -231,13 +231,13 @@ class BrandTestScreen extends StatelessWidget {
                   Text(
                     '#${color.value.toRadixString(16).substring(2).toUpperCase()}',
                     style: TextStyle(
-                      color: Colors.grey.shade600,
+                      color: AppColors.textGrey,
                       fontFamily: 'monospace',
                     ),
                   ),
                   Text(
                     description,
-                    style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                    style: TextStyle(color: AppColors.textGrey, fontSize: 12),
                   ),
                 ],
               ),

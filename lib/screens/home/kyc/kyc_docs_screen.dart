@@ -276,7 +276,7 @@ class KycDocsScreen extends StatelessWidget {
                                 fontSize: 12.sp,
                                 fontWeight: FontWeight.w500,
                                 color:
-                                    isSelected ? Colors.green : Colors.black87,
+                                    isSelected ? Colors.green : AppColors.textPrimary,
                               ),
                               textAlign: TextAlign.center,
                             ),
@@ -292,7 +292,7 @@ class KycDocsScreen extends StatelessWidget {
                     right: 0,
                     child: LinearProgressIndicator(
                       value: uploadProgress,
-                      backgroundColor: Colors.grey[300],
+                      backgroundColor: AppColors.border,
                       valueColor: AlwaysStoppedAnimation<Color>(
                         AppColors.primary,
                       ),
@@ -326,9 +326,9 @@ class KycDocsScreen extends StatelessWidget {
           height: 165.h,
           width: 155.w,
           decoration: BoxDecoration(
-            color: Colors.grey[100],
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey[300]!, width: 1),
+            border: Border.all(color: AppColors.border!, width: 1),
           ),
           child: Center(
             child: Column(
@@ -384,7 +384,7 @@ class KycDocsScreen extends StatelessWidget {
         child: Container(
           padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
           decoration: BoxDecoration(
-            color: Colors.grey.withOpacity(0.9),
+            color: AppColors.textGrey.withValues(alpha: 0.9),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Text(
@@ -464,7 +464,7 @@ class KycDocsScreen extends StatelessWidget {
                   width: 40.w,
                   height: 4.h,
                   decoration: BoxDecoration(
-                    color: Colors.grey[300],
+                    color: AppColors.border,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -478,7 +478,7 @@ class KycDocsScreen extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 18.sp,
                           fontWeight: FontWeight.w600,
-                          color: Colors.black87,
+                          color: AppColors.textPrimary,
                         ),
                       ),
                     ),
@@ -487,7 +487,7 @@ class KycDocsScreen extends StatelessWidget {
                         print('🔄 Closing image picker bottom sheet');
                         Navigator.of(context).pop();
                       },
-                      icon: Icon(Icons.close, color: Colors.grey[600]),
+                      icon: Icon(Icons.close, color: AppColors.textGrey),
                       padding: EdgeInsets.zero,
                       constraints: BoxConstraints(),
                     ),

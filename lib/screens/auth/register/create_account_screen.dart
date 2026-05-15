@@ -327,7 +327,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
       countryListTheme: CountryListThemeData(
         flagSize: 25,
         backgroundColor: AppColors.whiteColor,
-        textStyle: const TextStyle(fontSize: 16, color: Colors.black),
+        textStyle: TextStyle(fontSize: 16, color: AppColors.textPrimary),
         bottomSheetHeight: 500,
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(20.0),
@@ -339,7 +339,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
           prefixIcon: const Icon(Icons.search),
           border: OutlineInputBorder(
             borderSide: BorderSide(
-              color: const Color(0xFF8C98A8).withValues(alpha: 0.2),
+              color: AppColors.border,
             ),
           ),
         ),
@@ -638,7 +638,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
             child: RTLHelper.rtlIcon(
               Icons.calendar_today,
               size: 20,
-              color: Colors.grey,
+              color: AppColors.textGrey,
             ),
           ),
         ),
@@ -714,7 +714,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
           onTap: _showTradingExperiencePopup,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 14),
-            child: RTLHelper.rtlIcon(Icons.arrow_drop_down, color: Colors.grey),
+            child: RTLHelper.rtlIcon(Icons.arrow_drop_down, color: AppColors.textGrey),
           ),
         ),
         validator:
@@ -830,7 +830,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
       ),
       child: IconButton(
         onPressed: () => Navigator.pop(context),
-        icon: RTLHelper.rtlIcon(Icons.arrow_back_ios, color: Colors.black),
+        icon: RTLHelper.rtlIcon(Icons.arrow_back_ios, color: AppColors.textPrimary),
         iconSize: 17.h,
         padding: RTLHelper.getRTLPadding(left: 5.w),
       ),

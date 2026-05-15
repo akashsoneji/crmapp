@@ -288,7 +288,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
         onTap: onTap,
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 14.w),
-          child: Icon(suffixIcon, color: Colors.grey[600], size: 18),
+          child: Icon(suffixIcon, color: AppColors.textGrey, size: 18),
         ),
       ),
       decoration: InputDecoration(
@@ -317,7 +317,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   Widget _buildTimePeriodFilter() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.primary, width: 1.5),
       ),
@@ -385,7 +385,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   Widget _buildCustomDateRange() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.primary, width: 1.5),
       ),
@@ -522,13 +522,13 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                 style: TextStyle(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.w500,
-                  color: Colors.grey[600],
+                  color: AppColors.textGrey,
                 ),
               ),
               SizedBox(height: 8.h),
               Text(
                 'Try adjusting your filters',
-                style: TextStyle(fontSize: 14.sp, color: Colors.grey[500]),
+                style: TextStyle(fontSize: 14.sp, color: AppColors.textGrey),
               ),
             ],
           ),
@@ -573,7 +573,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: AppColors.border.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -633,7 +633,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                         transaction.transactionType ?? "",
                         style: TextStyle(
                           fontSize: 12.sp,
-                          color: Colors.grey[600],
+                          color: AppColors.textGrey,
                         ),
                       ),
                     ],
@@ -655,7 +655,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                     style: TextStyle(
                       fontSize: 12.sp,
                       fontWeight: FontWeight.w700,
-                      color: Colors.grey[600],
+                      color: AppColors.textGrey,
                     ),
                   ),
                 ],
@@ -814,7 +814,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                 width: 40.w,
                 height: 4.h,
                 decoration: BoxDecoration(
-                  color: Colors.grey[300],
+                  color: AppColors.border,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -845,7 +845,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                         languageService.tr('common_no_accounts_found'),
                         style: TextStyle(
                           fontSize: 14.sp,
-                          color: Colors.grey[600],
+                          color: AppColors.textGrey,
                         ),
                       ),
                     );
@@ -854,7 +854,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                   return ListView.separated(
                     itemCount: accounts.length,
                     separatorBuilder:
-                        (context, index) => Divider(color: Colors.grey[300]),
+                        (context, index) => Divider(color: AppColors.border),
                     itemBuilder: (context, index) {
                       final account = accounts[index];
                       final isSelected =
@@ -911,7 +911,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                               style: TextStyle(
                                 fontSize: 14.sp,
                                 fontWeight: FontWeight.w500,
-                                color: Colors.grey[800],
+                                color: AppColors.textGrey,
                               ),
                             ),
 
@@ -955,7 +955,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                   width: 40.w,
                   height: 4.h,
                   decoration: BoxDecoration(
-                    color: Colors.grey[300],
+                    color: AppColors.border,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),

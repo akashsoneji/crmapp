@@ -20,7 +20,7 @@ class KycVerificationScreen extends StatelessWidget {
     final languageService = Get.find<LanguageService>();
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: AppColors.surface,
       body: Obx(
         () => Stack(
           children: [
@@ -56,7 +56,7 @@ class KycVerificationScreen extends StatelessWidget {
               color: AppColors.whiteColor,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: AppColors.border.withValues(alpha: 0.05),
                   blurRadius: 10,
                   offset: const Offset(0, 2),
                 ),
@@ -73,8 +73,8 @@ class KycVerificationScreen extends StatelessWidget {
                   child: Text(
                     languageService.tr('kyc_verification'),
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Colors.black,
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
                     ),
@@ -110,7 +110,7 @@ class KycVerificationScreen extends StatelessWidget {
                       style: TextStyle(
                         fontSize: isTablet ? 32 : 28,
                         fontWeight: FontWeight.w700,
-                        color: Colors.black,
+                        color: AppColors.textPrimary,
                         height: 1.2,
                       ),
                     ),
@@ -123,7 +123,7 @@ class KycVerificationScreen extends StatelessWidget {
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: isTablet ? 18 : 16,
-                        color: Colors.grey[600],
+                        color: AppColors.textGrey,
                         height: 1.4,
                       ),
                     ),
@@ -136,7 +136,7 @@ class KycVerificationScreen extends StatelessWidget {
                       style: TextStyle(
                         fontSize: isTablet ? 18 : 16,
                         fontWeight: FontWeight.w600,
-                        color: Colors.black87,
+                        color: AppColors.textPrimary,
                       ),
                     ),
 
@@ -210,14 +210,14 @@ class KycVerificationScreen extends StatelessWidget {
           Positioned(
             left: 20,
             top: 0,
-            child: _buildDocument(Colors.grey[300]!),
+            child: _buildDocument(AppColors.surface),
           ),
 
           // Middle document
           Positioned(
             left: 10,
             top: 10,
-            child: _buildDocument(Colors.grey[200]!),
+            child: _buildDocument(AppColors.surface),
           ),
 
           // Front document with purple section
@@ -241,10 +241,10 @@ class KycVerificationScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey[300]!),
+        border: Border.all(color: AppColors.border),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: AppColors.border.withValues(alpha: 0.1),
             blurRadius: 5,
             offset: const Offset(2, 2),
           ),
@@ -260,16 +260,16 @@ class KycVerificationScreen extends StatelessWidget {
                 Container(
                   height: 3,
                   width: double.infinity,
-                  color: Colors.grey[400],
+                  color: AppColors.textGrey,
                   margin: const EdgeInsets.only(bottom: 4),
                 ),
                 Container(
                   height: 2,
                   width: 40,
-                  color: Colors.grey[400],
+                  color: AppColors.textGrey,
                   margin: const EdgeInsets.only(bottom: 4),
                 ),
-                Container(height: 2, width: 50, color: Colors.grey[400]),
+                Container(height: 2, width: 50, color: AppColors.textGrey),
               ],
             ),
           ),
@@ -305,7 +305,7 @@ class KycVerificationScreen extends StatelessWidget {
               width: 30,
               height: 50,
               decoration: BoxDecoration(
-                color: Colors.black87,
+                color: AppColors.textPrimary,
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(15),
                   topRight: Radius.circular(15),
@@ -350,7 +350,7 @@ class KycVerificationScreen extends StatelessWidget {
               width: 45,
               height: 8,
               decoration: BoxDecoration(
-                color: Colors.black87,
+                color: AppColors.textPrimary,
                 borderRadius: BorderRadius.circular(4),
               ),
             ),
@@ -360,12 +360,12 @@ class KycVerificationScreen extends StatelessWidget {
           Positioned(
             bottom: 0,
             left: 20,
-            child: Container(width: 8, height: 20, color: Colors.black87),
+            child: Container(width: 8, height: 20, color: AppColors.textPrimary),
           ),
           Positioned(
             bottom: 0,
             right: 20,
-            child: Container(width: 8, height: 20, color: Colors.black87),
+            child: Container(width: 8, height: 20, color: AppColors.textPrimary),
           ),
         ],
       ),
@@ -383,7 +383,7 @@ class KycVerificationScreen extends StatelessWidget {
               onTap: controller.hideDocumentSelection,
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-                child: Container(color: Colors.black.withOpacity(0.3)),
+                child: Container(color: AppColors.border.withValues(alpha: 0.3)),
               ),
             ),
           ),
@@ -423,7 +423,7 @@ class KycVerificationScreen extends StatelessWidget {
               height: 4,
               margin: const EdgeInsets.symmetric(vertical: 12),
               decoration: BoxDecoration(
-                color: Colors.grey[300],
+                color: AppColors.border,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -449,7 +449,7 @@ class KycVerificationScreen extends StatelessWidget {
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 14,
-                      color: Colors.grey[600],
+                      color: AppColors.textGrey,
                       height: 1.4,
                     ),
                   ),
@@ -481,10 +481,10 @@ class KycVerificationScreen extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.whiteColor,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey[200]!),
+          border: Border.all(color: AppColors.border),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.02),
+              color: AppColors.border.withValues(alpha: 0.02),
               blurRadius: 5,
               offset: const Offset(0, 2),
             ),
@@ -512,23 +512,23 @@ class KycVerificationScreen extends StatelessWidget {
                 children: [
                   Text(
                     document.title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: Colors.black,
+                      color: AppColors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     document.subtitle,
-                    style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                    style: TextStyle(fontSize: 13, color: AppColors.textGrey),
                   ),
                 ],
               ),
             ),
 
             // Arrow icon
-            Icon(Icons.chevron_right, color: Colors.grey[400], size: 20),
+            Icon(Icons.chevron_right, color: AppColors.textGrey, size: 20),
           ],
         ),
       ),

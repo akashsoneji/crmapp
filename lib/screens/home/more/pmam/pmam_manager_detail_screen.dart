@@ -95,7 +95,7 @@ class _PmamManagerDetailScreenState extends State<PmamManagerDetailScreen> {
                         width: 40.w,
                         height: 4.h,
                         decoration: BoxDecoration(
-                          color: const Color(0xFFDDDDDD),
+                          color: AppColors.border,
                           borderRadius: BorderRadius.circular(4.r),
                         ),
                       ),
@@ -396,7 +396,7 @@ class _PmamManagerDetailScreenState extends State<PmamManagerDetailScreen> {
                 borderRadius: BorderRadius.circular(16.r),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.06),
+                    color: AppColors.border.withValues(alpha: 0.06),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -541,7 +541,7 @@ class _PmamManagerDetailScreenState extends State<PmamManagerDetailScreen> {
                   borderRadius: BorderRadius.circular(14.r),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: AppColors.border.withValues(alpha: 0.05),
                       blurRadius: 8,
                       offset: const Offset(0, 3),
                     ),
@@ -660,7 +660,7 @@ class _DetailStatCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: AppColors.border.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),

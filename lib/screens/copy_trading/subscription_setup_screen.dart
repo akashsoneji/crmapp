@@ -74,7 +74,7 @@ class _SubscriptionSetupScreenState extends State<SubscriptionSetupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F6F6),
+      backgroundColor: AppColors.surface,
       appBar: AppBar(
         backgroundColor: AppColors.whiteColor,
         elevation: 0,
@@ -84,12 +84,12 @@ class _SubscriptionSetupScreenState extends State<SubscriptionSetupScreen> {
           icon: SvgPicture.asset('assets/svg/trade/arro_back.svg'),
           onPressed: () => Get.back(),
         ),
-        title: const Text(
+        title: Text(
           'Subscription Setup',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w600,
-            color: Colors.black,
+            color: AppColors.primary,
           ),
         ),
       ),
@@ -195,16 +195,13 @@ class _SubscriptionSetupScreenState extends State<SubscriptionSetupScreen> {
                                 vertical: 12,
                               ),
                               decoration: BoxDecoration(
-                                color:
-                                    selected
-                                        ? AppColors.primary
-                                        : Colors.grey.shade100,
+                                color: AppColors.surface,
                                 borderRadius: BorderRadius.circular(4),
                                 border: Border.all(
                                   color:
                                       selected
                                           ? AppColors.primary
-                                          : Colors.grey.shade200,
+                                          : AppColors.border,
                                 ),
                               ),
                               child: Column(
@@ -438,7 +435,7 @@ class _SubscriptionSetupScreenState extends State<SubscriptionSetupScreen> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.shade200,
+            color: AppColors.border,
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -468,11 +465,11 @@ class _SubscriptionSetupScreenState extends State<SubscriptionSetupScreen> {
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey.shade300),
+              borderSide: BorderSide(color: AppColors.border),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey.shade300),
+              borderSide: BorderSide(color: AppColors.border),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
@@ -506,7 +503,7 @@ class _SubscriptionSetupScreenState extends State<SubscriptionSetupScreen> {
             label,
             style: TextStyle(
               fontSize: 14,
-              color: isBold ? Colors.black : AppColors.icongrey,
+              color: isBold ? AppColors.textPrimary : AppColors.textGrey,
               fontWeight: isBold ? FontWeight.w600 : FontWeight.w400,
             ),
           ),
@@ -531,5 +528,5 @@ class _SubscriptionSetupScreenState extends State<SubscriptionSetupScreen> {
   }
 
   Widget _summaryDivider() =>
-      Divider(height: 1, thickness: 1, color: Colors.grey.shade100);
+      Divider(height: 1, thickness: 1, color: AppColors.surface);
 }

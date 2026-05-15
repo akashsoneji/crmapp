@@ -272,7 +272,7 @@ class _IBStructureScreenState extends State<IBStructureScreen> {
           borderRadius: BorderRadius.circular(12.r),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: AppColors.border.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -397,7 +397,7 @@ class _IBStructureScreenState extends State<IBStructureScreen> {
                           TextButton(
                             onPressed: () => _navigateToEditGroup(group),
                             style: TextButton.styleFrom(
-                              backgroundColor: Colors.grey[200],
+                              backgroundColor: AppColors.surface,
                               padding: EdgeInsets.symmetric(
                                 horizontal: 12.w,
                                 vertical: 6.h,
@@ -413,7 +413,7 @@ class _IBStructureScreenState extends State<IBStructureScreen> {
                           TextButton(
                             onPressed: () => _deleteGroup(group),
                             style: TextButton.styleFrom(
-                              backgroundColor: Colors.grey[200],
+                              backgroundColor: AppColors.surface,
                               padding: EdgeInsets.symmetric(
                                 horizontal: 12.w,
                                 vertical: 6.h,

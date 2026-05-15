@@ -18,7 +18,7 @@ class TenaxBrokerSelectionScreen
     return PopScope(
       canPop: allowBack,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF4F4F6),
+        backgroundColor: AppColors.surface,
         appBar: AppBar(
           automaticallyImplyLeading: allowBack,
           leading:
@@ -30,7 +30,7 @@ class TenaxBrokerSelectionScreen
                   : null,
           elevation: 0,
           centerTitle: false,
-          backgroundColor: const Color(0xFFF4F4F6),
+          backgroundColor: AppColors.surface,
           title: Text(
             controller.isDemoMode ? 'Select Demo' : 'Broker',
             style: TextStyle(
@@ -54,7 +54,7 @@ class TenaxBrokerSelectionScreen
                           color: AppColors.whiteColor,
                           borderRadius: BorderRadius.circular(12.r),
                           border: Border.all(
-                            color: const Color(0xFFD5D7DE),
+                            color: AppColors.border,
                             width: 1.w,
                           ),
                         ),
@@ -77,12 +77,12 @@ class TenaxBrokerSelectionScreen
                                 onChanged: controller.onSearchChanged,
                                 style: TextStyle(
                                   fontSize: 14.sp,
-                                  color: const Color(0xFF21242C),
+                                  color: AppColors.textPrimary,
                                 ),
                                 decoration: InputDecoration(
                                   hintText: 'Find broker...',
                                   hintStyle: TextStyle(
-                                    color: const Color(0xFF9CA3AF),
+                                    color: AppColors.textGrey,
                                     fontSize: 14.sp,
                                   ),
                                   border: InputBorder.none,
@@ -197,7 +197,7 @@ class TenaxBrokerSelectionScreen
         padding: EdgeInsets.symmetric(vertical: 12.h),
         decoration: BoxDecoration(
           border: Border(
-            bottom: BorderSide(color: const Color(0xFFD6D8DE), width: 1.w),
+            bottom: BorderSide(color: AppColors.border, width: 1.w),
           ),
         ),
         child: Row(
@@ -213,7 +213,7 @@ class TenaxBrokerSelectionScreen
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      color: const Color(0xFF21242C),
+                      color: AppColors.textPrimary,
                       fontSize: 16.sp,
                       fontWeight: FontWeight.w700,
                     ),
@@ -225,7 +225,7 @@ class TenaxBrokerSelectionScreen
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        color: const Color(0xFF767B88),
+                        color: AppColors.textGrey,
                         fontSize: 13.sp,
                         fontWeight: FontWeight.w400,
                       ),
@@ -257,7 +257,7 @@ class TenaxBrokerSelectionScreen
                           : Icon(
                             Icons.info_outline,
                             size: 22.w,
-                            color: const Color(0xFF5E616C),
+                            color: AppColors.textGrey,
                           ),
                 ),
               );
@@ -325,7 +325,7 @@ class TenaxBrokerSelectionScreen
             'Use search to find a company',
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: const Color(0xFF2B2D33),
+              color: AppColors.textPrimary,
               fontSize: 18.sp,
               fontWeight: FontWeight.w700,
             ),
@@ -335,7 +335,7 @@ class TenaxBrokerSelectionScreen
             'The application may feature brokerage companies which may not be regulated in your country. Exercise caution and responsibility before opening an account with any brokerage company.',
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: const Color(0xFF747884),
+              color: AppColors.textGrey,
               fontSize: 13.sp,
               height: 1.5,
               fontWeight: FontWeight.w400,
@@ -346,7 +346,7 @@ class TenaxBrokerSelectionScreen
             "Contact details are provided for each company. Use them to further research their regulatory status and services. Tenax code may not possess complete and updated information about the regulation status of brokerage companies in particular countries and does not guarantee their reliability or reputation.",
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: const Color(0xFF747884),
+              color: AppColors.textGrey,
               fontSize: 13.sp,
               height: 1.5,
               fontWeight: FontWeight.w400,

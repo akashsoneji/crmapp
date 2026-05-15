@@ -116,10 +116,10 @@ class _MasterHeroCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(14.r),
-        border: Border.all(color: Colors.grey.withOpacity(0.15)),
+        border: Border.all(color: AppColors.border),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: AppColors.border.withValues(alpha: 0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -283,7 +283,7 @@ class _MasterHeroCard extends StatelessWidget {
             decoration: BoxDecoration(
               color: AppColors.tradeBackgroundCenterColor.withOpacity(0.35),
               borderRadius: BorderRadius.circular(14.r),
-              border: Border.all(color: Colors.grey.withOpacity(0.12)),
+              border: Border.all(color: AppColors.border),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -375,7 +375,7 @@ class _ViewByPlanCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(14.r),
-        border: Border.all(color: Colors.grey.withOpacity(0.15)),
+        border: Border.all(color: AppColors.border),
       ),
       padding: EdgeInsets.fromLTRB(14.w, 14.h, 14.w, 14.h),
       child: Column(
@@ -443,7 +443,7 @@ class _PlanChip extends StatelessWidget {
           color: selected ? AppColors.primary : AppColors.whiteColor,
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
-            color: selected ? AppColors.primary : Colors.grey.withOpacity(0.22),
+            color: selected ? AppColors.primary : AppColors.border.withValues(alpha: 0.22),
           ),
         ),
         child: Text(
@@ -483,7 +483,7 @@ class _PerformanceCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: AppColors.whiteColor,
             borderRadius: BorderRadius.circular(14.r),
-            border: Border.all(color: Colors.grey.withOpacity(0.15)),
+            border: Border.all(color: AppColors.border),
           ),
           child: Center(
             child: CommonLoadingWidget(size: 32.0, color: AppColors.primary),
@@ -495,7 +495,7 @@ class _PerformanceCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.whiteColor,
           borderRadius: BorderRadius.circular(14.r),
-          border: Border.all(color: Colors.grey.withOpacity(0.15)),
+          border: Border.all(color: AppColors.border),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -673,7 +673,7 @@ class _TimeChip extends StatelessWidget {
                   ? AppColors.textPrimary
                   : AppColors.tradeBackgroundCenterColor.withOpacity(0.35),
           borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: Colors.grey.withOpacity(0.12)),
+          border: Border.all(color: AppColors.border),
         ),
         child: Text(
           label,
@@ -733,7 +733,7 @@ class _OrdersCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(14.r),
-        border: Border.all(color: Colors.grey.withOpacity(0.15)),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         children: [
@@ -821,7 +821,7 @@ class _OrderCardState extends State<_OrderCard> {
         decoration: BoxDecoration(
           color: AppColors.whiteColor,
           borderRadius: BorderRadius.circular(12.r),
-          border: Border.all(color: Colors.grey.withOpacity(0.15)),
+          border: Border.all(color: AppColors.border),
         ),
         child: Column(
           children: [
@@ -913,7 +913,7 @@ class _OrderCardState extends State<_OrderCard> {
             // ── Expanded details ──────────────────────────────────────
             if (_expanded) ...[
               SizedBox(height: 12.h),
-              Divider(color: Colors.grey.withOpacity(0.12), height: 1),
+              Divider(color: AppColors.border.withValues(alpha: 0.12), height: 1),
               SizedBox(height: 12.h),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,

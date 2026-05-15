@@ -151,11 +151,11 @@ class _PaymentItem extends StatelessWidget {
           trailing: Icon(
             Icons.arrow_forward_ios,
             size: 16.r,
-            color: Colors.grey.withOpacity(0.3),
+            color: AppColors.border.withValues(alpha: 0.3),
           ),
           onTap: onTap,
         ),
-        Divider(height: 1, color: Colors.grey.withOpacity(0.1)),
+        Divider(height: 1, color: AppColors.border.withValues(alpha: 0.1)),
       ],
     );
   }

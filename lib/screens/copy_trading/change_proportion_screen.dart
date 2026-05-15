@@ -111,7 +111,7 @@ class _ChangeProportionScreenState extends State<ChangeProportionScreen> {
       elevation: 0.8,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.grey.shade200),
+        side: BorderSide(color: AppColors.surface),
       ),
       child: Padding(
         padding: EdgeInsets.all(10.0),
@@ -135,7 +135,7 @@ class _ChangeProportionScreenState extends State<ChangeProportionScreen> {
       decoration: BoxDecoration(
         color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: Colors.grey.shade100),
+        border: Border.all(color: AppColors.surface),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,

@@ -165,7 +165,7 @@ class KycIntroScreen extends StatelessWidget {
                           stageCompletion?.identityVerified == true &&
                                   stageCompletion?.addressProofVerified == true
                               ? Colors.green
-                              : Colors.grey[400]!,
+                              : AppColors.textGrey!,
                       textColor:
                           stageCompletion?.identityVerified == true &&
                                   stageCompletion?.addressProofVerified == true
@@ -174,7 +174,7 @@ class KycIntroScreen extends StatelessWidget {
                                   stageCompletion?.emailVerified != null &&
                                   stageCompletion?.personalDetails == true)
                               ? AppColors.primary.withAlpha(1000)
-                              : Colors.grey[400]!,
+                              : AppColors.textGrey!,
                       features: [
                         'Unlimited deposits',
                         'Global and local payments',
@@ -202,7 +202,7 @@ class KycIntroScreen extends StatelessWidget {
                               ? Colors.green
                               : stageCompletion?.identityVerified == true
                               ? AppColors.primary
-                              : Colors.grey[400]!,
+                              : AppColors.textGrey!,
                       backgroundColor:
                           stageCompletion?.addressProofVerified == true
                               ? const Color(0xFFE8F5E8) // Light green
@@ -214,7 +214,7 @@ class KycIntroScreen extends StatelessWidget {
                               ? Colors.green
                               : stageCompletion?.identityVerified == true
                               ? AppColors.primary
-                              : Colors.grey[400]!,
+                              : AppColors.textGrey!,
                       features: [
                         'Unlimited deposits',
                         'Global and local payments',

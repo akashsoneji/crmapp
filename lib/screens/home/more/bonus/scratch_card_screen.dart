@@ -908,7 +908,7 @@ class ScratchCardListScreen extends StatelessWidget {
                   LinearProgressIndicator(
                     minHeight: 2,
                     color: AppColors.primary,
-                    backgroundColor: Colors.black.withOpacity(0.06),
+                    backgroundColor: AppColors.border.withValues(alpha: 0.06),
                   ),
 
                 // ── Summary Banner ──
@@ -1001,14 +1001,14 @@ class _ScratchCardsGridState extends State<_ScratchCardsGrid> {
                     vertical: 4.h,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEDF7EE),
+                    color: AppColors.successBg,
                     borderRadius: BorderRadius.circular(20.r),
                   ),
                   child: Text(
                     '$scratchedCount scratched · $remainingCount remaining',
                     style: TextStyle(
                       fontSize: 12.sp,
-                      color: const Color(0xFF2A7D3F),
+                      color: AppColors.successText,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -1084,7 +1084,7 @@ class _ScratchLeaderboardSection extends StatelessWidget {
             decoration: BoxDecoration(
               color: AppColors.whiteColor,
               borderRadius: BorderRadius.circular(14.r),
-              border: Border.all(color: Colors.black.withOpacity(0.06)),
+              border: Border.all(color: AppColors.border.withValues(alpha: 0.06)),
             ),
             child: Row(
               children: [
@@ -1136,7 +1136,7 @@ class _ScratchLeaderboardSection extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.whiteColor,
                 borderRadius: BorderRadius.circular(14.r),
-                border: Border.all(color: Colors.black.withOpacity(0.06)),
+                border: Border.all(color: AppColors.border.withValues(alpha: 0.06)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1158,7 +1158,7 @@ class _ScratchLeaderboardSection extends StatelessWidget {
                           week,
                           style: TextStyle(
                             fontSize: 11.sp,
-                            color: Colors.grey.shade500,
+                            color: AppColors.textGrey,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -1178,7 +1178,7 @@ class _ScratchLeaderboardSection extends StatelessWidget {
                       decoration: BoxDecoration(
                         border: Border(
                           bottom: BorderSide(
-                            color: Colors.black.withOpacity(0.05),
+                            color: AppColors.border.withValues(alpha: 0.05),
                           ),
                         ),
                       ),
@@ -1191,7 +1191,7 @@ class _ScratchLeaderboardSection extends StatelessWidget {
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontSize: 14.sp,
-                                color: Colors.grey.shade700,
+                                color: AppColors.textGrey,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -1292,15 +1292,15 @@ class _ScratchLotsProgressSection extends StatelessWidget {
       }
 
       Color statusTextColor(String status) {
-        if (status == 'completed') return const Color(0xFF2A7D3F);
+        if (status == 'completed') return AppColors.successText;
         if (status == 'in_progress') return AppColors.primary;
-        return Colors.grey.shade600;
+        return AppColors.textGrey;
       }
 
       Color statusBgColor(String status) {
-        if (status == 'completed') return const Color(0xFFEDF7EE);
+        if (status == 'completed') return AppColors.successBg;
         if (status == 'in_progress') return AppColors.primary.withOpacity(0.08);
-        return Colors.grey.shade200;
+        return AppColors.surface;
       }
 
       Border? statusBorder(String status) {
@@ -1316,7 +1316,7 @@ class _ScratchLotsProgressSection extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.whiteColor,
           borderRadius: BorderRadius.circular(16.r),
-          border: Border.all(color: Colors.black.withOpacity(0.07)),
+          border: Border.all(color: AppColors.border.withValues(alpha: 0.07)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1336,7 +1336,7 @@ class _ScratchLotsProgressSection extends StatelessWidget {
                   '${doneLots.toStringAsFixed(2)} / ${targetLots.toStringAsFixed(2)}',
                   style: TextStyle(
                     fontSize: 12.sp,
-                    color: Colors.grey.shade700,
+                    color: AppColors.textGrey,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -1347,7 +1347,7 @@ class _ScratchLotsProgressSection extends StatelessWidget {
               borderRadius: BorderRadius.circular(6.r),
               child: Container(
                 height: 10.h,
-                color: const Color(0xFFF0E0F8),
+                color: AppColors.accentPurple,
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: FractionallySizedBox(
@@ -1370,7 +1370,7 @@ class _ScratchLotsProgressSection extends StatelessWidget {
                   '0 lots',
                   style: TextStyle(
                     fontSize: 10.sp,
-                    color: Colors.grey.shade500,
+                    color: AppColors.textGrey,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -1380,7 +1380,7 @@ class _ScratchLotsProgressSection extends StatelessWidget {
                     '${firstStep.targetLots.toStringAsFixed(0)} lots',
                     style: TextStyle(
                       fontSize: 10.sp,
-                      color: Colors.grey.shade500,
+                      color: AppColors.textGrey,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -1389,7 +1389,7 @@ class _ScratchLotsProgressSection extends StatelessWidget {
                     '${firstStep.thresholdPercent}%',
                     style: TextStyle(
                       fontSize: 10.sp,
-                      color: Colors.grey.shade400,
+                      color: AppColors.textGrey,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -1399,7 +1399,7 @@ class _ScratchLotsProgressSection extends StatelessWidget {
                   '${targetLots.toStringAsFixed(0)} lots ✓',
                   style: TextStyle(
                     fontSize: 10.sp,
-                    color: Colors.grey.shade500,
+                    color: AppColors.textGrey,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -1410,9 +1410,9 @@ class _ScratchLotsProgressSection extends StatelessWidget {
               Container(
                 padding: EdgeInsets.all(12.w),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade50,
+                  color: AppColors.surface,
                   borderRadius: BorderRadius.circular(12.r),
-                  border: Border.all(color: Colors.black.withOpacity(0.06)),
+                  border: Border.all(color: AppColors.border.withValues(alpha: 0.06)),
                 ),
                 child: Column(
                   children: [
@@ -1423,7 +1423,7 @@ class _ScratchLotsProgressSection extends StatelessWidget {
                             'Lots Completed',
                             style: TextStyle(
                               fontSize: 11.sp,
-                              color: Colors.grey.shade600,
+                              color: AppColors.textGrey,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -1432,7 +1432,7 @@ class _ScratchLotsProgressSection extends StatelessWidget {
                           'Withdrawable Amount',
                           style: TextStyle(
                             fontSize: 11.sp,
-                            color: Colors.grey.shade600,
+                            color: AppColors.textGrey,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -1466,7 +1466,7 @@ class _ScratchLotsProgressSection extends StatelessWidget {
                                               ? AppColors.textPrimary
                                               : (status == 'in_progress'
                                                   ? AppColors.textPrimary
-                                                  : Colors.grey.shade600),
+                                                  : AppColors.textGrey),
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
@@ -1475,7 +1475,7 @@ class _ScratchLotsProgressSection extends StatelessWidget {
                                     '(${step.targetLots.toStringAsFixed(0)} lots · ${step.thresholdPercent}%)',
                                     style: TextStyle(
                                       fontSize: 11.sp,
-                                      color: Colors.grey.shade500,
+                                      color: AppColors.textGrey,
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
@@ -1508,8 +1508,8 @@ class _ScratchLotsProgressSection extends StatelessWidget {
                                 fontSize: 13.sp,
                                 color:
                                     isCompleted
-                                        ? const Color(0xFF2A9D5C)
-                                        : Colors.grey.shade500,
+                                        ? AppColors.successText
+                                        : AppColors.textGrey,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -1549,7 +1549,7 @@ class _ScratchLotsProgressSection extends StatelessWidget {
                       width: double.infinity,
                       height: 42,
                       backgroundColor:
-                          canConvert ? AppColors.primary : Colors.grey.shade300,
+                          canConvert ? AppColors.primary : AppColors.border,
                       foregroundColor: Colors.white,
                       isLoading: controller.isConverting.value,
                       onPressed:
@@ -1588,7 +1588,7 @@ class _MockLeaderboardCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(14.r),
-        border: Border.all(color: Colors.black.withOpacity(0.06)),
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.06)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1609,7 +1609,7 @@ class _MockLeaderboardCard extends StatelessWidget {
                 (data["week"] ?? "").toString(),
                 style: TextStyle(
                   fontSize: 11.sp,
-                  color: Colors.grey.shade500,
+                  color: AppColors.textGrey,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -1626,7 +1626,7 @@ class _MockLeaderboardCard extends StatelessWidget {
               padding: EdgeInsets.symmetric(vertical: 8.h),
               decoration: BoxDecoration(
                 border: Border(
-                  bottom: BorderSide(color: Colors.black.withOpacity(0.05)),
+                  bottom: BorderSide(color: AppColors.border.withValues(alpha: 0.05)),
                 ),
               ),
               child: Row(
@@ -1760,7 +1760,7 @@ class _MockHistoryCard extends StatelessWidget {
             decoration: BoxDecoration(
               color: AppColors.whiteColor,
               borderRadius: BorderRadius.circular(12.r),
-              border: Border.all(color: Colors.black.withOpacity(0.06)),
+              border: Border.all(color: AppColors.border.withValues(alpha: 0.06)),
             ),
             child: Row(
               children: [
@@ -1793,7 +1793,7 @@ class _MockHistoryCard extends StatelessWidget {
                         sub,
                         style: TextStyle(
                           fontSize: 12.sp,
-                          color: Colors.grey.shade600,
+                          color: AppColors.textGrey,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -1805,14 +1805,14 @@ class _MockHistoryCard extends StatelessWidget {
                             vertical: 2.h,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFEDF7EE),
+                            color: AppColors.successBg,
                             borderRadius: BorderRadius.circular(20.r),
                           ),
                           child: Text(
                             chip,
                             style: TextStyle(
                               fontSize: 10.sp,
-                              color: const Color(0xFF2A7D3F),
+                              color: AppColors.successText,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -1826,7 +1826,7 @@ class _MockHistoryCard extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 15.sp,
                     fontWeight: FontWeight.w600,
-                    color: const Color(0xFF2A9D5C),
+                    color: AppColors.successText,
                   ),
                 ),
               ],
@@ -1907,7 +1907,7 @@ class _ScratchHistoryListState extends State<_ScratchHistoryList> {
                     borderRadius: BorderRadius.circular(12.r),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: AppColors.border.withValues(alpha: 0.05),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),
@@ -1953,7 +1953,7 @@ class _ScratchHistoryListState extends State<_ScratchHistoryList> {
                               'Expires: ${card.expiresLabel}',
                               style: TextStyle(
                                 fontSize: 11.sp,
-                                color: Colors.grey.shade600,
+                                color: AppColors.textGrey,
                               ),
                             ),
                           ],
@@ -1965,7 +1965,7 @@ class _ScratchHistoryListState extends State<_ScratchHistoryList> {
                           fontSize: 13.sp,
                           fontWeight: FontWeight.w500,
                           color:
-                              reward > 0 ? Colors.green.shade700 : Colors.grey,
+                              reward > 0 ? AppColors.success : AppColors.textGrey,
                         ),
                       ),
                     ],
@@ -1998,7 +1998,7 @@ class _SummaryBanner extends StatelessWidget {
         borderRadius: BorderRadius.circular(16.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: AppColors.border.withValues(alpha: 0.06),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -2036,7 +2036,7 @@ class _SummaryBanner extends StatelessWidget {
                         'Account details will appear here once available.',
                         style: TextStyle(
                           fontSize: 11.sp,
-                          color: Colors.grey.shade600,
+                          color: AppColors.textGrey,
                         ),
                       ),
                     ],
@@ -2071,7 +2071,7 @@ class _SummaryBanner extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.primary.withOpacity(0.05),
                 borderRadius: BorderRadius.circular(12.r),
-                border: Border.all(color: Colors.black.withOpacity(0.06)),
+                border: Border.all(color: AppColors.border.withValues(alpha: 0.06)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -2080,7 +2080,7 @@ class _SummaryBanner extends StatelessWidget {
                     label,
                     style: TextStyle(
                       fontSize: 10.sp,
-                      color: Colors.grey.shade600,
+                      color: AppColors.textGrey,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -2373,9 +2373,9 @@ class _NextCardCountdownBannerState extends State<_NextCardCountdownBanner> {
         margin: EdgeInsets.symmetric(horizontal: 16.w),
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
         decoration: BoxDecoration(
-          color: const Color(0xFFFFFBEA),
+          color: AppColors.warningBg,
           borderRadius: BorderRadius.circular(14.r),
-          border: Border.all(color: Colors.yellow.shade300, width: 1),
+          border: Border.all(color: AppColors.warningBorder, width: 1),
         ),
         child: Column(
           children: [
@@ -2481,11 +2481,11 @@ class _EmptyState extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.card_giftcard, size: 64.r, color: Colors.grey.shade300),
+          Icon(Icons.card_giftcard, size: 64.r, color: AppColors.border),
           SizedBox(height: 12.h),
           Text(
             'No scratch cards available',
-            style: TextStyle(fontSize: 15.sp, color: Colors.grey.shade500),
+            style: TextStyle(fontSize: 15.sp, color: AppColors.textGrey),
           ),
         ],
       ),
@@ -2606,13 +2606,13 @@ class _LockedScratchCardGridItemState
         //           SizedBox(height: 12.h),
         //           Row(
         //             children: [
-        //               Icon(Icons.timer, color: Colors.grey.shade600, size: 16.r),
+        //               Icon(Icons.timer, color: AppColors.textGrey, size: 16.r),
         //               SizedBox(width: 6.w),
         //               Text(
         //                 'Time remaining: ${_formatCountdown(diff)}',
         //                 style: TextStyle(
         //                   fontSize: 13.sp,
-        //                   color: Colors.grey.shade600,
+        //                   color: AppColors.textGrey,
         //                   fontWeight: FontWeight.w500,
         //                 ),
         //               ),
@@ -2644,7 +2644,7 @@ class _LockedScratchCardGridItemState
             Positioned.fill(
               child: ColorFiltered(
                 colorFilter: ColorFilter.mode(
-                  Colors.black.withOpacity(0.31),
+                  AppColors.border.withValues(alpha: 0.31),
                   BlendMode.saturation,
                 ),
                 child: SvgPicture.asset(
@@ -2657,7 +2657,7 @@ class _LockedScratchCardGridItemState
 
             // Dark overlay
             Positioned.fill(
-              child: Container(color: Colors.black.withOpacity(0.28)),
+              child: Container(color: AppColors.border.withValues(alpha: 0.28)),
             ),
 
             // Lock icon + countdown content
@@ -2747,7 +2747,7 @@ class _ScratchCardGridItem extends StatelessWidget {
             if (card.isScratched)
               Positioned.fill(
                 child: Container(
-                  color: Colors.black.withOpacity(0.0),
+                  color: Colors.transparent,
                   child: Align(
                     alignment: Alignment.bottomCenter,
                     child: Column(
@@ -2866,7 +2866,7 @@ class ScratchCardDetailScreen extends StatelessWidget {
                     "You've got a scratch card reward!",
                     style: TextStyle(
                       fontSize: 14.sp,
-                      color: Colors.grey.shade600,
+                      color: AppColors.textGrey,
                     ),
                   ),
                   SizedBox(height: 32.h),
@@ -2926,7 +2926,7 @@ class ScratchCardDetailScreen extends StatelessWidget {
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 13.sp,
-                          color: Colors.grey.shade500,
+                          color: AppColors.textGrey,
                           height: 1.4,
                         ),
                       ),
@@ -3219,7 +3219,7 @@ class _ActiveScratchCardState extends State<_ActiveScratchCard> {
                   accuracy: ScratchAccuracy.low,
                   brushSize: 70,
                   threshold: 100,
-                  color: const Color(0xFF0F1E2D),
+                  color: AppColors.scratchOverlay,
                   image: Image.memory(_svgBytes!, fit: BoxFit.cover),
                   onChange: widget.ctrl.onProgress,
                   onScratchEnd: widget.ctrl.onScratchEnd,
@@ -3317,7 +3317,7 @@ class _RewardContent extends StatelessWidget {
                     shadows: [
                       Shadow(
                         blurRadius: 12,
-                        color: Colors.black.withOpacity(0.4),
+                        color: AppColors.border.withValues(alpha: 0.4),
                         offset: const Offset(0, 3),
                       ),
                     ],
@@ -3366,7 +3366,7 @@ class _RevealedCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(20.r),
           boxShadow: [
             BoxShadow(
-              color: (isWin ? AppColors.primary : Colors.grey).withOpacity(0.4),
+              color: (isWin ? AppColors.primary : AppColors.textGrey).withOpacity(0.4),
               blurRadius: 24,
               offset: const Offset(0, 10),
             ),
@@ -3412,7 +3412,7 @@ class _RevealedCard extends StatelessWidget {
                         shadows: [
                           Shadow(
                             blurRadius: 12,
-                            color: Colors.black.withOpacity(0.4),
+                            color: AppColors.border.withValues(alpha: 0.4),
                             offset: const Offset(0, 3),
                           ),
                         ],
@@ -3645,7 +3645,7 @@ class _CreditStatusBadge extends StatelessWidget {
         color:
             isCredited
                 ? AppColors.primary.withOpacity(0.15)
-                : Colors.grey.shade100,
+                : AppColors.surface,
         border: Border.all(
           color:
               isCredited
@@ -3847,7 +3847,7 @@ class _CreateScratchAccountDialogState
                         'Required to scratch and reveal rewards',
                         style: TextStyle(
                           fontSize: 11.sp,
-                          color: Colors.grey.shade500,
+                          color: AppColors.textGrey,
                         ),
                       ),
                     ],
@@ -3921,8 +3921,8 @@ class _CreateScratchAccountDialogState
                     child: OutlinedButton(
                       onPressed: loading ? null : () => Get.back(),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.grey.shade600,
-                        side: BorderSide(color: Colors.grey.shade300),
+                        foregroundColor: AppColors.textGrey,
+                        side: BorderSide(color: AppColors.border),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12.r),
                         ),
@@ -4000,17 +4000,17 @@ class _PasswordField extends StatelessWidget {
       style: TextStyle(fontSize: 14.sp, color: AppColors.textPrimary),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: TextStyle(fontSize: 13.sp, color: Colors.grey.shade400),
+        hintStyle: TextStyle(fontSize: 13.sp, color: AppColors.textGrey),
         filled: true,
-        fillColor: Colors.grey.shade50,
+        fillColor: AppColors.surface,
         contentPadding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12.r),
-          borderSide: BorderSide(color: Colors.grey.shade200),
+          borderSide: BorderSide(color: AppColors.surface),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12.r),
-          borderSide: BorderSide(color: Colors.grey.shade200),
+          borderSide: BorderSide(color: AppColors.surface),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12.r),
@@ -4020,7 +4020,7 @@ class _PasswordField extends StatelessWidget {
           onPressed: onToggle,
           icon: Icon(
             obscure ? Icons.visibility_off : Icons.visibility,
-            color: Colors.grey.shade400,
+            color: AppColors.textGrey,
             size: 20.r,
           ),
         ),

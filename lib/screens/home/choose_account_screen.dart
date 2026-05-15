@@ -175,7 +175,7 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
                     ]
                     : [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: AppColors.border.withValues(alpha: 0.05),
                         blurRadius: 10,
                         offset: Offset(0, 6),
                       ),
@@ -194,7 +194,7 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
                       style: TextStyle(
                         fontSize: 18.sp,
                         fontWeight: FontWeight.w500,
-                        color: Colors.black87,
+                        color: AppColors.textPrimary,
                         height: 1.4,
                       ),
                     ),

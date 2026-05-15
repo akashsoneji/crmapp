@@ -177,7 +177,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
         ),
         shape: Border(
           bottom: BorderSide(
-            color: Colors.grey.shade300, // divider color
+            color: AppColors.border, // divider color
             width: 1, // divider thickness
           ),
         ),
@@ -315,7 +315,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
             padding: EdgeInsets.symmetric(horizontal: 14.w),
             child: RTLHelper.rtlIcon(
               Icons.keyboard_arrow_down_outlined,
-              color: Colors.grey,
+              color: AppColors.textGrey,
             ),
           ),
         ),
@@ -363,7 +363,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
             padding: EdgeInsets.symmetric(horizontal: 14.w),
             child: RTLHelper.rtlIcon(
               Icons.keyboard_arrow_down_outlined,
-              color: Colors.grey,
+              color: AppColors.textGrey,
             ),
           ),
         ),
@@ -437,7 +437,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
             padding: EdgeInsets.symmetric(horizontal: 14.w),
             child: RTLHelper.rtlIcon(
               Icons.keyboard_arrow_down_outlined,
-              color: Colors.grey,
+              color: AppColors.textGrey,
             ),
           ),
         ),
@@ -488,7 +488,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
             Container(
               padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
               decoration: BoxDecoration(
-                color: Colors.grey[50],
+                color: AppColors.surface,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: AppColors.border),
               ),
@@ -599,7 +599,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
             padding: EdgeInsets.symmetric(horizontal: 14.w),
             child: RTLHelper.rtlIcon(
               Icons.keyboard_arrow_down_outlined,
-              color: Colors.grey,
+              color: AppColors.textGrey,
             ),
           ),
         ),
@@ -686,8 +686,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
             decoration: BoxDecoration(
               color: isAmountConfirmed ? AppColors.primary : Colors.transparent,
               border: Border.all(
-                color:
-                    isAmountConfirmed ? AppColors.primary : Colors.grey[400]!,
+                color: isAmountConfirmed ? AppColors.primary : AppColors.textGrey,
                 width: 2,
               ),
               borderRadius: BorderRadius.circular(4),
@@ -810,11 +809,11 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
         isDense: true,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: Colors.grey[300]!),
+          borderSide: BorderSide(color: AppColors.border),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: Colors.grey[300]!),
+          borderSide: BorderSide(color: AppColors.border),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
@@ -891,11 +890,11 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
             isDense: true,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey[300]!),
+              borderSide: BorderSide(color: AppColors.border),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey[300]!),
+              borderSide: BorderSide(color: AppColors.border),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
@@ -964,11 +963,11 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
               isDense: true,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.grey[300]!),
+                borderSide: BorderSide(color: AppColors.border),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.grey[300]!),
+                borderSide: BorderSide(color: AppColors.border),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
@@ -1189,7 +1188,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
                   width: 40.w,
                   height: 4.h,
                   decoration: BoxDecoration(
-                    color: Colors.grey[300],
+                    color: AppColors.border,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -1320,7 +1319,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
             shrinkWrap: true,
             itemCount: totalItems,
             separatorBuilder:
-                (_, __) => Divider(height: 1, color: Colors.grey.shade300),
+                (_, __) => Divider(height: 1, color: AppColors.border),
             itemBuilder: (context, index) {
               // Check if this is the wallet item (last item if wallet exists)
               final bool isWalletItem = hasWallet && index == accounts.length;
@@ -1378,7 +1377,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
                               color:
                                   isSelected
                                       ? AppColors.primary
-                                      : Colors.black87,
+                                      : AppColors.textPrimary,
                             ),
                           ),
                         ),
@@ -1391,7 +1390,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
                             color:
                                 isSelected
                                     ? AppColors.primary
-                                    : Colors.grey.shade700,
+                                    : AppColors.textGrey,
                           ),
                         ),
                         if (isSelected) ...[
@@ -1460,7 +1459,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
                               color:
                                   isSelected
                                       ? AppColors.primary
-                                      : Colors.black87,
+                                      : AppColors.textPrimary,
                             ),
                           ),
                         ),
@@ -1474,7 +1473,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
                             color:
                                 isSelected
                                     ? AppColors.primary
-                                    : Colors.grey.shade700,
+                                    : AppColors.textGrey,
                           ),
                         ),
 
@@ -1521,7 +1520,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
                     width: 40.w,
                     height: 4.h,
                     decoration: BoxDecoration(
-                      color: Colors.grey[300],
+                      color: AppColors.border,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -1784,7 +1783,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
                       width: 40.w,
                       height: 4.h,
                       decoration: BoxDecoration(
-                        color: Colors.grey[300],
+                        color: AppColors.border,
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -1862,7 +1861,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
                     width: 40.w,
                     height: 4.h,
                     decoration: BoxDecoration(
-                      color: Colors.grey[300],
+                      color: AppColors.border,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -1883,7 +1882,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
                       itemCount: userWithdrawalMethods.length,
                       separatorBuilder:
                           (_, __) =>
-                              Divider(height: 1, color: Colors.grey.shade300),
+                              Divider(height: 1, color: AppColors.border),
                       itemBuilder: (context, index) {
                         final method =
                             userWithdrawalMethods[index]

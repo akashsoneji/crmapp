@@ -139,7 +139,7 @@ class _TradeHistoryCardState extends State<_TradeHistoryCard> {
       margin: EdgeInsets.only(bottom: 12.h),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12.r),
-        side: BorderSide(color: Colors.grey.withOpacity(0.1)),
+        side: BorderSide(color: AppColors.border.withValues(alpha: 0.1)),
       ),
       color: AppColors.whiteColor,
       child: InkWell(
@@ -246,7 +246,7 @@ class _TradeHistoryCardState extends State<_TradeHistoryCard> {
               if (_isExpanded) ...[
                 SizedBox(height: 12.h),
                 Divider(
-                  color: Colors.grey.withOpacity(0.1),
+                  color: AppColors.border.withValues(alpha: 0.1),
                   thickness: 1,
                   height: 1,
                 ),

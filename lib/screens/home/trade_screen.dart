@@ -693,7 +693,7 @@ class _TradeScreenState extends State<TradeScreen> {
                   style: AppTextStyles.label.copyWith(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w400,
-                    color: AppColors.textPrimaryLight,
+                    color: AppColors.textPrimary,
                   ),
                 ),
               )
@@ -3902,7 +3902,7 @@ class _TradeScreenState extends State<TradeScreen> {
                 width: iconSize,
                 height: iconSize,
                 decoration: BoxDecoration(
-                  color: Colors.grey[300],
+                  color: AppColors.surface,
                   borderRadius: BorderRadius.circular(4.r),
                 ),
                 child: Center(

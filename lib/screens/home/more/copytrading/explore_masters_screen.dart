@@ -167,7 +167,7 @@ class _SortButton extends StatelessWidget {
           decoration: BoxDecoration(
             color: AppColors.whiteColor,
             borderRadius: BorderRadius.circular(12.r),
-            border: Border.all(color: Colors.grey.withOpacity(0.15)),
+            border: Border.all(color: AppColors.border.withValues(alpha: 0.15)),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -201,10 +201,10 @@ class _MasterCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.whiteColor,
           borderRadius: BorderRadius.circular(14.r),
-          border: Border.all(color: Colors.grey.withOpacity(0.15)),
+          border: Border.all(color: AppColors.border.withValues(alpha: 0.15)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.03),
+              color: AppColors.border.withValues(alpha: 0.03),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -326,7 +326,7 @@ class _MiniStat extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.tradeBackgroundCenterColor.withOpacity(0.35),
           borderRadius: BorderRadius.circular(12.r),
-          border: Border.all(color: Colors.grey.withOpacity(0.10)),
+          border: Border.all(color: AppColors.border.withValues(alpha: 0.10)),
           boxShadow: [
             BoxShadow(
               color: 
@@ -372,7 +372,7 @@ class _LoadingList extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.whiteColor,
           borderRadius: BorderRadius.circular(14.r),
-          border: Border.all(color: Colors.grey.withOpacity(0.15)),
+          border: Border.all(color: AppColors.border.withValues(alpha: 0.15)),
         ),
       ),
     );

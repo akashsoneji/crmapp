@@ -1071,7 +1071,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(color: Colors.grey[400]!),
+                  border: Border.all(color: AppColors.textGrey!),
                 ),
                 child: IconButton(
                   onPressed: () {
@@ -1086,7 +1086,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                       widget.onVolumeChanged(volume);
                     });
                   },
-                  icon: Icon(Icons.remove, size: 20.h, color: Colors.grey[600]),
+                  icon: Icon(Icons.remove, size: 20.h, color: AppColors.textGrey),
                   padding: EdgeInsets.zero,
                   constraints: BoxConstraints(),
                 ),
@@ -1599,9 +1599,9 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
       width: double.infinity,
       padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(6.r),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(color: AppColors.surface!),
       ),
       child: Row(
         children: [
@@ -1610,7 +1610,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
             height: 20.h,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.grey[400]!),
+              border: Border.all(color: AppColors.textGrey!),
             ),
             child: IconButton(
               onPressed: () {
@@ -1632,7 +1632,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                   _pnlCalculationKey++;
                 });
               },
-              icon: Icon(Icons.remove, size: 10.h, color: Colors.grey[600]),
+              icon: Icon(Icons.remove, size: 10.h, color: AppColors.textGrey),
               padding: EdgeInsets.zero,
               constraints: BoxConstraints(),
             ),
@@ -1881,7 +1881,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                       width: 40.w,
                       height: 4.h,
                       decoration: BoxDecoration(
-                        color: Colors.grey[300],
+                        color: AppColors.border,
                         borderRadius: BorderRadius.circular(2.r),
                       ),
                     ),
@@ -1934,7 +1934,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                                       color:
                                           isSelected
                                               ? AppColors.primary
-                                              : Colors.black87,
+                                              : AppColors.textPrimary,
                                     ),
                                   ),
                                 ),

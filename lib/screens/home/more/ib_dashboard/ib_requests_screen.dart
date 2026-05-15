@@ -190,7 +190,7 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
                           color:
                               isSelected
                                   ? AppColors.primary
-                                  : Colors.grey.shade300,
+                                  : AppColors.border,
                           width: 1,
                         ),
                         boxShadow:
@@ -299,7 +299,7 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
         borderRadius: BorderRadius.circular(16.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: AppColors.border.withValues(alpha: 0.06),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -625,7 +625,7 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
                       return Container(
                         padding: EdgeInsets.symmetric(horizontal: 12.w),
                         decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey.shade300),
+                          border: Border.all(color: AppColors.border),
                           borderRadius: BorderRadius.circular(8.r),
                         ),
                         child: DropdownButtonHideUnderline(

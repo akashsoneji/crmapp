@@ -131,7 +131,7 @@ class _PmamCreatePlanScreenState extends State<PmamCreatePlanScreen> {
                   borderRadius: BorderRadius.circular(14.r),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: AppColors.border.withValues(alpha: 0.05),
                       blurRadius: 10,
                       offset: const Offset(0, 3),
                     ),
@@ -204,7 +204,7 @@ class _PmamCreatePlanScreenState extends State<PmamCreatePlanScreen> {
                   borderRadius: BorderRadius.circular(14.r),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: AppColors.border.withValues(alpha: 0.05),
                       blurRadius: 10,
                       offset: const Offset(0, 3),
                     ),
@@ -227,7 +227,7 @@ class _PmamCreatePlanScreenState extends State<PmamCreatePlanScreen> {
                         return Container(
                           padding: EdgeInsets.all(12.w),
                           decoration: BoxDecoration(
-                            border: Border.all(color: const Color(0xFFDDDDDD)),
+                            border: Border.all(color: AppColors.border),
                             borderRadius: BorderRadius.circular(10.r),
                           ),
                           child: Text(
@@ -256,14 +256,14 @@ class _PmamCreatePlanScreenState extends State<PmamCreatePlanScreen> {
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10.r),
-                            borderSide: const BorderSide(
-                              color: Color(0xFFDDDDDD),
+                            borderSide:  BorderSide(
+                              color: AppColors.border,
                             ),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10.r),
-                            borderSide: const BorderSide(
-                              color: Color(0xFFDDDDDD),
+                            borderSide: BorderSide(
+                              color: AppColors.border,
                             ),
                           ),
                           focusedBorder: OutlineInputBorder(
@@ -471,11 +471,11 @@ class _StyledTextField extends StatelessWidget {
         contentPadding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10.r),
-          borderSide: const BorderSide(color: Color(0xFFDDDDDD)),
+          borderSide: BorderSide(color: AppColors.border),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10.r),
-          borderSide: const BorderSide(color: Color(0xFFDDDDDD)),
+          borderSide: BorderSide(color: AppColors.border),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10.r),

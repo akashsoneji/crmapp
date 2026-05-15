@@ -596,9 +596,9 @@ class _EditProfileState extends State<EditProfile> {
                                       controller.updateTitle(value);
                                     },
                                   ),
-                          suffixIcon: const Icon(
+                          suffixIcon: Icon(
                             Icons.arrow_drop_down,
-                            color: Colors.grey,
+                            color: AppColors.textGrey,
                           ),
                           decoration: InputDecoration(
                             labelText: languageService.tr('kyc_details_title'),
@@ -742,7 +742,7 @@ class _EditProfileState extends State<EditProfile> {
                               child: Icon(
                                 Icons.calendar_today,
                                 size: 20,
-                                color: Colors.grey,
+                                color: AppColors.textGrey,
                               ),
                             ),
                           ),
@@ -790,9 +790,9 @@ class _EditProfileState extends State<EditProfile> {
                                       controller.updateGender(value);
                                     },
                                   ),
-                          suffixIcon: const Icon(
+                          suffixIcon: Icon(
                             Icons.arrow_drop_down,
-                            color: Colors.grey,
+                            color: AppColors.textGrey,
                           ),
                           decoration: InputDecoration(
                             labelText: languageService.tr(
@@ -983,7 +983,7 @@ class _EditProfileState extends State<EditProfile> {
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(color: AppColors.error),
             ),
-            suffixIcon: const Icon(Icons.arrow_drop_down, color: Colors.grey),
+            suffixIcon: Icon(Icons.arrow_drop_down, color: AppColors.textGrey),
           ),
           validator: (value) {
             if (dropdownService.selectedCountry.value == null) {
@@ -1035,7 +1035,7 @@ class _EditProfileState extends State<EditProfile> {
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(color: AppColors.error),
             ),
-            suffixIcon: const Icon(Icons.arrow_drop_down, color: Colors.grey),
+            suffixIcon: Icon(Icons.arrow_drop_down, color: AppColors.textGrey),
           ),
         ),
       ),
@@ -1081,7 +1081,7 @@ class _EditProfileState extends State<EditProfile> {
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(color: AppColors.error),
             ),
-            suffixIcon: const Icon(Icons.arrow_drop_down, color: Colors.grey),
+            suffixIcon: Icon(Icons.arrow_drop_down, color: AppColors.textGrey),
           ),
         ),
       ),

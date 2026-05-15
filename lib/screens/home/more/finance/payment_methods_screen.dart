@@ -71,14 +71,14 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
             //   'MT5 ${widget.accountNumber}',
             //   style: TextStyle(
             //     fontSize: 12.sp,
-            //     color: Colors.grey[600],
+            //     color: AppColors.textGrey,
             //     fontWeight: FontWeight.normal,
             //   ),
             // ),
           ],
         ),
         shape: Border(
-          bottom: BorderSide(color: Colors.grey.shade300, width: 1),
+          bottom: BorderSide(color: AppColors.border, width: 1),
         ),
         centerTitle: true,
       ),

@@ -134,7 +134,7 @@ class _InternalTransferHistoryScreenState
         border: Border.all(color: AppColors.icongrey.withValues(alpha: 0.12)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: AppColors.border.withValues(alpha: 0.04),
             blurRadius: 14,
             offset: const Offset(0, 6),
           ),
@@ -344,7 +344,7 @@ class _InternalTransferHistoryScreenState
         border: Border.all(color: statusColor.withValues(alpha: 0.26)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: AppColors.border.withValues(alpha: 0.04),
             blurRadius: 14,
             offset: const Offset(0, 6),
           ),

@@ -135,7 +135,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
       return SizedBox(
         height: 160.h,
         child: Material(
-          color: Colors.black.withOpacity(0.06),
+          color: AppColors.border.withValues(alpha: 0.06),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             mainAxisSize: MainAxisSize.max,
@@ -328,7 +328,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
                   fontSize: 12.sp,
                   fontWeight: FontWeight.w400,
                   height: 22 / 15,
-                  color: AppColors.textPrimaryLight,
+                  color: AppColors.textPrimary,
                 ),
               ),
               SizedBox(width: 4.w),
@@ -374,7 +374,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
                 child: Material(
                   elevation: elevation,
                   color: AppColors.tradeBackgroundCenterColor,
-                  shadowColor: Colors.black.withOpacity(0.3),
+                  shadowColor: AppColors.border.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(8.r),
                   child: child,
                 ),
@@ -537,8 +537,8 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
         background: Container(
           alignment: Alignment.centerRight,
           padding: EdgeInsets.symmetric(horizontal: 20.w),
-          color: Colors.red.withOpacity(0.8),
-          child: Icon(Icons.delete_outline, color: Colors.white, size: 28.h),
+          color: AppColors.red.withOpacity(0.8),
+          child: Icon(Icons.delete_outline, color: AppColors.whiteColor, size: 28.h),
         ),
         onDismissed: (direction) {
           // Remove from local list immediately to satisfy Dismissible requirements
