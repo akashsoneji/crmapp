@@ -21,10 +21,10 @@ class CopyTradingHubScreen extends StatelessWidget {
     final controller = Get.put(CopyTradingHubController());
 
     return Scaffold(
-      backgroundColor: AppColors.tradeBackgroundCenterColor,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         scrolledUnderElevation: 0,
-        backgroundColor: AppColors.tradeBackgroundCenterColor,
+        backgroundColor: AppColors.background,
         elevation: 0,
         centerTitle: true,
         title: Text(
@@ -152,7 +152,7 @@ class CopyTradingHubScreen extends StatelessWidget {
 
   Widget _divider() => Padding(
         padding: EdgeInsets.symmetric(horizontal: 16.w),
-        child: Divider(height: 1, thickness: 0.5, color: AppColors.border.withValues(alpha: 0.22)),
+        child: Divider(height: 1, thickness: 0.5, color: AppColors.icongrey.withValues(alpha: 0.14)),
       );
 }
 
@@ -166,7 +166,7 @@ class _SectionCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.card,
         borderRadius: BorderRadius.circular(14.r),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: AppColors.icongrey.withValues(alpha: 0.14)),
         boxShadow: [
           BoxShadow(
             color: AppColors.border.withValues(alpha: 0.03),

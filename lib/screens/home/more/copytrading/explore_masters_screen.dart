@@ -16,10 +16,10 @@ class ExploreMastersScreen extends StatelessWidget {
     final controller = Get.put(CopyTradingMastersController());
 
     return Scaffold(
-      backgroundColor: AppColors.tradeBackgroundCenterColor,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         scrolledUnderElevation: 0,
-        backgroundColor: AppColors.tradeBackgroundCenterColor,
+        backgroundColor: AppColors.background,
         elevation: 0,
         centerTitle: true,
         title: Text(
@@ -215,10 +215,13 @@ class _MasterCard extends StatelessWidget {
             dividerColor: Colors.transparent,
             splashColor: Colors.transparent,
             highlightColor: Colors.transparent,
+            iconTheme: IconThemeData(color: AppColors.textPrimary),
           ),
           child: ExpansionTile(
             tilePadding: EdgeInsets.zero,
             childrenPadding: EdgeInsets.only(bottom: 10.h, top: 4.h),
+            iconColor: AppColors.textPrimary,
+            collapsedIconColor: AppColors.textPrimary,
             title: Row(
               children: [
                 Container(

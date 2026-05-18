@@ -172,6 +172,8 @@ class _PmamBecomeManagerScreenState extends State<PmamBecomeManagerScreen> {
                       width: 20.w,
                       height: 20.w,
                       child: Checkbox(
+                        checkColor: AppColors.whiteColor,
+                        side: BorderSide(color: AppColors.textGrey, width: 1.5),
                         value: _termsAccepted,
                         onChanged:
                             (v) => setState(() => _termsAccepted = v ?? false),
