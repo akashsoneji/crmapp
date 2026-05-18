@@ -1516,11 +1516,7 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
     bool value, {
     required Function(bool) onChanged,
   }) {
-    return AppSwitchTile(
-      title: title,
-      value: value,
-      onChanged: onChanged,
-    );
+    return AppSwitchTile(title: title, value: value, onChanged: onChanged);
   }
 
   Widget _buildCurrentProfitLoss(double profitLoss, bool isPositive) {

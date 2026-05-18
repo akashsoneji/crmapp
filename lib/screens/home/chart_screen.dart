@@ -4166,11 +4166,7 @@ Placing Order:
     return ValueListenableBuilder<bool>(
       valueListenable: valueNotifier,
       builder: (context, value, child) {
-        return AppSwitchTile(
-          title: title,
-          value: value,
-          onChanged: onChanged,
-        );
+        return AppSwitchTile(title: title, value: value, onChanged: onChanged);
       },
     );
   }

@@ -125,16 +125,15 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
 
     // When user switches MT5 account, the mapping for `datafeed_symbol`
     // may change. Clear it so the chart resolves it again.
-    _accountWorker = ever<MT5Account?>(
-      accountController.activeMT5AccountRx,
-      (_) {
-        if (!mounted) return;
-        setState(() {
-          _datafeedSymbolForSelected = '';
-          _lastDatafeedLookupKey = '';
-        });
-      },
-    );
+    _accountWorker = ever<MT5Account?>(accountController.activeMT5AccountRx, (
+      _,
+    ) {
+      if (!mounted) return;
+      setState(() {
+        _datafeedSymbolForSelected = '';
+        _lastDatafeedLookupKey = '';
+      });
+    });
   }
 
   void _initializePrices() {
@@ -258,11 +257,13 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
               ? PrecisionHelper.formatPrice(
                 PrecisionHelper.parseDouble(
                   orderType.isStopLimit
-                      ? (_openPriceController.text.isNotEmpty ? _openPriceController.text : _openPrice.value.toString())
+                      ? (_openPriceController.text.isNotEmpty
+                          ? _openPriceController.text
+                          : _openPrice.value.toString())
                       : (limitPriceFromController != null &&
-                              limitPriceFromController > 0)
-                          ? limitPriceControllerValue
-                          : _limitPrice.value.toString(),
+                          limitPriceFromController > 0)
+                      ? limitPriceControllerValue
+                      : _limitPrice.value.toString(),
                   decimals: decimals,
                 ),
                 decimals: decimals,
@@ -750,9 +751,10 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
                 key: ValueKey(
                   '${selectedSymbol}|${accountController.activeMT5Account?.metaAccountNumber ?? ''}|${_datafeedSymbolForSelected.isNotEmpty ? _datafeedSymbolForSelected : selectedSymbol}',
                 ), // Force update when symbol/account changes
-                symbol: _datafeedSymbolForSelected.isNotEmpty
-                    ? _datafeedSymbolForSelected
-                    : _removeSymbolSuffixForDisplay(selectedSymbol),
+                symbol:
+                    _datafeedSymbolForSelected.isNotEmpty
+                        ? _datafeedSymbolForSelected
+                        : _removeSymbolSuffixForDisplay(selectedSymbol),
                 url: _buildChartUrlWithDatafeedSymbol(),
               ),
             ),
@@ -782,8 +784,7 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
     if (!showChart) return;
     if (selectedSymbol.isEmpty) return;
 
-    final accountNumber =
-        accountController.activeMT5Account?.metaAccountNumber;
+    final accountNumber = accountController.activeMT5Account?.metaAccountNumber;
     if (accountNumber == null) return;
 
     final accountNumberStr = accountNumber.toString();
@@ -798,8 +799,7 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
     _isResolvingDatafeedSymbol = true;
 
     Future(() async {
-      final ok =
-          await SymbolDetailsCacheService.ensureCached(accountNumberStr);
+      final ok = await SymbolDetailsCacheService.ensureCached(accountNumberStr);
       if (!mounted) return;
 
       if (!ok) {
@@ -817,8 +817,7 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
       );
       if (!mounted) return;
 
-      final resolved =
-          (details?['datafeed_symbol'] ?? '').toString().trim();
+      final resolved = (details?['datafeed_symbol'] ?? '').toString().trim();
 
       if (lookupKey != _lastDatafeedLookupKey) return;
 
@@ -840,9 +839,10 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
 
   String _buildChartUrlWithDatafeedSymbol() {
     final displaySymbol = _removeSymbolSuffixForDisplay(selectedSymbol);
-    final effectiveDatafeedSymbol = _datafeedSymbolForSelected.isNotEmpty
-        ? _datafeedSymbolForSelected
-        : displaySymbol;
+    final effectiveDatafeedSymbol =
+        _datafeedSymbolForSelected.isNotEmpty
+            ? _datafeedSymbolForSelected
+            : displaySymbol;
 
     return '${FlavorConfig.instance.chartBaseUrl}/mobile-chart?symbol=$effectiveDatafeedSymbol&theme=${AppColors.chartTheme}';
   }
