@@ -1,6 +1,9 @@
+import 'package:crm_app/constants/text_styles.dart';
+import 'package:crm_app/screens/home/trading_main_screen.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/controllers/ib_controller.dart';
@@ -123,6 +126,10 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
             fontWeight: FontWeight.w600,
             color: AppColors.textPrimary,
           ),
+        ),
+        leading: IconButton(
+          icon: SvgPicture.asset("assets/svg/ib_dashboard/home.svg", colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn)),
+          onPressed: () => Get.offAll(() => const TradingMainScreen()),
         ),
         centerTitle: true,
       ),
@@ -414,7 +421,6 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
             child: Column(
               children: [
                 _buildInfoGrid([
-                  _buildInfoItem(Icons.phone_outlined, 'Phone', phone),
                   _buildInfoItem(
                     Icons.assignment_outlined,
                     'Plan',
@@ -581,7 +587,7 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
                     Container(
                       padding: EdgeInsets.symmetric(vertical: 14.h),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF673AB7),
+                        color: AppColors.primary,
                         borderRadius: BorderRadius.circular(8.r),
                       ),
                       alignment: Alignment.center,
@@ -654,10 +660,12 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
                     SizedBox(height: 8.h),
 
                     TextField(
+                      style: TextStyle(color: AppColors.textPrimary),
                       controller: reasonController,
                       maxLines: 4,
                       decoration: InputDecoration(
                         hintText: 'Please provide a reason...',
+                        hintStyle: TextStyle(color: AppColors.textGrey),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8.r),
                         ),
@@ -701,7 +709,7 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
                               _loadApprovalRequests();
                             }
                           },
-                          child: const Text('Submit'),
+                          child: Text('Submit', style: AppTextStyles.textButton.copyWith(color: AppColors.whiteColor)),
                         ),
                       ],
                     ),

@@ -1,6 +1,8 @@
+import 'package:crm_app/screens/home/trading_main_screen.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/controllers/ib_controller.dart';
@@ -419,6 +421,10 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
             fontWeight: FontWeight.w600,
             color: AppColors.textPrimary,
           ),
+        ),
+        leading: IconButton(
+          icon: SvgPicture.asset("assets/svg/ib_dashboard/home.svg", colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn)),
+          onPressed: () => Get.offAll(() => const TradingMainScreen()),
         ),
         centerTitle: true,
         // leading: IconButton(
