@@ -21,4 +21,5 @@ class GoldenwolffxConfig extends BaseClientConfig {
         chartBaseUrl: 'https://demo.tenaxcode.com',
         
       );
+      
 }

@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
+import 'package:crm_app/flavor_config.dart';
 import 'package:crm_app/controllers/account_controller.dart';
 import 'package:crm_app/controllers/dashboard_controller.dart';
 import 'package:crm_app/models/mt5_account.dart';
@@ -231,12 +232,9 @@ class AccountHeaderWidget extends StatelessWidget {
                                 width: 45.w,
                                 height: 22.h,
                                 decoration: BoxDecoration(
-                                  color:
-                                      AppColors.isDarkMode
-                                          ? AppColors.primary.withValues(
-                                            alpha: 0.1,
-                                          )
-                                          : AppColors.primary,
+                                  color: _getAccountTypeBadgeBackground(
+                                    primaryAccount,
+                                  ),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
@@ -299,18 +297,25 @@ class AccountHeaderWidget extends StatelessWidget {
     );
   }
 
-  // ✅ FIX: Updated to use primary account (MT5Account) instead of AccountController
-  // Uses brandPrimary so demo/live badges stay visible in dark mode (AppColors.primary is white).
-  Color _getAccountTypeColor(MT5Account? primaryAccount) {
-    if (primaryAccount != null) {
-      final accountType = primaryAccount.accountType;
-      return accountType.toLowerCase() == 'demo'
-          ? AppColors.brandPrimary.withValues(
-            alpha: AppColors.isDarkMode ? 0.28 : 0.2,
-          )
-          : AppColors.brandPrimary;
+  Color _getAccountTypeBadgeBackground(MT5Account? primaryAccount) {
+    if (FlavorConfig.isGoldenwolffx()) {
+      return AppColors.isDarkMode
+          ? AppColors.primary.withValues(alpha: 0.1)
+          : AppColors.primary;
     }
-    return AppColors.brandPrimary;
+
+    final accountType = primaryAccount?.accountType.toLowerCase() ?? 'live';
+    if (accountType == 'demo') {
+      return AppColors.brandPrimary.withValues(
+        alpha: AppColors.isDarkMode ? 0.28 : 0.2,
+      );
+    }
+
+    // Live (non–goldenwolffx): light = brand fill; dark = white @ 0.1 alpha.
+    if (AppColors.isDarkMode) {
+      return AppColors.textPrimaryDark.withValues(alpha: 0.1);
+    }
+    return AppColors.primary;
   }
 
   String _getAccountTypeText(MT5Account? primaryAccount) {
@@ -330,12 +335,22 @@ class AccountHeaderWidget extends StatelessWidget {
   }
 
   Color _getAccountTypeTextColor(MT5Account? primaryAccount) {
-    if (primaryAccount != null) {
-      return primaryAccount.accountType.toLowerCase() == 'demo'
-          ? AppColors.primary
-          : AppColors.onColoredBackground;
+    if (FlavorConfig.isGoldenwolffx()) {
+      if (primaryAccount != null) {
+        return primaryAccount.accountType.toLowerCase() == 'demo'
+            ? AppColors.primary
+            : AppColors.onColoredBackground;
+      }
+      return AppColors.onColoredBackground;
     }
-    return AppColors.onColoredBackground;
+
+    final accountType = primaryAccount?.accountType.toLowerCase() ?? 'live';
+    if (accountType == 'demo') {
+      return AppColors.primary;
+    }
+
+    // Live (non–goldenwolffx): white text in light and dark.
+    return AppColors.textPrimaryDark;
   }
 
   String _getAccountNumber(MT5Account? primaryAccount) {
