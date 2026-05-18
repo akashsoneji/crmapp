@@ -83,9 +83,10 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
         obscureText: obscureText,
         controller: controller,
         validator: validator,
-        style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w400),
+        style: AppTextStyles.input,
         decoration: InputDecoration(
           labelText: label,
+          labelStyle: TextStyle(color: AppColors.textGrey),
           suffixIcon: IconButton(
             icon: Icon(
               obscureText ? Icons.visibility : Icons.visibility_off,
@@ -113,6 +114,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide(color: AppColors.error),
           ),
+          errorStyle: TextStyle(color: AppColors.errorText),
         ),
       ),
     );
