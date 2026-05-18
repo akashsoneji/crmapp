@@ -2106,7 +2106,10 @@ Placing Order:
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(7.r),
-                color: AppColors.primary.withOpacity(0.1),
+                color:
+                    AppColors.isDarkMode
+                        ? AppColors.primary.withOpacity(0.1)
+                        : AppColors.primary,
               ),
               child: Text(
                 languageService.tr('chart_pending_order_header'),

@@ -1932,7 +1932,17 @@ class _TradeScreenState extends State<TradeScreen> {
                                   Get.back(closeOverlays: true);
                                 }
                               },
-                              activeColor: AppColors.primary,
+                              fillColor:
+                                  WidgetStateProperty.resolveWith<Color?>((
+                                    states,
+                                  ) {
+                                    if (states.contains(
+                                      WidgetState.selected,
+                                    )) {
+                                      return AppColors.controlActive;
+                                    }
+                                    return AppColors.textGreyLight;
+                                  }),
                             ),
                           ),
                           onTap: () {

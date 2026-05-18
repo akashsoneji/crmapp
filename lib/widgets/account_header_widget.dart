@@ -231,7 +231,12 @@ class AccountHeaderWidget extends StatelessWidget {
                                 width: 45.w,
                                 height: 22.h,
                                 decoration: BoxDecoration(
-                                  color: _getAccountTypeColor(primaryAccount),
+                                  color:
+                                      AppColors.isDarkMode
+                                          ? AppColors.primary.withValues(
+                                            alpha: 0.1,
+                                          )
+                                          : AppColors.primary,
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
@@ -256,7 +261,7 @@ class AccountHeaderWidget extends StatelessWidget {
                                   color: AppColors.textGrey,
                                 ),
                               ),
-                              SizedBox(width: 10.w), // 10px space as requested
+                              // SizedBox(width: 3.w), // 10px space as requested
                               Icon(
                                 Icons.arrow_drop_down,
                                 size:
@@ -281,14 +286,10 @@ class AccountHeaderWidget extends StatelessWidget {
                   width: 32.w,
                   height: 32.h,
                   decoration: BoxDecoration(
-                    color: AppColors.brandPrimary,
+                    color: AppColors.primary.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(
-                    Icons.add,
-                    color: AppColors.onColoredBackground,
-                    size: 20.h,
-                  ),
+                  child: Icon(Icons.add, color: AppColors.primary, size: 20.h),
                 ),
               ),
             ],
@@ -331,7 +332,7 @@ class AccountHeaderWidget extends StatelessWidget {
   Color _getAccountTypeTextColor(MT5Account? primaryAccount) {
     if (primaryAccount != null) {
       return primaryAccount.accountType.toLowerCase() == 'demo'
-          ? AppColors.brandPrimary
+          ? AppColors.primary
           : AppColors.onColoredBackground;
     }
     return AppColors.onColoredBackground;
@@ -529,30 +530,40 @@ class AccountHeaderWidget extends StatelessWidget {
                                       accountController
                                           .activeMT5Account
                                           ?.metaAccountNumber,
-                                  onChanged: (value) async {
-                                    // Disable the radio button while loading
-                                    if (accountController.isLoading) {
-                                      return;
-                                    }
+                                  onChanged:
+                                      accountController.isLoading
+                                          ? null
+                                          : (value) async {
+                                            if (Navigator.of(
+                                              context,
+                                            ).canPop()) {
+                                              Navigator.of(context).pop();
+                                            }
 
-                                    // ✅ FIX: Close bottom sheet immediately for better UX
-                                    // Account switch happens in background
-                                    if (Navigator.of(context).canPop()) {
-                                      Navigator.of(context).pop();
-                                    }
-
-                                    try {
-                                      // Call API to switch account (runs in background)
-                                      accountController.setActiveMT5Account(
-                                        value!,
+                                            try {
+                                              accountController
+                                                  .setActiveMT5Account(value!);
+                                            } catch (e) {
+                                              if (kDebugMode) {
+                                                print(
+                                                  'Account switch failed: $e',
+                                                );
+                                              }
+                                            }
+                                          },
+                                  fillColor: WidgetStateProperty.resolveWith<
+                                    Color?
+                                  >((states) {
+                                    if (states.contains(WidgetState.disabled)) {
+                                      return AppColors.textGreyLight.withValues(
+                                        alpha: 0.5,
                                       );
-                                    } catch (e) {
-                                      if (kDebugMode) {
-                                        print('Account switch failed: $e');
-                                      }
                                     }
-                                  },
-                                  activeColor: AppColors.controlActive,
+                                    if (states.contains(WidgetState.selected)) {
+                                      return AppColors.controlActive;
+                                    }
+                                    return AppColors.textGreyLight;
+                                  }),
                                 ),
                                 tileColor:
                                     isActive
