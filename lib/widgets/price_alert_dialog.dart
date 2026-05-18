@@ -68,6 +68,18 @@ class _PriceAlertDialogState extends State<PriceAlertDialog> {
     return 1.0 / multiplier;
   }
 
+  /// Dark mode: deselected radio ring = white; selected = primary.
+  WidgetStateProperty<Color?> get _alertRadioFillColor =>
+      WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.selected)) {
+          return AppColors.primary;
+        }
+        if (AppColors.isDarkMode) {
+          return AppColors.textPrimaryDark;
+        }
+        return null;
+      });
+
   /*
   String _getPriceChangePercentage() {
     if (widget.currentPrice == 0 || _price == 0) {
@@ -306,7 +318,7 @@ class _PriceAlertDialogState extends State<PriceAlertDialog> {
                       value: 'above',
                       groupValue: _selectedCondition,
                       contentPadding: EdgeInsets.zero,
-                      activeColor: AppColors.primary,
+                      fillColor: _alertRadioFillColor,
                       onChanged: (value) {
                         if (value != null) {
                           setState(() {
@@ -325,7 +337,7 @@ class _PriceAlertDialogState extends State<PriceAlertDialog> {
                       value: 'below',
                       groupValue: _selectedCondition,
                       contentPadding: EdgeInsets.zero,
-                      activeColor: AppColors.primary,
+                      fillColor: _alertRadioFillColor,
                       onChanged: (value) {
                         if (value != null) {
                           setState(() {
