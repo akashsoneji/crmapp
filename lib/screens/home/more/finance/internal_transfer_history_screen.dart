@@ -129,12 +129,12 @@ class _InternalTransferHistoryScreenState
     return Container(
       padding: EdgeInsets.all(14.w),
       decoration: BoxDecoration(
-        color: AppColors.whiteColor,
+        color: AppColors.cardBackground,
         borderRadius: BorderRadius.circular(18.r),
-        border: Border.all(color: AppColors.icongrey.withValues(alpha: 0.12)),
+        border: Border.all(color: AppColors.border),
         boxShadow: [
           BoxShadow(
-            color: AppColors.border.withValues(alpha: 0.04),
+            color: AppColors.shadow,
             blurRadius: 14,
             offset: const Offset(0, 6),
           ),
@@ -339,12 +339,12 @@ class _InternalTransferHistoryScreenState
     return Container(
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
-        color: AppColors.whiteColor,
+        color: AppColors.cardBackground,
         borderRadius: BorderRadius.circular(18.r),
         border: Border.all(color: statusColor.withValues(alpha: 0.26)),
         boxShadow: [
           BoxShadow(
-            color: AppColors.border.withValues(alpha: 0.04),
+            color: AppColors.shadow,
             blurRadius: 14,
             offset: const Offset(0, 6),
           ),
@@ -619,9 +619,15 @@ class _InternalTransferHistoryScreenState
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
+            colorScheme: ColorScheme(
+              brightness: AppColors.isDarkMode ? Brightness.dark : Brightness.light,
               primary: AppColors.primary,
               onPrimary: AppColors.onColoredBackground,
+              secondary: AppColors.primary,
+              onSecondary: AppColors.onColoredBackground,
+              error: AppColors.error,
+              onError: AppColors.onColoredBackground,
+              surface: AppColors.background,
               onSurface: AppColors.textPrimary,
             ),
           ),
@@ -641,64 +647,77 @@ class _InternalTransferHistoryScreenState
   void _showStatusSheet() {
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: AppColors.whiteColor,
+      backgroundColor: AppColors.background,
+      isScrollControlled: true,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(22.r)),
       ),
       builder: (context) {
         return SafeArea(
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 20.h),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 42.w,
-                  height: 4.h,
-                  decoration: BoxDecoration(
-                    color: AppColors.icongrey.withValues(alpha: 0.30),
-                    borderRadius: BorderRadius.circular(4.r),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.5,
+            ),
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 20.h),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 42.w,
+                    height: 4.h,
+                    decoration: BoxDecoration(
+                      color: AppColors.border,
+                      borderRadius: BorderRadius.circular(4.r),
+                    ),
                   ),
-                ),
-                SizedBox(height: 18.h),
-                Text(
-                  'Select Status',
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 17.sp,
-                    fontWeight: FontWeight.w800,
+                  SizedBox(height: 18.h),
+                  Text(
+                    'Select Status',
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 17.sp,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
-                ),
-                SizedBox(height: 12.h),
-                ...controller.statusFilters.map(
-                  (status) => Obx(() {
-                    final isSelected =
-                        status.value == controller.selectedStatus.value.value;
-                    return ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(
-                        status.label,
-                        style: TextStyle(
-                          color:
-                              isSelected
-                                  ? AppColors.primary
-                                  : AppColors.textPrimary,
-                          fontWeight:
-                              isSelected ? FontWeight.w700 : FontWeight.w500,
-                        ),
-                      ),
-                      trailing:
-                          isSelected
-                              ? Icon(Icons.check, color: AppColors.primary)
-                              : null,
-                      onTap: () {
-                        controller.setStatus(status);
-                        Navigator.pop(context);
+                  SizedBox(height: 12.h),
+                  Flexible(
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: controller.statusFilters.length,
+                      itemBuilder: (context, index) {
+                        final status = controller.statusFilters[index];
+                        return Obx(() {
+                          final isSelected =
+                              status.value == controller.selectedStatus.value.value;
+                          return ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            title: Text(
+                              status.label,
+                              style: TextStyle(
+                                color:
+                                    isSelected
+                                        ? AppColors.primary
+                                        : AppColors.textPrimary,
+                                fontWeight:
+                                    isSelected ? FontWeight.w700 : FontWeight.w500,
+                              ),
+                            ),
+                            trailing:
+                                isSelected
+                                    ? Icon(Icons.check, color: AppColors.primary)
+                                    : null,
+                            onTap: () {
+                              controller.setStatus(status);
+                              Navigator.pop(context);
+                            },
+                          );
+                        });
                       },
-                    );
-                  }),
-                ),
-              ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         );
