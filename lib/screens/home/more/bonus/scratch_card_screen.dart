@@ -1350,7 +1350,7 @@ class _ScratchLotsProgressSection extends StatelessWidget {
               borderRadius: BorderRadius.circular(6.r),
               child: Container(
                 height: 10.h,
-                color: AppColors.accentPurple,
+                color: AppColors.primary,
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: FractionallySizedBox(

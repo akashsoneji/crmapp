@@ -162,7 +162,7 @@ class _WalletScreenState extends State<WalletScreen> {
                   controller.wallet.value?.walletId ?? '',
                   style: TextStyle(
                     fontSize: 16.sp,
-                    color: AppColors.icongrey,
+                    color: AppColors.textPrimary,
                     fontWeight: FontWeight.w400,
                   ),
                 ),
@@ -193,7 +193,7 @@ class _WalletScreenState extends State<WalletScreen> {
                   '\$${controller.balance.value}',
                   style: TextStyle(
                     fontSize: 16.sp,
-                    color: AppColors.icongrey,
+                    color: AppColors.textPrimary,
                     fontWeight: FontWeight.w400,
                   ),
                 ),

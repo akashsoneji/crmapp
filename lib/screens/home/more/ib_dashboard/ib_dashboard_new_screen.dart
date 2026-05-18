@@ -104,10 +104,10 @@ class _IbDashboardNewScreenState extends State<IbDashboardNewScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.tradeBackgroundCenterColor,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         scrolledUnderElevation: 0,
-        backgroundColor: AppColors.tradeBackgroundCenterColor,
+        backgroundColor: AppColors.background,
         elevation: 0,
         title: Text(
           'IB Dashboard',
@@ -120,7 +120,7 @@ class _IbDashboardNewScreenState extends State<IbDashboardNewScreen> {
         centerTitle: true,
         leadingWidth: 75.w,
         leading: IconButton(
-          icon: SvgPicture.asset("assets/svg/ib_dashboard/home.svg"),
+          icon: SvgPicture.asset("assets/svg/ib_dashboard/home.svg", colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn)),
           onPressed: () => Get.offAll(() => const TradingMainScreen()),
         ),
       ),
