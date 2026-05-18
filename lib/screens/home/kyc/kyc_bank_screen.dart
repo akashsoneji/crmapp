@@ -249,9 +249,9 @@ class _KycBankScreenState extends State<KycBankScreen> {
             ),
           )
           : Scaffold(
-            backgroundColor: AppColors.whiteColor,
+            backgroundColor: AppColors.background,
             appBar: AppBar(
-              backgroundColor: AppColors.whiteColor,
+              backgroundColor: AppColors.background,
               scrolledUnderElevation: 0,
               elevation: 0,
               leading: IconButton(
@@ -272,7 +272,7 @@ class _KycBankScreenState extends State<KycBankScreen> {
               centerTitle: true,
             ),
             body: Container(
-              color: AppColors.whiteColor, // theme-aware
+              color: AppColors.background, // theme-aware
               child: Stack(
                 children: [
                   SafeArea(
@@ -1285,24 +1285,24 @@ class _KycBankScreenState extends State<KycBankScreen> {
           child: Wrap(
             children: [
               ListTile(
-                leading: Icon(Icons.camera_alt),
-                title: Text(languageService.tr('kyc_take_photo')),
+                leading: Icon(Icons.camera_alt, color: AppColors.textPrimary),
+                title: Text(languageService.tr('kyc_take_photo'), style: TextStyle(color: AppColors.textPrimary)),
                 onTap: () async {
                   Navigator.pop(context);
                   await controller.startCamera();
                 },
               ),
               ListTile(
-                leading: Icon(Icons.photo_library),
-                title: Text(languageService.tr('kyc_select_from_gallery')),
+                leading: Icon(Icons.photo_library, color: AppColors.textPrimary),
+                title: Text(languageService.tr('kyc_select_from_gallery'), style: TextStyle(color: AppColors.textPrimary)),
                 onTap: () async {
                   Navigator.pop(context);
                   await _pickImageFromGallery();
                 },
               ),
               ListTile(
-                leading: Icon(Icons.attach_file),
-                title: Text(languageService.tr('kyc_attach_from_documents')),
+                leading: Icon(Icons.attach_file, color: AppColors.textPrimary ),
+                title: Text(languageService.tr('kyc_attach_from_documents'), style: TextStyle(color: AppColors.textPrimary)),
                 onTap: () async {
                   final result = await FilePicker.platform.pickFiles(
                     type: FileType.any,

@@ -162,11 +162,11 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.whiteColor,
+      backgroundColor: AppColors.background,
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
         scrolledUnderElevation: 0,
-        backgroundColor: AppColors.backgroundLight,
+        backgroundColor: AppColors.background,
         elevation: 0,
         leading: Padding(
           padding: EdgeInsets.only(left: 10.w),
@@ -178,13 +178,6 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
             onPressed: () => NavigationHelper.safeBack(context: context),
           ),
         ),
-        shape: Border(
-          bottom: BorderSide(
-            color: AppColors.border, // divider color
-            width: 1, // divider thickness
-          ),
-        ),
-
         title: Text(
           languageService.tr('withdrawal'),
           style: AppTextStyles.screenTitle,

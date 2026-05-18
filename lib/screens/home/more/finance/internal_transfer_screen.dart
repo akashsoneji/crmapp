@@ -142,17 +142,11 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
     final bool isKeyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: AppColors.background,
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
-        backgroundColor: AppColors.backgroundLight,
+        backgroundColor: AppColors.background,
         scrolledUnderElevation: 0,
-        shape: Border(
-          bottom: BorderSide(
-            color: AppColors.textGrey, // divider color
-            width: 1, // divider thickness
-          ),
-        ),
         elevation: 0,
         leading: IconButton(
           icon: SvgPicture.asset(
