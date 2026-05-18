@@ -47,10 +47,10 @@ class _CreateCrmAppAccountScreenState extends State<CreateCrmAppAccountScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      backgroundColor: AppColors.whiteColor,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         scrolledUnderElevation: 0,
-        backgroundColor: AppColors.whiteColor,
+        backgroundColor: AppColors.background,
         elevation: 0,
         leading: IconButton(
           onPressed: () => Get.back(closeOverlays: true),
@@ -61,7 +61,7 @@ class _CreateCrmAppAccountScreenState extends State<CreateCrmAppAccountScreen> {
         ),
         title: Text(
           'Create new ${widget.accountType} Account',
-          style: AppTextStyles.heading,
+          style: AppTextStyles.heading.copyWith(color: AppColors.textPrimary),
         ),
         centerTitle: true,
       ),
@@ -314,6 +314,9 @@ class _CreateCrmAppAccountScreenState extends State<CreateCrmAppAccountScreen> {
         ),
         decoration: InputDecoration(
           labelText: label,
+          labelStyle: TextStyle(color: AppColors.textGrey),
+          floatingLabelStyle: TextStyle(color: AppColors.primary),
+          hintStyle: TextStyle(color: AppColors.textGrey),
           contentPadding: EdgeInsets.symmetric(
             horizontal: 16.w,
             vertical: 16.h,
@@ -354,6 +357,7 @@ class _CreateCrmAppAccountScreenState extends State<CreateCrmAppAccountScreen> {
         controller: controller,
         obscureText: !showPassword,
         readOnly: readOnly,
+        style: TextStyle(color: AppColors.textPrimary),
         suffixIcon:
             onTogglePassword != null
                 ? InkWell(
@@ -373,6 +377,14 @@ class _CreateCrmAppAccountScreenState extends State<CreateCrmAppAccountScreen> {
         decoration: InputDecoration(
           labelText: label,
           helperText: helperText,
+          labelStyle: TextStyle(color: AppColors.textGrey),
+          floatingLabelStyle: TextStyle(color: AppColors.primary),
+          hintStyle: TextStyle(color: AppColors.textGrey),
+          helperStyle: TextStyle(
+            color: AppColors.textGrey,
+            fontSize: 12.sp,
+            height: 1.35,
+          ),
           helperMaxLines: 3,
           contentPadding: EdgeInsets.symmetric(
             horizontal: 16.w,
@@ -452,17 +464,30 @@ class _CreateCrmAppAccountScreenState extends State<CreateCrmAppAccountScreen> {
   ) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.whiteColor,
+      backgroundColor: AppColors.background,
+      isScrollControlled: true,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder:
           (context) => Container(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.6,
+            ),
             padding: EdgeInsets.all(24.w),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Container(
+                  width: 40.w,
+                  height: 4.h,
+                  margin: EdgeInsets.only(bottom: 16.h),
+                  decoration: BoxDecoration(
+                    color: AppColors.border,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
                 Row(
                   children: [
                     Text(
@@ -481,9 +506,9 @@ class _CreateCrmAppAccountScreenState extends State<CreateCrmAppAccountScreen> {
                   ],
                 ),
                 SizedBox(height: 16.h),
-                Container(
-                  height: 300.h,
+                Flexible(
                   child: ListView.builder(
+                    shrinkWrap: true,
                     itemCount: options.length,
                     itemBuilder: (context, index) {
                       final option = options[index];
@@ -502,7 +527,7 @@ class _CreateCrmAppAccountScreenState extends State<CreateCrmAppAccountScreen> {
                           decoration: BoxDecoration(
                             color:
                                 isSelected
-                                    ? AppColors.primary.withOpacity(0.1)
+                                    ? AppColors.primary.withValues(alpha: 0.1)
                                     : null,
                             borderRadius: BorderRadius.circular(8),
                           ),

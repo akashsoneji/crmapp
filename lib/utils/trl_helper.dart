@@ -209,8 +209,10 @@ class RTLHelper {
       maxLines: maxLines ?? 1,
       decoration:
           decoration?.copyWith(
-            floatingLabelStyle: TextStyle(color: AppColors.textGrey),
-
+            labelStyle: decoration.labelStyle ?? TextStyle(color: AppColors.textGrey),
+            floatingLabelStyle: decoration.floatingLabelStyle ?? TextStyle(color: AppColors.textGrey),
+            hintStyle: decoration.hintStyle ?? TextStyle(color: AppColors.textGrey),
+            helperStyle: decoration.helperStyle ?? TextStyle(color: AppColors.textGrey),
             prefixIcon: isRTL ? suffixIcon : prefixIcon,
             suffixIcon: isRTL ? prefixIcon : suffixIcon,
             contentPadding:
@@ -226,6 +228,7 @@ class RTLHelper {
           InputDecoration(
             labelStyle: TextStyle(color: AppColors.textGrey),
             floatingLabelStyle: TextStyle(color: AppColors.textGrey),
+            hintStyle: TextStyle(color: AppColors.textGrey),
             labelText: labelText,
             hintText: hintText,
             prefixIcon: isRTL ? suffixIcon : prefixIcon,

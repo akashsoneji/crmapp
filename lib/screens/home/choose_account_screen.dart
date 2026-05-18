@@ -49,9 +49,8 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        shape: Border(bottom: BorderSide(color: AppColors.textGrey)),
         scrolledUnderElevation: 0.0,
-        backgroundColor: AppColors.backgroundLight,
+        backgroundColor: AppColors.background,
         leading: IconButton(
           onPressed: () {
             // Check if came from account_created_screen
@@ -77,7 +76,7 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
         ),
       ),
       // backgroundColor: AppColors.whiteColor,
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
           children: [
