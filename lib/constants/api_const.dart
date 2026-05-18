@@ -104,6 +104,7 @@ class ApiConstants {
 
   // App Status APIs (public; used before login for version / maintenance)
   static const String mobileAppDetails = '${ajax}mobile-app-details';
+  static const String crmSettings = '${ajax}crm-settings';
 
   // Copy Trading APIs
   // User (authenticated) endpoints

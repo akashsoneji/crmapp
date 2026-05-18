@@ -38,6 +38,7 @@ import 'utils/app_logger.dart';
 import 'services/app_status/app_status_service.dart';
 import 'services/app_status/app_status_controller.dart';
 import 'services/app_status/app_status_overlay.dart';
+import 'services/crm_settings_service.dart';
 
 // Connectivity overlay imports
 import 'services/connectivity/connectivity_service.dart';
@@ -174,6 +175,7 @@ Future<void> initServices() async {
   // REQUIRED: Version check and maintenance check are enabled for testing
   Get.put<AppStatusService>(AppStatusService(), permanent: true);
   Get.put<AppStatusController>(AppStatusController(), permanent: true);
+  Get.put<CrmSettingsService>(CrmSettingsService(), permanent: true);
 
   // Start periodic app status checking
   // REQUIRED: Starting periodic check for testing

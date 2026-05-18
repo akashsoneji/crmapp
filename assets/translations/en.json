@@ -439,6 +439,7 @@
   "legal_documents_subtitle": "I confirm that I have read and agree to the terms outlined in the documents below.",
   "legal_documents_customer_agreement": "Customer Agreement",
   "legal_documents_privacy_policy": "Privacy Policy",
+  "agreement_document_unavailable": "This document is not available right now. Please try again later.",
   "privacy_policy_introduction": "Introduction",
   "privacy_policy_intro_text": "This Privacy Policy describes how we collect, use, and protect your personal information when you use our trading platform.",
   "privacy_policy_data_collection": "Data Collection",

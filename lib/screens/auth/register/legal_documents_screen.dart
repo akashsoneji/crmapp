@@ -12,7 +12,7 @@ import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/services/secure_storage_service.dart';
 import 'package:crm_app/services/biometric_service.dart';
 import 'package:crm_app/services/app_lock_service.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:crm_app/utils/agreement_launcher.dart';
 
 import '../../../widgets/common_loading_widget.dart';
 import '../../../widgets/custom_toast.dart';
@@ -193,61 +193,20 @@ class _LegalDocumentsScreenState extends State<LegalDocumentsScreen> {
         SizedBox(height: 16.h),
         _buildDocumentItem(
           languageService.tr("legal_documents_customer_agreement"),
+          onTap: AgreementLauncher.openTerms,
         ),
         SizedBox(height: 5.h),
         _buildDocumentItem(
           languageService.tr("legal_documents_privacy_policy"),
+          onTap: AgreementLauncher.openPrivacy,
         ),
       ],
     );
   }
 
-  Widget _buildDocumentItem(String title) {
+  Widget _buildDocumentItem(String title, {required VoidCallback onTap}) {
     return InkWell(
-      onTap: () async{
-        if (title == "Privacy Policy") {
-          
-                              final brokerData =
-                                  await SecureStorageService.getTenaxBrokerSelection();
-                              final urlStr =
-                                  brokerData?['broker_runtime_config']?['privacy_policy_url']
-                                      ?.toString();
-                              print("objecturl is $urlStr");
-                              if (urlStr != null && urlStr.isNotEmpty) {
-                                final uri = Uri.parse(urlStr);
-                                if (await canLaunchUrl(uri)) {
-                                  await launchUrl(
-                                    uri,
-                                    mode: LaunchMode.externalApplication,
-                                  );
-                                  return;
-                                }
-                              }
-                              Get.toNamed(AppPages.PRIVACY_POLICY);
-                            
-          // Navigator.pushNamed(context, '/privacy-policy');
-        } else {
-          
-                              final brokerData =
-                                  await SecureStorageService.getTenaxBrokerSelection();
-                              final urlStr =
-                                  brokerData?['broker_runtime_config']?['terms_of_use_url']
-                                      ?.toString();
-                              print("objecturl is $urlStr");
-                              if (urlStr != null && urlStr.isNotEmpty) {
-                                final uri = Uri.parse(urlStr);
-                                if (await canLaunchUrl(uri)) {
-                                  await launchUrl(
-                                    uri,
-                                    mode: LaunchMode.externalApplication,
-                                  );
-                                  return;
-                                }
-                              }
-                              Get.toNamed(AppPages.PRIVACY_POLICY);
-                            
-        }
-      },
+      onTap: onTap,
       child: Container(
         padding: EdgeInsets.symmetric(vertical: 6.h, horizontal: 8.w),
         child: Row(
