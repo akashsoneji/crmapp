@@ -70,15 +70,24 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
         _amountController.text = '0.00';
       }
     });
-    // Fetch wallet data when screen loads
-    _fetchData();
+    // Run after first frame to avoid updating Obx observables during build.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _fetchData());
   }
 
   Future<void> _fetchData() async {
-    // Fetch wallet data which includes MT5 accounts
-    await controller.fetchWalletData();
+    if (controller.isLoading.value) {
+      while (controller.isLoading.value && mounted) {
+        await Future.delayed(const Duration(milliseconds: 50));
+      }
+    } else if (controller.mt5Accounts.isEmpty && controller.wallet.value == null) {
+      await controller.fetchWalletData();
+    }
 
-    // Set default values if available
+    if (!mounted) return;
+    _applyDefaultAccountSelections();
+  }
+
+  void _applyDefaultAccountSelections() {
     if (controller.mt5Accounts.isNotEmpty && _selectedTransferFrom == null) {
       final firstAccount = controller.mt5Accounts.first;
       setState(() {
@@ -87,9 +96,9 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
         _selectedTransferFromAccount = firstAccount;
         _transferFromController.text =
             '${firstAccount.metaAccountNumber} - \$ ${firstAccount.balance}';
-        controller.selectedFromAccount.value = firstAccount;
-        controller.selectedFromAccountType.value = 'mt5';
       });
+      controller.selectedFromAccount.value = firstAccount;
+      controller.selectedFromAccountType.value = 'mt5';
     }
     if (controller.wallet.value != null &&
         _selectedTransferTo == null &&
@@ -101,9 +110,9 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
         _selectedTransferToAccount = wallet;
         _transferToController.text =
             '${wallet.walletId} - \$ ${wallet.walletBalance}';
-        controller.selectedToAccount.value = wallet;
-        controller.selectedToAccountType.value = 'wallet';
       });
+      controller.selectedToAccount.value = wallet;
+      controller.selectedToAccountType.value = 'wallet';
     }
   }
 

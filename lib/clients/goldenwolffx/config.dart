@@ -13,13 +13,8 @@ class GoldenwolffxConfig extends BaseClientConfig {
         logoSvgPath: 'logo.svg',
         splashLogoPath: 'splash_logo.svg',
         appIconPath: 'app_icon.png',
-        // apiBaseUrl: 'https://portal.goldenwolffx.com/api/',
-        // websocketUrl: 'wss://portal.goldenwolffx.com/trade-engine',
-        // chartBaseUrl: 'https://portal.goldenwolffx.com',
-        apiBaseUrl: 'https://demo.tenaxcode.com/api/',
-        websocketUrl: 'wss://demo.tenaxcode.com/trade-engine',
-        chartBaseUrl: 'https://demo.tenaxcode.com',
-        
+        apiBaseUrl: 'https://portal.goldenwolffx.com/api/',
+        websocketUrl: 'wss://portal.goldenwolffx.com/trade-engine',
+        chartBaseUrl: 'https://portal.goldenwolffx.com',
       );
-      
 }
