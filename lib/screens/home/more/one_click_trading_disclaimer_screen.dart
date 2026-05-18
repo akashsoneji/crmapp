@@ -1,8 +1,10 @@
+import 'package:crm_app/widgets/app_svg_back_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/services/one_click_trading_service.dart';
+import 'package:get/get.dart';
 
 class OneClickTradingDisclaimerScreen extends StatefulWidget {
   const OneClickTradingDisclaimerScreen({super.key});
@@ -21,13 +23,14 @@ class _OneClickTradingDisclaimerScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.whiteColor,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.whiteColor,
+        backgroundColor: AppColors.background,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: AppColors.textPrimary),
-          onPressed: () => Navigator.of(context).pop(),
+        leading: AppSvgBackButton(
+          onPressed: () => Get.back(closeOverlays: true),
+          iconWidth: 30.w,
+          iconHeight: 30.h,
         ),
         title: Text(
           'One Click Trading',
@@ -127,6 +130,14 @@ class _OneClickTradingDisclaimerScreenState
                       });
                     },
                     activeColor: AppColors.primary,
+                    fillColor: WidgetStateProperty.resolveWith((states) {
+                      if (states.contains(WidgetState.selected)) {
+                        return AppColors.primary;
+                      }
+                      return Colors.transparent;
+                    }),
+                    checkColor: AppColors.whiteColor,
+                    side: BorderSide(color: AppColors.textGrey, width: 1.5),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(4.r),
                     ),

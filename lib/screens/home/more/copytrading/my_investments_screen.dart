@@ -66,10 +66,10 @@ class _MyInvestmentsScreenState extends State<MyInvestmentsScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.tradeBackgroundCenterColor,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         scrolledUnderElevation: 0,
-        backgroundColor: AppColors.tradeBackgroundCenterColor,
+        backgroundColor: AppColors.background,
         elevation: 0,
         centerTitle: true,
         title: Text('My Investments', style: AppTextStyles.screenTitle),

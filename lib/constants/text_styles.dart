@@ -74,7 +74,7 @@ class AppTextStyles {
   static TextStyle get button => TextStyle(
     fontSize: 16.sp,
     fontWeight: FontWeight.w600,
-    color: AppColors.onColoredBackground,
+    color: AppColors.whiteColor,
   );
 
   // Label On Trade Button Style
