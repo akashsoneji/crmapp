@@ -156,7 +156,7 @@ class _EditProfileState extends State<EditProfile> {
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: AppColors.background,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -193,12 +193,25 @@ class _EditProfileState extends State<EditProfile> {
                     controller: searchController,
                     textCapitalization: TextCapitalization.none,
                     autocorrect: false,
+                    style: TextStyle(color: AppColors.textPrimary),
                     decoration: InputDecoration(
                       hintText: 'Search countries...',
-                      prefixIcon: Icon(Icons.search),
+                      hintStyle: TextStyle(color: AppColors.textGrey),
+                      prefixIcon: Icon(Icons.search, color: AppColors.textGrey),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: AppColors.border),
                       ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: AppColors.border),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: AppColors.primary, width: 2),
+                      ),
+                      fillColor: AppColors.surface,
+                      filled: true,
                     ),
                     onChanged: (value) {
                       filteredCountries.value =
@@ -221,9 +234,12 @@ class _EditProfileState extends State<EditProfile> {
                           return ListTile(
                             leading: Text(
                               country.emoji ?? '',
-                              style: TextStyle(fontSize: 24),
+                              style: const TextStyle(fontSize: 24),
                             ),
-                            title: Text(country.name ?? ''),
+                            title: Text(
+                              country.name ?? '',
+                              style: TextStyle(color: AppColors.textPrimary),
+                            ),
                             onTap: () {
                               dropdownService.selectCountry(country);
                               Navigator.pop(context);
@@ -249,7 +265,7 @@ class _EditProfileState extends State<EditProfile> {
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: AppColors.background,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -286,12 +302,25 @@ class _EditProfileState extends State<EditProfile> {
                     controller: searchController,
                     textCapitalization: TextCapitalization.none,
                     autocorrect: false,
+                    style: TextStyle(color: AppColors.textPrimary),
                     decoration: InputDecoration(
                       hintText: 'Search states...',
-                      prefixIcon: Icon(Icons.search),
+                      hintStyle: TextStyle(color: AppColors.textGrey),
+                      prefixIcon: Icon(Icons.search, color: AppColors.textGrey),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: AppColors.border),
                       ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: AppColors.border),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: AppColors.primary, width: 2),
+                      ),
+                      fillColor: AppColors.surface,
+                      filled: true,
                     ),
                     onChanged: (value) {
                       filteredStates.value =
@@ -312,7 +341,10 @@ class _EditProfileState extends State<EditProfile> {
                         itemBuilder: (context, index) {
                           final state = filteredStates[index];
                           return ListTile(
-                            title: Text(state.name),
+                            title: Text(
+                              state.name,
+                              style: TextStyle(color: AppColors.textPrimary),
+                            ),
                             onTap: () {
                               dropdownService.selectState(state);
                               Navigator.pop(context);
@@ -338,7 +370,7 @@ class _EditProfileState extends State<EditProfile> {
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: AppColors.background,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -375,12 +407,25 @@ class _EditProfileState extends State<EditProfile> {
                     controller: searchController,
                     textCapitalization: TextCapitalization.none,
                     autocorrect: false,
+                    style: TextStyle(color: AppColors.textPrimary),
                     decoration: InputDecoration(
                       hintText: 'Search cities...',
-                      prefixIcon: Icon(Icons.search),
+                      hintStyle: TextStyle(color: AppColors.textGrey),
+                      prefixIcon: Icon(Icons.search, color: AppColors.textGrey),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: AppColors.border),
                       ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: AppColors.border),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: AppColors.primary, width: 2),
+                      ),
+                      fillColor: AppColors.surface,
+                      filled: true,
                     ),
                     onChanged: (value) {
                       filteredCities.value =
@@ -401,7 +446,10 @@ class _EditProfileState extends State<EditProfile> {
                         itemBuilder: (context, index) {
                           final city = filteredCities[index];
                           return ListTile(
-                            title: Text(city.name),
+                            title: Text(
+                              city.name,
+                              style: TextStyle(color: AppColors.textPrimary),
+                            ),
                             onTap: () {
                               dropdownService.selectCity(city);
                               Navigator.pop(context);
@@ -426,13 +474,14 @@ class _EditProfileState extends State<EditProfile> {
   }) {
     final itemHeight = 56.0;
     final maxHeight =
-        MediaQuery.of(context).size.height * 0.85; // below app bar
+        MediaQuery.of(context).size.height * 0.85;
     final totalHeight =
-        (items.length * itemHeight) + 80; // include padding + title
+        (items.length * itemHeight) + 80;
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: AppColors.background,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -444,13 +493,23 @@ class _EditProfileState extends State<EditProfile> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              Container(
+                width: 40.w,
+                height: 4.h,
+                margin: EdgeInsets.only(top: 12.h),
+                decoration: BoxDecoration(
+                  color: AppColors.border,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
               Padding(
-                padding: const EdgeInsets.all(16),
+                padding: EdgeInsets.all(16.w),
                 child: Text(
                   title,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                  style: TextStyle(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
                   ),
                 ),
               ),
@@ -460,7 +519,10 @@ class _EditProfileState extends State<EditProfile> {
                   itemCount: items.length,
                   itemBuilder: (context, index) {
                     return ListTile(
-                      title: Text(items[index]),
+                      title: Text(
+                        items[index],
+                        style: TextStyle(color: AppColors.textPrimary),
+                      ),
                       onTap: () {
                         Navigator.pop(context);
                         onItemSelected(items[index]);
@@ -904,7 +966,7 @@ class _EditProfileState extends State<EditProfile> {
           ),
         ],
       ),
-      backgroundColor: AppColors.whiteColor,
+      backgroundColor: AppColors.background,
       bottomNavigationBar:
           isProfileVerified
               ? SizedBox.shrink()

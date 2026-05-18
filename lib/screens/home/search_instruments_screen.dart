@@ -1,3 +1,4 @@
+import 'package:crm_app/widgets/app_svg_back_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -84,13 +85,10 @@ class _SearchInstrumentsScreenState extends State<SearchInstrumentsScreen> {
           padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
           child: Row(
             children: [
-              GestureDetector(
-                onTap: () => Navigator.pop(context),
-                child: Icon(
-                  Icons.arrow_back,
-                  size: 24.h,
-                  color: AppColors.textPrimary,
-                ),
+              AppSvgBackButton(
+                onPressed: () => Get.back(closeOverlays: true),
+                iconWidth: 30.w,
+                iconHeight: 30.h,
               ),
               SizedBox(width: 12.w),
               Expanded(

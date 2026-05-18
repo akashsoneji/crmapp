@@ -25,10 +25,10 @@ class KycBankController extends GetxController {
 
   // Account type selection
   final RxString selectedAccountType = 'Bank'.obs;
-  final RxString selectedRelationship = 'Other'.obs;
+  final RxString selectedRelationship = 'Self'.obs;
   final RxList<String> accountTypes = ['Bank', 'Crypto', 'UPI'].obs;
   final RxList<String> relationShips =
-      ['Other', 'Mother', 'Father', 'Son', 'Wife', 'Daughter'].obs;
+      ['Self', 'Mother', 'Father', 'Son', 'Wife', 'Daughter', 'Other'].obs;
   final RxList<String> ifscIbanList = ['IFSC', 'IBAN'].obs;
 
   // Currency list

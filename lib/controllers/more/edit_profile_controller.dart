@@ -72,7 +72,7 @@ class EditProfileController extends GetxController {
     lastName.value = user.lastName;
     email.value = user.email;
     phone.value = user.mobile;
-    title.value = userDetails.title;
+    title.value = userDetails.title.isEmpty ? 'Mr' : userDetails.title;
     gender.value = userDetails.gender;
     address.value = userDetails.address1;
     postcode.value = userDetails.postcode;

@@ -447,21 +447,18 @@ class _KycBankScreenState extends State<KycBankScreen> {
         padding: EdgeInsets.only(bottom: 16.h),
         child: RTLHelper.rtlTextField(
           readOnly: true,
-          onTap: _showCurrencyOptions,
           controller: TextEditingController(
-            text: controller.selectedCurrency.value,
+            text: 'USD',
           ),
           labelText: 'Currency *',
-          suffixIcon: InkWell(
-            onTap: _showCurrencyOptions,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              child: RTLHelper.rtlIcon(
-                Icons.keyboard_arrow_down,
-                color: AppColors.icongrey,
-              ),
-            ),
-          ),
+          // suffixIcon: Padding(
+          //   padding: const EdgeInsets.symmetric(horizontal: 14),
+          //   child: RTLHelper.rtlIcon(
+          //     Icons.lock,
+          //     color: AppColors.textGrey,
+          //     size: 18,
+          //   ),
+          // ),
           decoration: InputDecoration(
             labelText: 'Currency *',
             labelStyle: TextStyle(color: AppColors.textGrey),
@@ -1038,40 +1035,63 @@ class _KycBankScreenState extends State<KycBankScreen> {
   // Helper for Account Type bottom sheet
   void _showAccountTypeOptions() {
     showModalBottomSheet(
-      backgroundColor: AppColors.whiteColor,
       context: context,
+      backgroundColor: AppColors.background,
+      isScrollControlled: true,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
         return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: EdgeInsets.all(16.w),
-                child: Text(
-                  'Select Account Type',
-                  style: TextStyle(
-                    fontSize: 18.sp,
-                    fontWeight: FontWeight.w600,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.5,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40.w,
+                  height: 4.h,
+                  margin: EdgeInsets.only(top: 12.h),
+                  decoration: BoxDecoration(
+                    color: AppColors.border,
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-              ),
-              ...controller.accountTypes.map((type) {
-                return ListTile(
-                  title: Text(type),
-                  trailing:
-                      controller.selectedAccountType.value == type
-                          ? Icon(Icons.check, color: AppColors.primary)
-                          : null,
-                  onTap: () {
-                    controller.setAccountType(type);
-                    Navigator.pop(context);
-                  },
-                );
-              }).toList(),
-            ],
+                Padding(
+                  padding: EdgeInsets.all(16.w),
+                  child: Text(
+                    'Select Account Type',
+                    style: TextStyle(
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+                Flexible(
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: controller.accountTypes.length,
+                    itemBuilder: (context, index) {
+                      final type = controller.accountTypes[index];
+                      return ListTile(
+                        title: Text(type, style: TextStyle(color: AppColors.textPrimary)),
+                        trailing:
+                            controller.selectedAccountType.value == type
+                                ? Icon(Icons.check, color: AppColors.primary)
+                                : null,
+                        onTap: () {
+                          controller.setAccountType(type);
+                          Navigator.pop(context);
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -1127,57 +1147,64 @@ class _KycBankScreenState extends State<KycBankScreen> {
 
   void _showRelationShipBottomSheet() {
     showModalBottomSheet(
-      backgroundColor: AppColors.whiteColor,
       context: context,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: EdgeInsets.all(16.w),
-                child: Text(
-                  'Select RelationShip',
-                  style: TextStyle(
-                    fontSize: 18.sp,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              ...controller.relationShips.map((type) {
-                return ListTile(
-                  title: Text(type),
-                  trailing:
-                      controller.selectedRelationship.value == type
-                          ? Icon(Icons.check, color: AppColors.primary)
-                          : null,
-                  onTap: () {
-                    controller.setRelationShip(type);
-                    Navigator.pop(context);
-                  },
-                );
-              }).toList(),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  // Helper for Currency bottom sheet
-  void _showCurrencyOptions() {
-    showModalBottomSheet(
-      context: context,
+      backgroundColor: AppColors.background,
       isScrollControlled: true,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
         return SafeArea(
-          child: _CurrencySelectionBottomSheet(controller: controller),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.5,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40.w,
+                  height: 4.h,
+                  margin: EdgeInsets.only(top: 12.h),
+                  decoration: BoxDecoration(
+                    color: AppColors.border,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsets.all(16.w),
+                  child: Text(
+                    'Select RelationShip',
+                    style: TextStyle(
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+                Flexible(
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: controller.relationShips.length,
+                    itemBuilder: (context, index) {
+                      final type = controller.relationShips[index];
+                      return ListTile(
+                        title: Text(type, style: TextStyle(color: AppColors.textPrimary)),
+                        trailing:
+                            controller.selectedRelationship.value == type
+                                ? Icon(Icons.check, color: AppColors.primary)
+                                : null,
+                        onTap: () {
+                          controller.setRelationShip(type);
+                          Navigator.pop(context);
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
         );
       },
     );
@@ -1187,59 +1214,78 @@ class _KycBankScreenState extends State<KycBankScreen> {
   void _showIfscIbanTypeSelection() {
     showModalBottomSheet(
       context: context,
+      backgroundColor: AppColors.background,
+      isScrollControlled: true,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
         return SafeArea(
-          child: Padding(
-            padding: EdgeInsets.all(16.w),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Select Code Type',
-                  style: TextStyle(
-                    fontSize: 18.sp,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                SizedBox(height: 20.h),
-
-                // IBAN Option
-                ListTile(
-                  title: Text(
-                    'IBAN',
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w500,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.4,
+            ),
+            child: Padding(
+              padding: EdgeInsets.all(16.w),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 40.w,
+                    height: 4.h,
+                    margin: EdgeInsets.only(bottom: 16.h),
+                    decoration: BoxDecoration(
+                      color: AppColors.border,
+                      borderRadius: BorderRadius.circular(2),
                     ),
                   ),
-
-                  onTap: () {
-                    controller.setOptRadio('IBAN');
-                    Navigator.pop(context);
-                  },
-                ),
-
-                // IFSC Option
-                ListTile(
-                  title: Text(
-                    'IFSC',
+                  Text(
+                    'Select Code Type',
                     style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w500,
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
                     ),
                   ),
+                  SizedBox(height: 20.h),
 
-                  onTap: () {
-                    controller.setOptRadio('IFSC');
-                    Navigator.pop(context);
-                  },
-                ),
+                  // IBAN Option
+                  ListTile(
+                    title: Text(
+                      'IBAN',
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
 
-                SizedBox(height: 10.h),
-              ],
+                    onTap: () {
+                      controller.setOptRadio('IBAN');
+                      Navigator.pop(context);
+                    },
+                  ),
+
+                  // IFSC Option
+                  ListTile(
+                    title: Text(
+                      'IFSC',
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+
+                    onTap: () {
+                      controller.setOptRadio('IFSC');
+                      Navigator.pop(context);
+                    },
+                  ),
+
+                  SizedBox(height: 10.h),
+                ],
+              ),
             ),
           ),
         );
@@ -1277,6 +1323,7 @@ class _KycBankScreenState extends State<KycBankScreen> {
   void _showProofOptions() {
     showModalBottomSheet(
       context: context,
+      backgroundColor: AppColors.background,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -1284,6 +1331,16 @@ class _KycBankScreenState extends State<KycBankScreen> {
         return SafeArea(
           child: Wrap(
             children: [
+              Container(
+                width: 40.w,
+                height: 4.h,
+                margin: EdgeInsets.only(top: 12.h, left: (MediaQuery.of(context).size.width - 40) / 2),
+                decoration: BoxDecoration(
+                  color: AppColors.border,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              SizedBox(height: 16.h),
               ListTile(
                 leading: Icon(Icons.camera_alt, color: AppColors.textPrimary),
                 title: Text(languageService.tr('kyc_take_photo'), style: TextStyle(color: AppColors.textPrimary)),
@@ -1309,7 +1366,6 @@ class _KycBankScreenState extends State<KycBankScreen> {
                   );
                   if (result != null && result.files.single.path != null) {
                     File imageFile = File(result.files.single.path!);
-                    // Compress image if needed (max 1.5 MB)
                     imageFile = await FileCompressionHelper.compressIfNeeded(
                       imageFile,
                     );
@@ -1562,13 +1618,9 @@ class _CurrencySelectionBottomSheetState
     final safeAreaTop = mediaQuery.padding.top;
     final safeAreaBottom = mediaQuery.padding.bottom;
 
-    // Calculate available height: screen height - safe area insets - keyboard height
-    // When keyboard is visible, reduce the max height accordingly
     final availableHeight =
         screenHeight - safeAreaTop - safeAreaBottom - keyboardHeight;
 
-    // Limit to 75% of available height when keyboard is visible, 65% when not
-    // Ensure minimum height of 300 and maximum doesn't exceed available space
     final heightPercentage = keyboardHeight > 0 ? 0.75 : 0.65;
     final maxHeight = (availableHeight * heightPercentage).clamp(
       300.0,
@@ -1583,11 +1635,20 @@ class _CurrencySelectionBottomSheetState
           mainAxisSize: MainAxisSize.min,
           children: [
             // Header
+            Container(
+              width: 40.w,
+              height: 4.h,
+              margin: EdgeInsets.only(top: 12.h),
+              decoration: BoxDecoration(
+                color: AppColors.border,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
             Padding(
               padding: EdgeInsets.all(16.w),
               child: Text(
                 'Select Currency',
-                style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w600),
+                style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
               ),
             ),
             // Search field
@@ -1595,10 +1656,12 @@ class _CurrencySelectionBottomSheetState
               padding: EdgeInsets.symmetric(horizontal: 16.w),
               child: TextField(
                 controller: searchController,
+                style: TextStyle(color: AppColors.textPrimary),
                 onChanged: _filterCurrencies,
                 decoration: InputDecoration(
                   hintText: 'Search currency...',
-                  prefixIcon: Icon(Icons.search, color: AppColors.icongrey),
+                  hintStyle: TextStyle(color: AppColors.textGrey),
+                  prefixIcon: Icon(Icons.search, color: AppColors.textGrey),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide(color: AppColors.border),
@@ -1611,6 +1674,8 @@ class _CurrencySelectionBottomSheetState
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide(color: AppColors.primary, width: 2),
                   ),
+                  fillColor: AppColors.surface,
+                  filled: true,
                   contentPadding: EdgeInsets.symmetric(
                     horizontal: 16.w,
                     vertical: 12.h,
@@ -1619,12 +1684,10 @@ class _CurrencySelectionBottomSheetState
               ),
             ),
             SizedBox(height: 8.h),
-            // Currency list - use Flexible to take remaining space and ensure it's scrollable
+            // Currency list
             Flexible(
               child: LayoutBuilder(
                 builder: (context, constraints) {
-                  // Calculate available height for list dynamically
-                  // Account for: title padding (16*2) + title text (~22) + search field (~60) + spacing (8)
                   final headerSpace = (16.w * 2) + (18.sp * 1.2) + 60.h + 8.h;
                   final listHeight = (constraints.maxHeight - headerSpace)
                       .clamp(150.0, constraints.maxHeight);
@@ -1638,7 +1701,7 @@ class _CurrencySelectionBottomSheetState
                       itemBuilder: (context, index) {
                         final currency = filteredCurrencies[index];
                         return ListTile(
-                          title: Text(currency),
+                          title: Text(currency, style: TextStyle(color: AppColors.textPrimary)),
                           trailing:
                               widget.controller.selectedCurrency.value ==
                                       currency
