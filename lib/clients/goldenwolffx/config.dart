@@ -17,4 +17,5 @@ class GoldenwolffxConfig extends BaseClientConfig {
         websocketUrl: 'wss://portal.goldenwolffx.com/trade-engine',
         chartBaseUrl: 'https://portal.goldenwolffx.com',
       );
+      
 }
