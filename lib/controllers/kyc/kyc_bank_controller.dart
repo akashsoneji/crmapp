@@ -14,6 +14,8 @@ import 'package:crm_app/services/secure_storage_service.dart';
 import 'package:crm_app/models/currency_list_model.dart';
 import 'package:crm_app/screens/home/kyc/kyc_bank_camera_screen.dart';
 import 'package:crm_app/controllers/app_notification_controller.dart';
+import 'package:crm_app/controllers/finance/withdrawal_controller.dart'
+    show WithdrawalMethod, WithdrawalMethodResponse;
 
 class KycBankController extends GetxController {
   // Observable variables
@@ -23,10 +25,11 @@ class KycBankController extends GetxController {
   final RxString errorMessage = ''.obs;
   final RxString successMessage = ''.obs;
 
-  // Account type selection
-  final RxString selectedAccountType = 'Bank'.obs;
+  // Account type selection (populated from withdrawal methods API)
+  final RxString selectedAccountType = ''.obs;
   final RxString selectedRelationship = 'Self'.obs;
-  final RxList<String> accountTypes = ['Bank', 'Crypto', 'UPI'].obs;
+  final RxList<String> accountTypes = <String>[].obs;
+  final RxList<WithdrawalMethod> withdrawalMethods = <WithdrawalMethod>[].obs;
   final RxList<String> relationShips =
       ['Self', 'Mother', 'Father', 'Son', 'Wife', 'Daughter', 'Other'].obs;
   final RxList<String> ifscIbanList = ['IFSC', 'IBAN'].obs;
@@ -79,6 +82,7 @@ class KycBankController extends GetxController {
     super.onInit();
 
     fetchCurrencyList();
+    fetchWithdrawalMethods();
     // Initialize camera
     initializeCamera();
 
@@ -115,6 +119,70 @@ class KycBankController extends GetxController {
         _backgroundTime = null;
       },
     );
+  }
+
+  /// Maps API `method_name` to form field category (bank, crypto, upi).
+  String get accountTypeCategory {
+    switch (selectedAccountType.value.toLowerCase()) {
+      case 'local':
+      case 'bank':
+        return 'bank';
+      case 'crypto':
+        return 'crypto';
+      case 'upi':
+        return 'upi';
+      default:
+        return selectedAccountType.value.toLowerCase();
+    }
+  }
+
+  bool get requiresBankAccountValidation => accountTypeCategory == 'bank';
+
+  // Fetch withdrawal methods for account type dropdown
+  Future<void> fetchWithdrawalMethods() async {
+    try {
+      errorMessage.value = '';
+
+      final token = await SecureStorageService.getAuthToken();
+      final response = await ApiService.get(
+        endpoint: ApiConstants.withdrawalRequest,
+        token: token,
+      );
+
+      if (response.success && response.data != null) {
+        final withdrawalMethodResponse = WithdrawalMethodResponse.fromJson(
+          response.data,
+        );
+        if (withdrawalMethodResponse.status &&
+            withdrawalMethodResponse.data.isNotEmpty) {
+          withdrawalMethods.assignAll(withdrawalMethodResponse.data);
+          accountTypes.assignAll(
+            withdrawalMethodResponse.data
+                .map((m) => m.methodName ?? '')
+                .where((name) => name.isNotEmpty)
+                .toList(),
+          );
+          if (selectedAccountType.value.isEmpty ||
+              !accountTypes.contains(selectedAccountType.value)) {
+            selectedAccountType.value = accountTypes.first;
+          }
+          print(
+            '✅ Loaded ${accountTypes.length} withdrawal methods for account type',
+          );
+        } else {
+          errorMessage.value =
+              withdrawalMethodResponse.message.isNotEmpty
+                  ? withdrawalMethodResponse.message
+                  : 'Failed to fetch withdrawal methods';
+        }
+      } else {
+        errorMessage.value =
+            response.message ?? 'Failed to fetch withdrawal methods';
+      }
+    } catch (e) {
+      errorMessage.value = 'Error fetching withdrawal methods: $e';
+      print('❌ Error fetching withdrawal methods: $e');
+    }
   }
 
   // Fetch currency list
@@ -312,7 +380,9 @@ class KycBankController extends GetxController {
         }
         // Reset form
         clearFormFields();
-        selectedAccountType.value = 'Bank';
+        if (accountTypes.isNotEmpty) {
+          selectedAccountType.value = accountTypes.first;
+        }
         selectedCurrency.value = 'USD';
 
         print('isBankList: ${isBankList.value}');
@@ -384,7 +454,7 @@ class KycBankController extends GetxController {
     }
 
     // Dynamic validation based on account type
-    if (selectedAccountType.value.toLowerCase() == "bank") {
+    if (accountTypeCategory == "bank") {
       if (ifscIbanCode.value.isEmpty) {
         errorMessage.value = 'Please enter IFSC/IBAN code';
         if (Get.isRegistered<AppNotificationController>()) {
@@ -430,7 +500,7 @@ class KycBankController extends GetxController {
         }
         return false;
       }
-    } else if (selectedAccountType.value.toLowerCase() == "crypto") {
+    } else if (accountTypeCategory == "crypto") {
       if (cryptoAddress.value.isEmpty) {
         errorMessage.value = 'Please enter crypto address';
         if (Get.isRegistered<AppNotificationController>()) {
@@ -472,7 +542,7 @@ class KycBankController extends GetxController {
     final params = <String, dynamic>{};
 
     // Add conditional parameters based on account type
-    if (selectedAccountType.value.toLowerCase() == "bank") {
+    if (accountTypeCategory == "bank") {
       params.addAll({
         "ifsc_iban": ifscIbanCode.value,
         "bank_name": bankName.value,
@@ -482,7 +552,7 @@ class KycBankController extends GetxController {
         "swift_code": bankSwiftCode.value,
         "optradio": ifscIbanType.value,
       });
-    } else if (selectedAccountType.value.toLowerCase() == "crypto") {
+    } else if (accountTypeCategory == "crypto") {
       params.addAll({
         "crypto_holder_name": accountHolderName.value,
         "crypto_address": cryptoAddress.value,
@@ -523,7 +593,7 @@ class KycBankController extends GetxController {
 
   // Get the correct proof field name based on withdrawal method
   String _getProofFieldName() {
-    switch (selectedAccountType.value.toLowerCase()) {
+    switch (accountTypeCategory) {
       case 'bank':
         return 'bank_proof_img';
       case 'upi':
@@ -632,7 +702,9 @@ class KycBankController extends GetxController {
   // Clear all data
   void clearAllData() {
     clearFormFields();
-    selectedAccountType.value = 'Bank';
+    if (accountTypes.isNotEmpty) {
+      selectedAccountType.value = accountTypes.first;
+    }
     selectedCurrency.value = 'USD';
     currencies.clear();
     errorMessage.value = '';

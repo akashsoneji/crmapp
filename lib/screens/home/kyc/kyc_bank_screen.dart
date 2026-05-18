@@ -515,9 +515,9 @@ class _KycBankScreenState extends State<KycBankScreen> {
     }
   }
 
-  // Get fields based on selected account type
+  // Get fields based on selected account type (API method_name)
   List<Widget> _getFieldsForAccountType() {
-    switch (controller.selectedAccountType.value.toLowerCase()) {
+    switch (controller.accountTypeCategory) {
       case 'bank':
         return _buildBankFields();
       case 'crypto':
@@ -614,7 +614,11 @@ class _KycBankScreenState extends State<KycBankScreen> {
       children: [
         Text(
           languageService.tr('kyc_add_proof'),
-          style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w500),
+          style: TextStyle(
+            fontSize: 14.sp,
+            fontWeight: FontWeight.w500,
+            color: AppColors.textPrimary,
+          ),
         ),
         SizedBox(height: 8.h),
         GestureDetector(
@@ -992,8 +996,7 @@ class _KycBankScreenState extends State<KycBankScreen> {
                     controller.submitWithdrawal();
                   } else {
                     // Validate account numbers before sending OTP
-                    if (controller.selectedAccountType.value.toLowerCase() ==
-                        'bank') {
+                    if (controller.requiresBankAccountValidation) {
                       if (_validateAccountNumbers()) {
                         controller.sendOtp();
                       } else {
@@ -1071,24 +1074,42 @@ class _KycBankScreenState extends State<KycBankScreen> {
                   ),
                 ),
                 Flexible(
-                  child: ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: controller.accountTypes.length,
-                    itemBuilder: (context, index) {
-                      final type = controller.accountTypes[index];
-                      return ListTile(
-                        title: Text(type, style: TextStyle(color: AppColors.textPrimary)),
-                        trailing:
-                            controller.selectedAccountType.value == type
-                                ? Icon(Icons.check, color: AppColors.primary)
-                                : null,
-                        onTap: () {
-                          controller.setAccountType(type);
-                          Navigator.pop(context);
-                        },
+                  child: Obx(() {
+                    if (controller.accountTypes.isEmpty) {
+                      return Padding(
+                        padding: EdgeInsets.all(24.w),
+                        child: Text(
+                          'Loading account types...',
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 14.sp,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
                       );
-                    },
-                  ),
+                    }
+                    return ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: controller.accountTypes.length,
+                      itemBuilder: (context, index) {
+                        final type = controller.accountTypes[index];
+                        return ListTile(
+                          title: Text(
+                            type,
+                            style: TextStyle(color: AppColors.textPrimary),
+                          ),
+                          trailing:
+                              controller.selectedAccountType.value == type
+                                  ? Icon(Icons.check, color: AppColors.primary)
+                                  : null,
+                          onTap: () {
+                            controller.setAccountType(type);
+                            Navigator.pop(context);
+                          },
+                        );
+                      },
+                    );
+                  }),
                 ),
               ],
             ),
