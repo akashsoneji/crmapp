@@ -1,6 +1,9 @@
+import 'package:crm_app/constants/text_styles.dart';
+import 'package:crm_app/widgets/app_svg_back_button.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/controllers/ib_controller.dart';
@@ -53,6 +56,11 @@ class _MyStructureScreenState extends State<MyStructureScreen> {
         scrolledUnderElevation: 0,
         backgroundColor: AppColors.tradeBackgroundCenterColor,
         elevation: 0,
+        leading: AppSvgBackButton(
+          onPressed: () => Get.back(closeOverlays: true),
+          iconWidth: 30.w,
+          iconHeight: 30.h,
+        ),
         title: Text(
           'My Structure',
           style: TextStyle(
@@ -102,7 +110,7 @@ class _MyStructureScreenState extends State<MyStructureScreen> {
                       SizedBox(height: 16.h),
                       ElevatedButton(
                         onPressed: _loadData,
-                        child: Text('Retry'),
+                        child: Text('Retry', style: AppTextStyles.textButton.copyWith(color: AppColors.whiteColor)),
                       ),
                     ],
                   ),
