@@ -143,12 +143,18 @@ class _MyInvestmentsScreenState extends State<MyInvestmentsScreen>
                   child: TabBar(
                     controller: tabController,
                     indicator: BoxDecoration(
-                      color: AppColors.primary,
+                      color:
+                          AppColors.isDarkMode
+                              ? AppColors.textPrimaryDark.withValues(alpha: 0.1)
+                              : AppColors.primary,
                       borderRadius: BorderRadius.circular(10.r),
                     ),
                     indicatorSize: TabBarIndicatorSize.tab,
                     dividerColor: Colors.transparent,
-                    labelColor: AppColors.onColoredBackground,
+                    labelColor:
+                        AppColors.isDarkMode
+                            ? AppColors.textPrimaryDark
+                            : AppColors.onColoredBackground,
                     unselectedLabelColor: AppColors.textGrey,
                     labelStyle: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w600),
                     unselectedLabelStyle: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w500),
@@ -981,8 +987,15 @@ class _EmptyInvestmentsState extends StatelessWidget {
               icon: Icon(Icons.explore_outlined, size: 16.r),
               label: Text('Explore Masters', style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600)),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: AppColors.onColoredBackground,
+                elevation: 0,
+                backgroundColor:
+                    AppColors.isDarkMode
+                        ? AppColors.textPrimaryDark.withValues(alpha: 0.1)
+                        : AppColors.primary,
+                foregroundColor:
+                    AppColors.isDarkMode
+                        ? AppColors.textPrimaryDark
+                        : AppColors.onColoredBackground,
                 padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
               ),

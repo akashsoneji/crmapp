@@ -3,6 +3,7 @@ import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/widgets/app_svg_back_button.dart';
 import 'package:crm_app/widgets/labeled_app_text_field.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
+import 'package:crm_app/widgets/app_select_field.dart';
 import 'package:crm_app/controllers/copy_trading/copy_trading_hub_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -308,7 +309,13 @@ class _PendingReviewScreen extends StatelessWidget {
               SizedBox(height: 14.h),
               ElevatedButton(
                 onPressed: () => Get.back(),
-                style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor:
+                      AppColors.primary.computeLuminance() > 0.5
+                          ? AppColors.textPrimaryLight
+                          : AppColors.onColoredBackground,
+                ),
                 child: const Text('OK'),
               ),
             ],
@@ -374,6 +381,14 @@ class _BecomeMasterScreenState extends State<_BecomeMasterScreen> {
           final err = hub.masterApplyEligibleError.value;
           final canSubmit = hub.canSubmitMasterApply;
           final applying = hub.isLoading.value;
+          final applyBtnFg =
+              AppColors.primary.computeLuminance() > 0.5
+                  ? AppColors.textPrimaryLight
+                  : AppColors.onColoredBackground;
+          final isDark = AppColors.isDarkMode;
+          final checkBorder = isDark ? AppColors.textPrimaryDark : AppColors.primary;
+          final checkFill = isDark ? AppColors.textPrimaryDark : AppColors.primary;
+          final checkMark = isDark ? AppColors.textPrimaryLight : AppColors.onColoredBackground;
 
           return Container(
             padding: EdgeInsets.all(16.r),
@@ -410,34 +425,24 @@ class _BecomeMasterScreenState extends State<_BecomeMasterScreen> {
                     ),
                   )
                 else
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 2.h),
-                    decoration: BoxDecoration(
-                      color: AppColors.whiteColor,
-                      borderRadius: BorderRadius.circular(12.r),
-                      border: Border.all(color: AppColors.border),
-                    ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<int?>(
-                        value: hub.masterApplySelectedAccountId.value,
-                        isExpanded: true,
-                        hint: Text('-- Select account --', style: AppTextStyles.black14500.copyWith(color: AppColors.textGrey)),
-                        items: accounts
+                  AppSelectField<int>(
+                    value: hub.masterApplySelectedAccountId.value,
+                    hint: '-- Select account --',
+                    sheetTitle: 'Trading account',
+                    borderRadius: 12,
+                    fontSize: 14.sp,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+                    options:
+                        accounts
                             .map(
-                              (a) => DropdownMenuItem<int>(
+                              (a) => AppSelectOption<int>(
                                 value: a.id,
-                                child: Text(
-                                  '${a.metaAccountNumber} · ${a.accountType} · ${r'$'}${a.equity.toStringAsFixed(2)}',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: AppTextStyles.black14500,
-                                ),
+                                title: '${a.metaAccountNumber} · ${a.accountType}',
+                                subtitle: '\$${a.equity.toStringAsFixed(2)}',
                               ),
                             )
                             .toList(),
-                        onChanged: (v) => hub.masterApplySelectedAccountId.value = v,
-                      ),
-                    ),
+                    onChanged: (v) => hub.masterApplySelectedAccountId.value = v,
                   ),
                 if (err.isNotEmpty && accounts.isNotEmpty) ...[
                   SizedBox(height: 8.h),
@@ -459,13 +464,22 @@ class _BecomeMasterScreenState extends State<_BecomeMasterScreen> {
                       width: 26.r,
                       height: 26.r,
                       child: Checkbox(
-                        activeColor: AppColors.primary,
                         value: hub.masterApplyTermsAccepted.value,
+                        side: BorderSide(color: checkBorder, width: 1.5),
+                        fillColor: WidgetStateProperty.resolveWith((states) {
+                          if (states.contains(WidgetState.selected)) {
+                            return checkFill;
+                          }
+                          return Colors.transparent;
+                        }),
+                        checkColor: checkMark,
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        visualDensity: VisualDensity.compact,
                         onChanged: (v) => hub.masterApplyTermsAccepted.value = v ?? false,
                       ),
                     ),
                     Padding(
-                      padding:   EdgeInsets.only(left:4.w),
+                      padding: EdgeInsets.only(left: 4.w),
                       child: Text(
                         'I accept the Terms & Conditions',
                         style: TextStyle(fontSize: 14.sp, color: AppColors.textPrimary),
@@ -506,9 +520,9 @@ class _BecomeMasterScreenState extends State<_BecomeMasterScreen> {
                         : null,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
-                      foregroundColor: AppColors.onColoredBackground,
-                      disabledBackgroundColor: AppColors.textGrey.withOpacity(0.35),
-                      disabledForegroundColor: AppColors.onColoredBackground.withOpacity(0.85),
+                      foregroundColor: applyBtnFg,
+                      disabledBackgroundColor: AppColors.textGrey.withValues(alpha: 0.35),
+                      disabledForegroundColor: applyBtnFg.withValues(alpha: 0.45),
                       padding: EdgeInsets.zero,
                       minimumSize: Size(double.infinity, 44.h),
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -518,9 +532,15 @@ class _BecomeMasterScreenState extends State<_BecomeMasterScreen> {
                         ? SizedBox(
                             width: 20.r,
                             height: 20.r,
-                            child: const CircularProgressIndicator(strokeWidth: 2, color: AppColors.onColoredBackground),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: applyBtnFg,
+                            ),
                           )
-                        : Text('Apply', style: AppTextStyles.button),
+                        : Text(
+                            'Apply',
+                            style: AppTextStyles.button.copyWith(color: applyBtnFg),
+                          ),
                   ),
                 ),
               ],

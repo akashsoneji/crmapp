@@ -1,5 +1,6 @@
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/widgets/app_svg_back_button.dart';
+import 'package:crm_app/widgets/app_select_field.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/copy_trading/copy_trading_masters_controller.dart';
 import 'package:flutter/material.dart';
@@ -148,35 +149,33 @@ class _SearchField extends StatelessWidget {
 
 class _SortButton extends StatelessWidget {
   final RxString value;
-  final ValueChanged<String> onChanged;
+  final Future<void> Function(String) onChanged;
   const _SortButton({required this.value, required this.onChanged});
+
+  static const List<AppSelectOption<String>> _options = [
+    AppSelectOption(value: '', title: 'Default'),
+    AppSelectOption(value: 'gain', title: 'Sort by Gain'),
+    AppSelectOption(value: 'aum', title: 'Sort by AUM'),
+    AppSelectOption(value: 'copiers', title: 'Sort by Copiers'),
+  ];
 
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      return PopupMenuButton<String>(
-        onSelected: onChanged,
-        itemBuilder: (_) => const [
-          PopupMenuItem(value: '', child: Text('Default')),
-          PopupMenuItem(value: 'gain', child: Text('Sort by Gain')),
-          PopupMenuItem(value: 'aum', child: Text('Sort by AUM')),
-          PopupMenuItem(value: 'copiers', child: Text('Sort by Copiers')),
-        ],
-        child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
-          decoration: BoxDecoration(
-            color: AppColors.whiteColor,
-            borderRadius: BorderRadius.circular(12.r),
-            border: Border.all(color: AppColors.border.withValues(alpha: 0.15)),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.sort, size: 18.r, color: AppColors.primary),
-              SizedBox(width: 6.w),
-              Text('Sort', style: TextStyle(fontSize: 12.sp, color: AppColors.textPrimary)),
-            ],
-          ),
+      return SizedBox(
+        width: 128.w,
+        child: AppSelectField<String>(
+          value: value.value,
+          hint: 'Sort',
+          sheetTitle: 'Sort by',
+          borderRadius: 12,
+          fontSize: 12.sp,
+          contentPadding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 12.h),
+          options: _options,
+          onChanged: (v) async {
+            if (v == null) return;
+            await onChanged(v);
+          },
         ),
       );
     });

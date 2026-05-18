@@ -10,6 +10,7 @@ import 'package:crm_app/routes/app_pages.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
 import 'package:crm_app/models/pmam_model.dart';
 import 'package:crm_app/screens/home/more/pmam/pmam_trade_history_screen.dart';
+import 'package:crm_app/utils/app_picker_theme.dart';
 
 class PmamInvestorPortalScreen extends StatefulWidget {
   const PmamInvestorPortalScreen({super.key});
@@ -392,8 +393,8 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
             }
 
             Future<void> pickFrom() async {
-              final picked = await showDatePicker(
-                context: ctx,
+              final picked = await AppPickerTheme.showAppDatePicker(
+                ctx,
                 initialDate: from,
                 firstDate: DateTime(2000),
                 lastDate: DateTime(2100),
@@ -404,8 +405,8 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
             }
 
             Future<void> pickTo() async {
-              final picked = await showDatePicker(
-                context: ctx,
+              final picked = await AppPickerTheme.showAppDatePicker(
+                ctx,
                 initialDate: to,
                 firstDate: DateTime(2000),
                 lastDate: DateTime(2100),
@@ -442,7 +443,10 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                           ),
                           IconButton(
                             onPressed: () => Navigator.of(ctx).pop(),
-                            icon: const Icon(Icons.close),
+                            icon: Icon(
+                              Icons.close,
+                              color: AppColors.textPrimary,
+                            ),
                           ),
                         ],
                       ),

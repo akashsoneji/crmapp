@@ -7,6 +7,7 @@ import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/pmam/pmam_controller.dart';
 import 'package:crm_app/controllers/auth_controller.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
+import 'package:crm_app/widgets/app_select_field.dart';
 
 class PmamCreatePlanScreen extends StatefulWidget {
   const PmamCreatePlanScreen({super.key});
@@ -242,41 +243,15 @@ class _PmamCreatePlanScreenState extends State<PmamCreatePlanScreen> {
                           ),
                         );
                       }
-                      return DropdownButtonFormField<Map<String, dynamic>>(
-                        isExpanded: true,
+                      return AppSelectField<Map<String, dynamic>>(
                         value: _selectedAccount,
-                        hint: Text(
-                          'Select a trading account',
-                          style: TextStyle(
-                            fontSize: 14.sp,
-                            color: AppColors.textGrey,
-                          ),
-                        ),
-                        decoration: InputDecoration(
-                          contentPadding: EdgeInsets.symmetric(
-                            horizontal: 8.w,
-                            vertical: 6.h,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10.r),
-                            borderSide:  BorderSide(
-                              color: AppColors.border,
-                            ),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10.r),
-                            borderSide: BorderSide(
-                              color: AppColors.border,
-                            ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10.r),
-                            borderSide: BorderSide(color: AppColors.primary),
-                          ),
-                        ),
-                        items:
+                        hint: 'Select a trading account',
+                        sheetTitle: 'Select Trading Account',
+                        valueEquals: (a, b) => a['id'] == b['id'],
+                        options:
                             accounts.map((acc) {
-                              final accNo = acc['meta_account_number'] ?? '-';
+                              final accNo =
+                                  acc['meta_account_number']?.toString() ?? '-';
                               final bal =
                                   double.tryParse(
                                     acc['balance']?.toString() ?? '0',
@@ -284,20 +259,20 @@ class _PmamCreatePlanScreenState extends State<PmamCreatePlanScreen> {
                                   0;
                               final availBal =
                                   double.tryParse(
-                                    acc['available_balance']?.toString() ?? '0',
+                                    acc['available_balance']?.toString() ??
+                                        '0',
                                   ) ??
                                   0;
-                              return DropdownMenuItem<Map<String, dynamic>>(
+                              return AppSelectOption<Map<String, dynamic>>(
                                 value: acc,
-                                child: Text(
-                                  '$accNo — Balance: \$${bal.toStringAsFixed(2)} (Available: \$${availBal.toStringAsFixed(2)})',
-                                  style: TextStyle(fontSize: 13.sp),
-                                  overflow: TextOverflow.ellipsis,
-                                  maxLines: 1,
-                                ),
+                                title:
+                                    '$accNo — Balance: \$${bal.toStringAsFixed(2)}',
+                                subtitle:
+                                    'Available: \$${availBal.toStringAsFixed(2)}',
                               );
                             }).toList(),
-                        onChanged: (v) => setState(() => _selectedAccount = v),
+                        onChanged:
+                            (v) => setState(() => _selectedAccount = v),
                       );
                     }),
                     SizedBox(height: 4.h),

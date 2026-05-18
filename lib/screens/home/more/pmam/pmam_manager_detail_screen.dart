@@ -6,6 +6,7 @@ import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/pmam/pmam_controller.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
+import 'package:crm_app/widgets/app_select_field.dart';
 import 'package:crm_app/models/pmam_model.dart';
 
 class PmamManagerDetailScreen extends StatefulWidget {
@@ -122,38 +123,30 @@ class _PmamManagerDetailScreenState extends State<PmamManagerDetailScreen> {
                         ),
                       ),
                       SizedBox(height: 8.h),
-                      Container(
-                        padding: EdgeInsets.symmetric(horizontal: 12.w),
-                        decoration: BoxDecoration(
-                          color: AppColors.tradeBackgroundCenterColor,
-                          borderRadius: BorderRadius.circular(10.r),
-                        ),
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<PmamPlan>(
-                            isExpanded: true,
-                            value: _selectedPlan,
-                            items:
-                                _manager.plans.map((p) {
-                                  return DropdownMenuItem(
+                      AppSelectField<PmamPlan>(
+                        value: _selectedPlan,
+                        hint: 'Select a plan',
+                        sheetTitle: 'Select Plan',
+                        valueEquals: (a, b) => a.id == b.id,
+                        options:
+                            _manager.plans
+                                .map(
+                                  (p) => AppSelectOption<PmamPlan>(
                                     value: p,
-                                    child: Text(
-                                      p.planName,
-                                      style: TextStyle(fontSize: 14.sp),
-                                    ),
-                                  );
-                                }).toList(),
-                            onChanged: (val) {
-                              if (val != null) {
-                                setSheetState(() {
-                                  _selectedPlan = val;
-                                  _selectedAccount = null;
-                                  _ctrl.loadEligibleAccounts(val.id);
-                                });
-                                setState(() {});
-                              }
-                            },
-                          ),
-                        ),
+                                    title: p.planName,
+                                  ),
+                                )
+                                .toList(),
+                        onChanged: (val) {
+                          if (val != null) {
+                            setSheetState(() {
+                              _selectedPlan = val;
+                              _selectedAccount = null;
+                              _ctrl.loadEligibleAccounts(val.id);
+                            });
+                            setState(() {});
+                          }
+                        },
                       ),
                       SizedBox(height: 16.h),
                     ],
@@ -179,50 +172,38 @@ class _PmamManagerDetailScreenState extends State<PmamManagerDetailScreen> {
                           ),
                         );
                       }
-                      return Container(
-                        padding: EdgeInsets.symmetric(horizontal: 12.w),
-                        decoration: BoxDecoration(
-                          color: AppColors.tradeBackgroundCenterColor,
-                          borderRadius: BorderRadius.circular(10.r),
-                        ),
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<Map<String, dynamic>>(
-                            isExpanded: true,
-                            value: _selectedAccount,
-                            hint: Text(
-                              'Choose an account',
-                              style: TextStyle(fontSize: 14.sp),
-                            ),
-                            items:
-                                _ctrl.eligibleAccounts.map((acc) {
-                                  final accNo =
-                                      acc['meta_account_number'] ?? '-';
-                                  final bal =
-                                      double.tryParse(
-                                        acc['balance']?.toString() ?? '0',
-                                      ) ??
-                                      0;
-                                  final availBal =
-                                      double.tryParse(
-                                        acc['available_balance']?.toString() ??
-                                            '0',
-                                      ) ??
-                                      0;
-                                  return DropdownMenuItem(
-                                    value: acc,
-                                    child: Text(
-                                      '$accNo — Balance: \$${bal.toStringAsFixed(2)} (Available: \$${availBal.toStringAsFixed(2)})',
-                                      style: TextStyle(fontSize: 13.sp),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  );
-                                }).toList(),
-                            onChanged: (val) {
-                              setSheetState(() => _selectedAccount = val);
-                            },
-                          ),
-                        ),
+                      return AppSelectField<Map<String, dynamic>>(
+                        value: _selectedAccount,
+                        hint: 'Choose an account',
+                        sheetTitle: 'Select Trading Account',
+                        valueEquals: (a, b) => a['id'] == b['id'],
+                        options:
+                            _ctrl.eligibleAccounts.map((acc) {
+                              final accNo =
+                                  acc['meta_account_number']?.toString() ??
+                                  '-';
+                              final bal =
+                                  double.tryParse(
+                                    acc['balance']?.toString() ?? '0',
+                                  ) ??
+                                  0;
+                              final availBal =
+                                  double.tryParse(
+                                    acc['available_balance']?.toString() ??
+                                        '0',
+                                  ) ??
+                                  0;
+                              return AppSelectOption<Map<String, dynamic>>(
+                                value: acc,
+                                title:
+                                    '$accNo — Balance: \$${bal.toStringAsFixed(2)}',
+                                subtitle:
+                                    'Available: \$${availBal.toStringAsFixed(2)}',
+                              );
+                            }).toList(),
+                        onChanged: (val) {
+                          setSheetState(() => _selectedAccount = val);
+                        },
                       );
                     }),
                     SizedBox(height: 20.h),

@@ -7,6 +7,8 @@ import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/pmam/pmam_manager_plan_detail_controller.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
 import 'package:crm_app/widgets/dashBorder.dart';
+import 'package:crm_app/utils/app_picker_theme.dart';
+import 'package:crm_app/widgets/app_select_field.dart';
 
 class PmamManagerPlanDetailScreen extends StatefulWidget {
   const PmamManagerPlanDetailScreen({super.key});
@@ -78,7 +80,10 @@ class _PmamManagerPlanDetailScreenState
           onPressed: () => Get.back(),
           icon: SvgPicture.asset(
             'assets/svg/trade/arro_back.svg',
-            colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn),
+            colorFilter: ColorFilter.mode(
+              AppColors.textPrimary,
+              BlendMode.srcIn,
+            ),
           ),
         ),
         title: Obx(() {
@@ -252,8 +257,8 @@ class _PmamManagerPlanDetailScreenState
                       'mm/dd/yyyy',
                       Icons.calendar_today_rounded,
                       onTap: () async {
-                        final date = await showDatePicker(
-                          context: context,
+                        final date = await AppPickerTheme.showAppDatePicker(
+                          context,
                           initialDate: DateTime.now(),
                           firstDate: DateTime(2000),
                           lastDate: DateTime(2100),
@@ -273,8 +278,8 @@ class _PmamManagerPlanDetailScreenState
                       'mm/dd/yyyy',
                       Icons.calendar_today_rounded,
                       onTap: () async {
-                        final date = await showDatePicker(
-                          context: context,
+                        final date = await AppPickerTheme.showAppDatePicker(
+                          context,
                           initialDate: DateTime.now(),
                           firstDate: DateTime(2000),
                           lastDate: DateTime(2100),
@@ -326,7 +331,10 @@ class _PmamManagerPlanDetailScreenState
                 ),
                 child: Text(
                   'Apply',
-                  style: TextStyle(color: AppColors.whiteColor, fontSize: 13.sp),
+                  style: TextStyle(
+                    color: AppColors.whiteColor,
+                    fontSize: 13.sp,
+                  ),
                 ),
               ),
             ],
@@ -461,7 +469,10 @@ class _PmamManagerPlanDetailScreenState
                 ),
                 child: Text(
                   'Apply',
-                  style: TextStyle(color: AppColors.whiteColor, fontSize: 13.sp),
+                  style: TextStyle(
+                    color: AppColors.whiteColor,
+                    fontSize: 13.sp,
+                  ),
                 ),
               ),
             ],
@@ -582,37 +593,18 @@ class _PmamManagerPlanDetailScreenState
           ),
         ),
         SizedBox(height: 6.h),
-        Container(
-          height: 36.h,
-          padding: EdgeInsets.symmetric(horizontal: 10.w),
-          decoration: BoxDecoration(
-            color: AppColors.whiteColor,
-            border: Border.all(color: AppColors.border),
-            borderRadius: BorderRadius.circular(8.r),
-          ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: value,
-              isExpanded: true,
-
-              icon: Icon(
-                Icons.keyboard_arrow_down,
-                // wn_rounded,
-                size: 16.sp,
-                color: AppColors.textGrey,
-              ),
-              items:
-                  items
-                      .map(
-                        (e) => DropdownMenuItem(
-                          value: e,
-                          child: Text(e, style: TextStyle(fontSize: 12.sp)),
-                        ),
-                      )
-                      .toList(),
-              onChanged: onChanged,
-            ),
-          ),
+        AppSelectField<String>(
+          value: value,
+          hint: 'Select',
+          sheetTitle: label,
+          borderRadius: 8,
+          fontSize: 12.sp,
+          contentPadding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+          options:
+              items
+                  .map((e) => AppSelectOption<String>(value: e, title: e))
+                  .toList(),
+          onChanged: onChanged,
         ),
       ],
     );
@@ -644,12 +636,22 @@ class _PmamManagerPlanDetailScreenState
             borderRadius: BorderRadius.circular(8.r),
           ),
           child: TextField(
-            style: TextStyle(fontSize: 12.sp),
+            textAlignVertical: TextAlignVertical.center,
+            style: AppPickerTheme.dropdownTextStyle(12.sp),
             decoration: InputDecoration(
               hintText: hint,
               hintStyle: TextStyle(fontSize: 12.sp, color: AppColors.textGrey),
+              isDense: true,
               border: InputBorder.none,
-              contentPadding: EdgeInsets.only(bottom: 14.h), // align vertically
+              enabledBorder: InputBorder.none,
+              focusedBorder: InputBorder.none,
+              disabledBorder: InputBorder.none,
+              errorBorder: InputBorder.none,
+              focusedErrorBorder: InputBorder.none,
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 10.w,
+                vertical: 10,
+              ),
             ),
             onSubmitted: onChanged,
           ),
@@ -728,7 +730,6 @@ class _PmamManagerPlanDetailScreenState
     Map<String, String> itemsMap,
     Function(String?) onChanged,
   ) {
-    // If the selected value is not in the map keys, force it to the first key to avoid error.
     final safeValue = itemsMap.containsKey(value) ? value : itemsMap.keys.first;
 
     return Column(
@@ -743,41 +744,21 @@ class _PmamManagerPlanDetailScreenState
           ),
         ),
         SizedBox(height: 6.h),
-        Container(
-          height: 36.h,
-          padding: EdgeInsets.symmetric(horizontal: 10.w),
-          decoration: BoxDecoration(
-            color: AppColors.whiteColor,
-            border: Border.all(color: AppColors.border),
-            borderRadius: BorderRadius.circular(8.r),
-          ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: safeValue,
-              isExpanded: true,
-              icon: Icon(
-                Icons.keyboard_arrow_down_rounded,
-                size: 16.sp,
-                color: AppColors.textGrey,
-              ),
-              menuMaxHeight: Get.height * 0.3,
-              items:
-                  itemsMap.entries
-                      .map(
-                        (e) => DropdownMenuItem(
-                          value: e.key,
-                          child: Text(
-                            e.value,
-                            style: TextStyle(fontSize: 12.sp),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      )
-                      .toList(),
-              onChanged: onChanged,
-            ),
-          ),
+        AppSelectField<String>(
+          value: safeValue,
+          hint: 'Select',
+          sheetTitle: label,
+          borderRadius: 8,
+          fontSize: 12.sp,
+          contentPadding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+          options:
+              itemsMap.entries
+                  .map(
+                    (e) =>
+                        AppSelectOption<String>(value: e.key, title: e.value),
+                  )
+                  .toList(),
+          onChanged: onChanged,
         ),
       ],
     );
@@ -800,57 +781,38 @@ class _PmamManagerPlanDetailScreenState
           ),
         ),
         SizedBox(height: 6.h),
-        Container(
-          height: 36.h,
-          padding: EdgeInsets.symmetric(horizontal: 10.w),
-          decoration: BoxDecoration(
-            color: AppColors.whiteColor,
-            border: Border.all(color: AppColors.border),
-            borderRadius: BorderRadius.circular(8.r),
-          ),
-          child: Obx(() {
-            final investors = _ctrl.allPlanInvestors;
-            final itemsMap = {'': 'All investors'};
-            for (var inv in investors) {
-              final valId =
-                  inv['user_id'] ??
-                  inv['investor_user_id'] ??
-                  inv['investor_id'];
-              if (valId != null && inv['investor_name'] != null) {
-                itemsMap[valId.toString()] = inv['investor_name'].toString();
-              }
+        Obx(() {
+          final investors = _ctrl.allPlanInvestors;
+          final itemsMap = <String, String>{'': 'All investors'};
+          for (var inv in investors) {
+            final valId =
+                inv['user_id'] ?? inv['investor_user_id'] ?? inv['investor_id'];
+            if (valId != null && inv['investor_name'] != null) {
+              itemsMap[valId.toString()] = inv['investor_name'].toString();
             }
-            final safeValue = itemsMap.containsKey(value) ? value : '';
+          }
+          final safeValue = itemsMap.containsKey(value) ? value : '';
 
-            return DropdownButtonHideUnderline(
-              child: DropdownButton<String>(
-                value: safeValue,
-                isExpanded: true,
-                icon: Icon(
-                  Icons.keyboard_arrow_down_rounded,
-                  size: 16.sp,
-                  color: AppColors.textGrey,
-                ),
-                menuMaxHeight: Get.height * 0.3,
-                items:
-                    itemsMap.entries
-                        .map(
-                          (e) => DropdownMenuItem(
-                            value: e.key,
-                            child: Text(
-                              e.value,
-                              style: TextStyle(fontSize: 12.sp),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        )
-                        .toList(),
-                onChanged: onChanged,
-              ),
-            );
-          }),
-        ),
+          return AppSelectField<String>(
+            value: safeValue,
+            hint: 'All investors',
+            sheetTitle: label,
+            borderRadius: 8,
+            fontSize: 12.sp,
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: 10.w,
+              vertical: 8.h,
+            ),
+            options:
+                itemsMap.entries
+                    .map(
+                      (e) =>
+                          AppSelectOption<String>(value: e.key, title: e.value),
+                    )
+                    .toList(),
+            onChanged: onChanged,
+          );
+        }),
       ],
     );
   }
