@@ -41,7 +41,6 @@ class _WalletScreenState extends State<WalletScreen> {
         controller.amountController.text = '0.00';
       }
     });
-    controller.fetchWalletData();
   }
 
   @override

@@ -167,6 +167,12 @@ class WalletController extends GetxController {
     // transferToController.text = accountOptions[0];
     // amountController.text = '\$500.00';
     // amount.value = '\$500.00';
+  }
+
+  @override
+  void onReady() {
+    super.onReady();
+    // Fetch after first frame so Obx widgets are not updated during build.
     fetchWalletData();
   }
 

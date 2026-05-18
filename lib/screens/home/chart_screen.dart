@@ -1836,9 +1836,9 @@ Placing Order:
             ? _datafeedSymbolForSelected
             : displaySymbol;
 
-    // print(
-    //   '🔵 Flavor: ${FlavorConfig.instance.chartBaseUrl}/mobile-chart?symbol=$effectiveDatafeedSymbol&theme=light',
-    // );
+    print(
+      '🔵 Flavor: ${FlavorConfig.instance.chartBaseUrl}/mobile-chart?symbol=$effectiveDatafeedSymbol&theme=${AppColors.chartTheme}',
+    );
     // print('🔵 Chart Area: ${FlavorConfig.instance.chartBaseUrl}');
     return Container(
       width: double.infinity,
