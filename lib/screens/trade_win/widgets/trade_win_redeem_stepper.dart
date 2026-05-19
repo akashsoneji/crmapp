@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/screens/trade_win/trade_win_theme.dart';
 
@@ -9,55 +8,83 @@ class TradeWinRedeemStepper extends StatelessWidget {
 
   const TradeWinRedeemStepper({super.key, required this.currentStep});
 
+  static const _stepCount = 3;
+
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: List.generate(3, (index) {
-        final step = index + 1;
-        final isActive = step == currentStep;
-        final isDone = step < currentStep;
+    return Center(
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (var index = 0; index < _stepCount; index++) ...[
+            if (index > 0) _Connector(completed: index < currentStep),
+            _StepCircle(
+              step: index + 1,
+              isActive: index + 1 == currentStep,
+              isDone: index + 1 < currentStep,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
 
-        return Expanded(
-          child: Row(
-            children: [
-              Container(
-                width: 32.w,
-                height: 32.w,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: isActive || isDone
-                      ? TradeWinTheme.accentFillStrong
-                      : AppColors.icongrey.withValues(alpha: 0.25),
-                  border: (isActive || isDone) && AppColors.isDarkMode
-                      ? Border.all(color: Colors.white.withValues(alpha: 0.25))
-                      : null,
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  '$step',
-                  style: AppTextStyles.subheading.copyWith(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w700,
-                    color: isActive || isDone
-                        ? TradeWinTheme.onAccentFill
-                        : AppColors.textGrey,
-                  ),
-                ),
-              ),
-              if (index < 2)
-                Expanded(
-                  child: Container(
-                    height: 2.h,
-                    margin: EdgeInsets.symmetric(horizontal: 4.w),
-                    color: step < currentStep
-                        ? TradeWinTheme.onAccentFill.withValues(alpha: 0.5)
-                        : AppColors.icongrey.withValues(alpha: 0.25),
-                  ),
-                ),
-            ],
-          ),
-        );
-      }),
+class _StepCircle extends StatelessWidget {
+  final int step;
+  final bool isActive;
+  final bool isDone;
+
+  const _StepCircle({
+    required this.step,
+    required this.isActive,
+    required this.isDone,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final highlighted = isActive || isDone;
+    return Container(
+      width: 28.w,
+      height: 28.w,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: highlighted
+            ? TradeWinTheme.stepperActiveBg
+            : TradeWinTheme.stepperInactiveBg,
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        '$step',
+        style: AppTextStyles.subheading.copyWith(
+          fontSize: 13.sp,
+          fontWeight: FontWeight.w700,
+          color: highlighted
+              ? TradeWinTheme.stepperActiveFg
+              : TradeWinTheme.stepperInactiveFg,
+        ),
+      ),
+    );
+  }
+}
+
+class _Connector extends StatelessWidget {
+  final bool completed;
+
+  const _Connector({required this.completed});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 40.w,
+      height: 2.h,
+      margin: EdgeInsets.symmetric(horizontal: 6.w),
+      decoration: BoxDecoration(
+        color: completed
+            ? TradeWinTheme.stepperLineCompleted
+            : TradeWinTheme.stepperLinePending,
+        borderRadius: BorderRadius.circular(1.r),
+      ),
     );
   }
 }

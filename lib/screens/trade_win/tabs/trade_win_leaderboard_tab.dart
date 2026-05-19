@@ -1,3 +1,4 @@
+import 'package:crm_app/widgets/app_svg_back_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -28,18 +29,13 @@ class _TradeWinLeaderboardTabState extends State<TradeWinLeaderboardTab> {
     return Column(
       children: [
         Padding(
-          padding: EdgeInsets.fromLTRB(8.w, 8.h, 16.w, 0),
+          padding: EdgeInsets.fromLTRB(0.w, 0.h, 0.w, 0),
           child: Row(
             children: [
-              IconButton(
-                onPressed: () => Get.back(),
-                icon: SvgPicture.asset(
-                  'assets/svg/trade/arro_back.svg',
-                  colorFilter: ColorFilter.mode(
-                    AppColors.textPrimary,
-                    BlendMode.srcIn,
-                  ),
-                ),
+              AppSvgBackButton(
+                onPressed: () => Get.back(closeOverlays: true),
+                iconWidth: 30.w,
+                iconHeight: 30.h,
               ),
               Expanded(
                 child: Text(
@@ -50,37 +46,6 @@ class _TradeWinLeaderboardTabState extends State<TradeWinLeaderboardTab> {
               ),
               SizedBox(width: 48.w),
             ],
-          ),
-        ),
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-          child: Container(
-            padding: EdgeInsets.all(4.w),
-            decoration: BoxDecoration(
-              color: AppColors.card,
-              borderRadius: BorderRadius.circular(12.r),
-              border: Border.all(
-                color: AppColors.icongrey.withValues(alpha: 0.15),
-              ),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _SegmentButton(
-                    label: languageService.tr('tw_live_leaderboard'),
-                    selected: _segment == 0,
-                    onTap: () => setState(() => _segment = 0),
-                  ),
-                ),
-                Expanded(
-                  child: _SegmentButton(
-                    label: languageService.tr('tw_top_traders'),
-                    selected: _segment == 1,
-                    onTap: () => setState(() => _segment = 1),
-                  ),
-                ),
-              ],
-            ),
           ),
         ),
         Expanded(
@@ -95,17 +60,22 @@ class _TradeWinLeaderboardTabState extends State<TradeWinLeaderboardTab> {
               );
             }
 
-            final top3 = entries.where((e) => e.rank <= 3).toList()
-              ..sort((a, b) => a.rank.compareTo(b.rank));
+            final top3 =
+                entries.where((e) => e.rank <= 3).toList()
+                  ..sort((a, b) => a.rank.compareTo(b.rank));
             final rest = entries.where((e) => e.rank > 3).toList();
 
             return ListView(
               padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 100.h),
               children: [
-                if (top3.isNotEmpty) _Podium(top3: top3, languageService: languageService),
+                if (top3.isNotEmpty)
+                  _Podium(top3: top3, languageService: languageService),
                 SizedBox(height: 16.h),
                 ...rest.map(
-                  (e) => _LeaderboardRow(entry: e, languageService: languageService),
+                  (e) => _LeaderboardRow(
+                    entry: e,
+                    languageService: languageService,
+                  ),
                 ),
               ],
             );
@@ -137,9 +107,10 @@ class _SegmentButton extends StatelessWidget {
         decoration: BoxDecoration(
           color: selected ? TradeWinTheme.chipSelectedBg : Colors.transparent,
           borderRadius: BorderRadius.circular(10.r),
-          border: selected && AppColors.isDarkMode
-              ? Border.all(color: Colors.white.withValues(alpha: 0.2))
-              : null,
+          border:
+              selected && AppColors.isDarkMode
+                  ? Border.all(color: Colors.white.withValues(alpha: 0.2))
+                  : null,
         ),
         alignment: Alignment.center,
         child: Text(
@@ -147,9 +118,10 @@ class _SegmentButton extends StatelessWidget {
           style: AppTextStyles.subheading.copyWith(
             fontSize: 12.sp,
             fontWeight: FontWeight.w600,
-            color: selected
-                ? TradeWinTheme.chipSelectedFg
-                : TradeWinTheme.chipUnselectedFg,
+            color:
+                selected
+                    ? TradeWinTheme.chipSelectedFg
+                    : TradeWinTheme.chipUnselectedFg,
           ),
         ),
       ),
@@ -247,11 +219,7 @@ class _PodiumColumn extends StatelessWidget {
 
     return Column(
       children: [
-        SvgPicture.asset(
-          medalAsset,
-          height: 32.h,
-          width: 32.w,
-        ),
+        SvgPicture.asset(medalAsset, height: 32.h, width: 32.w),
         SizedBox(height: 4.h),
         Text(
           TradeWinFormat.maskName(entry!.name),
@@ -273,9 +241,10 @@ class _PodiumColumn extends StatelessWidget {
             TradeWinFormat.lotsWithUnit(entry!.lots, lotsLabel),
             style: AppTextStyles.headingblack.copyWith(
               fontSize: 12.sp,
-              color: AppColors.isDarkMode
-                  ? AppColors.textPrimary
-                  : AppColors.brandPrimary,
+              color:
+                  AppColors.isDarkMode
+                      ? AppColors.textPrimary
+                      : AppColors.brandPrimary,
             ),
             textAlign: TextAlign.center,
           ),
@@ -289,10 +258,7 @@ class _LeaderboardRow extends StatelessWidget {
   final TradeWinLeaderboardEntryModel entry;
   final LanguageService languageService;
 
-  const _LeaderboardRow({
-    required this.entry,
-    required this.languageService,
-  });
+  const _LeaderboardRow({required this.entry, required this.languageService});
 
   @override
   Widget build(BuildContext context) {
@@ -303,21 +269,25 @@ class _LeaderboardRow extends StatelessWidget {
       margin: EdgeInsets.only(bottom: 8.h),
       padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
       decoration: BoxDecoration(
-        color: entry.isMe
-            ? AppColors.primary.withValues(alpha: 0.08)
-            : AppColors.card,
+        color:
+            entry.isMe
+                ? AppColors.primary.withValues(alpha: 0.08)
+                : AppColors.card,
         borderRadius: BorderRadius.circular(12.r),
         border: Border.all(
-          color: entry.isMe
-              ? AppColors.primary.withValues(alpha: 0.3)
-              : AppColors.icongrey.withValues(alpha: 0.1),
+          color:
+              entry.isMe
+                  ? AppColors.primary.withValues(alpha: 0.3)
+                  : AppColors.icongrey.withValues(alpha: 0.1),
         ),
       ),
       child: Row(
         children: [
           Text(
             '#${entry.rank}',
-            style: AppTextStyles.subheading.copyWith(fontWeight: FontWeight.w600),
+            style: AppTextStyles.subheading.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
           ),
           SizedBox(width: 12.w),
           Container(

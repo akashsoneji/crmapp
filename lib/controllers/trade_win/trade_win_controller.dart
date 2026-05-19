@@ -11,6 +11,7 @@ class TradeWinController extends GetxController {
   final RxBool moduleEnabled = true.obs;
   final RxString errorMessage = ''.obs;
   final RxString selectedCategory = 'all'.obs;
+  final RxInt mainTabIndex = 0.obs;
 
   final RxList<TradeWinProductModel> products = <TradeWinProductModel>[].obs;
   final Rxn<TradeWinStatsModel> stats = Rxn<TradeWinStatsModel>();
@@ -75,9 +76,8 @@ class TradeWinController extends GetxController {
           productsRaw
               .whereType<Map>()
               .map(
-                (e) => TradeWinProductModel.fromJson(
-                  Map<String, dynamic>.from(e),
-                ),
+                (e) =>
+                    TradeWinProductModel.fromJson(Map<String, dynamic>.from(e)),
               )
               .toList(),
         );
@@ -86,9 +86,10 @@ class TradeWinController extends GetxController {
       }
 
       final statsRaw = data['stats'];
-      stats.value = statsRaw is Map
-          ? TradeWinStatsModel.fromJson(Map<String, dynamic>.from(statsRaw))
-          : null;
+      stats.value =
+          statsRaw is Map
+              ? TradeWinStatsModel.fromJson(Map<String, dynamic>.from(statsRaw))
+              : null;
 
       final pastRaw = data['past_wins'];
       if (pastRaw is List) {
@@ -96,9 +97,8 @@ class TradeWinController extends GetxController {
           pastRaw
               .whereType<Map>()
               .map(
-                (e) => TradeWinPastWinModel.fromJson(
-                  Map<String, dynamic>.from(e),
-                ),
+                (e) =>
+                    TradeWinPastWinModel.fromJson(Map<String, dynamic>.from(e)),
               )
               .toList(),
         );

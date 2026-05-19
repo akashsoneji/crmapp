@@ -26,6 +26,13 @@ class TradeWinStatsModel {
       return 0;
     }
 
+    int toInt(dynamic v) {
+      if (v is int) return v;
+      if (v is num) return v.toInt();
+      if (v is String) return int.tryParse(v) ?? 0;
+      return 0;
+    }
+
     return TradeWinStatsModel(
       totalLots: toDouble(json['total_lots']),
       lifetimeLots: toDouble(json['lifetime_lots']),
@@ -34,7 +41,7 @@ class TradeWinStatsModel {
       lifetimePoints: toDouble(json['lifetime_points']),
       spentPoints: toDouble(json['spent_points']),
       totalPrizeValueWon: toDouble(json['total_prize_value_won']),
-      pastWinsCount: json['past_wins_count'] as int? ?? 0,
+      pastWinsCount: toInt(json['past_wins_count']),
     );
   }
 }

@@ -1,11 +1,12 @@
+import 'package:crm_app/widgets/app_svg_back_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/trade_win/trade_win_controller.dart';
 import 'package:crm_app/models/trade_win/trade_win_product_model.dart';
+import 'package:crm_app/models/trade_win/trade_win_stats_model.dart';
 import 'package:crm_app/routes/app_pages.dart';
 import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/utils/trade_win_format.dart';
@@ -34,6 +35,8 @@ class TradeWinHomeTab extends StatelessWidget {
       }
 
       final stats = controller.stats.value;
+      final selectedCategory = controller.selectedCategory.value;
+      final categories = controller.categories;
 
       return RefreshIndicator(
         color: AppColors.primary,
@@ -43,27 +46,19 @@ class TradeWinHomeTab extends StatelessWidget {
           slivers: [
             SliverToBoxAdapter(
               child: Padding(
-                padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 0),
+                padding: EdgeInsets.fromLTRB(0.w, 0.h, 0.w, 0),
                 child: Row(
                   children: [
-                    IconButton(
-                      onPressed: () => Get.back(),
-                      icon: SvgPicture.asset(
-                        'assets/svg/trade/arro_back.svg',
-                        colorFilter: ColorFilter.mode(
-                          AppColors.textPrimary,
-                          BlendMode.srcIn,
-                        ),
-                      ),
+                    AppSvgBackButton(
+                      onPressed: () => Get.back(closeOverlays: true),
+                      iconWidth: 30.w,
+                      iconHeight: 30.h,
                     ),
                     Expanded(
                       child: Text(
                         languageService.tr('tw_title'),
                         textAlign: TextAlign.center,
-                        style: AppTextStyles.heading.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.primary,
-                        ),
+                        style: AppTextStyles.heading,
                       ),
                     ),
                     SizedBox(width: 48.w),
@@ -73,15 +68,9 @@ class TradeWinHomeTab extends StatelessWidget {
             ),
             SliverToBoxAdapter(
               child: Padding(
-                padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 0),
-                child: _PointsCard(stats: stats, languageService: languageService),
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(16.w, 20.h, 16.w, 8.h),
+                padding: EdgeInsets.only(top: 8.h, bottom: 8.h),
                 child: _OverviewSection(
-                  controller: controller,
+                  stats: stats,
                   languageService: languageService,
                 ),
               ),
@@ -101,69 +90,28 @@ class TradeWinHomeTab extends StatelessWidget {
               ),
             ),
             SliverToBoxAdapter(
-              child: Obx(() {
-                final cats = controller.categories;
-                return SizedBox(
-                  height: 40.h,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    padding: EdgeInsets.symmetric(horizontal: 16.w),
-                    itemCount: cats.length,
-                    separatorBuilder: (_, __) => SizedBox(width: 8.w),
-                    itemBuilder: (context, index) {
-                      final cat = cats[index];
-                      final selected =
-                          controller.selectedCategory.value == cat;
-                      final label = cat == 'all'
-                          ? languageService.tr('tw_all')
-                          : TradeWinFormat.categoryLabel(cat);
-                      return GestureDetector(
-                        onTap: () => controller.selectCategory(cat),
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 16.w,
-                            vertical: 8.h,
-                          ),
-                          decoration: BoxDecoration(
-                            color: selected
-                                ? TradeWinTheme.chipSelectedBg
-                                : TradeWinTheme.chipUnselectedBg,
-                            borderRadius: BorderRadius.circular(20.r),
-                            border: Border.all(
-                              color: selected
-                                  ? TradeWinTheme.chipSelectedBorder
-                                  : TradeWinTheme.chipUnselectedBorder,
-                              width: selected
-                                  ? TradeWinTheme.chipSelectedBorderWidth
-                                  : TradeWinTheme.chipUnselectedBorderWidth,
-                            ),
-                            boxShadow: selected && AppColors.isDarkMode
-                                ? [
-                                    BoxShadow(
-                                      color: Colors.white.withValues(alpha: 0.08),
-                                      blurRadius: 4,
-                                      offset: const Offset(0, 1),
-                                    ),
-                                  ]
-                                : null,
-                          ),
-                          child: Text(
-                            label,
-                            style: TextStyle(
-                              color: selected
-                                  ? TradeWinTheme.chipSelectedFg
-                                  : TradeWinTheme.chipUnselectedFg,
-                              fontWeight:
-                                  selected ? FontWeight.w700 : FontWeight.w500,
-                              fontSize: 13.sp,
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                );
-              }),
+              child: SizedBox(
+                height: 40.h,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: EdgeInsets.symmetric(horizontal: 16.w),
+                  itemCount: categories.length,
+                  separatorBuilder: (_, __) => SizedBox(width: 8.w),
+                  itemBuilder: (context, index) {
+                    final cat = categories[index];
+                    final selected = selectedCategory == cat;
+                    final label =
+                        cat == 'all'
+                            ? languageService.tr('tw_all')
+                            : TradeWinFormat.categoryLabel(cat);
+                    return _CatalogFilterChip(
+                      label: label,
+                      selected: selected,
+                      onTap: () => controller.selectCategory(cat),
+                    );
+                  },
+                ),
+              ),
             ),
             Obx(() {
               final items = controller.filteredProducts;
@@ -231,56 +179,188 @@ class _ModuleDisabled extends StatelessWidget {
   }
 }
 
-class _PointsCard extends StatelessWidget {
-  final dynamic stats;
+class _OverviewSection extends StatelessWidget {
+  final TradeWinStatsModel? stats;
   final LanguageService languageService;
 
-  const _PointsCard({required this.stats, required this.languageService});
+  const _OverviewSection({required this.stats, required this.languageService});
 
   @override
   Widget build(BuildContext context) {
-    final points = stats?.totalPoints ?? 0;
-    final spentLots = stats?.spentLots ?? 0;
+    final s = stats;
+    if (s == null) {
+      return Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16.w),
+        child: Text(
+          languageService.tr('tw_no_data'),
+          style: AppTextStyles.subheading,
+        ),
+      );
+    }
 
-    return Container(
-      padding: EdgeInsets.all(18.w),
-      decoration: BoxDecoration(
-        color: TradeWinTheme.heroCardBg,
-        borderRadius: BorderRadius.circular(16.r),
-        border: TradeWinTheme.heroCardBorder,
+    final cards = [
+      _OverviewCardData(
+        icon: Icons.show_chart_rounded,
+        title: languageService.tr('tw_available_lots'),
+        value: TradeWinFormat.lots(s.totalLots),
+        valueColor: AppColors.green,
+        subtitle: languageService.tr('tw_spendable_volume'),
+        footerLines: [
+          _OverviewFooterLine(
+            prefix: languageService.tr('tw_total_traded_prefix'),
+            value: languageService.tr('tw_lots_amount', {
+              'lots': TradeWinFormat.lots(s.lifetimeLots),
+            }),
+          ),
+          _OverviewFooterLine(
+            prefix: languageService.tr('tw_already_spent_prefix'),
+            value: languageService.tr('tw_lots_amount', {
+              'lots': TradeWinFormat.lots(s.spentLots),
+            }),
+          ),
+        ],
       ),
-      child: Column(
+      _OverviewCardData(
+        icon: Icons.account_balance_wallet_outlined,
+        title: languageService.tr('tw_available_points'),
+        value: TradeWinFormat.pointsValue(s.totalPoints),
+        subtitle: languageService.tr('tw_spendable_balance'),
+      ),
+      _OverviewCardData(
+        icon: Icons.military_tech_outlined,
+        title: languageService.tr('tw_past_wins'),
+        value: '${s.pastWinsCount}',
+        subtitle: languageService.tr('tw_total_redemptions'),
+      ),
+      _OverviewCardData(
+        icon: Icons.emoji_events_outlined,
+        title: languageService.tr('tw_value_won'),
+        value: TradeWinFormat.currency(s.totalPrizeValueWon),
+        subtitle: languageService.tr('tw_total_prize_value'),
+      ),
+    ];
+
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16.w),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.card,
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(color: AppColors.icongrey.withValues(alpha: 0.12)),
+        ),
+        child: Column(
+          children: [
+            for (var i = 0; i < cards.length; i++) ...[
+              _OverviewCompactRow(data: cards[i]),
+              if (i < cards.length - 1)
+                Divider(
+                  height: 1,
+                  indent: 48.w,
+                  endIndent: 12.w,
+                  color: AppColors.icongrey.withValues(alpha: 0.12),
+                ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _OverviewCardData {
+  final IconData icon;
+  final String title;
+  final String value;
+  final String subtitle;
+  final Color? valueColor;
+  final List<_OverviewFooterLine> footerLines;
+
+  const _OverviewCardData({
+    required this.icon,
+    required this.title,
+    required this.value,
+    required this.subtitle,
+    this.valueColor,
+    this.footerLines = const [],
+  });
+}
+
+class _OverviewFooterLine {
+  final String prefix;
+  final String value;
+
+  const _OverviewFooterLine({required this.prefix, required this.value});
+}
+
+class _OverviewCompactRow extends StatelessWidget {
+  final _OverviewCardData data;
+
+  const _OverviewCompactRow({required this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(10.w, 8.h, 12.w, 8.h),
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            languageService.tr('tw_available_points'),
-            style: AppTextStyles.subheading.copyWith(
-              color: TradeWinTheme.onAccentFill.withValues(alpha: 0.85),
-              fontSize: 13.sp,
+          Container(
+            width: 28.w,
+            height: 28.w,
+            decoration: BoxDecoration(
+              color: AppColors.brandPrimary,
+              borderRadius: BorderRadius.circular(6.r),
+            ),
+            child: Icon(
+              data.icon,
+              color: AppColors.onColoredBackground,
+              size: 16.sp,
             ),
           ),
-          SizedBox(height: 8.h),
-          Row(
-            children: [
-              Icon(Icons.star, color: Colors.amber, size: 28.sp),
-              SizedBox(width: 8.w),
-              Text(
-                TradeWinFormat.points(points),
-                style: AppTextStyles.centerbodyHeading.copyWith(
-                  color: TradeWinTheme.onAccentFill,
-                  fontSize: 28.sp,
+          SizedBox(width: 8.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        data.title.toUpperCase(),
+                        style: AppTextStyles.subheading.copyWith(
+                          fontSize: 11.sp,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textGrey,
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      data.value,
+                      style: AppTextStyles.headingblack.copyWith(
+                        fontSize: 18.sp,
+                        fontWeight: FontWeight.w700,
+                        color: data.valueColor ?? AppColors.brandPrimary,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ],
-          ),
-          SizedBox(height: 12.h),
-          Text(
-            languageService.tr('tw_total_spent_claims', {
-              'lots': TradeWinFormat.lots(spentLots),
-            }),
-            style: AppTextStyles.subheading.copyWith(
-              color: TradeWinTheme.onAccentFill.withValues(alpha: 0.75),
-              fontSize: 12.sp,
+                Text(
+                  data.subtitle,
+                  style: AppTextStyles.subheading.copyWith(
+                    fontSize: 12.sp,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                if (data.footerLines.isNotEmpty) ...[
+                  SizedBox(height: 4.h),
+                  for (var i = 0; i < data.footerLines.length; i++) ...[
+                    _OverviewFooterText(line: data.footerLines[i]),
+                    if (i < data.footerLines.length - 1) SizedBox(height: 2.h),
+                  ],
+                ],
+              ],
             ),
           ),
         ],
@@ -289,95 +369,80 @@ class _PointsCard extends StatelessWidget {
   }
 }
 
-class _OverviewSection extends StatelessWidget {
-  final TradeWinController controller;
-  final LanguageService languageService;
+class _OverviewFooterText extends StatelessWidget {
+  final _OverviewFooterLine line;
 
-  const _OverviewSection({
-    required this.controller,
-    required this.languageService,
-  });
+  const _OverviewFooterText({required this.line});
 
   @override
   Widget build(BuildContext context) {
-    final stats = controller.stats.value;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          languageService.tr('tw_overview'),
-          style: AppTextStyles.headingblack,
+    return RichText(
+      text: TextSpan(
+        style: AppTextStyles.subheading.copyWith(
+          fontSize: 11.sp,
+          color: AppColors.textGrey,
         ),
-        SizedBox(height: 12.h),
-        GridView.count(
-          crossAxisCount: 2,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          mainAxisSpacing: 10.h,
-          crossAxisSpacing: 10.w,
-          childAspectRatio: 1.6,
-          children: [
-            _OverviewTile(
-              value: TradeWinFormat.lots(stats?.totalLots ?? 0),
-              label: languageService.tr('tw_total_lots'),
-              valueColor: AppColors.quickActionBlue,
+        children: [
+          TextSpan(text: line.prefix),
+          TextSpan(
+            text: ' ${line.value}',
+            style: TextStyle(
+              fontSize: 11.sp,
+              fontWeight: FontWeight.w600,
+              color: AppColors.brandPrimary,
             ),
-            _OverviewTile(
-              value: '${stats?.pastWinsCount ?? 0}',
-              label: languageService.tr('tw_past_wins'),
-              valueColor: AppColors.green,
-            ),
-            _OverviewTile(
-              value: TradeWinFormat.currency(stats?.totalPrizeValueWon ?? 0),
-              label: languageService.tr('tw_total_prize'),
-              valueColor: AppColors.quickActionOrange,
-            ),
-            _OverviewTile(
-              value: '${controller.pastWins.length}',
-              label: languageService.tr('tw_redemptions'),
-              valueColor: AppColors.quickActionBlue,
-            ),
-          ],
-        ),
-      ],
+          ),
+        ],
+      ),
     );
   }
 }
 
-class _OverviewTile extends StatelessWidget {
-  final String value;
+class _CatalogInfoChip extends StatelessWidget {
   final String label;
-  final Color valueColor;
+  final String value;
+  final Color bg;
+  final Color labelColor;
 
-  const _OverviewTile({
-    required this.value,
+  const _CatalogInfoChip({
     required this.label,
-    required this.valueColor,
+    required this.value,
+    required this.bg,
+    required this.labelColor,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(14.w),
+      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 5.h),
       decoration: BoxDecoration(
-        color: AppColors.card,
-        borderRadius: BorderRadius.circular(14.r),
-        border: Border.all(color: AppColors.icongrey.withValues(alpha: 0.12)),
+        color: bg,
+        borderRadius: BorderRadius.circular(8.r),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
+          Text(
+            label.toUpperCase(),
+            style: TextStyle(
+              fontSize: 7.sp,
+              fontWeight: FontWeight.w700,
+              color: labelColor,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          SizedBox(height: 2.h),
           Text(
             value,
             style: AppTextStyles.headingblack.copyWith(
-              fontSize: 20.sp,
-              color: valueColor,
+              fontSize: 11.sp,
+              fontWeight: FontWeight.w700,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
-          SizedBox(height: 4.h),
-          Text(label, style: AppTextStyles.subheading.copyWith(fontSize: 12.sp)),
         ],
       ),
     );
@@ -449,41 +514,35 @@ class _ProductCatalogCard extends StatelessWidget {
                         ),
                       ],
                     ),
-                    SizedBox(height: 8.h),
+                    SizedBox(height: 6.h),
                     Row(
                       children: [
-                        Icon(Icons.star, size: 14.sp, color: Colors.amber),
-                        SizedBox(width: 4.w),
-                        Text(
-                          TradeWinFormat.points(product.requiredPoints),
-                          style: AppTextStyles.subheading.copyWith(
-                            fontWeight: FontWeight.w600,
+                        Expanded(
+                          child: _CatalogInfoChip(
+                            label: languageService.tr('tw_point_cost'),
+                            value: TradeWinFormat.points(
+                              product.requiredPoints,
+                            ),
+                            bg: AppColors.warningBg,
+                            labelColor: AppColors.warningText,
                           ),
                         ),
-                        SizedBox(width: 8.w),
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 8.w,
-                            vertical: 3.h,
-                          ),
-                          decoration: BoxDecoration(
-                            color: TradeWinTheme.accentFill,
-                            borderRadius: BorderRadius.circular(12.r),
-                            border: AppColors.isDarkMode
-                                ? Border.all(
-                                    color: Colors.white.withValues(alpha: 0.15),
-                                  )
-                                : null,
-                          ),
-                          child: Text(
-                            languageService.tr('tw_lot_required_chip', {
+                        SizedBox(width: 6.w),
+                        Expanded(
+                          child: _CatalogInfoChip(
+                            label: languageService.tr('tw_lot_required'),
+                            value: languageService.tr('tw_lot_required_chip', {
                               'lots': TradeWinFormat.lots(product.requiredLots),
                             }),
-                            style: TextStyle(
-                              fontSize: 11.sp,
-                              color: TradeWinTheme.onAccentFill,
-                              fontWeight: FontWeight.w600,
-                            ),
+                            bg:
+                                AppColors.isDarkMode
+                                    ? AppColors.brandPrimary.withValues(
+                                      alpha: 0.2,
+                                    )
+                                    : AppColors.brandPrimary.withValues(
+                                      alpha: 0.1,
+                                    ),
+                            labelColor: TradeWinTheme.sectionTitle,
                           ),
                         ),
                       ],
@@ -523,11 +582,12 @@ class _ProductCatalogCard extends StatelessWidget {
                 padding: EdgeInsets.symmetric(vertical: 12.h),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12.r),
-                  side: AppColors.isDarkMode
-                      ? BorderSide(
-                          color: Colors.white.withValues(alpha: 0.2),
-                        )
-                      : BorderSide.none,
+                  side:
+                      AppColors.isDarkMode
+                          ? BorderSide(
+                            color: Colors.white.withValues(alpha: 0.2),
+                          )
+                          : BorderSide.none,
                 ),
               ),
               child: Text(
@@ -547,15 +607,67 @@ class _ProductCatalogCard extends StatelessWidget {
 
   void _onRedeem(BuildContext context) {
     if (!product.canRedeem) {
-      CustomToastService.show(
+      CustomToastService.showWarning(
         message: languageService.tr('tw_insufficient_eligibility'),
-        type: ToastType.warning,
       );
       return;
     }
     Get.toNamed(
       AppPages.TRADE_WIN_PRODUCT_DETAIL,
       arguments: {'productId': product.id},
+    );
+  }
+}
+
+class _CatalogFilterChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _CatalogFilterChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20.r),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeInOut,
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+          decoration: BoxDecoration(
+            color:
+                selected
+                    ? TradeWinTheme.catalogChipSelectedBg
+                    : TradeWinTheme.catalogChipUnselectedBg,
+            borderRadius: BorderRadius.circular(20.r),
+            border: Border.all(
+              color:
+                  selected
+                      ? TradeWinTheme.catalogChipSelectedBorder
+                      : TradeWinTheme.catalogChipUnselectedBorder,
+              width: selected ? 1.5 : 1,
+            ),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              color:
+                  selected
+                      ? TradeWinTheme.catalogChipSelectedFg
+                      : TradeWinTheme.catalogChipUnselectedFg,
+              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+              fontSize: 13.sp,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

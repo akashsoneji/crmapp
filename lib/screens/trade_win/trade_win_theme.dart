@@ -26,6 +26,32 @@ abstract final class TradeWinTheme {
   static Color get onAccentFill =>
       AppColors.isDarkMode ? AppColors.textPrimary : AppColors.onColoredBackground;
 
+  /// Category filter chips — clear selected vs unselected in light & dark.
+  static Color get catalogChipSelectedBg =>
+      AppColors.isDarkMode
+          ? Colors.white.withValues(alpha: 0.1)
+          : AppColors.brandPrimary;
+
+  static Color get catalogChipSelectedFg =>
+      AppColors.isDarkMode ? Colors.white : AppColors.onColoredBackground;
+
+  static Color get catalogChipSelectedBorder =>
+      AppColors.isDarkMode
+          ? Colors.white.withValues(alpha: 0.1)
+          : AppColors.brandPrimary;
+
+  static Color get catalogChipUnselectedBg =>
+      AppColors.isDarkMode
+          ? Colors.transparent
+          : AppColors.icongrey.withValues(alpha: 0.12);
+
+  static Color get catalogChipUnselectedFg => AppColors.textPrimary;
+
+  static Color get catalogChipUnselectedBorder =>
+      AppColors.isDarkMode
+          ? AppColors.icongrey.withValues(alpha: 0.45)
+          : AppColors.icongrey.withValues(alpha: 0.35);
+
   static Color get chipSelectedBg =>
       AppColors.isDarkMode
           ? Colors.white.withValues(alpha: 0.28)
@@ -58,4 +84,22 @@ abstract final class TradeWinTheme {
       AppColors.isDarkMode
           ? Border.all(color: Colors.white.withValues(alpha: 0.18))
           : null;
+
+  /// Redeem stepper — always brand-colored (never white lines in dark mode).
+  static Color get stepperActiveBg => AppColors.brandPrimary;
+
+  static Color get stepperInactiveBg =>
+      AppColors.icongrey.withValues(alpha: AppColors.isDarkMode ? 0.4 : 0.28);
+
+  static Color get stepperActiveFg => AppColors.onColoredBackground;
+
+  static Color get stepperInactiveFg => AppColors.textGrey;
+
+  static Color get stepperLineCompleted => AppColors.brandPrimary;
+
+  static Color get stepperLinePending =>
+      AppColors.icongrey.withValues(alpha: AppColors.isDarkMode ? 0.4 : 0.28);
+
+  /// Section headings (avoid [AppColors.primary] which is white in dark mode).
+  static Color get sectionTitle => AppColors.brandPrimary;
 }
