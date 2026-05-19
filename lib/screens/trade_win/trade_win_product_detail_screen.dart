@@ -10,7 +10,6 @@ import 'package:crm_app/routes/app_pages.dart';
 import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/utils/trade_win_format.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
-import 'package:crm_app/screens/trade_win/trade_win_theme.dart';
 import 'package:crm_app/screens/trade_win/widgets/trade_win_product_image.dart';
 
 class TradeWinProductDetailScreen extends StatefulWidget {
@@ -36,6 +35,43 @@ class _TradeWinProductDetailScreenState
       _product = ctrl.productById(productId);
     }
     _product ??= args?['product'] as TradeWinProductModel?;
+
+    // Always use latest parsed product from controller (avoids stale/hot-reload instances).
+    final id = _product?.id;
+    if (id != null) {
+      final fresh = ctrl.productById(id);
+      if (fresh != null) _product = fresh;
+    }
+  }
+
+  int get _maxQty {
+    final product = _product;
+    if (product == null || product.stock <= 0) return 1;
+    return product.stock;
+  }
+
+  bool get _canRedeem => _product?.canRedeemQuantity(_quantity) ?? false;
+
+  String _redeemButtonLabel(LanguageService languageService) {
+    final product = _product!;
+    if (product.stock <= 0) {
+      return languageService.tr('tw_out_of_stock');
+    }
+    if (_canRedeem) {
+      return languageService.tr('tw_redeem_now');
+    }
+    final pointsShort = product.pointsShortfallFor(_quantity);
+    if (pointsShort > 0) {
+      return languageService.tr('tw_more_points_needed', {
+        'count': '$pointsShort',
+      });
+    }
+    final lotsShort = product.lotsShortfallFor(_quantity);
+    if (lotsShort > 0) {
+      final lotsText = TradeWinFormat.lots(lotsShort);
+      return languageService.tr('tw_more_lots_needed', {'count': lotsText});
+    }
+    return languageService.tr('tw_insufficient_eligibility');
   }
 
   @override
@@ -50,7 +86,10 @@ class _TradeWinProductDetailScreenState
             onPressed: () => Get.back(),
             icon: SvgPicture.asset(
               'assets/svg/trade/arro_back.svg',
-              colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn),
+              colorFilter: ColorFilter.mode(
+                AppColors.textPrimary,
+                BlendMode.srcIn,
+              ),
             ),
           ),
         ),
@@ -58,7 +97,9 @@ class _TradeWinProductDetailScreenState
       );
     }
 
-    final maxQty = product.stock > 0 ? product.stock : 1;
+    final progress = product.progressFraction;
+    final percent = (progress * 100).round();
+    final maxQty = _maxQty;
 
     return Scaffold(
       backgroundColor: AppColors.tradeBackgroundCenterColor,
@@ -75,193 +116,242 @@ class _TradeWinProductDetailScreenState
           onPressed: () => Get.back(),
           icon: SvgPicture.asset(
             'assets/svg/trade/arro_back.svg',
-            colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn),
+            colorFilter: ColorFilter.mode(
+              AppColors.textPrimary,
+              BlendMode.srcIn,
+            ),
           ),
         ),
       ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 100.h),
+        padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 24.h),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             TradeWinProductImage(
               imagePath: product.imagePath,
               width: double.infinity,
-              height: 200.h,
-              borderRadius: BorderRadius.circular(16.r),
+              height: 120.h,
+              borderRadius: BorderRadius.circular(12.r),
             ),
             SizedBox(height: 8.h),
-            Align(
-              alignment: Alignment.centerRight,
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
-                decoration: BoxDecoration(
-                  color: AppColors.green.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(8.r),
-                ),
-                child: Text(
-                  TradeWinFormat.categoryTag(product.category),
-                  style: TextStyle(
-                    fontSize: 10.sp,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.green,
-                  ),
-                ),
-              ),
-            ),
-            SizedBox(height: 8.h),
-            Text(product.name, style: AppTextStyles.centerbodyHeading),
-            SizedBox(height: 16.h),
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  child: _InfoCard(
-                    label: languageService.tr('tw_point_cost'),
-                    value: TradeWinFormat.points(product.requiredPoints),
-                    sub: languageService.tr('tw_available_balance'),
-                    bg: AppColors.warningBg,
-                    labelColor: AppColors.warningText,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        product.name,
+                        style: AppTextStyles.headingblack.copyWith(
+                          fontSize: 17.sp,
+                        ),
+                      ),
+                      if (product.description.isNotEmpty) ...[
+                        SizedBox(height: 2.h),
+                        Text(
+                          product.description,
+                          style: AppTextStyles.subheading.copyWith(
+                            fontSize: 12.sp,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ],
                   ),
                 ),
-                SizedBox(width: 10.w),
-                Expanded(
-                  child: _InfoCard(
-                    label: languageService.tr('tw_lot_required'),
-                    value: languageService.tr('tw_lot_required_chip', {
-                      'lots': TradeWinFormat.lots(product.requiredLots),
-                    }),
-                    sub: languageService.tr('tw_closed_trades_only'),
-                    bg: TradeWinTheme.accentFill,
-                    labelColor: TradeWinTheme.onAccentFill,
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                  decoration: BoxDecoration(
+                    color: AppColors.green.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(6.r),
+                  ),
+                  child: Text(
+                    TradeWinFormat.categoryTag(product.category),
+                    style: TextStyle(
+                      fontSize: 9.sp,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.green,
+                    ),
                   ),
                 ),
               ],
             ),
-            SizedBox(height: 16.h),
+            SizedBox(height: 10.h),
             Container(
+              width: double.infinity,
+              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
               decoration: BoxDecoration(
-                color: AppColors.card,
-                borderRadius: BorderRadius.circular(14.r),
-                border: Border.all(color: AppColors.icongrey.withValues(alpha: 0.12)),
+                color: AppColors.isDarkMode
+                    ? AppColors.brandPrimary.withValues(alpha: 0.12)
+                    : AppColors.brandPrimary.withValues(alpha: 0.06),
+                borderRadius: BorderRadius.circular(10.r),
+                border: Border.all(
+                  color: AppColors.brandPrimary.withValues(alpha: 0.25),
+                ),
               ),
               child: Column(
                 children: [
-                  _Row(
+                  _EligibilityRow(
+                    label: languageService.tr('tw_allowed_groups'),
+                    value: product.displayAllowedGroups,
+                  ),
+                  _eligibilityDivider(),
+                  _EligibilityRow(
+                    label: languageService.tr('tw_allowed_symbols'),
+                    value: product.displayAllowedSymbols,
+                  ),
+                  _eligibilityDivider(),
+                  _EligibilityRow(
                     label: languageService.tr('tw_your_available_lots'),
                     value: TradeWinFormat.lots(product.availableLots),
                     valueColor: AppColors.green,
                   ),
-                  Divider(height: 1, color: AppColors.icongrey.withValues(alpha: 0.15)),
-                  _Row(
+                  _eligibilityDivider(),
+                  _EligibilityRow(
                     label: languageService.tr('tw_your_available_points'),
                     value: TradeWinFormat.points(product.calculatedPoints),
                     valueColor: AppColors.green,
                   ),
-                  Divider(height: 1, color: AppColors.icongrey.withValues(alpha: 0.15)),
-                  _Row(
-                    label: languageService.tr('tw_stock_left'),
+                ],
+              ),
+            ),
+            SizedBox(height: 10.h),
+            Row(
+              children: [
+                Expanded(
+                  child: _MetaLine(
+                    label: languageService.tr('tw_value_label'),
+                    value: TradeWinFormat.currency(product.prizeValue),
+                  ),
+                ),
+                Expanded(
+                  child: _MetaLine(
+                    label: languageService.tr('tw_stock_label'),
                     value: languageService.tr('tw_stock_count', {
                       'count': '${product.stock}',
                     }),
                     valueColor: AppColors.quickActionOrange,
+                    alignEnd: true,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-            SizedBox(height: 16.h),
-            _Row(
-              label: languageService.tr('tw_product_value'),
-              value: TradeWinFormat.currency(product.prizeValue),
-            ),
-            SizedBox(height: 8.h),
-            _Row(
-              label: languageService.tr('tw_claimed'),
+            SizedBox(height: 4.h),
+            _MetaLine(
+              label: languageService.tr('tw_claimed_label'),
               value: languageService.tr('tw_claimed_times', {
                 'count': '${product.claimsCount}',
               }),
             ),
-            SizedBox(height: 20.h),
-            Text(
-              languageService.tr('tw_about_product'),
-              style: AppTextStyles.headingblack,
+            SizedBox(height: 12.h),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  languageService.tr('tw_quantity'),
+                  style: AppTextStyles.headingblack.copyWith(fontSize: 14.sp),
+                ),
+                Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.card,
+                    border: Border.all(
+                      color: AppColors.brandPrimary.withValues(alpha: 0.2),
+                    ),
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _QtyButton(
+                        icon: Icons.remove,
+                        enabled: _quantity > 1,
+                        onTap: () => setState(() => _quantity--),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 12.w),
+                        child: Text(
+                          '$_quantity',
+                          style: AppTextStyles.headingblack.copyWith(
+                            fontSize: 15.sp,
+                          ),
+                        ),
+                      ),
+                      _QtyButton(
+                        icon: Icons.add,
+                        enabled: _quantity < maxQty,
+                        onTap: () => setState(() => _quantity++),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-            SizedBox(height: 8.h),
+            SizedBox(height: 12.h),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4.r),
+              child: LinearProgressIndicator(
+                value: progress,
+                minHeight: 6.h,
+                backgroundColor: AppColors.brandPrimary.withValues(alpha: 0.15),
+                color: AppColors.brandPrimary,
+              ),
+            ),
+            SizedBox(height: 6.h),
             Text(
-              product.description.isNotEmpty
-                  ? product.description
-                  : languageService.tr('tw_no_description'),
-              style: AppTextStyles.subheading,
+              languageService.tr('tw_progress_lots', {
+                'current': TradeWinFormat.lots(product.availableLots),
+                'required': TradeWinFormat.lots(product.requiredLots),
+                'percent': '$percent',
+              }),
+              style: AppTextStyles.subheading.copyWith(fontSize: 12.sp),
+            ),
+            SizedBox(height: 16.h),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _canRedeem
+                    ? () => _redeem(product, languageService)
+                    : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _canRedeem
+                      ? AppColors.brandPrimary
+                      : AppColors.icongrey.withValues(alpha: 0.35),
+                  foregroundColor: AppColors.onColoredBackground,
+                  disabledBackgroundColor:
+                      AppColors.icongrey.withValues(alpha: 0.35),
+                  disabledForegroundColor: AppColors.textGrey,
+                  padding: EdgeInsets.symmetric(vertical: 14.h),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10.r),
+                  ),
+                ),
+                child: Text(
+                  _redeemButtonLabel(languageService),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14.sp,
+                  ),
+                ),
+              ),
             ),
           ],
-        ),
-      ),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 16.h),
-          child: Row(
-            children: [
-              Container(
-                decoration: BoxDecoration(
-                  border: Border.all(color: AppColors.icongrey.withValues(alpha: 0.3)),
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
-                child: Row(
-                  children: [
-                    IconButton(
-                      onPressed: _quantity > 1
-                          ? () => setState(() => _quantity--)
-                          : null,
-                      icon: Icon(Icons.remove, color: TradeWinTheme.onAccentFill),
-                    ),
-                    Text('$_quantity', style: AppTextStyles.headingblack),
-                    IconButton(
-                      onPressed: _quantity < maxQty
-                          ? () => setState(() => _quantity++)
-                          : null,
-                      icon: Icon(Icons.add, color: TradeWinTheme.onAccentFill),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(width: 12.w),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () => _redeem(product, languageService),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: TradeWinTheme.accentFill,
-                    foregroundColor: TradeWinTheme.onAccentFill,
-                    padding: EdgeInsets.symmetric(vertical: 14.h),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.r),
-                      side: AppColors.isDarkMode
-                          ? BorderSide(
-                              color: Colors.white.withValues(alpha: 0.2),
-                            )
-                          : BorderSide.none,
-                    ),
-                  ),
-                  child: Text(
-                    languageService.tr('tw_redeem_now'),
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 15.sp,
-                      color: TradeWinTheme.onAccentFill,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );
   }
 
+  Widget _eligibilityDivider() => Divider(
+        height: 1,
+        color: AppColors.brandPrimary.withValues(alpha: 0.12),
+      );
+
   void _redeem(TradeWinProductModel product, LanguageService languageService) {
-    if (!product.canRedeem) {
-      CustomToastService.show(
-        message: languageService.tr('tw_insufficient_eligibility'),
-        type: ToastType.warning,
+    if (!product.canRedeemQuantity(_quantity)) {
+      CustomToastService.showWarning(
+        message: _redeemButtonLabel(languageService),
       );
       return;
     }
@@ -272,78 +362,112 @@ class _TradeWinProductDetailScreenState
   }
 }
 
-class _InfoCard extends StatelessWidget {
+class _EligibilityRow extends StatelessWidget {
   final String label;
   final String value;
-  final String sub;
-  final Color bg;
-  final Color labelColor;
+  final Color? valueColor;
 
-  const _InfoCard({
+  const _EligibilityRow({
     required this.label,
     required this.value,
-    required this.sub,
-    required this.bg,
-    required this.labelColor,
+    this.valueColor,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.all(12.w),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(12.r),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 8.h),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label.toUpperCase(),
-            style: TextStyle(
-              fontSize: 10.sp,
-              fontWeight: FontWeight.w700,
-              color: labelColor,
+          Expanded(
+            child: Text(
+              label,
+              style: AppTextStyles.subheading.copyWith(
+                fontSize: 12.sp,
+                color: AppColors.brandPrimary,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
-          SizedBox(height: 6.h),
-          Text(value, style: AppTextStyles.headingblack.copyWith(fontSize: 18.sp)),
-          SizedBox(height: 4.h),
-          Text(sub, style: AppTextStyles.subheading.copyWith(fontSize: 11.sp)),
+          Text(
+            value,
+            style: AppTextStyles.headingblack.copyWith(
+              fontSize: 13.sp,
+              fontWeight: FontWeight.w600,
+              color: valueColor ?? AppColors.textSecondary,
+            ),
+          ),
         ],
       ),
     );
   }
 }
 
-class _Row extends StatelessWidget {
+class _MetaLine extends StatelessWidget {
   final String label;
   final String value;
   final Color? valueColor;
+  final bool alignEnd;
 
-  const _Row({required this.label, required this.value, this.valueColor});
+  const _MetaLine({
+    required this.label,
+    required this.value,
+    this.valueColor,
+    this.alignEnd = false,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return RichText(
+      textAlign: alignEnd ? TextAlign.end : TextAlign.start,
+      text: TextSpan(
+        style: AppTextStyles.subheading.copyWith(
+          fontSize: 12.sp,
+          color: AppColors.textSecondary,
+        ),
         children: [
-          Text(
-            label,
-            style: AppTextStyles.label.copyWith(
-              color: valueColor == null ? AppColors.primary : AppColors.textPrimary,
-            ),
-          ),
-          Text(
-            value,
-            style: AppTextStyles.headingblack.copyWith(
-              fontSize: 14.sp,
+          TextSpan(text: label),
+          TextSpan(
+            text: ' $value',
+            style: TextStyle(
+              fontSize: 12.sp,
+              fontWeight: FontWeight.w700,
               color: valueColor ?? AppColors.textPrimary,
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _QtyButton extends StatelessWidget {
+  final IconData icon;
+  final bool enabled;
+  final VoidCallback onTap;
+
+  const _QtyButton({
+    required this.icon,
+    required this.enabled,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.brandPrimary.withValues(alpha: 0.08),
+      child: InkWell(
+        onTap: enabled ? onTap : null,
+        child: SizedBox(
+          width: 36.w,
+          height: 36.h,
+          child: Icon(
+            icon,
+            size: 18.sp,
+            color: enabled ? AppColors.brandPrimary : AppColors.textGrey,
+          ),
+        ),
       ),
     );
   }

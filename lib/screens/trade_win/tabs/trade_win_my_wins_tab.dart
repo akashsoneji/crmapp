@@ -1,3 +1,4 @@
+import 'package:crm_app/widgets/app_svg_back_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
@@ -23,18 +24,13 @@ class TradeWinMyWinsTab extends StatelessWidget {
     return Column(
       children: [
         Padding(
-          padding: EdgeInsets.fromLTRB(8.w, 8.h, 16.w, 0),
+          padding: EdgeInsets.fromLTRB(0.w, 0.h, 0.w, 0),
           child: Row(
             children: [
-              IconButton(
-                onPressed: () => Get.back(),
-                icon: SvgPicture.asset(
-                  'assets/svg/trade/arro_back.svg',
-                  colorFilter: ColorFilter.mode(
-                    AppColors.textPrimary,
-                    BlendMode.srcIn,
-                  ),
-                ),
+              AppSvgBackButton(
+                onPressed: () => Get.back(closeOverlays: true),
+                iconWidth: 30.w,
+                iconHeight: 30.h,
               ),
               Expanded(
                 child: Text(
@@ -63,10 +59,11 @@ class TradeWinMyWinsTab extends StatelessWidget {
               padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 100.h),
               itemCount: wins.length,
               separatorBuilder: (_, __) => SizedBox(height: 12.h),
-              itemBuilder: (context, index) => _PastWinCard(
-                win: wins[index],
-                languageService: languageService,
-              ),
+              itemBuilder:
+                  (context, index) => _PastWinCard(
+                    win: wins[index],
+                    languageService: languageService,
+                  ),
             );
           }),
         ),
@@ -140,12 +137,16 @@ class _PastWinCard extends StatelessWidget {
             '${languageService.tr('tw_submitted')}: ${win.claimDate}',
             style: AppTextStyles.subheading.copyWith(fontSize: 12.sp),
           ),
-          Divider(height: 20.h, color: AppColors.icongrey.withValues(alpha: 0.2)),
+          Divider(
+            height: 20.h,
+            color: AppColors.icongrey.withValues(alpha: 0.2),
+          ),
           InkWell(
-            onTap: () => Get.toNamed(
-              AppPages.TRADE_WIN_PAST_WIN_DETAIL,
-              arguments: {'win': win},
-            ),
+            onTap:
+                () => Get.toNamed(
+                  AppPages.TRADE_WIN_PAST_WIN_DETAIL,
+                  arguments: {'win': win},
+                ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -156,7 +157,11 @@ class _PastWinCard extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                Icon(Icons.chevron_right, color: AppColors.primary, size: 20.sp),
+                Icon(
+                  Icons.chevron_right,
+                  color: AppColors.primary,
+                  size: 20.sp,
+                ),
               ],
             ),
           ),

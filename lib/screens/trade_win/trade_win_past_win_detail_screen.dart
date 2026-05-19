@@ -1,3 +1,4 @@
+import 'package:crm_app/widgets/app_svg_back_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
@@ -37,12 +38,10 @@ class TradeWinPastWinDetailScreen extends StatelessWidget {
           languageService.tr('tw_win_details'),
           style: AppTextStyles.heading,
         ),
-        leading: IconButton(
-          onPressed: () => Get.back(),
-          icon: SvgPicture.asset(
-            'assets/svg/trade/arro_back.svg',
-            colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn),
-          ),
+        leading: AppSvgBackButton(
+          onPressed: () => Get.back(closeOverlays: true),
+          iconWidth: 30.w,
+          iconHeight: 30.h,
         ),
       ),
       body: SingleChildScrollView(
@@ -55,7 +54,9 @@ class TradeWinPastWinDetailScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.card,
                 borderRadius: BorderRadius.circular(16.r),
-                border: Border.all(color: AppColors.icongrey.withValues(alpha: 0.12)),
+                border: Border.all(
+                  color: AppColors.icongrey.withValues(alpha: 0.12),
+                ),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -70,7 +71,10 @@ class TradeWinPastWinDetailScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(win.productName, style: AppTextStyles.headingblack),
+                        Text(
+                          win.productName,
+                          style: AppTextStyles.headingblack,
+                        ),
                         SizedBox(height: 4.h),
                         Text(
                           TradeWinFormat.categoryLabel(win.category),
@@ -86,7 +90,9 @@ class TradeWinPastWinDetailScreen extends StatelessWidget {
                         SizedBox(height: 8.h),
                         Text(
                           languageService.tr('tw_submitted'),
-                          style: AppTextStyles.subheading.copyWith(fontSize: 12.sp),
+                          style: AppTextStyles.subheading.copyWith(
+                            fontSize: 12.sp,
+                          ),
                         ),
                         TradeWinStatusBadge(status: win.status),
                       ],
@@ -105,7 +111,9 @@ class TradeWinPastWinDetailScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.card,
                 borderRadius: BorderRadius.circular(16.r),
-                border: Border.all(color: AppColors.icongrey.withValues(alpha: 0.12)),
+                border: Border.all(
+                  color: AppColors.icongrey.withValues(alpha: 0.12),
+                ),
               ),
               child: Column(
                 children: [

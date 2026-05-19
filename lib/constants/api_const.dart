@@ -115,6 +115,7 @@ class ApiConstants {
 
   // Trade & Win APIs
   static const String tradeWinProducts = 'v1/user/trade-win/products';
+  static const String tradeWinClaim = 'v1/user/trade-win/claim';
 
   // Copy Trading APIs
   // User (authenticated) endpoints

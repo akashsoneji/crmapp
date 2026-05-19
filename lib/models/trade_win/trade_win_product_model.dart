@@ -13,6 +13,8 @@ class TradeWinProductModel {
   final double eligibleLots;
   final double availableLots;
   final double calculatedPoints;
+  final String? allowedGroups;
+  final String? allowedSymbols;
 
   const TradeWinProductModel({
     required this.id,
@@ -29,7 +31,20 @@ class TradeWinProductModel {
     required this.eligibleLots,
     required this.availableLots,
     required this.calculatedPoints,
+    this.allowedGroups,
+    this.allowedSymbols,
   });
+
+  String get displayAllowedGroups =>
+      _nonEmptyOrAll(allowedGroups);
+
+  String get displayAllowedSymbols =>
+      _nonEmptyOrAll(allowedSymbols);
+
+  static String _nonEmptyOrAll(String? value) {
+    final trimmed = value?.trim() ?? '';
+    return trimmed.isEmpty ? 'All' : trimmed;
+  }
 
   factory TradeWinProductModel.fromJson(Map<String, dynamic> json) {
     double toDouble(dynamic v, [double fallback = 0]) {
@@ -53,16 +68,63 @@ class TradeWinProductModel {
       eligibleLots: toDouble(json['eligible_lots']),
       availableLots: toDouble(json['available_lots']),
       calculatedPoints: toDouble(json['calculated_points']),
+      allowedGroups: _formatAllowed(json['allowed_groups']),
+      allowedSymbols: _formatAllowed(json['allowed_symbols']),
     );
+  }
+
+  static String? _formatAllowed(dynamic value) {
+    if (value == null) return null;
+    if (value is String) {
+      final trimmed = value.trim();
+      return trimmed.isEmpty ? null : trimmed;
+    }
+    if (value is List) {
+      if (value.isEmpty) return null;
+      final items = value
+          .map((e) => e?.toString().trim() ?? '')
+          .where((e) => e.isNotEmpty)
+          .toList();
+      return items.isEmpty ? null : items.join(', ');
+    }
+    if (value is Map) {
+      if (value.isEmpty) return null;
+      final items = value.entries
+          .map((e) => e.value?.toString().trim() ?? '')
+          .where((e) => e.isNotEmpty)
+          .toList();
+      return items.isEmpty ? null : items.join(', ');
+    }
+    final text = value.toString().trim();
+    return text.isEmpty ? null : text;
   }
 
   bool get isActive => status.toLowerCase() == 'active';
 
-  bool get canRedeem =>
-      isActive &&
-      stock > 0 &&
-      availableLots >= requiredLots &&
-      calculatedPoints >= requiredPoints;
+  double pointsNeededFor(int quantity) => requiredPoints * quantity;
+
+  double lotsNeededFor(int quantity) => requiredLots * quantity;
+
+  bool canRedeemQuantity(int quantity) {
+    if (!isActive || quantity < 1 || stock < quantity) return false;
+    return availableLots >= lotsNeededFor(quantity) &&
+        calculatedPoints >= pointsNeededFor(quantity);
+  }
+
+  bool get canRedeem => canRedeemQuantity(1);
+
+  int pointsShortfallFor(int quantity) {
+    final needed = pointsNeededFor(quantity);
+    final diff = needed - calculatedPoints;
+    if (diff <= 0) return 0;
+    return diff.ceil();
+  }
+
+  double lotsShortfallFor(int quantity) {
+    final needed = lotsNeededFor(quantity);
+    final diff = needed - availableLots;
+    return diff > 0 ? diff : 0;
+  }
 
   double get progressFraction {
     if (requiredLots <= 0) return 0;

@@ -14,7 +14,7 @@ class TradeWinMainScreen extends StatefulWidget {
 }
 
 class _TradeWinMainScreenState extends State<TradeWinMainScreen> {
-  final ValueNotifier<int> _currentIndex = ValueNotifier<int>(0);
+  late final TradeWinController _controller;
 
   final List<Widget> _tabs = const [
     TradeWinHomeTab(),
@@ -28,12 +28,7 @@ class _TradeWinMainScreenState extends State<TradeWinMainScreen> {
     if (!Get.isRegistered<TradeWinController>()) {
       Get.put(TradeWinController());
     }
-  }
-
-  @override
-  void dispose() {
-    _currentIndex.dispose();
-    super.dispose();
+    _controller = Get.find<TradeWinController>();
   }
 
   @override
@@ -41,22 +36,17 @@ class _TradeWinMainScreenState extends State<TradeWinMainScreen> {
     return Scaffold(
       backgroundColor: AppColors.tradeBackgroundCenterColor,
       body: SafeArea(
-        child: ValueListenableBuilder<int>(
-          valueListenable: _currentIndex,
-          builder: (context, index, _) {
-            return IndexedStack(index: index, children: _tabs);
-          },
-        ),
+        child: Obx(() {
+          final index = _controller.mainTabIndex.value.clamp(0, _tabs.length - 1);
+          return IndexedStack(index: index, children: _tabs);
+        }),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      floatingActionButton: ValueListenableBuilder<int>(
-        valueListenable: _currentIndex,
-        builder: (context, index, _) {
-          return TradeWinBottomNavigation(
-            currentIndex: index,
-            onTap: (i) => _currentIndex.value = i,
-          );
-        },
+      floatingActionButton: Obx(
+        () => TradeWinBottomNavigation(
+          currentIndex: _controller.mainTabIndex.value.clamp(0, _tabs.length - 1),
+          onTap: (i) => _controller.mainTabIndex.value = i,
+        ),
       ),
     );
   }

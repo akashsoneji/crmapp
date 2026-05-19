@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:crm_app/constants/api_const.dart';
 import 'package:crm_app/controllers/trade_win/trade_win_controller.dart';
 import 'package:crm_app/models/trade_win/trade_win_product_model.dart';
 import 'package:crm_app/models/trade_win/trade_win_shipping_details_model.dart';
 import 'package:crm_app/routes/app_pages.dart';
+import 'package:crm_app/services/api_service.dart';
+import 'package:crm_app/services/language_service.dart';
+import 'package:crm_app/widgets/custom_toast.dart';
 
 class TradeWinRedeemController extends GetxController {
   TradeWinRedeemController({
@@ -17,23 +21,16 @@ class TradeWinRedeemController extends GetxController {
 
   final RxInt currentStep = 1.obs;
   final RxInt quantity = 1.obs;
-  final RxBool rememberAddress = true.obs;
   final RxBool isSubmitting = false.obs;
 
-  final nameController = TextEditingController();
-  final phoneController = TextEditingController();
-  final emailController = TextEditingController();
-  final addressController = TextEditingController();
-  final cityController = TextEditingController();
-  final countryController = TextEditingController();
-
   static const _prefPrefix = 'trade_win_shipping_';
+  static const redeemTag = 'trade_win_redeem';
 
   double get totalCost => product.requiredPoints * quantity.value;
 
   double get balanceAfter {
-    final ctrl = Get.find<TradeWinController>();
-    final current = ctrl.stats.value?.totalPoints ?? 0;
+    if (!Get.isRegistered<TradeWinController>()) return 0;
+    final current = Get.find<TradeWinController>().stats.value?.totalPoints ?? 0;
     return (current - totalCost).clamp(0, double.infinity);
   }
 
@@ -41,96 +38,100 @@ class TradeWinRedeemController extends GetxController {
   void onInit() {
     super.onInit();
     quantity.value = initialQuantity.clamp(1, product.stock > 0 ? product.stock : 1);
-    _loadSavedAddress();
   }
 
-  @override
-  void onClose() {
-    nameController.dispose();
-    phoneController.dispose();
-    emailController.dispose();
-    addressController.dispose();
-    cityController.dispose();
-    countryController.dispose();
-    super.onClose();
-  }
-
-  Future<void> _loadSavedAddress() async {
+  static Future<TradeWinShippingDetailsModel> loadSavedAddress() async {
     final prefs = await SharedPreferences.getInstance();
-    nameController.text = prefs.getString('${_prefPrefix}name') ?? '';
-    phoneController.text = prefs.getString('${_prefPrefix}phone') ?? '';
-    emailController.text = prefs.getString('${_prefPrefix}email') ?? '';
-    addressController.text = prefs.getString('${_prefPrefix}address') ?? '';
-    cityController.text = prefs.getString('${_prefPrefix}city') ?? '';
-    countryController.text = prefs.getString('${_prefPrefix}country') ?? '';
+    return TradeWinShippingDetailsModel(
+      name: prefs.getString('${_prefPrefix}name') ?? '',
+      phone: prefs.getString('${_prefPrefix}phone') ?? '',
+      email: prefs.getString('${_prefPrefix}email') ?? '',
+      address: prefs.getString('${_prefPrefix}address') ?? '',
+      city: prefs.getString('${_prefPrefix}city') ?? '',
+      country: prefs.getString('${_prefPrefix}country') ?? '',
+    );
   }
 
-  Future<void> _saveAddressIfNeeded() async {
-    if (!rememberAddress.value) return;
+  static Future<void> saveAddress(TradeWinShippingDetailsModel details) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('${_prefPrefix}name', nameController.text.trim());
-    await prefs.setString('${_prefPrefix}phone', phoneController.text.trim());
-    await prefs.setString('${_prefPrefix}email', emailController.text.trim());
-    await prefs.setString('${_prefPrefix}address', addressController.text.trim());
-    await prefs.setString('${_prefPrefix}city', cityController.text.trim());
-    await prefs.setString('${_prefPrefix}country', countryController.text.trim());
+    await prefs.setString('${_prefPrefix}name', details.name);
+    await prefs.setString('${_prefPrefix}phone', details.phone);
+    await prefs.setString('${_prefPrefix}email', details.email);
+    await prefs.setString('${_prefPrefix}address', details.address);
+    await prefs.setString('${_prefPrefix}city', details.city);
+    await prefs.setString('${_prefPrefix}country', details.country);
   }
 
-  void incrementQuantity() {
-    final maxQty = product.stock > 0 ? product.stock : 1;
-    if (quantity.value < maxQty) quantity.value++;
-  }
-
-  void decrementQuantity() {
-    if (quantity.value > 1) quantity.value--;
+  static bool validateShipping(TradeWinShippingDetailsModel details) {
+    return details.name.isNotEmpty &&
+        details.phone.isNotEmpty &&
+        details.email.isNotEmpty &&
+        details.address.isNotEmpty &&
+        details.city.isNotEmpty &&
+        details.country.isNotEmpty;
   }
 
   void goToStep(int step) {
     currentStep.value = step.clamp(1, 2);
   }
 
-  bool validateShipping() {
-    return nameController.text.trim().isNotEmpty &&
-        phoneController.text.trim().isNotEmpty &&
-        emailController.text.trim().isNotEmpty &&
-        addressController.text.trim().isNotEmpty &&
-        cityController.text.trim().isNotEmpty &&
-        countryController.text.trim().isNotEmpty;
-  }
-
-  TradeWinShippingDetailsModel get shippingDetails =>
-      TradeWinShippingDetailsModel(
-        name: nameController.text.trim(),
-        phone: phoneController.text.trim(),
-        email: emailController.text.trim(),
-        address: addressController.text.trim(),
-        city: cityController.text.trim(),
-        country: countryController.text.trim(),
-      );
-
-  /// TODO: Replace with POST api/v1/user/trade-win/redeem when available.
-  Future<void> submitRedemption() async {
-    if (!validateShipping()) return;
+  Future<void> submitRedemption({
+    required TradeWinShippingDetailsModel shipping,
+    required bool rememberAddress,
+  }) async {
+    if (!validateShipping(shipping)) return;
 
     isSubmitting.value = true;
     try {
-      await _saveAddressIfNeeded();
-
-      final reference = 'TRW-${DateTime.now().millisecondsSinceEpoch}';
-
-      if (Get.isRegistered<TradeWinController>()) {
-        Get.find<TradeWinController>().fetchProducts(showLoader: false);
-      }
-
-      Get.offNamed(
-        AppPages.TRADE_WIN_REDEMPTION_SUCCESS,
-        arguments: {
-          'productName': product.name,
-          'reference': reference,
+      final response = await ApiService.post(
+        endpoint: ApiConstants.tradeWinClaim,
+        data: {
+          'product_id': product.id,
+          'quantity': quantity.value,
+          'shipping_details': shipping.toJson(),
         },
       );
-    } finally {
+
+      if (!response.success) {
+        CustomToastService.showError(
+          message: response.message ??
+              Get.find<LanguageService>().tr('tw_claim_failed'),
+        );
+        isSubmitting.value = false;
+        return;
+      }
+
+      if (rememberAddress) {
+        await saveAddress(shipping);
+      }
+
+      final apiMessage = response.message?.trim();
+      final successMessage = apiMessage != null && apiMessage.isNotEmpty
+          ? apiMessage
+          : Get.find<LanguageService>().tr('tw_claim_success');
+
+      CustomToastService.showSuccess(message: successMessage);
+
+      if (Get.isRegistered<TradeWinController>()) {
+        final tradeWin = Get.find<TradeWinController>();
+        tradeWin.mainTabIndex.value = 0;
+        await tradeWin.fetchProducts(showLoader: false);
+      }
+
+      _navigateToTradeWinHome();
+    } catch (e) {
+      CustomToastService.showError(message: e.toString());
       isSubmitting.value = false;
     }
+  }
+
+  void _navigateToTradeWinHome() {
+    if (Get.currentRoute == AppPages.TRADE_WIN_MAIN) return;
+
+    FocusManager.instance.primaryFocus?.unfocus();
+    Get.offNamedUntil(
+      AppPages.TRADE_WIN_MAIN,
+      (route) => route.settings.name == AppPages.TRADE_WIN_MAIN,
+    );
   }
 }
