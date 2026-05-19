@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_svg/svg.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
@@ -188,9 +188,36 @@ class _Podium extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          Expanded(child: _PodiumColumn(entry: second, height: 72.h, medalColor: AppColors.textGrey, rank: 2, lotsLabel: lotsLabel)),
-          Expanded(child: _PodiumColumn(entry: first, height: 96.h, medalColor: Colors.amber, rank: 1, lotsLabel: lotsLabel)),
-          Expanded(child: _PodiumColumn(entry: third, height: 56.h, medalColor: Colors.orange.shade300, rank: 3, lotsLabel: lotsLabel)),
+          Expanded(
+            child: _PodiumColumn(
+              entry: second,
+              height: 72.h,
+              medalAsset: 'assets/svg/more/silver.svg',
+              podiumTint: AppColors.icongrey.withValues(alpha: 0.2),
+              rank: 2,
+              lotsLabel: lotsLabel,
+            ),
+          ),
+          Expanded(
+            child: _PodiumColumn(
+              entry: first,
+              height: 96.h,
+              medalAsset: 'assets/svg/more/gold.svg',
+              podiumTint: const Color(0xFFF2B92C).withValues(alpha: 0.15),
+              rank: 1,
+              lotsLabel: lotsLabel,
+            ),
+          ),
+          Expanded(
+            child: _PodiumColumn(
+              entry: third,
+              height: 56.h,
+              medalAsset: 'assets/svg/more/copper.svg',
+              podiumTint: const Color(0xFFB87333).withValues(alpha: 0.15),
+              rank: 3,
+              lotsLabel: lotsLabel,
+            ),
+          ),
         ],
       ),
     );
@@ -200,14 +227,16 @@ class _Podium extends StatelessWidget {
 class _PodiumColumn extends StatelessWidget {
   final TradeWinLeaderboardEntryModel? entry;
   final double height;
-  final Color medalColor;
+  final String medalAsset;
+  final Color podiumTint;
   final int rank;
   final String lotsLabel;
 
   const _PodiumColumn({
     required this.entry,
     required this.height,
-    required this.medalColor,
+    required this.medalAsset,
+    required this.podiumTint,
     required this.rank,
     required this.lotsLabel,
   });
@@ -218,7 +247,11 @@ class _PodiumColumn extends StatelessWidget {
 
     return Column(
       children: [
-        Icon(Icons.emoji_events, color: medalColor, size: 28.sp),
+        SvgPicture.asset(
+          medalAsset,
+          height: 32.h,
+          width: 32.w,
+        ),
         SizedBox(height: 4.h),
         Text(
           TradeWinFormat.maskName(entry!.name),
@@ -232,7 +265,7 @@ class _PodiumColumn extends StatelessWidget {
           height: height,
           margin: EdgeInsets.symmetric(horizontal: 4.w),
           decoration: BoxDecoration(
-            color: medalColor.withValues(alpha: 0.15),
+            color: podiumTint,
             borderRadius: BorderRadius.vertical(top: Radius.circular(8.r)),
           ),
           alignment: Alignment.center,
@@ -240,7 +273,9 @@ class _PodiumColumn extends StatelessWidget {
             TradeWinFormat.lotsWithUnit(entry!.lots, lotsLabel),
             style: AppTextStyles.headingblack.copyWith(
               fontSize: 12.sp,
-              color: AppColors.primary,
+              color: AppColors.isDarkMode
+                  ? AppColors.textPrimary
+                  : AppColors.brandPrimary,
             ),
             textAlign: TextAlign.center,
           ),

@@ -131,9 +131,21 @@ class TradeWinHomeTab extends StatelessWidget {
                             borderRadius: BorderRadius.circular(20.r),
                             border: Border.all(
                               color: selected
-                                  ? TradeWinTheme.chipBorder
-                                  : AppColors.icongrey.withValues(alpha: 0.25),
+                                  ? TradeWinTheme.chipSelectedBorder
+                                  : TradeWinTheme.chipUnselectedBorder,
+                              width: selected
+                                  ? TradeWinTheme.chipSelectedBorderWidth
+                                  : TradeWinTheme.chipUnselectedBorderWidth,
                             ),
+                            boxShadow: selected && AppColors.isDarkMode
+                                ? [
+                                    BoxShadow(
+                                      color: Colors.white.withValues(alpha: 0.08),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 1),
+                                    ),
+                                  ]
+                                : null,
                           ),
                           child: Text(
                             label,
@@ -141,7 +153,8 @@ class TradeWinHomeTab extends StatelessWidget {
                               color: selected
                                   ? TradeWinTheme.chipSelectedFg
                                   : TradeWinTheme.chipUnselectedFg,
-                              fontWeight: FontWeight.w600,
+                              fontWeight:
+                                  selected ? FontWeight.w700 : FontWeight.w500,
                               fontSize: 13.sp,
                             ),
                           ),

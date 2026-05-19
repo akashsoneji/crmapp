@@ -17,12 +17,18 @@ abstract final class TradeWinTheme {
           ? Colors.white.withValues(alpha: 0.22)
           : AppColors.brandPrimary;
 
+  /// Bottom nav selected pill — low alpha so icons stay visible.
+  static Color get navSelectedBg =>
+      AppColors.isDarkMode
+          ? Colors.white.withValues(alpha: 0.08)
+          : AppColors.brandPrimary.withValues(alpha: 0.12);
+
   static Color get onAccentFill =>
       AppColors.isDarkMode ? AppColors.textPrimary : AppColors.onColoredBackground;
 
   static Color get chipSelectedBg =>
       AppColors.isDarkMode
-          ? Colors.white.withValues(alpha: 0.15)
+          ? Colors.white.withValues(alpha: 0.28)
           : AppColors.brandPrimary;
 
   static Color get chipUnselectedBg => AppColors.card;
@@ -31,10 +37,17 @@ abstract final class TradeWinTheme {
 
   static Color get chipUnselectedFg => AppColors.textPrimary;
 
-  static Color get chipBorder =>
+  static Color get chipSelectedBorder =>
       AppColors.isDarkMode
-          ? Colors.white.withValues(alpha: 0.25)
-          : AppColors.brandPrimary.withValues(alpha: 0.35);
+          ? Colors.white.withValues(alpha: 0.55)
+          : AppColors.brandPrimary;
+
+  static Color get chipUnselectedBorder =>
+      AppColors.icongrey.withValues(alpha: 0.25);
+
+  static double get chipSelectedBorderWidth => AppColors.isDarkMode ? 1.5 : 1.0;
+
+  static double get chipUnselectedBorderWidth => 1.0;
 
   static Color get heroCardBg =>
       AppColors.isDarkMode

@@ -81,7 +81,7 @@ class PromotionalScreen extends StatelessWidget {
             if (showTradeWin) {
               tiles.add(
                 MoreMenuTile(
-                  iconAssetPath: 'assets/svg/more/bonus/trade-win.svg',
+                  iconAssetPath: 'assets/svg/more/trade_win.svg',
                   label: languageService.tr('trade_win'),
                   onTap: () => Get.toNamed(AppPages.TRADE_WIN_MAIN),
                   textColor: AppColors.textPrimary,

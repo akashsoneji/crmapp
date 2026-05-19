@@ -6,8 +6,6 @@ import 'package:crm_app/widgets/trade_win_bottom_navigation.dart';
 import 'package:crm_app/screens/trade_win/tabs/trade_win_home_tab.dart';
 import 'package:crm_app/screens/trade_win/tabs/trade_win_leaderboard_tab.dart';
 import 'package:crm_app/screens/trade_win/tabs/trade_win_my_wins_tab.dart';
-import 'package:crm_app/screens/trade_win/tabs/trade_win_profile_tab.dart';
-
 class TradeWinMainScreen extends StatefulWidget {
   const TradeWinMainScreen({super.key});
 
@@ -22,7 +20,6 @@ class _TradeWinMainScreenState extends State<TradeWinMainScreen> {
     TradeWinHomeTab(),
     TradeWinLeaderboardTab(),
     TradeWinMyWinsTab(),
-    TradeWinProfileTab(),
   ];
 
   @override

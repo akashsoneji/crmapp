@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
@@ -16,6 +17,24 @@ class TradeWinBottomNavigation extends StatelessWidget {
     required this.currentIndex,
     required this.onTap,
   });
+
+  static const _items = [
+    _NavItem(
+      inactiveAsset: 'assets/svg/more/home.svg',
+      activeAsset: 'assets/svg/more/home_selected.svg',
+      labelKey: 'tw_nav_home',
+    ),
+    _NavItem(
+      inactiveAsset: 'assets/svg/more/leaderboard.svg',
+      activeAsset: 'assets/svg/more/leaderboard_selected.svg',
+      labelKey: 'tw_nav_leaderboard',
+    ),
+    _NavItem(
+      inactiveAsset: 'assets/svg/more/my_wins.svg',
+      activeAsset: 'assets/svg/more/my_wins_selected.svg',
+      labelKey: 'tw_nav_my_wins',
+    ),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -46,12 +65,14 @@ class TradeWinBottomNavigation extends StatelessWidget {
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _item(0, Icons.home_outlined, Icons.home, languageService.tr('tw_nav_home')),
-                  _item(1, Icons.emoji_events_outlined, Icons.emoji_events, languageService.tr('tw_nav_leaderboard')),
-                  _item(2, Icons.military_tech_outlined, Icons.military_tech, languageService.tr('tw_nav_my_wins')),
-                  _item(3, Icons.person_outline, Icons.person, languageService.tr('tw_nav_profile')),
-                ],
+                children: List.generate(
+                  _items.length,
+                  (index) => _buildItem(
+                    index: index,
+                    item: _items[index],
+                    label: languageService.tr(_items[index].labelKey),
+                  ),
+                ),
               ),
             ),
           ),
@@ -60,8 +81,16 @@ class TradeWinBottomNavigation extends StatelessWidget {
     );
   }
 
-  Widget _item(int index, IconData icon, IconData activeIcon, String label) {
+  Widget _buildItem({
+    required int index,
+    required _NavItem item,
+    required String label,
+  }) {
     final selected = currentIndex == index;
+    final inactiveColor = AppColors.textGrey;
+    final activeColor =
+        AppColors.isDarkMode ? AppColors.textPrimary : AppColors.brandPrimary;
+
     return Expanded(
       child: InkWell(
         onTap: () => onTap(index),
@@ -69,18 +98,20 @@ class TradeWinBottomNavigation extends StatelessWidget {
         child: Container(
           padding: EdgeInsets.symmetric(vertical: 6.h),
           decoration: BoxDecoration(
-            color: selected ? TradeWinTheme.accentFill : Colors.transparent,
+            color: selected ? TradeWinTheme.navSelectedBg : Colors.transparent,
             borderRadius: BorderRadius.circular(24.r),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                selected ? activeIcon : icon,
-                size: 22.sp,
-                color: selected
-                    ? TradeWinTheme.onAccentFill
-                    : AppColors.textGrey,
+              SvgPicture.asset(
+                selected ? item.activeAsset : item.inactiveAsset,
+                height: 22.h,
+                width: 22.w,
+                colorFilter: ColorFilter.mode(
+                  selected ? activeColor : inactiveColor,
+                  BlendMode.srcIn,
+                ),
               ),
               SizedBox(height: 2.h),
               Text(
@@ -89,10 +120,8 @@ class TradeWinBottomNavigation extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: AppTextStyles.subheading.copyWith(
                   fontSize: 10.sp,
-                  fontWeight: FontWeight.w600,
-                  color: selected
-                      ? TradeWinTheme.onAccentFill
-                      : AppColors.textGrey,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+                  color: selected ? activeColor : inactiveColor,
                 ),
               ),
             ],
@@ -101,4 +130,16 @@ class TradeWinBottomNavigation extends StatelessWidget {
       ),
     );
   }
+}
+
+class _NavItem {
+  final String inactiveAsset;
+  final String activeAsset;
+  final String labelKey;
+
+  const _NavItem({
+    required this.inactiveAsset,
+    required this.activeAsset,
+    required this.labelKey,
+  });
 }
