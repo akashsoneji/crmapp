@@ -69,6 +69,11 @@ import '../screens/home/more/pmam/pmam_create_plan_screen.dart';
 import '../screens/home/more/pmam/pmam_investor_portal_screen.dart';
 import '../screens/home/more/pmam/pmam_manager_detail_screen.dart';
 import '../screens/home/more/pmam/pmam_manager_plan_detail_screen.dart';
+import '../screens/trade_win/trade_win_main_screen.dart';
+import '../screens/trade_win/trade_win_product_detail_screen.dart';
+import '../screens/trade_win/trade_win_redeem_screen.dart';
+import '../screens/trade_win/trade_win_redemption_success_screen.dart';
+import '../screens/trade_win/trade_win_past_win_detail_screen.dart';
 import '../bindings/auth_binding.dart';
 import '../bindings/account_binding.dart';
 import '../bindings/trading_binding.dart';
@@ -145,6 +150,13 @@ class AppPages {
   static const PMAM_INVESTOR_PORTAL = _Paths.PMAM_INVESTOR_PORTAL;
   static const PMAM_MANAGER_DETAIL = _Paths.PMAM_MANAGER_DETAIL;
   static const PMAM_MANAGER_PLAN_DETAIL = _Paths.PMAM_MANAGER_PLAN_DETAIL;
+
+  // ── Trade & Win ──
+  static const TRADE_WIN_MAIN = _Paths.TRADE_WIN_MAIN;
+  static const TRADE_WIN_PRODUCT_DETAIL = _Paths.TRADE_WIN_PRODUCT_DETAIL;
+  static const TRADE_WIN_REDEEM = _Paths.TRADE_WIN_REDEEM;
+  static const TRADE_WIN_REDEMPTION_SUCCESS = _Paths.TRADE_WIN_REDEMPTION_SUCCESS;
+  static const TRADE_WIN_PAST_WIN_DETAIL = _Paths.TRADE_WIN_PAST_WIN_DETAIL;
 
   static final routes = [
     GetPage(
@@ -357,5 +369,20 @@ class AppPages {
     GetPage(name: _Paths.PMAM_INVESTOR_PORTAL, page: () => const PmamInvestorPortalScreen()),
     GetPage(name: _Paths.PMAM_MANAGER_DETAIL, page: () => const PmamManagerDetailScreen()),
     GetPage(name: _Paths.PMAM_MANAGER_PLAN_DETAIL, page: () => const PmamManagerPlanDetailScreen()),
+    // ── Trade & Win ──
+    GetPage(name: _Paths.TRADE_WIN_MAIN, page: () => const TradeWinMainScreen()),
+    GetPage(
+      name: _Paths.TRADE_WIN_PRODUCT_DETAIL,
+      page: () => const TradeWinProductDetailScreen(),
+    ),
+    GetPage(name: _Paths.TRADE_WIN_REDEEM, page: () => const TradeWinRedeemScreen()),
+    GetPage(
+      name: _Paths.TRADE_WIN_REDEMPTION_SUCCESS,
+      page: () => const TradeWinRedemptionSuccessScreen(),
+    ),
+    GetPage(
+      name: _Paths.TRADE_WIN_PAST_WIN_DETAIL,
+      page: () => const TradeWinPastWinDetailScreen(),
+    ),
   ];
 }

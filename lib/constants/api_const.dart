@@ -106,6 +106,12 @@ class ApiConstants {
   static const String mobileAppDetails = '${ajax}mobile-app-details';
   static const String crmSettings = '${ajax}crm-settings';
 
+  // Enabled modules (per-user feature flags)
+  static const String enabledModules = '${ajax}enabled-modules';
+
+  // Trade & Win APIs
+  static const String tradeWinProducts = 'v1/user/trade-win/products';
+
   // Copy Trading APIs
   // User (authenticated) endpoints
   static const String copyTradingMasterApply = '${ajax}copytrading/master/apply';

@@ -24,6 +24,7 @@ import 'package:crm_app/widgets/theme_bottom_sheet.dart';
 import 'package:crm_app/services/secure_storage_service.dart';
 import 'package:crm_app/services/app_lock_service.dart';
 import 'package:crm_app/services/biometric_service.dart';
+import 'package:crm_app/services/enabled_modules_service.dart';
 
 class MoreScreen extends StatefulWidget {
   const MoreScreen({super.key});
@@ -92,6 +93,9 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
       _lastRefreshTime = DateTime.now();
       moreController.loadMoreScreenData();
       _loadTenaxProfiles();
+      if (Get.isRegistered<EnabledModulesService>()) {
+        Get.find<EnabledModulesService>().fetchEnabledModules(force: true);
+      }
     }
   }
 
@@ -878,8 +882,12 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
 
               // Financial Section
               // _SectionHeader(title: languageService.tr('general_financial')),
-              _CardGroup(
-                children: [
+              Obx(() {
+                final modules = Get.find<EnabledModulesService>().modules.value;
+                final showCopyTrading = modules?.copytrading ?? false;
+                final showPmam = modules?.pmam ?? false;
+
+                final items = <Widget>[
                   _MenuItem(
                     icon: 'dollar-circle',
                     label: languageService.tr('general_finance'),
@@ -897,44 +905,34 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                           transition: Transition.rightToLeft,
                         ),
                   ),
-                  // _MenuItemWithButton(
-                  //   icon: 'dashboard',
-                  //   label: languageService.tr('more_dashboard'),
-                  //   buttonText: languageService.tr('switch_to_ib'),
-                  //   onTap: () {},
-                  //   onButtonTap: () async => await _handleSwitchToIB(),
-                  // ),
                   _MenuItem(
                     icon: 'dashboard',
                     label: languageService.tr('more_dashboard'),
-                    // buttonText: languageService.tr('switch_to_ib'),
                     onTap: () async => await _handleSwitchToIB(),
                   ),
-                  _MenuItem(
-                    icon: 'copy-trading',
-                    label: languageService.tr('more_copy_trading'),
-                    onTap: () => Get.toNamed(AppPages.COPY_TRADING_HUB),
-                  ),
-                  // _MenuItem(
-                  //   icon: 'copy-trading',
-                  //   label: languageService.tr('more_copy_trading'),
-                  //   onTap: () => Get.toNamed(AppPages.COPY_TRADING_HUB),
-                  // ),
+                ];
 
-                  // _MenuItemWithButton(
-                  //   icon: 'copy-trading',
-                  //   label: languageService.tr('more_copy_trading'),
-                  //   buttonText: languageService.tr('switch_to_copy_trading'),
-                  //   onTap: () => Get.toNamed(AppPages.COPY_TRADING_MAIN),
-                  //   onButtonTap: () => Get.toNamed(AppPages.COPY_TRADING_MAIN),
-                  // ),
-                  _MenuItem(
-                    icon: 'dashboard',
-                    label: 'PAMM',
-                    onTap: () => Get.toNamed(AppPages.PMAM_MAIN),
-                  ),
-                ],
-              ),
+                if (showCopyTrading) {
+                  items.add(
+                    _MenuItem(
+                      icon: 'copy-trading',
+                      label: languageService.tr('more_copy_trading'),
+                      onTap: () => Get.toNamed(AppPages.COPY_TRADING_HUB),
+                    ),
+                  );
+                }
+                if (showPmam) {
+                  items.add(
+                    _MenuItem(
+                      icon: 'dashboard',
+                      label: 'PAMM',
+                      onTap: () => Get.toNamed(AppPages.PMAM_MAIN),
+                    ),
+                  );
+                }
+
+                return _CardGroup(children: items);
+              }),
 
               SizedBox(height: 20.h),
 

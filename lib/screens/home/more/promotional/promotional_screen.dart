@@ -4,12 +4,11 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/screens/home/more/widgets/more_menu_widgets.dart';
-// import 'package:crm_app/screens/home/more/finance/payment_methods_screen.dart';
-
-import '../../../../constants/color.dart';
-import '../../../../constants/text_styles.dart';
-// import '../../../../routes/app_pages.dart';
-import '../../../../services/language_service.dart';
+import 'package:crm_app/constants/color.dart';
+import 'package:crm_app/constants/text_styles.dart';
+import 'package:crm_app/services/language_service.dart';
+import 'package:crm_app/services/enabled_modules_service.dart';
+import 'package:crm_app/routes/app_pages.dart';
 
 class PromotionalScreen extends StatelessWidget {
   const PromotionalScreen({super.key});
@@ -17,6 +16,7 @@ class PromotionalScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final languageService = Get.find<LanguageService>();
+    final modulesService = Get.find<EnabledModulesService>();
 
     return Scaffold(
       backgroundColor: AppColors.tradeBackgroundCenterColor,
@@ -31,7 +31,10 @@ class PromotionalScreen extends StatelessWidget {
         leading: IconButton(
           icon: SvgPicture.asset(
             "assets/svg/trade/arro_back.svg",
-            colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn),
+            colorFilter: ColorFilter.mode(
+              AppColors.textPrimary,
+              BlendMode.srcIn,
+            ),
           ),
           onPressed: () => Navigator.of(context).pop(),
         ),
@@ -40,27 +43,54 @@ class PromotionalScreen extends StatelessWidget {
       body: SingleChildScrollView(
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 22.w, vertical: 8.h),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              MoreMenuCardGroup(
-                children: [
-                  MoreMenuTile(
-                    iconName: 'scratch',
-                    label: languageService.tr('general_scratch_card'),
-                    onTap: () {
-                      Get.to(
-                        () => const ScratchCardListScreen(),
-                        transition: Transition.rightToLeft,
-                        duration: const Duration(milliseconds: 300),
-                      );
-                    },
-                    textColor: AppColors.textPrimary,
+          child: Obx(() {
+            final modules = modulesService.modules.value;
+            final showScratch = modules?.scratchcard ?? false;
+            final showTradeWin = modules?.tradewin ?? false;
+
+            if (!showScratch && !showTradeWin) {
+              return Padding(
+                padding: EdgeInsets.symmetric(vertical: 32.h),
+                child: Center(
+                  child: Text(
+                    languageService.tr('tw_no_promotions'),
+                    style: AppTextStyles.subheading,
+                    textAlign: TextAlign.center,
                   ),
-                ],
-              ),
-            ],
-          ),
+                ),
+              );
+            }
+
+            final tiles = <Widget>[];
+            if (showScratch) {
+              tiles.add(
+                MoreMenuTile(
+                  iconName: 'scratch',
+                  label: languageService.tr('general_scratch_card'),
+                  onTap: () {
+                    Get.to(
+                      () => const ScratchCardListScreen(),
+                      transition: Transition.rightToLeft,
+                      duration: const Duration(milliseconds: 300),
+                    );
+                  },
+                  textColor: AppColors.textPrimary,
+                ),
+              );
+            }
+            if (showTradeWin) {
+              tiles.add(
+                MoreMenuTile(
+                  iconAssetPath: 'assets/svg/more/bonus/trade-win.svg',
+                  label: languageService.tr('trade_win'),
+                  onTap: () => Get.toNamed(AppPages.TRADE_WIN_MAIN),
+                  textColor: AppColors.textPrimary,
+                ),
+              );
+            }
+
+            return MoreMenuCardGroup(children: tiles);
+          }),
         ),
       ),
     );

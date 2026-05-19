@@ -27,6 +27,7 @@ import 'package:crm_app/services/market_watch_v2_service.dart';
 import 'dart:io' show Platform;
 import 'package:crm_app/services/biometric_service.dart';
 import 'package:crm_app/services/app_lock_service.dart';
+import 'package:crm_app/services/enabled_modules_service.dart';
 
 class AuthController extends GetxController {
   final AuthService _authService = Get.find<AuthService>();
@@ -357,6 +358,8 @@ class AuthController extends GetxController {
         print(
           'AuthController: All controllers and services re-initialized with new user token',
         );
+
+        _fetchEnabledModulesInBackground();
 
         // Navigate to trading screen AFTER controllers are ready
         Get.offAllNamed(AppPages.TRADING);
@@ -1299,6 +1302,7 @@ class AuthController extends GetxController {
                   'AuthController: Network error during token check, assuming offline mode',
                 );
                 _isAuthenticated.value = true;
+                _fetchEnabledModulesInBackground();
               } else {
                 // Token is invalid (401 or other API error), clear auth state
                 print(
@@ -1310,6 +1314,7 @@ class AuthController extends GetxController {
             } else {
               // Token is valid
               _isAuthenticated.value = true;
+              _fetchEnabledModulesInBackground();
             }
           } catch (e) {
             // If validation fails with exception, check if it's network related
@@ -1324,6 +1329,7 @@ class AuthController extends GetxController {
             if (isNetworkError) {
               print('AuthController: Network exception, assuming offline mode');
               _isAuthenticated.value = true;
+              _fetchEnabledModulesInBackground();
             } else {
               _isAuthenticated.value = false;
             }
@@ -1336,6 +1342,12 @@ class AuthController extends GetxController {
       print('AuthController checkAuthStatus error: $e');
       _isAuthenticated.value = false;
     }
+  }
+
+  void _fetchEnabledModulesInBackground() {
+    if (!Get.isRegistered<EnabledModulesService>()) return;
+    final service = Get.find<EnabledModulesService>();
+    service.fetchEnabledModules(force: true);
   }
 
   void resetAuthState() {

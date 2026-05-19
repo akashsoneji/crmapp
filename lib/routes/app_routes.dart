@@ -63,6 +63,13 @@ abstract class Routes {
   static const PMAM_INVESTOR_PORTAL = _Paths.PMAM_INVESTOR_PORTAL;
   static const PMAM_MANAGER_DETAIL = _Paths.PMAM_MANAGER_DETAIL;
   static const PMAM_MANAGER_PLAN_DETAIL = _Paths.PMAM_MANAGER_PLAN_DETAIL;
+
+  // ── Trade & Win ──
+  static const TRADE_WIN_MAIN = _Paths.TRADE_WIN_MAIN;
+  static const TRADE_WIN_PRODUCT_DETAIL = _Paths.TRADE_WIN_PRODUCT_DETAIL;
+  static const TRADE_WIN_REDEEM = _Paths.TRADE_WIN_REDEEM;
+  static const TRADE_WIN_REDEMPTION_SUCCESS = _Paths.TRADE_WIN_REDEMPTION_SUCCESS;
+  static const TRADE_WIN_PAST_WIN_DETAIL = _Paths.TRADE_WIN_PAST_WIN_DETAIL;
 }
 
 abstract class _Paths {
@@ -138,4 +145,11 @@ abstract class _Paths {
   static const PMAM_INVESTOR_PORTAL = '/pmam-investor-portal';
   static const PMAM_MANAGER_DETAIL = '/pmam-manager-detail';
   static const PMAM_MANAGER_PLAN_DETAIL = '/pmam-manager-plan-detail';
+
+  // ── Trade & Win ──
+  static const TRADE_WIN_MAIN = '/trade-win-main';
+  static const TRADE_WIN_PRODUCT_DETAIL = '/trade-win-product-detail';
+  static const TRADE_WIN_REDEEM = '/trade-win-redeem';
+  static const TRADE_WIN_REDEMPTION_SUCCESS = '/trade-win-redemption-success';
+  static const TRADE_WIN_PAST_WIN_DETAIL = '/trade-win-past-win-detail';
 }
