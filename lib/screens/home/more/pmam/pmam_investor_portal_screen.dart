@@ -1593,6 +1593,8 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
               ],
             ),
             child: ExpansionTile(
+              iconColor: AppColors.primary,
+              collapsedIconColor: AppColors.primary,
               shape: const RoundedRectangleBorder(side: BorderSide.none),
               collapsedShape: const RoundedRectangleBorder(
                 side: BorderSide.none,

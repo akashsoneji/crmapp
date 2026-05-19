@@ -659,9 +659,10 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
                   Expanded(
                     child: Text(
                       bankDetail!['crypto_address'].toString(),
-                      style: const TextStyle(
+                      style:  TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
+                        color: AppColors.textPrimary,
                       ),
                     ),
                   ),
@@ -777,6 +778,8 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
               borderRadius: BorderRadius.circular(8),
             ),
             child: ExpansionTile(
+              iconColor: AppColors.primary,
+              collapsedIconColor: AppColors.primary,
               collapsedBackgroundColor: Colors.transparent,
               backgroundColor: Colors.transparent,
               collapsedShape: RoundedRectangleBorder(
@@ -787,9 +790,9 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
                 borderRadius: BorderRadius.zero,
                 side: BorderSide.none,
               ),
-              title: const Text(
+              title:  Text(
                 'Instruction',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600,color: AppColors.textPrimary),
               ),
               childrenPadding: const EdgeInsets.all(16),
               children: [

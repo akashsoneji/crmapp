@@ -896,15 +896,15 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                       if (mounted) _refreshDataIfNeeded();
                     },
                   ),
-                  _MenuItem(
-                    icon: 'promotional',
-                    label: languageService.tr('general_promotional'),
-                    onTap:
-                        () => Get.to(
-                          () => const PromotionalScreen(),
-                          transition: Transition.rightToLeft,
-                        ),
-                  ),
+                  // _MenuItem(
+                  //   icon: 'promotional',
+                  //   label: languageService.tr('general_promotional'),
+                  //   onTap:
+                  //       () => Get.to(
+                  //         () => const PromotionalScreen(),
+                  //         transition: Transition.rightToLeft,
+                  //       ),
+                  // ),
                   _MenuItem(
                     icon: 'dashboard',
                     label: languageService.tr('more_dashboard'),
@@ -957,11 +957,11 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                     label: languageService.tr('change_password'),
                     onTap: () => Get.toNamed(AppPages.CHANGE_PASSWORD),
                   ),
-                  _MenuItem(
-                    icon: 'two_factor_auth',
-                    label: languageService.tr('two_factor_authentication'),
-                    onTap: () => Get.toNamed(AppPages.TWO_FACTOR_AUTH),
-                  ),
+                  // _MenuItem(
+                  //   icon: 'two_factor_auth',
+                  //   label: languageService.tr('two_factor_authentication'),
+                  //   onTap: () => Get.toNamed(AppPages.TWO_FACTOR_AUTH),
+                  // ),
                   _MenuItem(
                     icon: 'personal_info',
                     label: languageService.tr('delete_account'),
