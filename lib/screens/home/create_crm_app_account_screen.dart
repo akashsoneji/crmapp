@@ -1,3 +1,4 @@
+import 'package:crm_app/widgets/app_svg_back_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -52,12 +53,10 @@ class _CreateCrmAppAccountScreenState extends State<CreateCrmAppAccountScreen> {
         scrolledUnderElevation: 0,
         backgroundColor: AppColors.background,
         elevation: 0,
-        leading: IconButton(
+         leading: AppSvgBackButton(
           onPressed: () => Get.back(closeOverlays: true),
-          icon: SvgPicture.asset(
-            "assets/svg/trade/arro_back.svg",
-            colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn),
-          ),
+          iconWidth: 30.w,
+          iconHeight: 30.h,
         ),
         title: Text(
           'Create new ${widget.accountType} Account',

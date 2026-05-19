@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:crm_app/widgets/app_svg_back_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
@@ -254,13 +255,12 @@ class _KycBankScreenState extends State<KycBankScreen> {
               backgroundColor: AppColors.background,
               scrolledUnderElevation: 0,
               elevation: 0,
-              leading: IconButton(
-                onPressed: () => _handleBackNavigation(),
-                icon: SvgPicture.asset(
-            'assets/svg/trade/arro_back.svg',
-            colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn),
-          ),
-              ),
+              leading:  AppSvgBackButton(
+          onPressed: () => _handleBackNavigation(),
+          iconWidth: 30.w,
+          iconHeight: 30.h,
+        ),
+              
               title: Text(
                 'Add Withdrawal Method',
                 style: AppTextStyles.heading.copyWith(

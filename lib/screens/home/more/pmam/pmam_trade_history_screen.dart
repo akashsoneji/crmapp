@@ -1,3 +1,4 @@
+import 'package:crm_app/widgets/app_svg_back_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -181,13 +182,18 @@ class _PmamTradeHistoryScreenState extends State<PmamTradeHistoryScreen> {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.whiteColor,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         scrolledUnderElevation: 0,
-        backgroundColor: AppColors.whiteColor,
+        backgroundColor: AppColors.background,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         foregroundColor: AppColors.textPrimary,
+        leading: AppSvgBackButton(
+          onPressed: () => Get.back(closeOverlays: true),
+          iconWidth: 30.w,
+          iconHeight: 30.h,
+        ),
         title: Text(
           'My P&L Trade History',
           style: TextStyle(

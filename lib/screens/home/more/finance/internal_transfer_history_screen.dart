@@ -1,3 +1,5 @@
+import 'package:crm_app/utils/navigation_helper.dart';
+import 'package:crm_app/widgets/app_svg_back_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -51,20 +53,15 @@ class _InternalTransferHistoryScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.tradeBackgroundCenterColor,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         scrolledUnderElevation: 0,
         elevation: 0,
-        backgroundColor: AppColors.tradeBackgroundCenterColor,
-        leading: IconButton(
-          icon: SvgPicture.asset(
-            'assets/svg/trade/arro_back.svg',
-            colorFilter: ColorFilter.mode(
-              AppColors.textPrimary,
-              BlendMode.srcIn,
-            ),
-          ),
-          onPressed: Get.back,
+        backgroundColor: AppColors.background,
+        leading:  AppSvgBackButton(
+          onPressed: () => NavigationHelper.safeBack(context: context),
+          iconWidth: 30.w,
+          iconHeight: 30.h,
         ),
         title: Text(
           'Internal Transfer History',
@@ -619,19 +616,14 @@ class _InternalTransferHistoryScreenState
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme(
-              brightness: AppColors.isDarkMode ? Brightness.dark : Brightness.light,
-              primary: AppColors.primary,
-              onPrimary: AppColors.onColoredBackground,
-              secondary: AppColors.primary,
-              onSecondary: AppColors.onColoredBackground,
-              error: AppColors.error,
-              onError: AppColors.onColoredBackground,
-              surface: AppColors.background,
-              onSurface: AppColors.textPrimary,
+           colorScheme: ColorScheme.light(
+           primary: AppColors.primary,
+            onPrimary: AppColors.whiteColor,
+              surface: AppColors.whiteColor,
+            onSurface: AppColors.textPrimary,
             ),
-          ),
-          child: child!,
+            ),
+            child: child!,
         );
       },
     );

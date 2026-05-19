@@ -38,6 +38,8 @@ class CopyTradingHubScreen extends StatelessWidget {
         ),
         leading: AppSvgBackButton(
           onPressed: () => AppSvgBackButton.popRoute(context),
+          iconWidth: 30.w,
+          iconHeight: 30.h,
         ),
       ),
       body: RefreshIndicator(

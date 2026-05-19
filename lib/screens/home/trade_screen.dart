@@ -1743,6 +1743,8 @@ class _TradeScreenState extends State<TradeScreen> {
                                     ),
                                     trailing: Checkbox(
                                       value: isSelected,
+                                      checkColor: AppColors.whiteColor,
+                        side: BorderSide(color: AppColors.textGrey, width: 1.5),
                                       onChanged: (value) {
                                         if (value == true) {
                                           // Add all variants when selecting base symbol

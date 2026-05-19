@@ -1,3 +1,4 @@
+import 'package:crm_app/widgets/app_svg_back_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
@@ -52,12 +53,10 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
         scrolledUnderElevation: 0,
         backgroundColor: AppColors.background,
         elevation: 0,
-        leading: Padding(
-          padding: EdgeInsets.only(left: 10.w),
-          child: IconButton(
-            icon: SvgPicture.asset("assets/svg/trade/arro_back.svg",color: AppColors.textPrimary),
-            onPressed: () => NavigationHelper.safeBack(context: context),
-          ),
+         leading: AppSvgBackButton(
+          onPressed: () => Get.back(closeOverlays: true),
+          iconWidth: 30.w,
+          iconHeight: 30.h,
         ),
         title: Column(
           mainAxisSize: MainAxisSize.min,

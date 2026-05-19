@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:crm_app/widgets/app_svg_back_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -98,17 +99,15 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.tradeBackgroundCenterColor,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         scrolledUnderElevation: 0,
-        backgroundColor: AppColors.tradeBackgroundCenterColor,
+        backgroundColor: AppColors.background,
         elevation: 0,
-        leading: IconButton(
-          onPressed: () => Get.back(),
-          icon: SvgPicture.asset(
-            'assets/svg/trade/arro_back.svg',
-            colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn),
-          ),
+       leading: AppSvgBackButton(
+          onPressed: () => Get.back(closeOverlays: true),
+          iconWidth: 30.w,
+          iconHeight: 30.h,
         ),
 
         title: Text('Investor Portal', style: AppTextStyles.heading),

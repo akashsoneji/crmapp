@@ -56,7 +56,10 @@ class _PmamManagerDashboardScreenState
         elevation: 0,
         title: Text('MANAGER PROFILE', style: AppTextStyles.headingblack),
         centerTitle: true,
-        leading: AppSvgBackButton(onPressed: () => Get.back()),
+        leading: AppSvgBackButton(
+          onPressed: () => Get.back(closeOverlays: true),
+          iconWidth: 30.w,
+          iconHeight: 30.h,),
         actions: [
           IconButton(
             icon: Icon(

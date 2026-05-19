@@ -1,3 +1,4 @@
+import 'package:crm_app/widgets/app_svg_back_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -187,14 +188,8 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
           backgroundColor: AppColors.background,
           scrolledUnderElevation: 0,
           elevation: 0,
-          leading: Padding(
-            padding: EdgeInsets.only(left: 0.w),
-            child: IconButton(
-              icon: SvgPicture.asset(
-            "assets/svg/trade/arro_back.svg",
-            colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn),
-          ),
-              onPressed: () {
+          leading:  AppSvgBackButton(
+          onPressed: () {
                 final fromTab =
                     Get.arguments != null && Get.arguments['from'] != null
                         ? Get.arguments['from']
@@ -205,8 +200,9 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                   Get.offAllNamed(Routes.TRADING);
                 }
               },
-            ),
-          ),
+          iconWidth: 30.w,
+          iconHeight: 30.h,
+        ),
           title: Text(
             languageService.tr('transaction_history'),
             style: AppTextStyles.screenTitle,

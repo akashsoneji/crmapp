@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:crm_app/widgets/app_svg_back_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -51,7 +52,7 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
         centerTitle: true,
         scrolledUnderElevation: 0.0,
         backgroundColor: AppColors.background,
-        leading: IconButton(
+        leading: AppSvgBackButton(
           onPressed: () {
             // Check if came from account_created_screen
             final args = Get.arguments;
@@ -63,13 +64,10 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
             } else {
               // Normal back navigation (e.g., from dashboard)
               Get.back(closeOverlays: true);
-            }
-          },
-          icon: SvgPicture.asset(
-            "assets/svg/trade/arro_back.svg",
-            colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn),
-          ),
-        ),
+            }},
+          iconWidth: 30.w,
+          iconHeight: 30.h,),
+        
         title: Text(
           languageService.tr('choose_account_title'),
           style: AppTextStyles.heading,

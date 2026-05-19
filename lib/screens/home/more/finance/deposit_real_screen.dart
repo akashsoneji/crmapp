@@ -1,3 +1,4 @@
+import 'package:crm_app/widgets/app_svg_back_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -184,15 +185,13 @@ class _DepositRealScreenState extends State<DepositRealScreen> {
         scrolledUnderElevation: 0,
         backgroundColor: AppColors.backgroundLight,
         elevation: 0,
-        leading: Padding(
-          padding: EdgeInsets.only(left: 10.w),
-          child: IconButton(
-            icon: SvgPicture.asset("assets/svg/trade/arro_back.svg",color: AppColors.textPrimary),
-            onPressed: () => NavigationHelper.safeBack(context: context),
-          ),
+        leading: 
+        AppSvgBackButton(
+          onPressed: () => NavigationHelper.safeBack(context: context),
+          iconWidth: 30.w,
+          iconHeight: 30.h,
         ),
-
-        title: Text(
+            title: Text(
           languageService.tr('deposit'),
           style: AppTextStyles.screenTitle,
         ),

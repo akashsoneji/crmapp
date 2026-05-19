@@ -1,3 +1,4 @@
+import 'package:crm_app/widgets/app_svg_back_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
@@ -37,14 +38,12 @@ class _BankListScreenState extends State<BankListScreen> {
         backgroundColor: AppColors.backgroundLight,
         scrolledUnderElevation: 0,
         elevation: 0,
-        leading: IconButton(
+        leading:  AppSvgBackButton(
           onPressed: () => Get.back(closeOverlays: true),
-          icon: SvgPicture.asset(
-            'assets/svg/trade/arro_back.svg',
-            colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn),
-          ),
+          iconWidth: 30.w,
+          iconHeight: 30.h,
         ),
-        title: Text(
+         title: Text(
           'Withdrawal Method',
           style: AppTextStyles.heading.copyWith(
             fontSize: 18.sp,

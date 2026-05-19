@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:crm_app/widgets/app_svg_back_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -157,12 +158,10 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
         backgroundColor: AppColors.background,
         scrolledUnderElevation: 0,
         elevation: 0,
-        leading: IconButton(
-          icon: SvgPicture.asset(
-            "assets/svg/trade/arro_back.svg",
-            colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn),
-          ),
+         leading: AppSvgBackButton(
           onPressed: () => NavigationHelper.safeBack(context: context),
+          iconWidth: 30.w,
+          iconHeight: 30.h,
         ),
         title: Text(
           languageService.tr('internal_transfer'),
