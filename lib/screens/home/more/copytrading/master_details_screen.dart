@@ -85,7 +85,7 @@ class MasterDetailsScreen extends StatelessWidget {
                 SizedBox(height: 12.h),
                 // _PlansCard(profile: profile, masterCode: masterCode),
                 // SizedBox(height: 12.h),
-                _OrdersCard(profile: profile),
+                _OrdersCard(profile: profile, controller: controller),
               ],
             ),
           ),
@@ -701,103 +701,159 @@ class _PerformanceChart extends StatelessWidget {
   Widget build(BuildContext context) {
     if (series.isEmpty) return const SizedBox.shrink();
 
-    final spots = <FlSpot>[];
+    final lineSpots = <FlSpot>[];
+    final barGroups = <BarChartGroupData>[];
     for (var i = 0; i < series.length; i++) {
-      spots.add(FlSpot(i.toDouble(), series[i].cumulativeProfit.toDouble()));
+      lineSpots.add(FlSpot(i.toDouble(), series[i].cumulativeProfit.toDouble()));
+      barGroups.add(
+        BarChartGroupData(
+          x: i,
+          barRods: [
+            BarChartRodData(
+              toY: series[i].profit.toDouble(),
+              color: series[i].profit >= 0
+                  ? AppColors.green.withValues(alpha: 0.60)
+                  : AppColors.error.withValues(alpha: 0.60),
+              width: 10,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(2)),
+            ),
+          ],
+        ),
+      );
     }
 
-    final profits = series.map((e) => e.cumulativeProfit.toDouble()).toList();
-    final minY = profits.reduce((a, b) => a < b ? a : b);
-    final maxY = profits.reduce((a, b) => a > b ? a : b);
-    final range = maxY - minY;
-    final padding = range * 0.15;
+    final cumulativeValues = series.map((e) => e.cumulativeProfit.toDouble()).toList();
+    final tradeValues = series.map((e) => e.profit.toDouble()).toList();
+    final allValues = [...cumulativeValues, ...tradeValues];
+    final minAll = allValues.reduce((a, b) => a < b ? a : b);
+    final maxAll = allValues.reduce((a, b) => a > b ? a : b);
+    final totalRange = maxAll - minAll;
+    final padding = totalRange * 0.2;
+
+    final firstDate = DateTime.tryParse(series.first.closeTime);
+    String dateLabel = series.first.closeTime;
+    if (firstDate != null) {
+      dateLabel = '${firstDate.day.toString().padLeft(2, '0')} ${_monthName(firstDate.month)}';
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Text(
+          'From master account closed trades (user trade history), not copier copies.',
+          style: TextStyle(fontSize: 9.sp, color: AppColors.textGrey, fontWeight: FontWeight.w500),
+        ),
+        SizedBox(height: 6.h),
+        Row(
+          children: [
+            _LegendItem(color: AppColors.primary, label: 'Cumulative P&L', outlined: true),
+            SizedBox(width: 16.w),
+            _LegendItem(color: AppColors.green.withValues(alpha: 0.60), label: 'Trade P&L'),
+          ],
+        ),
+        SizedBox(height: 8.h),
         SizedBox(
-          height: 160.h,
-          child: LineChart(
-            LineChartData(
-              lineBarsData: [
-                LineChartBarData(
-                  spots: spots,
-                  isCurved: true,
-                  barWidth: 2,
-                  dotData: FlDotData(
-                    show: true,
-                    getDotPainter: (spot, percent, bar, index) {
-                      return FlDotCirclePainter(
-                        radius: 3,
-                        color: AppColors.primary,
-                        strokeWidth: 1.5,
-                        strokeColor: AppColors.whiteColor,
-                      );
-                    },
-                  ),
-                  belowBarData: BarAreaData(
-                    show: true,
-                    color: AppColors.primary.withValues(alpha: 0.12),
-                  ),
-                ),
-              ],
+          height: 180.h,
+          child: BarChart(
+            BarChartData(
+              barGroups: barGroups,
+              borderData: FlBorderData(show: false),
               gridData: FlGridData(
                 show: true,
                 drawVerticalLine: false,
-                horizontalInterval: range > 0 ? range / 4 : 1,
+                horizontalInterval: totalRange > 0 ? totalRange / 4 : 1,
                 getDrawingHorizontalLine: (value) {
                   return FlLine(
-                    color: AppColors.border.withValues(alpha: 0.3),
+                    color: AppColors.border.withValues(alpha: 0.35),
                     strokeWidth: 0.5,
                   );
                 },
               ),
               titlesData: FlTitlesData(
                 show: true,
-                rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                rightTitles: AxisTitles(
+                  axisNameWidget: Padding(
+                    padding: EdgeInsets.only(bottom: 4.h),
+                    child: Text('Per trade', style: TextStyle(fontSize: 9.sp, color: AppColors.textGrey, fontWeight: FontWeight.w600)),
+                  ),
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 36,
+                    interval: totalRange > 0 ? totalRange / 4 : 1,
+                    getTitlesWidget: (value, meta) {
+                      return Padding(
+                        padding: EdgeInsets.only(left: 4.w),
+                        child: Text(
+                          '\$${value.toStringAsFixed(1)}',
+                          style: TextStyle(fontSize: 9.sp, color: AppColors.textGrey),
+                        ),
+                      );
+                    },
+                  ),
+                ),
                 topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                bottomTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                bottomTitles: AxisTitles(
+                  axisNameWidget: Padding(
+                    padding: EdgeInsets.only(top: 4.h),
+                    child: Text('Cumulative P&L', style: TextStyle(fontSize: 9.sp, color: AppColors.textGrey, fontWeight: FontWeight.w600)),
+                  ),
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 24,
+                    getTitlesWidget: (value, meta) {
+                      return Padding(
+                        padding: EdgeInsets.only(top: 4.h),
+                        child: Text(dateLabel, style: TextStyle(fontSize: 9.sp, color: AppColors.textGrey)),
+                      );
+                    },
+                  ),
+                ),
                 leftTitles: AxisTitles(
                   sideTitles: SideTitles(
                     showTitles: true,
-                    reservedSize: 48,
+                    reservedSize: 40,
+                    interval: totalRange > 0 ? totalRange / 4 : 1,
                     getTitlesWidget: (value, meta) {
                       return Padding(
-                        padding: EdgeInsets.only(right: 6.w),
+                        padding: EdgeInsets.only(right: 4.w),
                         child: Text(
                           '\$${value.toStringAsFixed(1)}',
-                          style: TextStyle(fontSize: 10.sp, color: AppColors.textGrey),
+                          style: TextStyle(fontSize: 9.sp, color: AppColors.textGrey),
                         ),
                       );
                     },
                   ),
                 ),
               ),
-              borderData: FlBorderData(show: false),
-              minX: 0,
-              maxX: (series.length - 1).toDouble(),
-              minY: minY - padding,
-              maxY: maxY + padding,
-              lineTouchData: LineTouchData(
-                touchTooltipData: LineTouchTooltipData(
-                  getTooltipColor: (touchedSpot) => AppColors.textPrimary,
-                  tooltipBorderRadius: BorderRadius.circular(6.r),
-                  getTooltipItems: (touchedSpots) {
-                    return touchedSpots.map((spot) {
-                      final idx = spot.x.toInt();
-                      final point = series[idx];
-                      final dt = DateTime.tryParse(point.closeTime);
-                      String dateStr = point.closeTime;
-                      if (dt != null) {
-                        dateStr = '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
-                      }
-                      return LineTooltipItem(
-                        '$dateStr\n\$${point.cumulativeProfit.toStringAsFixed(2)}',
-                        TextStyle(fontSize: 10.sp, color: AppColors.whiteColor, fontWeight: FontWeight.w600),
-                      );
-                    }).toList();
+              minY: minAll - padding,
+              maxY: maxAll + padding,
+              barTouchData: BarTouchData(
+                touchTooltipData: BarTouchTooltipData(
+                  getTooltipColor: (_) => AppColors.textPrimary,
+                  tooltipBorderRadius: BorderRadius.circular(6),
+                  getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                    final point = series[groupIndex];
+                    final dt = DateTime.tryParse(point.closeTime);
+                    String t = dateLabel;
+                    if (dt != null) {
+                      t = '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+                    }
+                    return BarTooltipItem(
+                      '$t\nTrade: \$${point.profit.toStringAsFixed(2)}\nCumulative: \$${point.cumulativeProfit.toStringAsFixed(2)}',
+                      TextStyle(fontSize: 10.sp, color: AppColors.whiteColor, fontWeight: FontWeight.w600),
+                    );
                   },
                 ),
+              ),
+              extraLinesData: ExtraLinesData(
+                horizontalLines: [
+                  HorizontalLine(
+                    y: 0,
+                    color: AppColors.textGrey.withValues(alpha: 0.3),
+                    strokeWidth: 1,
+                    dashArray: [4, 4],
+                  ),
+                ],
               ),
             ),
           ),
@@ -805,49 +861,49 @@ class _PerformanceChart extends StatelessWidget {
       ],
     );
   }
+
+  String _monthName(int month) {
+    const months = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return months[month.clamp(1, 12)];
+  }
 }
 
-class _PlanStat extends StatelessWidget {
+class _LegendItem extends StatelessWidget {
+  final Color color;
   final String label;
-  final String value;
-  const _PlanStat({required this.label, required this.value});
+  final bool outlined;
+
+  const _LegendItem({required this.color, required this.label, this.outlined = false});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 10.sp,
-            color: AppColors.textGrey,
-            fontWeight: FontWeight.w700,
+        Container(
+          width: 10,
+          height: 10,
+          decoration: BoxDecoration(
+            color: outlined ? Colors.transparent : color,
+            border: outlined ? Border.all(color: color, width: 1.5) : null,
+            borderRadius: BorderRadius.circular(2),
           ),
         ),
-        SizedBox(height: 2.h),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 12.sp,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
-          ),
-        ),
+        SizedBox(width: 4.w),
+        Text(label, style: TextStyle(fontSize: 10.sp, color: AppColors.textGrey, fontWeight: FontWeight.w500)),
       ],
     );
   }
 }
 
+// ignore_for_file: unused_element
 class _OrdersCard extends StatelessWidget {
   final CopyTradingMasterProfile profile;
-  const _OrdersCard({required this.profile});
+  final CopyTradingMasterDetailsController controller;
+  const _OrdersCard({required this.profile, required this.controller});
 
   @override
   Widget build(BuildContext context) {
-    final closed = profile.tradeHistory;
-    final open = profile.openPositions;
-
     return Container(
       decoration: BoxDecoration(
         color: AppColors.whiteColor,
@@ -856,22 +912,30 @@ class _OrdersCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          TabBar(
+          Obx(() => TabBar(
             labelColor: AppColors.textPrimary,
             unselectedLabelColor: AppColors.textGrey,
             indicatorColor: AppColors.primary,
             indicatorWeight: 2,
             tabs: [
-              Tab(text: 'Closed orders (${closed.length})'),
-              Tab(text: 'Open orders (${open.length})'),
+              Tab(text: 'Closed orders (${controller.tradeHistory.length})'),
+              Tab(text: 'Open orders (${controller.profile.value?.openPositions.length ?? 0})'),
             ],
-          ),
+          )),
           SizedBox(
             height: 360.h,
             child: TabBarView(
               children: [
-                _OrdersTable(items: closed, statusLabel: 'Closed'),
-                _OrdersTable(items: open, statusLabel: 'Open'),
+                Obx(() => _OrdersTable(
+                  items: controller.tradeHistory.toList(),
+                  statusLabel: 'Closed',
+                  isLoading: controller.isTradeHistoryLoading.value,
+                )),
+                Obx(() => _OrdersTable(
+                  items: controller.profile.value?.openPositions ?? [],
+                  statusLabel: 'Open',
+                  isLoading: false,
+                )),
               ],
             ),
           ),
@@ -884,10 +948,20 @@ class _OrdersCard extends StatelessWidget {
 class _OrdersTable extends StatelessWidget {
   final List<CopyTradingTradeItem> items;
   final String statusLabel;
-  const _OrdersTable({required this.items, required this.statusLabel});
+  final bool isLoading;
+  const _OrdersTable({
+    required this.items,
+    required this.statusLabel,
+    this.isLoading = false,
+  });
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return Center(
+        child: CircularProgressIndicator(color: AppColors.primary),
+      );
+    }
     if (items.isEmpty) {
       return Center(
         child: Text(

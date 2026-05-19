@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:crm_app/constants/api_const.dart';
 import 'package:crm_app/services/api_service.dart';
 import 'package:get/get.dart';
@@ -241,15 +242,35 @@ class CopyTradingMasterDetailsController extends GetxController {
   final RxBool isTimeframeLoading = false.obs;
   final RxBool isPlanLoading = false.obs;
   final RxBool isPlanOrTimeframeLoading = false.obs;
+  final RxBool isTradeHistoryLoading = false.obs;
   final RxString errorMessage = ''.obs;
   final Rxn<CopyTradingMasterProfile> profile = Rxn<CopyTradingMasterProfile>();
+  final RxList<CopyTradingTradeItem> tradeHistory = <CopyTradingTradeItem>[].obs;
   final RxString selectedTimeframe = '3m'.obs;
   final RxString selectedPlanId = ''.obs;
+
+  Timer? _refreshTimer;
 
   @override
   void onInit() {
     super.onInit();
     loadProfile(showLoading: true);
+    _startAutoRefresh();
+  }
+
+  @override
+  void onClose() {
+    _refreshTimer?.cancel();
+    super.onClose();
+  }
+
+  void _startAutoRefresh() {
+    _refreshTimer?.cancel();
+    _refreshTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (!isLoading.value && !isTimeframeLoading.value && !isPlanLoading.value) {
+        loadTradeHistory();
+      }
+    });
   }
 
   Future<void> selectTimeframe(String timeframe) async {
@@ -289,6 +310,7 @@ class CopyTradingMasterDetailsController extends GetxController {
         return;
       }
       profile.value = CopyTradingMasterProfile.fromJson(data.cast<String, dynamic>());
+      await loadTradeHistory();
     } catch (e) {
       profile.value = null;
       errorMessage.value = 'Load error: $e';
@@ -300,6 +322,35 @@ class CopyTradingMasterDetailsController extends GetxController {
       } else if (showLoading) {
         isLoading.value = false;
       }
+    }
+  }
+
+  Future<void> loadTradeHistory() async {
+    isTradeHistoryLoading.value = true;
+    try {
+      final timeframe = selectedTimeframe.value == 'all' ? null : selectedTimeframe.value;
+      final res = await ApiService.get(
+        endpoint: ApiConstants.copyTradingMasterTradeHistory(
+          masterCode,
+          timeframe: timeframe,
+        ),
+      );
+      if (res.success && res.data != null) {
+        final data = res.data?['data'];
+        if (data is Map) {
+          final historyList = data['data'];
+          if (historyList is List) {
+            tradeHistory.value = historyList
+                .whereType<Map>()
+                .map((e) => CopyTradingTradeItem.fromJson(e.cast<String, dynamic>()))
+                .toList();
+          }
+        }
+      }
+    } catch (_) {
+      // silently fail, trade history is secondary data
+    } finally {
+      isTradeHistoryLoading.value = false;
     }
   }
 }

@@ -163,6 +163,15 @@ class ApiConstants {
   static String copyTradingCopierMasterProfile(String masterCode) =>
       '${ajax}copytrading/copier/masters/$masterCode';
 
+  static String copyTradingMasterTradeHistory(String masterCode, {String? timeframe, int page = 1, int perPage = 20}) {
+    final base = '${ajax}copytrading/copier/masters/$masterCode/trade-history';
+    final params = <String>[];
+    if (timeframe != null && timeframe.isNotEmpty) params.add('timeframe=$timeframe');
+    params.add('page=$page');
+    params.add('per_page=$perPage');
+    return '$base?${params.join('&')}';
+  }
+
   // // Profile APIs
   // static const String profileUpdate = '${ajax}profile_update.php';
   // static const String getProfile = '${ajax}profile';
