@@ -483,6 +483,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
                                 'assets/svg/spread.svg',
                                 width: 10.w,
                                 height: 10.h,
+                                color: AppColors.textGrey,
                               ),
                               SizedBox(width: 2.w),
                               Flexible(
