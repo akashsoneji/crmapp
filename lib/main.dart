@@ -39,6 +39,7 @@ import 'services/app_status/app_status_service.dart';
 import 'services/app_status/app_status_controller.dart';
 import 'services/app_status/app_status_overlay.dart';
 import 'services/crm_settings_service.dart';
+import 'services/enabled_modules_service.dart';
 
 // Connectivity overlay imports
 import 'services/connectivity/connectivity_service.dart';
@@ -176,6 +177,7 @@ Future<void> initServices() async {
   Get.put<AppStatusService>(AppStatusService(), permanent: true);
   Get.put<AppStatusController>(AppStatusController(), permanent: true);
   Get.put<CrmSettingsService>(CrmSettingsService(), permanent: true);
+  Get.put<EnabledModulesService>(EnabledModulesService(), permanent: true);
 
   // Start periodic app status checking
   // REQUIRED: Starting periodic check for testing
@@ -509,6 +511,12 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
             }
           } catch (e) {
             print('AuthCheckScreen: Error fetching accounts: $e');
+          }
+
+          if (Get.isRegistered<EnabledModulesService>()) {
+            unawaited(
+              Get.find<EnabledModulesService>().fetchEnabledModules(force: true),
+            );
           }
 
           print('AuthCheckScreen: Navigating to Trading screen (Home)');
