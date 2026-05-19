@@ -28,9 +28,11 @@ import 'dart:io' show Platform;
 import 'package:crm_app/services/biometric_service.dart';
 import 'package:crm_app/services/app_lock_service.dart';
 import 'package:crm_app/services/enabled_modules_service.dart';
+import 'package:crm_app/services/google_otp_service.dart';
 
 class AuthController extends GetxController {
   final AuthService _authService = Get.find<AuthService>();
+  GoogleOtpService get _googleOtpService => Get.find<GoogleOtpService>();
 
   // Observable states
   final _isLoading = false.obs;
@@ -67,6 +69,7 @@ class AuthController extends GetxController {
   bool get isEmailVerified => _userData.value?.isEmailVerified ?? false;
   bool get isMobileVerified => _userData.value?.isMobileVerified ?? false;
   bool get isUserActive => _userData.value?.isActive ?? false;
+  bool get isGoogleOtpEnabled => _userData.value?.googleOtpEnabled ?? false;
 
   @override
   void onInit() {
@@ -113,14 +116,9 @@ class AuthController extends GetxController {
     bool enableBiometricAfterLogin = false,
   }) async {
     try {
-      // ⏱️ Performance measurement: Start timing
-      final stopwatch = Stopwatch()..start();
-      print('⏱️ [PERFORMANCE] Login process started at ${DateTime.now()}');
-
       _setLoading(true);
       _clearError();
 
-      final loginStartTime = stopwatch.elapsedMilliseconds;
       String? fcmToken = await SecureStorageService.getFcmToken();
       String deviceType = Platform.isIOS ? 'ios' : 'android';
 
@@ -130,45 +128,120 @@ class AuthController extends GetxController {
         fcmToken: fcmToken,
         deviceType: deviceType,
       );
-      print(
-        '⏱️ [PERFORMANCE] Login API completed: ${stopwatch.elapsedMilliseconds - loginStartTime}ms',
+
+      if (response.success && response.data != null) {
+        final loginResult = response.data!;
+
+        if (loginResult.requiresGoogleOtp) {
+          final challengeEmail =
+              loginResult.googleOtpChallenge?.email ?? email.trim();
+          Get.toNamed(AppPages.GOOGLE_LOGIN_OTP, arguments: challengeEmail);
+          return;
+        }
+
+        final loginResponse = loginResult.loginResponse;
+        if (loginResponse == null) {
+          _setError('Login failed. Please try again.');
+          return;
+        }
+
+        await _completeLogin(
+          loginResponse,
+          email: email,
+          enableBiometricAfterLogin: enableBiometricAfterLogin,
+        );
+        return;
+      } else {
+        print('❌ AuthController.login() - Login failed:');
+        print('   response.success: ${response.success}');
+        print('   response.message: ${response.message}');
+        print('   response.data: ${response.data}');
+
+        final errorMessage =
+            response.message?.isNotEmpty == true
+                ? response.message!
+                : 'Login failed. Please check your credentials and try again.';
+
+        print('   Setting error message: $errorMessage');
+        _setError(errorMessage);
+      }
+    } catch (e) {
+      _setError('Login error: $e');
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  Future<void> verifyGoogleLoginOtp({
+    required String email,
+    required String otpCode,
+  }) async {
+    try {
+      _setLoading(true);
+      _clearError();
+
+      final response = await _googleOtpService.verifyLoginOtp(
+        email: email,
+        otpCode: otpCode,
       );
 
       if (response.success && response.data != null) {
+        await _completeLogin(response.data!, email: email);
+      } else {
+        final errorMessage =
+            response.message?.isNotEmpty == true
+                ? response.message!
+                : 'OTP verification failed. Please try again.';
+        _setError(errorMessage);
+      }
+    } catch (e) {
+      _setError('OTP verification error: $e');
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  Future<void> updateGoogleOtpEnabled(bool enabled) async {
+    final user = _userData.value;
+    if (user == null) return;
+
+    final updatedUser = user.copyWith(googleOtpEnabled: enabled);
+    _userData.value = updatedUser;
+
+    try {
+      final loginData = await SecureStorageService.getCompleteLoginData();
+      if (loginData != null) {
+        loginData['user'] = updatedUser.toJson();
+        await SecureStorageService.saveUserData(jsonEncode(loginData));
+      }
+    } catch (e) {
+      print('AuthController: Failed to persist google OTP flag: $e');
+    }
+  }
+
+  Future<void> _completeLogin(
+    LoginResponseModel response, {
+    required String email,
+    bool enableBiometricAfterLogin = false,
+  }) async {
         // Save login data to secure storage
         final loginData = {
-          'token': response.data!.data.token,
-          'websocket_token': response.data!.data.websocketToken,
-          'user': response.data!.data.user.toJson(),
+          'token': response.data.token,
+          'websocket_token': response.data.websocketToken,
+          'user': response.data.user.toJson(),
           'is_logged_in': true,
         };
 
-        // Pre-initialize controllers in parallel with saving tokens
-        // This reduces sequential overhead
-        final controllerInitStart = stopwatch.elapsedMilliseconds;
-        final dashboardController = Get.put(DashboardController());
-        print(
-          '⏱️ [PERFORMANCE] DashboardController initialized: ${stopwatch.elapsedMilliseconds - controllerInitStart}ms',
-        );
-
         // Save tokens and update state in parallel
-        final tokenSaveStart = stopwatch.elapsedMilliseconds;
         await Future.wait([
           SecureStorageService.saveUserData(jsonEncode(loginData)),
-          SecureStorageService.saveAuthToken(response.data!.data.token),
-          SecureStorageService.saveWebsocketToken(
-            response.data!.data.websocketToken,
-          ),
+          SecureStorageService.saveAuthToken(response.data.token),
+          SecureStorageService.saveWebsocketToken(response.data.websocketToken),
           SecureStorageService.saveLoginStatus(true),
         ]);
-        print(
-          '⏱️ [PERFORMANCE] Tokens saved: ${stopwatch.elapsedMilliseconds - tokenSaveStart}ms',
-        );
 
-        _loginResponse.value = response.data;
-        _userData.value = response.data!.data.user;
-        _isAuthenticated.value = true;
-        await _persistTenaxUserBrokerProfile();
+        _loginResponse.value = response;
+        _userData.value = response.data.user;
 
         if (enableBiometricAfterLogin) {
           try {
@@ -201,11 +274,9 @@ class AuthController extends GetxController {
         OneClickTradingService.instance.setOneClickTradingEnabled(true);
 
         // ✅ FIX: Wait for account check before connecting sockets
-        // Initialize dashboard controller and fetch MT5 accounts
-        int accountDataStart = 0;
         try {
-          // Get account controller if it exists
           AccountController? accountController;
+          final dashboardController = Get.put(DashboardController());
           try {
             if (Get.isRegistered<AccountController>()) {
               accountController = Get.find<AccountController>();
@@ -214,8 +285,6 @@ class AuthController extends GetxController {
             print('AuthController: AccountController not registered yet: $e');
           }
 
-          // ✅ FIX: Wait for account check to complete
-          accountDataStart = stopwatch.elapsedMilliseconds;
           final futures = <Future>[dashboardController.forceCheckMT5Accounts()];
 
           if (accountController != null) {
@@ -223,9 +292,6 @@ class AuthController extends GetxController {
           }
 
           await Future.wait(futures, eagerError: false);
-          print(
-            '⏱️ [PERFORMANCE] Account data loaded: ${stopwatch.elapsedMilliseconds - accountDataStart}ms',
-          );
 
           // ✅ FIX: Check if account exists and set primary account
           final primaryAccount = dashboardController.primaryMT5Account;
@@ -361,65 +427,7 @@ class AuthController extends GetxController {
 
         _fetchEnabledModulesInBackground();
 
-        // Navigate to trading screen AFTER controllers are ready
         Get.offAllNamed(AppPages.TRADING);
-
-        // Navigate to trading screen
-        // final navigationStart = stopwatch.elapsedMilliseconds;
-        //
-        // stopwatch.stop();
-
-        // ⏱️ Performance measurement: Final timing report
-        // print('═══════════════════════════════════════════════════════');
-        // print('⏱️ [PERFORMANCE] LOGIN TO DASHBOARD TIMING REPORT');
-        // print('═══════════════════════════════════════════════════════');
-        // final totalTime = stopwatch.elapsedMilliseconds;
-        // print(
-        //   '⏱️ Total time: ${totalTime}ms (${(totalTime / 1000).toStringAsFixed(2)}s)',
-        // );
-        // print('⏱️ Breakdown:');
-        // print(
-        //   '   • Login API: ${stopwatch.elapsedMilliseconds - loginStartTime}ms',
-        // );
-        // if (totalTime > controllerInitStart) {
-        //   print('   • Controller Init: ${controllerInitStart}ms');
-        // }
-        // if (totalTime > tokenSaveStart) {
-        //   print('   • Token Save: ${tokenSaveStart - controllerInitStart}ms');
-        // }
-        // if (accountDataStart > 0 && totalTime > accountDataStart) {
-        //   print('   • Account Data: ${accountDataStart - tokenSaveStart}ms');
-        // }
-        // print('   • Navigation: ${totalTime - navigationStart}ms');
-        // print('═══════════════════════════════════════════════════════');
-        // print(
-        //   '${stopwatch.elapsedMilliseconds < 2000
-        //       ? "✅ EXCELLENT"
-        //       : stopwatch.elapsedMilliseconds < 3000
-        //       ? "✅ GOOD"
-        //       : "⚠️ NEEDS IMPROVEMENT"} (<2s excellent, <3s good, >3s needs work)',
-        // );
-        // print('═══════════════════════════════════════════════════════');
-      } else {
-        print('❌ AuthController.login() - Login failed:');
-        print('   response.success: ${response.success}');
-        print('   response.message: ${response.message}');
-        print('   response.data: ${response.data}');
-
-        // Ensure we always have an error message to display
-        final errorMessage =
-            response.message?.isNotEmpty == true
-                ? response.message!
-                : 'Login failed. Please check your credentials and try again.';
-
-        print('   Setting error message: $errorMessage');
-        _setError(errorMessage);
-      }
-    } catch (e) {
-      _setError('Login error: $e');
-    } finally {
-      _setLoading(false);
-    }
   }
 
   // ==================== REGISTRATION METHODS ====================

@@ -36,6 +36,8 @@ import '../screens/auth/password/forgot_password_screen.dart';
 import '../screens/auth/password/verify_code_screen.dart';
 import '../screens/auth/password/create_new_password_screen.dart';
 import '../screens/home/change_password_screen.dart';
+import '../screens/home/more/two_factor_auth_screen.dart';
+import '../screens/auth/google_login_otp_screen.dart';
 import '../screens/home/more/chat_with_us_screen.dart';
 import '../screens/home/more/edit_profile_screen.dart';
 import '../screens/home/more/finance/deposit_screen.dart';
@@ -131,6 +133,8 @@ class AppPages {
   static const DEPOSIT_INSTRUCTION_SCREEN = _Paths.DEPOSIT_INSTRUCTION_SCREEN;
   static const BANK_LIST = _Paths.BANK_LIST;
   static const CHANGE_PASSWORD = _Paths.CHANGE_PASSWORD;
+  static const TWO_FACTOR_AUTH = _Paths.TWO_FACTOR_AUTH;
+  static const GOOGLE_LOGIN_OTP = _Paths.GOOGLE_LOGIN_OTP;
   static const TENAX_BROKER_SELECTION = _Paths.TENAX_BROKER_SELECTION;
   static const TENAX_BROKER_INFO = _Paths.TENAX_BROKER_INFO;
   static const COPY_TRADING_WALLET = _Paths.COPY_TRADING_WALLET;
@@ -182,6 +186,7 @@ class AppPages {
     // ),
     GetPage(name: _Paths.KYC_BANK, page: () => KycBankScreen()),
     GetPage(name: _Paths.CHANGE_PASSWORD, page: () => ChangePasswordScreen()),
+    GetPage(name: _Paths.TWO_FACTOR_AUTH, page: () => const TwoFactorAuthScreen()),
     GetPage(
       name: _Paths.PAYMENT_METHOD,
       page: () => PaymentMethodsScreen(accountNumber: ''),
@@ -191,6 +196,11 @@ class AppPages {
     GetPage(
       name: _Paths.LOGIN,
       page: () => const LoginScreen(),
+      binding: AuthBinding(),
+    ),
+    GetPage(
+      name: _Paths.GOOGLE_LOGIN_OTP,
+      page: () => const GoogleLoginOtpScreen(),
       binding: AuthBinding(),
     ),
     GetPage(

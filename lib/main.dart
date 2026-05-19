@@ -25,6 +25,7 @@ import 'controllers/dashboard_controller.dart';
 import 'controllers/instruments_controller.dart';
 import 'controllers/trading_controller.dart';
 import 'services/auth_service.dart';
+import 'services/google_otp_service.dart';
 import 'services/account_service.dart';
 import 'services/api_service.dart';
 import 'services/websocket_endpoint_helper.dart';
@@ -145,6 +146,7 @@ Future<void> initServices() async {
   await themeService.ensureInitialized();
 
   Get.put<AuthService>(AuthServiceImpl(), permanent: true);
+  Get.put<GoogleOtpService>(GoogleOtpService(), permanent: true);
   Get.put<AccountService>(AccountServiceImpl(), permanent: true);
   Get.put<LoadingService>(LoadingService(), permanent: true);
   Get.put<AppLockService>(AppLockService(), permanent: true);

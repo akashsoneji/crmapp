@@ -127,6 +127,8 @@ abstract class _Paths {
   static const DEPOSIT_INSTRUCTION_SCREEN = '/deposit-instruction';
   static const BANK_LIST = '/bank-list';
   static const CHANGE_PASSWORD = '/change-password';
+  static const TWO_FACTOR_AUTH = '/two-factor-auth';
+  static const GOOGLE_LOGIN_OTP = '/google-login-otp';
   static const TENAX_BROKER_SELECTION = '/tenax-broker-selection';
   static const TENAX_BROKER_INFO = '/tenax-broker-info';
   static const COPY_TRADING_WALLET = '/copy-trading-wallet';

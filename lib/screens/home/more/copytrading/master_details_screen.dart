@@ -4,6 +4,7 @@ import 'package:crm_app/widgets/common_loading_widget.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/copy_trading/copy_trading_master_details_controller.dart';
 import 'package:crm_app/controllers/copy_trading/copy_trading_hub_controller.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -560,7 +561,10 @@ class _PerformanceCard extends StatelessWidget {
                 ),
               ],
             ),
-            SizedBox(height: 8.h),
+            SizedBox(height: 10.h),
+            if (profile.performanceSeries.isNotEmpty)
+              _PerformanceChart(series: profile.performanceSeries),
+            SizedBox(height: 10.h),
             Row(
               children: [
                 Expanded(
@@ -684,6 +688,121 @@ class _TimeChip extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _PerformanceChart extends StatelessWidget {
+  final List<PerformanceSeriesPoint> series;
+
+  const _PerformanceChart({required this.series});
+
+  @override
+  Widget build(BuildContext context) {
+    if (series.isEmpty) return const SizedBox.shrink();
+
+    final spots = <FlSpot>[];
+    for (var i = 0; i < series.length; i++) {
+      spots.add(FlSpot(i.toDouble(), series[i].cumulativeProfit.toDouble()));
+    }
+
+    final profits = series.map((e) => e.cumulativeProfit.toDouble()).toList();
+    final minY = profits.reduce((a, b) => a < b ? a : b);
+    final maxY = profits.reduce((a, b) => a > b ? a : b);
+    final range = maxY - minY;
+    final padding = range * 0.15;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          height: 160.h,
+          child: LineChart(
+            LineChartData(
+              lineBarsData: [
+                LineChartBarData(
+                  spots: spots,
+                  isCurved: true,
+                  barWidth: 2,
+                  dotData: FlDotData(
+                    show: true,
+                    getDotPainter: (spot, percent, bar, index) {
+                      return FlDotCirclePainter(
+                        radius: 3,
+                        color: AppColors.primary,
+                        strokeWidth: 1.5,
+                        strokeColor: AppColors.whiteColor,
+                      );
+                    },
+                  ),
+                  belowBarData: BarAreaData(
+                    show: true,
+                    color: AppColors.primary.withValues(alpha: 0.12),
+                  ),
+                ),
+              ],
+              gridData: FlGridData(
+                show: true,
+                drawVerticalLine: false,
+                horizontalInterval: range > 0 ? range / 4 : 1,
+                getDrawingHorizontalLine: (value) {
+                  return FlLine(
+                    color: AppColors.border.withValues(alpha: 0.3),
+                    strokeWidth: 0.5,
+                  );
+                },
+              ),
+              titlesData: FlTitlesData(
+                show: true,
+                rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                bottomTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                leftTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 48,
+                    getTitlesWidget: (value, meta) {
+                      return Padding(
+                        padding: EdgeInsets.only(right: 6.w),
+                        child: Text(
+                          '\$${value.toStringAsFixed(1)}',
+                          style: TextStyle(fontSize: 10.sp, color: AppColors.textGrey),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+              borderData: FlBorderData(show: false),
+              minX: 0,
+              maxX: (series.length - 1).toDouble(),
+              minY: minY - padding,
+              maxY: maxY + padding,
+              lineTouchData: LineTouchData(
+                touchTooltipData: LineTouchTooltipData(
+                  getTooltipColor: (touchedSpot) => AppColors.textPrimary,
+                  tooltipBorderRadius: BorderRadius.circular(6.r),
+                  getTooltipItems: (touchedSpots) {
+                    return touchedSpots.map((spot) {
+                      final idx = spot.x.toInt();
+                      final point = series[idx];
+                      final dt = DateTime.tryParse(point.closeTime);
+                      String dateStr = point.closeTime;
+                      if (dt != null) {
+                        dateStr = '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+                      }
+                      return LineTooltipItem(
+                        '$dateStr\n\$${point.cumulativeProfit.toStringAsFixed(2)}',
+                        TextStyle(fontSize: 10.sp, color: AppColors.whiteColor, fontWeight: FontWeight.w600),
+                      );
+                    }).toList();
+                  },
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

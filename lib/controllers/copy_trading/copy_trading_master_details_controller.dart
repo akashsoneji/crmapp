@@ -59,6 +59,26 @@ class CopyTradingTradeItem {
   }
 }
 
+class PerformanceSeriesPoint {
+  final String closeTime;
+  final num profit;
+  final num cumulativeProfit;
+
+  const PerformanceSeriesPoint({
+    required this.closeTime,
+    required this.profit,
+    required this.cumulativeProfit,
+  });
+
+  factory PerformanceSeriesPoint.fromJson(Map<String, dynamic> json) {
+    return PerformanceSeriesPoint(
+      closeTime: (json['close_time'] ?? '').toString(),
+      profit: _parseNum(json['profit'], 0),
+      cumulativeProfit: _parseNum(json['cumulative_profit'], 0),
+    );
+  }
+}
+
 class CopyTradingPlan {
   final int id;
   final int planId;
@@ -138,6 +158,7 @@ class CopyTradingMasterProfile {
   final List<CopyTradingPlan> plans;
   final List<CopyTradingTradeItem> tradeHistory;
   final List<CopyTradingTradeItem> openPositions;
+  final List<PerformanceSeriesPoint> performanceSeries;
 
   const CopyTradingMasterProfile({
     required this.masterCode,
@@ -162,6 +183,7 @@ class CopyTradingMasterProfile {
     required this.plans,
     required this.tradeHistory,
     required this.openPositions,
+    required this.performanceSeries,
   });
 
   factory CopyTradingMasterProfile.fromJson(Map<String, dynamic> json) {
@@ -177,6 +199,11 @@ class CopyTradingMasterProfile {
     final openPositionsList = openPositionsRaw is List
         ? openPositionsRaw.whereType<Map>().map((e) => CopyTradingTradeItem.fromJson(e.cast<String, dynamic>())).toList()
         : <CopyTradingTradeItem>[];
+
+    final performanceSeriesRaw = json['performance_series'];
+    final performanceSeriesList = performanceSeriesRaw is List
+        ? performanceSeriesRaw.whereType<Map>().map((e) => PerformanceSeriesPoint.fromJson(e.cast<String, dynamic>())).toList()
+        : <PerformanceSeriesPoint>[];
 
     return CopyTradingMasterProfile(
       masterCode: (json['master_code'] ?? '').toString(),
@@ -201,6 +228,7 @@ class CopyTradingMasterProfile {
       plans: plansList,
       tradeHistory: tradeHistoryList,
       openPositions: openPositionsList,
+      performanceSeries: performanceSeriesList,
     );
   }
 }

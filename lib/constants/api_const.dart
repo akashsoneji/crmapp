@@ -20,6 +20,10 @@ class ApiConstants {
   static const String changePassword = '${ajax}mt5accounts/changepassword';
   static const String changeLeverage = '${ajax}mt5accounts/changeleverage';
   static const String changeUserPassword = '${ajax}settings/change-password';
+  static const String googleOtpGenerate = '${ajax}settings/google-otp/generate';
+  static const String googleOtpVerify = '${ajax}settings/google-otp/verify';
+  static const String googleOtpDisable = '${ajax}settings/google-otp/disable';
+  static const String googleOtpVerifyLogin = '${ajax}auth/google/verify-login-otp';
   static const String register = '${ajax}register';
   static const String registerFcmToken = '${ajax}register-fcm-token';
   static const String dashboard = '${ajax}dashboard';
