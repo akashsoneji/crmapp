@@ -40,9 +40,12 @@ class MasterDetailsScreen extends StatelessWidget {
             fontWeight: FontWeight.w600,
           ),
         ),
-        leading: AppSvgBackButton(
+        leading:  AppSvgBackButton(
           onPressed: () => AppSvgBackButton.popRoute(context),
+          iconWidth: 30.w,
+          iconHeight: 30.h,
         ),
+        
         actions: [
           IconButton(
             onPressed: () => controller.loadProfile(showLoading: true),

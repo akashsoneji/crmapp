@@ -27,6 +27,8 @@ class MasterPlanDetailScreen extends StatelessWidget {
         title: Text('Plan Details', style: AppTextStyles.heading),
         leading: AppSvgBackButton(
           onPressed: () => AppSvgBackButton.popRoute(context),
+          iconHeight: 30.h,
+          iconWidth: 30.w,
         ),
       ),
       body: GetBuilder<CopyTradingMasterPlanDetailController>(
