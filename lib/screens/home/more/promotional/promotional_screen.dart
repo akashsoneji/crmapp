@@ -2,7 +2,6 @@ import 'package:crm_app/screens/home/more/bonus/scratch_card_screen.dart';
 import 'package:crm_app/widgets/app_svg_back_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/screens/home/more/widgets/more_menu_widgets.dart';
 import 'package:crm_app/constants/color.dart';

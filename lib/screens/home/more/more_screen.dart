@@ -883,9 +883,11 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
               // Financial Section
               // _SectionHeader(title: languageService.tr('general_financial')),
               Obx(() {
-                final modules = Get.find<EnabledModulesService>().modules.value;
+                final modulesService = Get.find<EnabledModulesService>();
+                final modules = modulesService.modules.value;
                 final showCopyTrading = modules?.copytrading ?? false;
                 final showPmam = modules?.pmam ?? false;
+                final showPromotional = modulesService.isPromotionalMenuVisible;
 
                 final items = <Widget>[
                   _MenuItem(
@@ -896,21 +898,27 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                       if (mounted) _refreshDataIfNeeded();
                     },
                   ),
-                  // _MenuItem(
-                  //   icon: 'promotional',
-                  //   label: languageService.tr('general_promotional'),
-                  //   onTap:
-                  //       () => Get.to(
-                  //         () => const PromotionalScreen(),
-                  //         transition: Transition.rightToLeft,
-                  //       ),
-                  // ),
                   _MenuItem(
                     icon: 'dashboard',
                     label: languageService.tr('more_dashboard'),
                     onTap: () async => await _handleSwitchToIB(),
                   ),
                 ];
+
+                if (showPromotional) {
+                  items.insert(
+                    1,
+                    _MenuItem(
+                      icon: 'promotional',
+                      label: languageService.tr('general_promotional'),
+                      onTap:
+                          () => Get.to(
+                            () => const PromotionalScreen(),
+                            transition: Transition.rightToLeft,
+                          ),
+                    ),
+                  );
+                }
 
                 if (showCopyTrading) {
                   items.add(

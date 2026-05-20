@@ -16,6 +16,10 @@ class EnabledModulesService extends GetxService {
   bool get isScratchCardEnabled => current.scratchcard;
   bool get isTradeWinEnabled => current.tradewin;
 
+  /// Promotional entry when at least one in-app promotional module is on.
+  bool get isPromotionalMenuVisible =>
+      isScratchCardEnabled || isTradeWinEnabled;
+
   Future<EnabledModulesModel?> fetchEnabledModules({bool force = false}) async {
     if (!force && modules.value != null) {
       return modules.value;
