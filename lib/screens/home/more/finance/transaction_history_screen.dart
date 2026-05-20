@@ -10,6 +10,7 @@ import '../../../../constants/text_styles.dart';
 import '../../../../controllers/finance/transaction_history_controller.dart';
 import '../../../../routes/app_pages.dart';
 import '../../../../services/language_service.dart';
+import '../../../../utils/app_picker_theme.dart';
 import '../../../../widgets/common_loading_widget.dart';
 
 class TransactionHistoryScreen extends StatefulWidget {
@@ -188,21 +189,21 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
           backgroundColor: AppColors.background,
           scrolledUnderElevation: 0,
           elevation: 0,
-          leading:  AppSvgBackButton(
-          onPressed: () {
-                final fromTab =
-                    Get.arguments != null && Get.arguments['from'] != null
-                        ? Get.arguments['from']
-                        : 'dashboard';
-                if (fromTab == 'finance') {
-                  NavigationHelper.safeBack(context: context);
-                } else {
-                  Get.offAllNamed(Routes.TRADING);
-                }
-              },
-          iconWidth: 30.w,
-          iconHeight: 30.h,
-        ),
+          leading: AppSvgBackButton(
+            onPressed: () {
+              final fromTab =
+                  Get.arguments != null && Get.arguments['from'] != null
+                      ? Get.arguments['from']
+                      : 'dashboard';
+              if (fromTab == 'finance') {
+                NavigationHelper.safeBack(context: context);
+              } else {
+                Get.offAllNamed(Routes.TRADING);
+              }
+            },
+            iconWidth: 30.w,
+            iconHeight: 30.h,
+          ),
           title: Text(
             languageService.tr('transaction_history'),
             style: AppTextStyles.screenTitle,
@@ -318,7 +319,10 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.primary, width: 1.5),
+        border: Border.all(
+          color: AppColors.primary.withValues(alpha: 0.5),
+          width: 1.5,
+        ),
       ),
       child: Column(
         children:
@@ -360,7 +364,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                           if (isSelected)
                             Icon(
                               Icons.check,
-                              color: AppColors.primary,
+                              color: AppColors.primary.withValues(alpha: 0.5),
                               size: 18,
                             ),
                         ],
@@ -370,7 +374,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                   if (!isLast)
                     Divider(
                       height: 1,
-                      color: AppColors.primary.withOpacity(0.6),
+                      color: AppColors.primary.withValues(alpha: 0.6),
                       indent: 16.w,
                       endIndent: 16.w,
                     ),
@@ -386,7 +390,10 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.primary, width: 1.5),
+        border: Border.all(
+          color: AppColors.primary.withValues(alpha: 0.5),
+          width: 1.5,
+        ),
       ),
       child: Column(
         children: [
@@ -561,7 +568,8 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
 
     Color _statusColor() {
       if (isApproved) return AppColors.green;
-      if (statusText == 'rejected' || statusText == 'failed') return AppColors.error;
+      if (statusText == 'rejected' || statusText == 'failed')
+        return AppColors.error;
       return AppColors.warning;
     }
 
@@ -747,8 +755,8 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   }
 
   void _showCustomDatePicker(bool isStartDate) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
+    final DateTime? picked = await AppPickerTheme.showAppDatePicker(
+      context,
       initialDate:
           isStartDate
               ? (customStartDate ??
@@ -756,18 +764,6 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
               : (customEndDate ?? DateTime.now()),
       firstDate: DateTime(2000),
       lastDate: DateTime.now(),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: AppColors.primary,
-              onPrimary: AppColors.whiteColor,
-              onSurface: AppColors.textPrimary,
-            ),
-          ),
-          child: child!,
-        );
-      },
     );
 
     if (picked != null) {

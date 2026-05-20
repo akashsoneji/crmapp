@@ -43,7 +43,7 @@ class _PmamMainScreenState extends State<PmamMainScreen> {
         scrolledUnderElevation: 0,
         backgroundColor: AppColors.background,
         elevation: 0,
-       leading: AppSvgBackButton(
+        leading: AppSvgBackButton(
           onPressed: () => Get.back(closeOverlays: true),
           iconWidth: 30.w,
           iconHeight: 30.h,
@@ -66,7 +66,7 @@ class _PmamMainScreenState extends State<PmamMainScreen> {
         //     ),
         //   ),
         // ),
-        title: Text('PMAM', style: AppTextStyles.heading),
+        title: Text('PAMM', style: AppTextStyles.heading),
         centerTitle: true,
       ),
       body: Obx(() {
@@ -222,7 +222,10 @@ class _PmamMainScreenState extends State<PmamMainScreen> {
         decoration: BoxDecoration(
           color: AppColors.errorBg,
           borderRadius: BorderRadius.circular(14.r),
-          border: Border.all(color: AppColors.error.withValues(alpha: 0.4), width: 1.2),
+          border: Border.all(
+            color: AppColors.error.withValues(alpha: 0.4),
+            width: 1.2,
+          ),
         ),
         child: Row(
           children: [

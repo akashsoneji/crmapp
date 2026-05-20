@@ -14,7 +14,6 @@ import 'package:get/get.dart';
 /// SVG action icons (tinted with [AppColors.primary] via [ColorFilter]).
 class _MyCopiesSvg {
   _MyCopiesSvg._();
-  static const add = 'assets/svg/copy_trading/my_copies/ct_add.svg';
   static const edit = 'assets/svg/copy_trading/my_copies/ct_edit.svg';
   static const pause = 'assets/svg/copy_trading/my_copies/ct_pause.svg';
   static const play = 'assets/svg/copy_trading/my_copies/ct_play.svg';
@@ -72,7 +71,8 @@ class _MyCopiesScreenState extends State<MyCopiesScreen> {
     final q = _searchCtrl.text.trim().toLowerCase();
     final status = _statusFilter.value;
     return all.where((s) {
-      final statusOk = status == 'all' ? true : s.status.toLowerCase() == status;
+      final statusOk =
+          status == 'all' ? true : s.status.toLowerCase() == status;
       if (!statusOk) return false;
       if (q.isEmpty) return true;
       return s.userName.toLowerCase().contains(q) ||
@@ -123,43 +123,48 @@ class _MyCopiesScreenState extends State<MyCopiesScreen> {
             return ListView(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 24.h),
-            children: [
-              if (err.isNotEmpty)
-                _InlineError(
-                  message: err,
-                  onRetry: () {
-                    CustomToastService.showError(message: err, title: 'Error');
-                    controller.load(showLoading: true);
-                  },
+              children: [
+                if (err.isNotEmpty)
+                  _InlineError(
+                    message: err,
+                    onRetry: () {
+                      CustomToastService.showError(
+                        message: err,
+                        title: 'Error',
+                      );
+                      controller.load(showLoading: true);
+                    },
+                  ),
+                if (err.isNotEmpty) SizedBox(height: 12.h),
+
+                _SearchBox(
+                  controller: _searchCtrl,
+                  onChanged: (_) => setState(() {}),
                 ),
-              if (err.isNotEmpty) SizedBox(height: 12.h),
+                SizedBox(height: 12.h),
 
-              _SearchBox(
-                controller: _searchCtrl,
-                onChanged: (_) => setState(() {}),
-              ),
-              SizedBox(height: 12.h),
+                Obx(() {
+                  return _FilterRow(
+                    selected: _statusFilter.value,
+                    onChanged: (v) => _statusFilter.value = v,
+                  );
+                }),
+                SizedBox(height: 12.h),
 
-              Obx(() {
-                return _FilterRow(
-                  selected: _statusFilter.value,
-                  onChanged: (v) => _statusFilter.value = v,
-                );
-              }),
-              SizedBox(height: 12.h),
+                _SummaryCard(controller: controller),
+                SizedBox(height: 12.h),
 
-              _SummaryCard(controller: controller),
-              SizedBox(height: 12.h),
-
-              if (filtered.isEmpty)
-                _EmptyState(
-                  title: 'No copies found',
-                  subtitle: list.isEmpty
-                      ? 'Explore masters and subscribe to start copy trading.'
-                      : 'Try changing search or filter.',
-                )
-              else
-                ...filtered.map((s) => _SubscriptionCard(
+                if (filtered.isEmpty)
+                  _EmptyState(
+                    title: 'No copies found',
+                    subtitle:
+                        list.isEmpty
+                            ? 'Explore masters and subscribe to start copy trading.'
+                            : 'Try changing search or filter.',
+                  )
+                else
+                  ...filtered.map(
+                    (s) => _SubscriptionCard(
                       item: s,
                       actionLoading: controller.actionLoading,
                       onEdit: () async {
@@ -209,11 +214,42 @@ class _MyCopiesScreenState extends State<MyCopiesScreen> {
                           context: context,
                           builder: (ctx) {
                             return AlertDialog(
-                              title: const Text('Stop copy?'),
-                              content: const Text('This is permanent. You can’t re-activate; you must re-subscribe.'),
+                              backgroundColor: AppColors.card,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16.r),
+                              ),
+                              title: Text(
+                                'Stop copy?',
+                                style: AppTextStyles.headingblack,
+                              ),
+                              content: Text(
+                                'This is permanent. You can’t re-activate; you must re-subscribe.',
+                                style: AppTextStyles.subheading.copyWith(
+                                  color: AppColors.textPrimary,
+                                  fontSize: 14.sp,
+                                ),
+                              ),
                               actions: [
-                                TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
-                                TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Stop')),
+                                TextButton(
+                                  onPressed: () => Navigator.of(ctx).pop(false),
+                                  child: Text(
+                                    'Cancel',
+                                    style: TextStyle(
+                                      color: AppColors.textPrimary,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                                TextButton(
+                                  onPressed: () => Navigator.of(ctx).pop(true),
+                                  child: Text(
+                                    'Stop',
+                                    style: TextStyle(
+                                      color: AppColors.error,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
                               ],
                             );
                           },
@@ -226,80 +262,56 @@ class _MyCopiesScreenState extends State<MyCopiesScreen> {
                           _toastSuccess(res.message ?? 'Stopped');
                         }
                       },
-                      onAddCapital: () async {
-                        final amountCtrl = TextEditingController();
-                        final amount = await showDialog<num?>(
-                          context: context,
-                          builder: (ctx) {
-                            return AlertDialog(
-                              title: const Text('Add capital'),
-                              content: TextField(
-                                controller: amountCtrl,
-                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                decoration: const InputDecoration(hintText: 'Amount (USD)'),
-                              ),
-                              actions: [
-                                TextButton(onPressed: () => Navigator.of(ctx).pop(null), child: const Text('Cancel')),
-                                TextButton(
-                                  onPressed: () {
-                                    final v = num.tryParse(amountCtrl.text.trim());
-                                    Navigator.of(ctx).pop(v);
-                                  },
-                                  child: const Text('Add'),
-                                ),
-                              ],
-                            );
-                          },
-                        );
-                        if (amount == null || amount <= 0) {
-                          _toastError('Enter a valid amount');
-                          return;
-                        }
-                        final res = await controller.addCapital(copierId: s.id, amount: amount);
-                        if (!res.success) {
-                          _toastError(res.message ?? 'Failed to add capital');
-                        } else {
-                          _toastSuccess(res.message ?? 'Capital added');
-                        }
-                      },
-                    )),
-
-              if (loading) ...[
-                SizedBox(height: 12.h),
-                Center(
-                  child: SizedBox(
-                    width: 18.r,
-                    height: 18.r,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                    ),
                   ),
-                ),
-              ],
 
-              Obx(() {
-                if (!controller.isLoadingMore.value) return const SizedBox.shrink();
-                return Column(
-                  children: [
-                    SizedBox(height: 16.h),
-                    Center(
-                      child: SizedBox(
-                        width: 24.r,
-                        height: 24.r,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                if (loading) ...[
+                  SizedBox(height: 12.h),
+                  Center(
+                    child: SizedBox(
+                      width: 18.r,
+                      height: 18.r,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppColors.primary,
                       ),
                     ),
-                    SizedBox(height: 8.h),
-                    Center(
-                      child: Text('Loading more...', style: AppTextStyles.caption),
-                    ),
-                    SizedBox(height: 16.h),
-                  ],
-                );
-              }),
-            ],
-          );
-        }),
+                  ),
+                ],
+
+                Obx(() {
+                  if (!controller.isLoadingMore.value)
+                    return const SizedBox.shrink();
+                  return Column(
+                    children: [
+                      SizedBox(height: 16.h),
+                      Center(
+                        child: SizedBox(
+                          width: 24.r,
+                          height: 24.r,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 8.h),
+                      Center(
+                        child: Text(
+                          'Loading more...',
+                          style: AppTextStyles.caption,
+                        ),
+                      ),
+                      SizedBox(height: 16.h),
+                    ],
+                  );
+                }),
+              ],
+            );
+          }),
+        ),
       ),
-    ));
+    );
   }
 }
 
@@ -316,21 +328,33 @@ class _SearchBox extends StatelessWidget {
         color: AppColors.card,
         borderRadius: BorderRadius.circular(14.r),
         border: Border.all(color: AppColors.textGrey.withOpacity(0.18)),
-        boxShadow: [BoxShadow(color: AppColors.border.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 4))],
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.border.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: AppTextField(
         controller: controller,
         onChanged: onChanged,
         prefixIcon: Icon(Icons.search, color: AppColors.textGrey),
         hintText: 'Search master / plan / account',
-        suffixIcon: controller.text.isEmpty ? null : IconButton(
+        suffixIcon:
+            controller.text.isEmpty
+                ? null
+                : IconButton(
                   onPressed: () {
                     controller.clear();
                     onChanged('');
                   },
-                  icon: Icon(Icons.close, size: 18.r, color: AppColors.textGrey),
+                  icon: Icon(
+                    Icons.close,
+                    size: 18.r,
+                    color: AppColors.textGrey,
+                  ),
                 ),
-        
       ),
     );
   }
@@ -347,10 +371,30 @@ class _FilterRow extends StatelessWidget {
       spacing: 8.w,
       runSpacing: 8.h,
       children: [
-        _FilterChip(label: 'All', value: 'all', selected: selected, onChanged: onChanged),
-        _FilterChip(label: 'Active', value: 'active', selected: selected, onChanged: onChanged),
-        _FilterChip(label: 'Paused', value: 'paused', selected: selected, onChanged: onChanged),
-        _FilterChip(label: 'Stopped', value: 'stopped', selected: selected, onChanged: onChanged),
+        _FilterChip(
+          label: 'All',
+          value: 'all',
+          selected: selected,
+          onChanged: onChanged,
+        ),
+        _FilterChip(
+          label: 'Active',
+          value: 'active',
+          selected: selected,
+          onChanged: onChanged,
+        ),
+        _FilterChip(
+          label: 'Paused',
+          value: 'paused',
+          selected: selected,
+          onChanged: onChanged,
+        ),
+        _FilterChip(
+          label: 'Stopped',
+          value: 'stopped',
+          selected: selected,
+          onChanged: onChanged,
+        ),
       ],
     );
   }
@@ -361,7 +405,12 @@ class _FilterChip extends StatelessWidget {
   final String value;
   final String selected;
   final ValueChanged<String> onChanged;
-  const _FilterChip({required this.label, required this.value, required this.selected, required this.onChanged});
+  const _FilterChip({
+    required this.label,
+    required this.value,
+    required this.selected,
+    required this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -374,7 +423,10 @@ class _FilterChip extends StatelessWidget {
         decoration: BoxDecoration(
           color: isOn ? AppColors.primary : AppColors.card,
           borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: isOn ? AppColors.primary : AppColors.textGrey.withOpacity(0.2)),
+          border: Border.all(
+            color:
+                isOn ? AppColors.primary : AppColors.textGrey.withOpacity(0.2),
+          ),
         ),
         child: Text(
           label,
@@ -430,10 +482,17 @@ class _SummaryCard extends StatelessWidget {
                     color: AppColors.primary.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(8.r),
                   ),
-                  child: Icon(Icons.groups_outlined, size: 16.r, color: AppColors.primary),
+                  child: Icon(
+                    Icons.groups_outlined,
+                    size: 16.r,
+                    color: AppColors.primary,
+                  ),
                 ),
                 SizedBox(width: 8.w),
-                Text('My Copiers', style: AppTextStyles.labelOnChartPendingOrderBold),
+                Text(
+                  'My Copiers',
+                  style: AppTextStyles.labelOnChartPendingOrderBold,
+                ),
                 const Spacer(),
                 Container(
                   padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
@@ -443,7 +502,11 @@ class _SummaryCard extends StatelessWidget {
                   ),
                   child: Text(
                     '$total total',
-                    style: TextStyle(fontSize: 10.sp, fontWeight: FontWeight.w600, color: AppColors.primary),
+                    style: TextStyle(
+                      fontSize: 10.sp,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primary,
+                    ),
                   ),
                 ),
               ],
@@ -455,10 +518,26 @@ class _SummaryCard extends StatelessWidget {
               spacing: 6.w,
               runSpacing: 6.h,
               children: [
-                _StatusChip(label: 'Active', count: active, color: AppColors.green),
-                _StatusChip(label: 'Pending', count: pending, color: AppColors.warning),
-                _StatusChip(label: 'Paused', count: paused, color: AppColors.textGrey),
-                _StatusChip(label: 'Stopped', count: stopped, color: AppColors.error),
+                _StatusChip(
+                  label: 'Active',
+                  count: active,
+                  color: AppColors.green,
+                ),
+                _StatusChip(
+                  label: 'Pending',
+                  count: pending,
+                  color: AppColors.warning,
+                ),
+                _StatusChip(
+                  label: 'Paused',
+                  count: paused,
+                  color: AppColors.textGrey,
+                ),
+                _StatusChip(
+                  label: 'Stopped',
+                  count: stopped,
+                  color: AppColors.error,
+                ),
               ],
             ),
             SizedBox(height: 14.h),
@@ -472,11 +551,38 @@ class _SummaryCard extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  Expanded(child: _MiniMetric(label: 'Total Capital', value: '\$${capital.toStringAsFixed(0)}', icon: Icons.account_balance_wallet_outlined)),
-                  Container(width: 1, height: 36.h, color: AppColors.textGrey.withValues(alpha: 0.12)),
-                  Expanded(child: _MiniMetric(label: 'Total P&L', value: '\$${pnl.toStringAsFixed(2)}', icon: Icons.trending_up, valueColor: pnl >= 0 ? AppColors.green : AppColors.error)),
-                  Container(width: 1, height: 36.h, color: AppColors.textGrey.withValues(alpha: 0.12)),
-                  Expanded(child: _MiniMetric(label: 'Commission', value: '\$${commission.toStringAsFixed(2)}', icon: Icons.payments_outlined)),
+                  Expanded(
+                    child: _MiniMetric(
+                      label: 'Total Capital',
+                      value: '\$${capital.toStringAsFixed(0)}',
+                      icon: Icons.account_balance_wallet_outlined,
+                    ),
+                  ),
+                  Container(
+                    width: 1,
+                    height: 36.h,
+                    color: AppColors.textGrey.withValues(alpha: 0.12),
+                  ),
+                  Expanded(
+                    child: _MiniMetric(
+                      label: 'Total P&L',
+                      value: '\$${pnl.toStringAsFixed(2)}',
+                      icon: Icons.trending_up,
+                      valueColor: pnl >= 0 ? AppColors.green : AppColors.error,
+                    ),
+                  ),
+                  Container(
+                    width: 1,
+                    height: 36.h,
+                    color: AppColors.textGrey.withValues(alpha: 0.12),
+                  ),
+                  Expanded(
+                    child: _MiniMetric(
+                      label: 'Commission',
+                      value: '\$${commission.toStringAsFixed(2)}',
+                      icon: Icons.payments_outlined,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -491,7 +597,11 @@ class _StatusChip extends StatelessWidget {
   final String label;
   final int count;
   final Color color;
-  const _StatusChip({required this.label, required this.count, required this.color});
+  const _StatusChip({
+    required this.label,
+    required this.count,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -513,7 +623,11 @@ class _StatusChip extends StatelessWidget {
           SizedBox(width: 4.w),
           Text(
             '$count $label',
-            style: TextStyle(fontSize: 10.sp, fontWeight: FontWeight.w600, color: color),
+            style: TextStyle(
+              fontSize: 10.sp,
+              fontWeight: FontWeight.w600,
+              color: color,
+            ),
           ),
         ],
       ),
@@ -526,7 +640,12 @@ class _MiniMetric extends StatelessWidget {
   final String value;
   final IconData icon;
   final Color? valueColor;
-  const _MiniMetric({required this.label, required this.value, required this.icon, this.valueColor});
+  const _MiniMetric({
+    required this.label,
+    required this.value,
+    required this.icon,
+    this.valueColor,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -536,11 +655,22 @@ class _MiniMetric extends StatelessWidget {
         children: [
           Icon(icon, size: 13.r, color: AppColors.textGrey),
           SizedBox(height: 3.h),
-          Text(label, style: TextStyle(fontSize: 9.sp, color: AppColors.textGrey, fontWeight: FontWeight.w500)),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 9.sp,
+              color: AppColors.textGrey,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
           SizedBox(height: 2.h),
           Text(
             value,
-            style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w700, color: valueColor ?? AppColors.textPrimary),
+            style: TextStyle(
+              fontSize: 12.sp,
+              fontWeight: FontWeight.w700,
+              color: valueColor ?? AppColors.textPrimary,
+            ),
           ),
         ],
       ),
@@ -555,7 +685,6 @@ class _SubscriptionCard extends StatefulWidget {
   final Future<void> Function() onPause;
   final Future<void> Function() onResume;
   final Future<void> Function() onStop;
-  final Future<void> Function() onAddCapital;
 
   const _SubscriptionCard({
     required this.item,
@@ -564,7 +693,6 @@ class _SubscriptionCard extends StatefulWidget {
     required this.onPause,
     required this.onResume,
     required this.onStop,
-    required this.onAddCapital,
   });
 
   @override
@@ -582,10 +710,13 @@ class _SubscriptionCardState extends State<_SubscriptionCard> {
   static String _formatCopyMethod(String m) {
     if (m.isEmpty) return '-';
     final t = m.replaceAll('_', ' ').trim();
-    return t.split(' ').map((w) {
-      if (w.isEmpty) return w;
-      return '${w[0].toUpperCase()}${w.substring(1).toLowerCase()}';
-    }).join(' ');
+    return t
+        .split(' ')
+        .map((w) {
+          if (w.isEmpty) return w;
+          return '${w[0].toUpperCase()}${w.substring(1).toLowerCase()}';
+        })
+        .join(' ');
   }
 
   static String _getInitials(String name) {
@@ -610,8 +741,10 @@ class _SubscriptionCardState extends State<_SubscriptionCard> {
       _ => AppColors.textGrey,
     };
 
-    final displayName = item.userName.isNotEmpty ? item.userName : 'Copier #${item.userId}';
-    final planDisplayName = item.planName.isNotEmpty ? item.planName : 'Plan #${item.planId}';
+    final displayName =
+        item.userName.isNotEmpty ? item.userName : 'Copier #${item.userId}';
+    final planDisplayName =
+        item.planName.isNotEmpty ? item.planName : 'Plan #${item.planId}';
 
     final bool canPause = status == 'active';
     final bool canResume = status == 'paused';
@@ -625,7 +758,11 @@ class _SubscriptionCardState extends State<_SubscriptionCard> {
         borderRadius: BorderRadius.circular(16.r),
         border: Border.all(color: AppColors.textGrey.withOpacity(0.14)),
         boxShadow: [
-          BoxShadow(color: AppColors.border.withValues(alpha: 0.05), blurRadius: 12, offset: const Offset(0, 4)),
+          BoxShadow(
+            color: AppColors.border.withValues(alpha: 0.05),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
         ],
       ),
       clipBehavior: Clip.antiAlias,
@@ -649,7 +786,10 @@ class _SubscriptionCardState extends State<_SubscriptionCard> {
                         gradient: LinearGradient(
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
-                          colors: [AppColors.primary, AppColors.primary.withOpacity(0.7)],
+                          colors: [
+                            AppColors.primary,
+                            AppColors.primary.withOpacity(0.7),
+                          ],
                         ),
                         borderRadius: BorderRadius.circular(12.r),
                       ),
@@ -673,7 +813,9 @@ class _SubscriptionCardState extends State<_SubscriptionCard> {
                         children: [
                           Text(
                             displayName,
-                            style: AppTextStyles.black16600.copyWith(fontWeight: FontWeight.w700),
+                            style: AppTextStyles.black16600.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -681,14 +823,21 @@ class _SubscriptionCardState extends State<_SubscriptionCard> {
                           Row(
                             children: [
                               Container(
-                                padding: EdgeInsets.symmetric(horizontal: 7.w, vertical: 2.h),
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 7.w,
+                                  vertical: 2.h,
+                                ),
                                 decoration: BoxDecoration(
                                   color: AppColors.primary.withOpacity(0.08),
                                   borderRadius: BorderRadius.circular(6.r),
                                 ),
                                 child: Text(
                                   planDisplayName,
-                                  style: TextStyle(fontSize: 11.sp, fontWeight: FontWeight.w500, color: AppColors.primary),
+                                  style: TextStyle(
+                                    fontSize: 11.sp,
+                                    fontWeight: FontWeight.w500,
+                                    color: AppColors.primary,
+                                  ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -696,14 +845,21 @@ class _SubscriptionCardState extends State<_SubscriptionCard> {
                               if (item.serverType.isNotEmpty) ...[
                                 SizedBox(width: 6.w),
                                 Container(
-                                  padding: EdgeInsets.symmetric(horizontal: 7.w, vertical: 2.h),
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 7.w,
+                                    vertical: 2.h,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: AppColors.textGrey.withOpacity(0.08),
                                     borderRadius: BorderRadius.circular(6.r),
                                   ),
                                   child: Text(
                                     item.serverType.toUpperCase(),
-                                    style: TextStyle(fontSize: 10.sp, fontWeight: FontWeight.w600, color: AppColors.textGrey),
+                                    style: TextStyle(
+                                      fontSize: 10.sp,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.textGrey,
+                                    ),
                                   ),
                                 ),
                               ],
@@ -720,7 +876,11 @@ class _SubscriptionCardState extends State<_SubscriptionCard> {
                       outline: status == 'active',
                     ),
                     SizedBox(width: 2.w),
-                    Icon(_expanded ? Icons.expand_less : Icons.expand_more, size: 22.r, color: AppColors.textGrey),
+                    Icon(
+                      _expanded ? Icons.expand_less : Icons.expand_more,
+                      size: 22.r,
+                      color: AppColors.textGrey,
+                    ),
                   ],
                 ),
               ),
@@ -737,11 +897,39 @@ class _SubscriptionCardState extends State<_SubscriptionCard> {
             ),
             child: Row(
               children: [
-                Expanded(child: _QuickStat(label: 'Capital', value: '\$${item.capitalAmount.toStringAsFixed(0)}', icon: Icons.account_balance_wallet_outlined)),
-                Container(width: 1, height: 28.h, color: AppColors.textGrey.withOpacity(0.15)),
-                Expanded(child: _QuickStat(label: 'P&L', value: '\$${item.totalPnl.toStringAsFixed(2)}', icon: Icons.trending_up, valueColor: item.totalPnl >= 0 ? AppColors.green : AppColors.error)),
-                Container(width: 1, height: 28.h, color: AppColors.textGrey.withOpacity(0.15)),
-                Expanded(child: _QuickStat(label: 'Commission', value: '\$${item.totalCommissionPaid.toStringAsFixed(2)}', icon: Icons.payments_outlined)),
+                Expanded(
+                  child: _QuickStat(
+                    label: 'Capital',
+                    value: '\$${item.capitalAmount.toStringAsFixed(0)}',
+                    icon: Icons.account_balance_wallet_outlined,
+                  ),
+                ),
+                Container(
+                  width: 1,
+                  height: 28.h,
+                  color: AppColors.textGrey.withOpacity(0.15),
+                ),
+                Expanded(
+                  child: _QuickStat(
+                    label: 'P&L',
+                    value: '\$${item.totalPnl.toStringAsFixed(2)}',
+                    icon: Icons.trending_up,
+                    valueColor:
+                        item.totalPnl >= 0 ? AppColors.green : AppColors.error,
+                  ),
+                ),
+                Container(
+                  width: 1,
+                  height: 28.h,
+                  color: AppColors.textGrey.withOpacity(0.15),
+                ),
+                Expanded(
+                  child: _QuickStat(
+                    label: 'Commission',
+                    value: '\$${item.totalCommissionPaid.toStringAsFixed(2)}',
+                    icon: Icons.payments_outlined,
+                  ),
+                ),
               ],
             ),
           ),
@@ -752,88 +940,158 @@ class _SubscriptionCardState extends State<_SubscriptionCard> {
             duration: const Duration(milliseconds: 280),
             curve: Curves.easeInOutCubic,
             alignment: Alignment.topCenter,
-            child: _expanded
-                ? Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // ── Details Grid (2 columns) ──────────────────────────────
-                      Padding(
-                        padding: EdgeInsets.fromLTRB(14.w, 4.h, 14.w, 0),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // LEFT COLUMN
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  _GridLabel(label: 'Account', value: item.accountNumber),
-                                  _GridLabel(label: 'Plan Status', value: item.planStatus.isNotEmpty ? _formatStatus(item.planStatus) : '-'),
-                                  _GridLabel(label: 'Copy Method', value: _formatCopyMethod(item.copyMethod)),
-                                  if (item.sizingMethod.isNotEmpty)
-                                    _GridLabel(label: 'Sizing', value: _formatCopyMethod(item.sizingMethod)),
-                                  _GridLabel(label: 'Open Trades', value: item.openTradesCount > 0 ? '${item.openTradesCount}' : 'None', valueColor: item.openTradesCount > 0 ? AppColors.warning : AppColors.textGrey),
-                                ],
-                              ),
-                            ),
-                            SizedBox(width: 16.w),
-                            // RIGHT COLUMN
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  _GridLabel(label: 'Active Since', value: item.formattedActiveSince, valueColor: AppColors.primary),
-                                  if (item.lotMultiplier > 0)
-                                    _GridLabel(label: 'Lot Multiplier', value: '${item.lotMultiplier}x'),
-                                  if (item.takeProfit.isNotEmpty)
-                                    _GridLabel(label: 'Take Profit', value: item.takeProfit),
-                                  if (item.stopLoss.isNotEmpty)
-                                    _GridLabel(label: 'Stop Loss', value: item.stopLoss),
-                                  _GridLabel(label: 'Commission', value: item.commissionDisplay, valueColor: AppColors.primary),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      SizedBox(height: 16.h),
-
-                      // ── ACTION BUTTONS ────────────────────────────────────────
-                      Padding(
-                        padding: EdgeInsets.fromLTRB(14.w, 0, 14.w, 14.h),
-                        child: Obx(() {
-                          final busy = widget.actionLoading.value;
-                          return Column(
+            child:
+                _expanded
+                    ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // ── Details Grid (2 columns) ──────────────────────────────
+                        Padding(
+                          padding: EdgeInsets.fromLTRB(14.w, 4.h, 14.w, 0),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Row(
-                                children: [
-                                  Expanded(child: _ActionButton(icon: _MyCopiesSvg.add, label: 'Add Capital', color: AppColors.primary, enabled: !busy, onTap: widget.onAddCapital)),
-                                  SizedBox(width: 8.w),
-                                  Expanded(child: _ActionButton(icon: _MyCopiesSvg.edit, label: 'Edit Settings', color: AppColors.textGrey, enabled: !busy && canEdit, onTap: widget.onEdit)),
-                                ],
-                              ),
-                              SizedBox(height: 8.h),
-                              Row(
-                                children: [
-                                  if (canPause)
-                                    Expanded(child: _ActionButton(icon: _MyCopiesSvg.pause, label: 'Pause', color: AppColors.warning, enabled: !busy, onTap: widget.onPause))
-                                  else if (canResume)
-                                    Expanded(child: _ActionButton(icon: _MyCopiesSvg.play, label: 'Resume', color: AppColors.green, enabled: !busy, onTap: widget.onResume))
-                                  else
-                                    const Expanded(child: SizedBox.shrink()),
-                                  if (canStop) ...[
-                                    if (canPause || canResume) SizedBox(width: 8.w),
-                                    Expanded(child: _ActionButton(icon: _MyCopiesSvg.target, label: 'Stop Copy', color: AppColors.error, enabled: !busy, onTap: widget.onStop)),
+                              // LEFT COLUMN
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _GridLabel(
+                                      label: 'Account',
+                                      value: item.accountNumber,
+                                    ),
+                                    _GridLabel(
+                                      label: 'Plan Status',
+                                      value:
+                                          item.planStatus.isNotEmpty
+                                              ? _formatStatus(item.planStatus)
+                                              : '-',
+                                    ),
+                                    _GridLabel(
+                                      label: 'Copy Method',
+                                      value: _formatCopyMethod(item.copyMethod),
+                                    ),
+                                    if (item.sizingMethod.isNotEmpty)
+                                      _GridLabel(
+                                        label: 'Sizing',
+                                        value: _formatCopyMethod(
+                                          item.sizingMethod,
+                                        ),
+                                      ),
+                                    _GridLabel(
+                                      label: 'Open Trades',
+                                      value:
+                                          item.openTradesCount > 0
+                                              ? '${item.openTradesCount}'
+                                              : 'None',
+                                      valueColor:
+                                          item.openTradesCount > 0
+                                              ? AppColors.warning
+                                              : AppColors.textGrey,
+                                    ),
                                   ],
-                                ],
+                                ),
+                              ),
+                              SizedBox(width: 16.w),
+                              // RIGHT COLUMN
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _GridLabel(
+                                      label: 'Active Since',
+                                      value: item.formattedActiveSince,
+                                      valueColor: AppColors.primary,
+                                    ),
+                                    if (item.lotMultiplier > 0)
+                                      _GridLabel(
+                                        label: 'Lot Multiplier',
+                                        value: '${item.lotMultiplier}x',
+                                      ),
+                                    if (item.takeProfit.isNotEmpty)
+                                      _GridLabel(
+                                        label: 'Take Profit',
+                                        value: item.takeProfit,
+                                      ),
+                                    if (item.stopLoss.isNotEmpty)
+                                      _GridLabel(
+                                        label: 'Stop Loss',
+                                        value: item.stopLoss,
+                                      ),
+                                    _GridLabel(
+                                      label: 'Commission',
+                                      value: item.commissionDisplay,
+                                      valueColor: AppColors.primary,
+                                    ),
+                                  ],
+                                ),
                               ),
                             ],
-                          );
-                        }),
-                      ),
-                    ],
-                  )
-                : const SizedBox.shrink(),
+                          ),
+                        ),
+                        SizedBox(height: 16.h),
+
+                        // ── ACTION BUTTONS ────────────────────────────────────────
+                        Padding(
+                          padding: EdgeInsets.fromLTRB(14.w, 0, 14.w, 14.h),
+                          child: Obx(() {
+                            final busy = widget.actionLoading.value;
+                            return Column(
+                              children: [
+                                _ActionButton(
+                                  icon: _MyCopiesSvg.edit,
+                                  label: 'Edit Settings',
+                                  color: AppColors.textGrey,
+                                  enabled: !busy && canEdit,
+                                  onTap: widget.onEdit,
+                                ),
+                                SizedBox(height: 8.h),
+                                Row(
+                                  children: [
+                                    if (canPause)
+                                      Expanded(
+                                        child: _ActionButton(
+                                          icon: _MyCopiesSvg.pause,
+                                          label: 'Pause',
+                                          color: AppColors.warning,
+                                          enabled: !busy,
+                                          onTap: widget.onPause,
+                                        ),
+                                      )
+                                    else if (canResume)
+                                      Expanded(
+                                        child: _ActionButton(
+                                          icon: _MyCopiesSvg.play,
+                                          label: 'Resume',
+                                          color: AppColors.green,
+                                          enabled: !busy,
+                                          onTap: widget.onResume,
+                                        ),
+                                      )
+                                    else
+                                      const Expanded(child: SizedBox.shrink()),
+                                    if (canStop) ...[
+                                      if (canPause || canResume)
+                                        SizedBox(width: 8.w),
+                                      Expanded(
+                                        child: _ActionButton(
+                                          icon: _MyCopiesSvg.target,
+                                          label: 'Stop Copy',
+                                          color: AppColors.error,
+                                          enabled: !busy,
+                                          onTap: widget.onStop,
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ],
+                            );
+                          }),
+                        ),
+                      ],
+                    )
+                    : const SizedBox.shrink(),
           ),
         ],
       ),
@@ -864,7 +1122,10 @@ class _QuickStat extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label, style: TextStyle(fontSize: 10.sp, color: AppColors.textGrey)),
+              Text(
+                label,
+                style: TextStyle(fontSize: 10.sp, color: AppColors.textGrey),
+              ),
               Text(
                 value,
                 style: TextStyle(
@@ -894,11 +1155,22 @@ class _GridLabel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: TextStyle(fontSize: 10.sp, color: AppColors.textGrey, fontWeight: FontWeight.w400)),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10.sp,
+              color: AppColors.textGrey,
+              fontWeight: FontWeight.w400,
+            ),
+          ),
           SizedBox(height: 2.h),
           Text(
             value,
-            style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w600, color: valueColor ?? AppColors.textPrimary),
+            style: TextStyle(
+              fontSize: 12.sp,
+              fontWeight: FontWeight.w600,
+              color: valueColor ?? AppColors.textPrimary,
+            ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -925,7 +1197,8 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final effectiveColor = enabled ? color : AppColors.textGrey.withOpacity(0.4);
+    final effectiveColor =
+        enabled ? color : AppColors.textGrey.withOpacity(0.4);
     return Material(
       color: effectiveColor.withOpacity(enabled ? 0.1 : 0.05),
       borderRadius: BorderRadius.circular(10.r),
@@ -937,11 +1210,20 @@ class _ActionButton extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              SvgPicture.asset(icon, width: 18.r, height: 18.r, colorFilter: ColorFilter.mode(effectiveColor, BlendMode.srcIn)),
+              SvgPicture.asset(
+                icon,
+                width: 18.r,
+                height: 18.r,
+                colorFilter: ColorFilter.mode(effectiveColor, BlendMode.srcIn),
+              ),
               SizedBox(width: 7.w),
               Text(
                 label,
-                style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w600, color: effectiveColor),
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w600,
+                  color: effectiveColor,
+                ),
               ),
             ],
           ),
@@ -951,13 +1233,17 @@ class _ActionButton extends StatelessWidget {
   }
 }
 
-
 class _StatusPill extends StatelessWidget {
   final String text;
   final Color color;
+
   /// When true (e.g. Active): outlined badge with primary-style border, no fill.
   final bool outline;
-  const _StatusPill({required this.text, required this.color, this.outline = false});
+  const _StatusPill({
+    required this.text,
+    required this.color,
+    this.outline = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -966,9 +1252,18 @@ class _StatusPill extends StatelessWidget {
       decoration: BoxDecoration(
         color: outline ? Colors.transparent : color.withOpacity(0.12),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: outline ? color.withOpacity(0.55) : color.withOpacity(0.25)),
+        border: Border.all(
+          color: outline ? color.withOpacity(0.55) : color.withOpacity(0.25),
+        ),
       ),
-      child: Text(text, style: TextStyle(fontSize: 11.sp, fontWeight: FontWeight.w600, color: color)),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 11.sp,
+          fontWeight: FontWeight.w600,
+          color: color,
+        ),
+      ),
     );
   }
 }
@@ -1017,7 +1312,12 @@ class _InlineError extends StatelessWidget {
         children: [
           Icon(Icons.error_outline, color: AppColors.error, size: 18.r),
           SizedBox(width: 8.w),
-          Expanded(child: Text(message, style: AppTextStyles.caption.copyWith(color: AppColors.error))),
+          Expanded(
+            child: Text(
+              message,
+              style: AppTextStyles.caption.copyWith(color: AppColors.error),
+            ),
+          ),
           TextButton(
             onPressed: onRetry,
             style: TextButton.styleFrom(padding: EdgeInsets.zero),
@@ -1028,4 +1328,3 @@ class _InlineError extends StatelessWidget {
     );
   }
 }
-
