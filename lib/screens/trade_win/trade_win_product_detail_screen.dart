@@ -184,9 +184,10 @@ class _TradeWinProductDetailScreenState
               width: double.infinity,
               padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
               decoration: BoxDecoration(
-                color: AppColors.isDarkMode
-                    ? AppColors.brandPrimary.withValues(alpha: 0.12)
-                    : AppColors.brandPrimary.withValues(alpha: 0.06),
+                color:
+                    AppColors.isDarkMode
+                        ? AppColors.primary.withValues(alpha: 0.12)
+                        : AppColors.brandPrimary.withValues(alpha: 0.06),
                 borderRadius: BorderRadius.circular(10.r),
                 border: Border.all(
                   color: AppColors.brandPrimary.withValues(alpha: 0.25),
@@ -295,8 +296,8 @@ class _TradeWinProductDetailScreenState
               child: LinearProgressIndicator(
                 value: progress,
                 minHeight: 6.h,
-                backgroundColor: AppColors.brandPrimary.withValues(alpha: 0.15),
-                color: AppColors.brandPrimary,
+                backgroundColor: AppColors.primary.withValues(alpha: 0.15),
+                color: AppColors.primary,
               ),
             ),
             SizedBox(height: 6.h),
@@ -312,16 +313,17 @@ class _TradeWinProductDetailScreenState
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: _canRedeem
-                    ? () => _redeem(product, languageService)
-                    : null,
+                onPressed:
+                    _canRedeem ? () => _redeem(product, languageService) : null,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: _canRedeem
-                      ? AppColors.brandPrimary
-                      : AppColors.icongrey.withValues(alpha: 0.35),
-                  foregroundColor: AppColors.onColoredBackground,
-                  disabledBackgroundColor:
-                      AppColors.icongrey.withValues(alpha: 0.35),
+                  backgroundColor:
+                      _canRedeem
+                          ? AppColors.primary.withValues(alpha: 0.1)
+                          : AppColors.icongrey.withValues(alpha: 0.35),
+                  foregroundColor: AppColors.primary,
+                  disabledBackgroundColor: AppColors.icongrey.withValues(
+                    alpha: 0.35,
+                  ),
                   disabledForegroundColor: AppColors.textGrey,
                   padding: EdgeInsets.symmetric(vertical: 14.h),
                   shape: RoundedRectangleBorder(
@@ -343,10 +345,8 @@ class _TradeWinProductDetailScreenState
     );
   }
 
-  Widget _eligibilityDivider() => Divider(
-        height: 1,
-        color: AppColors.brandPrimary.withValues(alpha: 0.12),
-      );
+  Widget _eligibilityDivider() =>
+      Divider(height: 1, color: AppColors.brandPrimary.withValues(alpha: 0.12));
 
   void _redeem(TradeWinProductModel product, LanguageService languageService) {
     if (!product.canRedeemQuantity(_quantity)) {
@@ -385,7 +385,7 @@ class _EligibilityRow extends StatelessWidget {
               label,
               style: AppTextStyles.subheading.copyWith(
                 fontSize: 12.sp,
-                color: AppColors.brandPrimary,
+                color: AppColors.primary,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -456,7 +456,7 @@ class _QtyButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.brandPrimary.withValues(alpha: 0.08),
+      color: AppColors.primary.withValues(alpha: 0.08),
       child: InkWell(
         onTap: enabled ? onTap : null,
         child: SizedBox(
@@ -465,7 +465,7 @@ class _QtyButton extends StatelessWidget {
           child: Icon(
             icon,
             size: 18.sp,
-            color: enabled ? AppColors.brandPrimary : AppColors.textGrey,
+            color: enabled ? AppColors.primary : AppColors.textGrey,
           ),
         ),
       ),

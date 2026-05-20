@@ -308,7 +308,7 @@ class _OverviewCompactRow extends StatelessWidget {
             width: 28.w,
             height: 28.w,
             decoration: BoxDecoration(
-              color: AppColors.brandPrimary,
+              color: AppColors.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(6.r),
             ),
             child: Icon(
@@ -341,7 +341,7 @@ class _OverviewCompactRow extends StatelessWidget {
                       style: AppTextStyles.headingblack.copyWith(
                         fontSize: 18.sp,
                         fontWeight: FontWeight.w700,
-                        color: data.valueColor ?? AppColors.brandPrimary,
+                        color: data.valueColor ?? AppColors.primary,
                       ),
                     ),
                   ],
@@ -389,7 +389,7 @@ class _OverviewFooterText extends StatelessWidget {
             style: TextStyle(
               fontSize: 11.sp,
               fontWeight: FontWeight.w600,
-              color: AppColors.brandPrimary,
+              color: AppColors.primary,
             ),
           ),
         ],
@@ -428,7 +428,7 @@ class _CatalogInfoChip extends StatelessWidget {
             style: TextStyle(
               fontSize: 7.sp,
               fontWeight: FontWeight.w700,
-              color: labelColor,
+              color: AppColors.primary,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -536,12 +536,8 @@ class _ProductCatalogCard extends StatelessWidget {
                             }),
                             bg:
                                 AppColors.isDarkMode
-                                    ? AppColors.brandPrimary.withValues(
-                                      alpha: 0.2,
-                                    )
-                                    : AppColors.brandPrimary.withValues(
-                                      alpha: 0.1,
-                                    ),
+                                    ? AppColors.primary.withValues(alpha: 0.2)
+                                    : AppColors.primary.withValues(alpha: 0.1),
                             labelColor: TradeWinTheme.sectionTitle,
                           ),
                         ),
