@@ -12,6 +12,9 @@ class BaseClientConfig {
   final Color secondaryColor;
   final Color accentColor;
 
+  // Splash color (null = use primaryColor)
+  final Color? splashColor;
+
   // Asset paths (relative to clients/{client}/assets/)
   final String logoSvgPath;
   final String splashLogoPath;
@@ -28,6 +31,7 @@ class BaseClientConfig {
     required this.primaryColor,
     required this.secondaryColor,
     required this.accentColor,
+    this.splashColor,
     required this.logoSvgPath,
     required this.splashLogoPath,
     required this.appIconPath,

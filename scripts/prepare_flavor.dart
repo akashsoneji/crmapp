@@ -250,6 +250,14 @@ Future<void> generateNativeSplash(String flavor) async {
   final colorHex =
       '#${colorMatch.group(1)!.substring(2)}'; // Remove alpha channel
 
+  // Extract splash color if available, otherwise use primary color
+  final splashColorMatch = RegExp(
+    r'splashColor:\s*const\s*Color\(0x([A-Fa-f0-9]{8})\)',
+  ).firstMatch(configContent);
+  final splashColorHex = splashColorMatch != null
+      ? '#${splashColorMatch.group(1)!.substring(2)}'
+      : colorHex;
+
   // Create drawable folder if it doesn't exist
   final drawableDir = Directory(
     path.join('android', 'app', 'src', flavor, 'res', 'drawable'),
@@ -320,7 +328,7 @@ Future<void> generateNativeSplash(String flavor) async {
     <color name="secondary_color">$secondaryColorHex</color>
     <color name="accent_color">$accentColorHex</color>
     <!-- SR wants white native splash background -->
-    <color name="my_splash_color">${flavor == 'sr' ? '#FFFFFF' : primaryColorHex}</color> <!-- $flavor -->
+    <color name="my_splash_color">${flavor == 'sr' ? '#FFFFFF' : splashColorHex}</color> <!-- $flavor -->
 </resources>
 ''';
 
@@ -328,7 +336,7 @@ Future<void> generateNativeSplash(String flavor) async {
 
   print('  ✓ Created launch_background.xml');
   print('  ✓ Created colors.xml');
-  print('  ✓ Splash color: $colorHex');
+  print('  ✓ Splash color: $splashColorHex');
 }
 
 /// Generate launcher icons using flutter_launcher_icons package
