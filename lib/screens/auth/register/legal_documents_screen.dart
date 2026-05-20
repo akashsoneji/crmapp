@@ -154,6 +154,8 @@ class _LegalDocumentsScreenState extends State<LegalDocumentsScreen> {
           width: 25.w,
           height: 25.h,
           child: Checkbox(
+            checkColor: AppColors.whiteColor,
+            side: BorderSide(color: AppColors.textGrey, width: 1.5),
             value: _isAgreementChecked,
             onChanged: (value) {
               setState(() {

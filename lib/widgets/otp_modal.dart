@@ -163,7 +163,7 @@ class _OtpModalState extends State<OtpModal> {
                 widget.isEmailVerification
                     ? 'Enter the ${widget.otpLength}-digit code we\'ve sent to your email'
                     : 'Enter the ${widget.otpLength}-digit code we\'ve sent to your number',
-                style: TextStyle(fontSize: 14.sp, color: AppColors.scrim),
+                style: TextStyle(fontSize: 14.sp, color: AppColors.textGrey),
                 textAlign: TextAlign.center,
               ),
               SizedBox(height: 4.h),
@@ -229,7 +229,7 @@ class _OtpModalState extends State<OtpModal> {
                 children: [
                   Text(
                     'Didn\'t receive the code? ',
-                    style: TextStyle(fontSize: 14.sp, color: AppColors.scrim),
+                    style: TextStyle(fontSize: 14.sp, color: AppColors.textGrey),
                   ),
                   TextButton(
                     onPressed: _handleResendOtp,
