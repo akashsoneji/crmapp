@@ -3,6 +3,8 @@ import 'trade_win_spent_detail_model.dart';
 
 class TradeWinPastWinModel {
   final int id;
+  /// Server reference (e.g. INDP-2844); falls back to INDP-{id} if missing.
+  final String referenceNo;
   final String productName;
   final String category;
   final String imagePath;
@@ -16,6 +18,7 @@ class TradeWinPastWinModel {
 
   const TradeWinPastWinModel({
     required this.id,
+    this.referenceNo = '',
     required this.productName,
     required this.category,
     required this.imagePath,
@@ -54,8 +57,12 @@ class TradeWinPastWinModel {
         )
         : const TradeWinShippingDetailsModel();
 
+    final id = json['id'] as int? ?? 0;
+    final ref = json['reference_no']?.toString().trim();
     return TradeWinPastWinModel(
-      id: json['id'] as int? ?? 0,
+      id: id,
+      referenceNo:
+          ref != null && ref.isNotEmpty ? ref : 'INDP-$id',
       productName: json['product_name']?.toString() ?? '',
       category: json['category']?.toString() ?? '',
       imagePath: json['image_path']?.toString() ?? '',
@@ -69,5 +76,6 @@ class TradeWinPastWinModel {
     );
   }
 
-  String get referenceCode => 'INDP-$id';
+  String get referenceCode =>
+      referenceNo.isNotEmpty ? referenceNo : 'INDP-$id';
 }

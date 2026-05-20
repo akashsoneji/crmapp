@@ -131,7 +131,7 @@ class _TradeWinProductDetailScreenState
             TradeWinProductImage(
               imagePath: product.imagePath,
               width: double.infinity,
-              height: 120.h,
+              height: 250.h,
               borderRadius: BorderRadius.circular(12.r),
             ),
             SizedBox(height: 8.h),
@@ -187,10 +187,10 @@ class _TradeWinProductDetailScreenState
                 color:
                     AppColors.isDarkMode
                         ? AppColors.primary.withValues(alpha: 0.12)
-                        : AppColors.brandPrimary.withValues(alpha: 0.06),
+                        : AppColors.primary.withValues(alpha: 0.06),
                 borderRadius: BorderRadius.circular(10.r),
                 border: Border.all(
-                  color: AppColors.brandPrimary.withValues(alpha: 0.25),
+                  color: AppColors.primary.withValues(alpha: 0.25),
                 ),
               ),
               child: Column(
@@ -259,7 +259,7 @@ class _TradeWinProductDetailScreenState
                   decoration: BoxDecoration(
                     color: AppColors.card,
                     border: Border.all(
-                      color: AppColors.brandPrimary.withValues(alpha: 0.2),
+                      color: AppColors.primary.withValues(alpha: 0.2),
                     ),
                     borderRadius: BorderRadius.circular(8.r),
                   ),
@@ -346,7 +346,7 @@ class _TradeWinProductDetailScreenState
   }
 
   Widget _eligibilityDivider() =>
-      Divider(height: 1, color: AppColors.brandPrimary.withValues(alpha: 0.12));
+      Divider(height: 1, color: AppColors.primary.withValues(alpha: 0.12));
 
   void _redeem(TradeWinProductModel product, LanguageService languageService) {
     if (!product.canRedeemQuantity(_quantity)) {

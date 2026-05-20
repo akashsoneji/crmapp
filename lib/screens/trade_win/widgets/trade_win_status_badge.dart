@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
-import 'package:crm_app/screens/trade_win/trade_win_theme.dart';
 
 class TradeWinStatusBadge extends StatelessWidget {
   final String status;
@@ -14,18 +13,18 @@ class TradeWinStatusBadge extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
       decoration: BoxDecoration(
-        color: TradeWinTheme.accentFill,
+        color: AppColors.cardBackGround,
         borderRadius: BorderRadius.circular(20.r),
-        border: AppColors.isDarkMode
-            ? Border.all(color: Colors.white.withValues(alpha: 0.15))
-            : null,
+        border:
+            AppColors.isDarkMode ? Border.all(color: AppColors.border) : null,
       ),
       child: Text(
         status.toUpperCase(),
         style: AppTextStyles.subheading.copyWith(
           fontSize: 10.sp,
           fontWeight: FontWeight.w700,
-          color: TradeWinTheme.onAccentFill,
+          color:
+              AppColors.isDarkMode ? AppColors.textPrimary : AppColors.primary,
           letterSpacing: 0.5,
         ),
       ),

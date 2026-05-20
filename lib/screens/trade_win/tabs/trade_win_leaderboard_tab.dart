@@ -9,7 +9,6 @@ import 'package:crm_app/controllers/trade_win/trade_win_controller.dart';
 import 'package:crm_app/models/trade_win/trade_win_leaderboard_entry_model.dart';
 import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/utils/trade_win_format.dart';
-import 'package:crm_app/screens/trade_win/trade_win_theme.dart';
 
 class TradeWinLeaderboardTab extends StatefulWidget {
   const TradeWinLeaderboardTab({super.key});
@@ -19,8 +18,6 @@ class TradeWinLeaderboardTab extends StatefulWidget {
 }
 
 class _TradeWinLeaderboardTabState extends State<TradeWinLeaderboardTab> {
-  int _segment = 0;
-
   @override
   Widget build(BuildContext context) {
     final languageService = Get.find<LanguageService>();
@@ -82,49 +79,6 @@ class _TradeWinLeaderboardTabState extends State<TradeWinLeaderboardTab> {
           }),
         ),
       ],
-    );
-  }
-}
-
-class _SegmentButton extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _SegmentButton({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: EdgeInsets.symmetric(vertical: 10.h),
-        decoration: BoxDecoration(
-          color: selected ? TradeWinTheme.chipSelectedBg : Colors.transparent,
-          borderRadius: BorderRadius.circular(10.r),
-          border:
-              selected && AppColors.isDarkMode
-                  ? Border.all(color: Colors.white.withValues(alpha: 0.2))
-                  : null,
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          label,
-          style: AppTextStyles.subheading.copyWith(
-            fontSize: 12.sp,
-            fontWeight: FontWeight.w600,
-            color:
-                selected
-                    ? TradeWinTheme.chipSelectedFg
-                    : TradeWinTheme.chipUnselectedFg,
-          ),
-        ),
-      ),
     );
   }
 }
@@ -244,7 +198,7 @@ class _PodiumColumn extends StatelessWidget {
               color:
                   AppColors.isDarkMode
                       ? AppColors.textPrimary
-                      : AppColors.brandPrimary,
+                      : AppColors.primary,
             ),
             textAlign: TextAlign.center,
           ),

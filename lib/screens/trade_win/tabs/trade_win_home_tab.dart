@@ -12,7 +12,6 @@ import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/utils/trade_win_format.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
-import 'package:crm_app/screens/trade_win/trade_win_theme.dart';
 import 'package:crm_app/screens/trade_win/widgets/trade_win_product_image.dart';
 
 class TradeWinHomeTab extends StatelessWidget {
@@ -38,111 +37,138 @@ class TradeWinHomeTab extends StatelessWidget {
       final selectedCategory = controller.selectedCategory.value;
       final categories = controller.categories;
 
-      return RefreshIndicator(
-        color: AppColors.primary,
-        onRefresh: () => controller.fetchProducts(showLoader: false),
-        child: CustomScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          slivers: [
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(0.w, 0.h, 0.w, 0),
-                child: Row(
-                  children: [
-                    AppSvgBackButton(
-                      onPressed: () => Get.back(closeOverlays: true),
-                      iconWidth: 30.w,
-                      iconHeight: 30.h,
-                    ),
-                    Expanded(
-                      child: Text(
-                        languageService.tr('tw_title'),
-                        textAlign: TextAlign.center,
-                        style: AppTextStyles.heading,
+      return NotificationListener<ScrollNotification>(
+        onNotification: (ScrollNotification n) {
+          if (n is! ScrollUpdateNotification) return false;
+          final m = n.metrics;
+          if (!m.hasPixels || m.maxScrollExtent <= 0) return false;
+          if (m.pixels >= m.maxScrollExtent - 280) {
+            controller.loadMoreProducts();
+          }
+          return false;
+        },
+        child: RefreshIndicator(
+          color: AppColors.primary,
+          onRefresh: () => controller.fetchProducts(showLoader: false),
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(0.w, 0.h, 0.w, 0),
+                  child: Row(
+                    children: [
+                      AppSvgBackButton(
+                        onPressed: () => Get.back(closeOverlays: true),
+                        iconWidth: 30.w,
+                        iconHeight: 30.h,
+                      ),
+                      Expanded(
+                        child: Text(
+                          languageService.tr('tw_title'),
+                          textAlign: TextAlign.center,
+                          style: AppTextStyles.heading,
+                        ),
+                      ),
+                      SizedBox(width: 48.w),
+                    ],
+                  ),
+                ),
+              ),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.only(top: 8.h, bottom: 8.h),
+                  child: _OverviewSection(
+                    stats: stats,
+                    languageService: languageService,
+                  ),
+                ),
+              ),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 8.h),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        languageService.tr('tw_product_catalog'),
+                        style: AppTextStyles.headingblack,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              SliverToBoxAdapter(
+                child: SizedBox(
+                  height: 40.h,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    padding: EdgeInsets.symmetric(horizontal: 16.w),
+                    itemCount: categories.length,
+                    separatorBuilder: (_, __) => SizedBox(width: 8.w),
+                    itemBuilder: (context, index) {
+                      final cat = categories[index];
+                      final selected = selectedCategory == cat;
+                      final label =
+                          cat == 'all'
+                              ? languageService.tr('tw_all')
+                              : TradeWinFormat.categoryLabel(cat);
+                      return _CatalogFilterChip(
+                        label: label,
+                        selected: selected,
+                        onTap: () => controller.selectCategory(cat),
+                      );
+                    },
+                  ),
+                ),
+              ),
+              Obx(() {
+                final items = controller.filteredProducts;
+                if (items.isEmpty) {
+                  return SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.all(32.h),
+                      child: Center(
+                        child: Text(
+                          languageService.tr('tw_no_products'),
+                          style: AppTextStyles.subheading,
+                        ),
                       ),
                     ),
-                    SizedBox(width: 48.w),
-                  ],
-                ),
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.only(top: 8.h, bottom: 8.h),
-                child: _OverviewSection(
-                  stats: stats,
-                  languageService: languageService,
-                ),
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 8.h),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      languageService.tr('tw_product_catalog'),
-                      style: AppTextStyles.headingblack,
+                  );
+                }
+                return SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) => Padding(
+                      padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 0),
+                      child: _ProductCatalogCard(
+                        product: items[index],
+                        languageService: languageService,
+                      ),
                     ),
-                  ],
-                ),
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: SizedBox(
-                height: 40.h,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  padding: EdgeInsets.symmetric(horizontal: 16.w),
-                  itemCount: categories.length,
-                  separatorBuilder: (_, __) => SizedBox(width: 8.w),
-                  itemBuilder: (context, index) {
-                    final cat = categories[index];
-                    final selected = selectedCategory == cat;
-                    final label =
-                        cat == 'all'
-                            ? languageService.tr('tw_all')
-                            : TradeWinFormat.categoryLabel(cat);
-                    return _CatalogFilterChip(
-                      label: label,
-                      selected: selected,
-                      onTap: () => controller.selectCategory(cat),
-                    );
-                  },
-                ),
-              ),
-            ),
-            Obx(() {
-              final items = controller.filteredProducts;
-              if (items.isEmpty) {
+                    childCount: items.length,
+                  ),
+                );
+              }),
+              Obx(() {
+                if (!controller.isLoadingMoreProducts.value) {
+                  return const SliverToBoxAdapter(child: SizedBox.shrink());
+                }
                 return SliverToBoxAdapter(
                   child: Padding(
-                    padding: EdgeInsets.all(32.h),
+                    padding: EdgeInsets.symmetric(vertical: 16.h),
                     child: Center(
-                      child: Text(
-                        languageService.tr('tw_no_products'),
-                        style: AppTextStyles.subheading,
+                      child: CommonLoadingWidget(
+                        size: 28,
+                        color: AppColors.primary,
                       ),
                     ),
                   ),
                 );
-              }
-              return SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) => Padding(
-                    padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 0),
-                    child: _ProductCatalogCard(
-                      product: items[index],
-                      languageService: languageService,
-                    ),
-                  ),
-                  childCount: items.length,
-                ),
-              );
-            }),
-            SliverToBoxAdapter(child: SizedBox(height: 100.h)),
-          ],
+              }),
+              SliverToBoxAdapter(child: SizedBox(height: 100.h)),
+            ],
+          ),
         ),
       );
     });
@@ -538,7 +564,7 @@ class _ProductCatalogCard extends StatelessWidget {
                                 AppColors.isDarkMode
                                     ? AppColors.primary.withValues(alpha: 0.2)
                                     : AppColors.primary.withValues(alpha: 0.1),
-                            labelColor: TradeWinTheme.sectionTitle,
+                            labelColor: AppColors.primary,
                           ),
                         ),
                       ],
@@ -573,16 +599,14 @@ class _ProductCatalogCard extends StatelessWidget {
             child: ElevatedButton(
               onPressed: () => _onRedeem(context),
               style: ElevatedButton.styleFrom(
-                backgroundColor: TradeWinTheme.accentFill,
-                foregroundColor: TradeWinTheme.onAccentFill,
+                backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                foregroundColor: AppColors.onColoredBackground,
                 padding: EdgeInsets.symmetric(vertical: 12.h),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12.r),
                   side:
                       AppColors.isDarkMode
-                          ? BorderSide(
-                            color: Colors.white.withValues(alpha: 0.2),
-                          )
+                          ? BorderSide(color: AppColors.border)
                           : BorderSide.none,
                 ),
               ),
@@ -591,7 +615,7 @@ class _ProductCatalogCard extends StatelessWidget {
                 style: TextStyle(
                   fontWeight: FontWeight.w700,
                   fontSize: 15.sp,
-                  color: TradeWinTheme.onAccentFill,
+                  color: AppColors.onColoredBackground,
                 ),
               ),
             ),
@@ -640,14 +664,11 @@ class _CatalogFilterChip extends StatelessWidget {
           decoration: BoxDecoration(
             color:
                 selected
-                    ? TradeWinTheme.catalogChipSelectedBg
-                    : TradeWinTheme.catalogChipUnselectedBg,
+                    ? AppColors.primary.withValues(alpha: 0.1)
+                    : AppColors.chipSurface,
             borderRadius: BorderRadius.circular(20.r),
             border: Border.all(
-              color:
-                  selected
-                      ? TradeWinTheme.catalogChipSelectedBorder
-                      : TradeWinTheme.catalogChipUnselectedBorder,
+              color: selected ? AppColors.primary : AppColors.border,
               width: selected ? 1.5 : 1,
             ),
           ),
@@ -656,8 +677,8 @@ class _CatalogFilterChip extends StatelessWidget {
             style: TextStyle(
               color:
                   selected
-                      ? TradeWinTheme.catalogChipSelectedFg
-                      : TradeWinTheme.catalogChipUnselectedFg,
+                      ? AppColors.onColoredBackground
+                      : AppColors.textPrimary,
               fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
               fontSize: 13.sp,
             ),

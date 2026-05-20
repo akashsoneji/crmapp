@@ -5,7 +5,6 @@ import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/routes/app_pages.dart';
 import 'package:crm_app/services/language_service.dart';
-import 'package:crm_app/screens/trade_win/trade_win_theme.dart';
 
 class TradeWinRedemptionSuccessScreen extends StatelessWidget {
   const TradeWinRedemptionSuccessScreen({super.key});
@@ -25,11 +24,7 @@ class TradeWinRedemptionSuccessScreen extends StatelessWidget {
           child: Column(
             children: [
               const Spacer(),
-              Icon(
-                Icons.check_circle,
-                size: 88.sp,
-                color: AppColors.green,
-              ),
+              Icon(Icons.check_circle, size: 88.sp, color: AppColors.green),
               SizedBox(height: 20.h),
               Text(
                 languageService.tr('tw_redemption_successful'),
@@ -52,7 +47,9 @@ class TradeWinRedemptionSuccessScreen extends StatelessWidget {
                       ),
                     ),
                     TextSpan(
-                      text: languageService.tr('tw_item_being_processed_suffix'),
+                      text: languageService.tr(
+                        'tw_item_being_processed_suffix',
+                      ),
                     ),
                   ],
                 ),
@@ -97,19 +94,20 @@ class TradeWinRedemptionSuccessScreen extends StatelessWidget {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    Get.until((route) => route.settings.name == AppPages.TRADE_WIN_MAIN);
+                    Get.until(
+                      (route) => route.settings.name == AppPages.TRADE_WIN_MAIN,
+                    );
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: TradeWinTheme.accentFill,
-                    foregroundColor: TradeWinTheme.onAccentFill,
+                    backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                    foregroundColor: AppColors.onColoredBackground,
                     padding: EdgeInsets.symmetric(vertical: 14.h),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12.r),
-                      side: AppColors.isDarkMode
-                          ? BorderSide(
-                              color: Colors.white.withValues(alpha: 0.2),
-                            )
-                          : BorderSide.none,
+                      side:
+                          AppColors.isDarkMode
+                              ? BorderSide(color: AppColors.border)
+                              : BorderSide.none,
                     ),
                   ),
                   child: Text(
@@ -117,7 +115,7 @@ class TradeWinRedemptionSuccessScreen extends StatelessWidget {
                     style: TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 16.sp,
-                      color: TradeWinTheme.onAccentFill,
+                      color: AppColors.onColoredBackground,
                     ),
                   ),
                 ),

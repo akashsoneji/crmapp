@@ -5,7 +5,6 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
-import 'package:crm_app/screens/trade_win/trade_win_theme.dart';
 import 'package:crm_app/services/language_service.dart';
 
 class TradeWinBottomNavigation extends StatelessWidget {
@@ -89,7 +88,7 @@ class TradeWinBottomNavigation extends StatelessWidget {
     final selected = currentIndex == index;
     final inactiveColor = AppColors.textGrey;
     final activeColor =
-        AppColors.isDarkMode ? AppColors.textPrimary : AppColors.brandPrimary;
+        AppColors.isDarkMode ? AppColors.textPrimary : AppColors.primary;
 
     return Expanded(
       child: InkWell(
@@ -98,7 +97,12 @@ class TradeWinBottomNavigation extends StatelessWidget {
         child: Container(
           padding: EdgeInsets.symmetric(vertical: 6.h),
           decoration: BoxDecoration(
-            color: selected ? TradeWinTheme.navSelectedBg : Colors.transparent,
+            color:
+                selected
+                    ? AppColors.primary.withValues(
+                      alpha: AppColors.isDarkMode ? 0.15 : 0.12,
+                    )
+                    : Colors.transparent,
             borderRadius: BorderRadius.circular(24.r),
           ),
           child: Column(

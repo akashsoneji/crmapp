@@ -422,7 +422,7 @@ class DashboardScreen extends StatelessWidget {
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.accent.withAlpha(50),
+                          color: AppColors.primary.withAlpha(50),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
@@ -689,7 +689,7 @@ Color _accountTypeBadgeTextColor(String accountType) {
   if (accountType.toLowerCase() == 'live') {
     return AppColors.onColoredBackground;
   }
-  return AppColors.isDarkMode ? AppColors.textPrimary : AppColors.brandPrimary;
+  return AppColors.isDarkMode ? AppColors.textPrimary : AppColors.primary;
 }
 
 class AccountInfoBottomSheet extends StatelessWidget {
@@ -765,7 +765,7 @@ class AccountInfoBottomSheet extends StatelessWidget {
                           decoration: BoxDecoration(
                             color:
                                 account.accountType == 'live'
-                                    ? AppColors.accent
+                                    ? AppColors.primary.withValues(alpha: 0.1)
                                     : AppColors.primary.withAlpha(51),
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -792,7 +792,7 @@ class AccountInfoBottomSheet extends StatelessWidget {
                               // width: 29.w,
                               padding: EdgeInsets.only(left: 4.w, right: 4.w),
                               decoration: BoxDecoration(
-                                color: AppColors.accent.withAlpha(50),
+                                color: AppColors.primary.withAlpha(50),
                                 borderRadius: BorderRadius.circular(2.r),
                               ),
                               child: Text.rich(

@@ -1,7 +1,6 @@
 import 'package:crm_app/widgets/app_svg_back_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
@@ -10,6 +9,7 @@ import 'package:crm_app/models/trade_win/trade_win_past_win_model.dart';
 import 'package:crm_app/routes/app_pages.dart';
 import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/utils/trade_win_format.dart';
+import 'package:crm_app/widgets/common_loading_widget.dart';
 import 'package:crm_app/screens/trade_win/widgets/trade_win_product_image.dart';
 import 'package:crm_app/screens/trade_win/widgets/trade_win_status_badge.dart';
 
@@ -46,6 +46,11 @@ class TradeWinMyWinsTab extends StatelessWidget {
         Expanded(
           child: Obx(() {
             final wins = controller.pastWins;
+            if (controller.isLoadingPastWins.value && wins.isEmpty) {
+              return Center(
+                child: CommonLoadingWidget(size: 40, color: AppColors.primary),
+              );
+            }
             if (wins.isEmpty) {
               return Center(
                 child: Text(
@@ -55,15 +60,46 @@ class TradeWinMyWinsTab extends StatelessWidget {
               );
             }
 
-            return ListView.separated(
-              padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 100.h),
-              itemCount: wins.length,
-              separatorBuilder: (_, __) => SizedBox(height: 12.h),
-              itemBuilder:
-                  (context, index) => _PastWinCard(
-                    win: wins[index],
-                    languageService: languageService,
-                  ),
+            return NotificationListener<ScrollNotification>(
+              onNotification: (ScrollNotification n) {
+                if (n is! ScrollUpdateNotification) return false;
+                final m = n.metrics;
+                if (!m.hasPixels || m.maxScrollExtent <= 0) return false;
+                if (m.pixels >= m.maxScrollExtent - 200) {
+                  controller.loadMorePastWins();
+                }
+                return false;
+              },
+              child: RefreshIndicator(
+                color: AppColors.primary,
+                onRefresh: () => controller.fetchPastWins(reset: true),
+                child: ListView.builder(
+                  padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 100.h),
+                  itemCount:
+                      wins.length +
+                      (controller.isLoadingMorePastWins.value ? 1 : 0),
+                  itemBuilder: (context, index) {
+                    if (index >= wins.length) {
+                      return Padding(
+                        padding: EdgeInsets.symmetric(vertical: 16.h),
+                        child: Center(
+                          child: CommonLoadingWidget(
+                            size: 28,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      );
+                    }
+                    return Padding(
+                      padding: EdgeInsets.only(top: index == 0 ? 0 : 12.h),
+                      child: _PastWinCard(
+                        win: wins[index],
+                        languageService: languageService,
+                      ),
+                    );
+                  },
+                ),
+              ),
             );
           }),
         ),

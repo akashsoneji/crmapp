@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
-import 'package:crm_app/screens/trade_win/trade_win_theme.dart';
 
 class TradeWinRedeemStepper extends StatelessWidget {
   final int currentStep;
@@ -49,9 +49,10 @@ class _StepCircle extends StatelessWidget {
       height: 28.w,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: highlighted
-            ? TradeWinTheme.stepperActiveBg
-            : TradeWinTheme.stepperInactiveBg,
+        color:
+            highlighted
+                ? AppColors.primary.withValues(alpha: 0.1)
+                : AppColors.neutralTrack,
       ),
       alignment: Alignment.center,
       child: Text(
@@ -59,9 +60,7 @@ class _StepCircle extends StatelessWidget {
         style: AppTextStyles.subheading.copyWith(
           fontSize: 13.sp,
           fontWeight: FontWeight.w700,
-          color: highlighted
-              ? TradeWinTheme.stepperActiveFg
-              : TradeWinTheme.stepperInactiveFg,
+          color: highlighted ? AppColors.primary : AppColors.textGrey,
         ),
       ),
     );
@@ -80,9 +79,7 @@ class _Connector extends StatelessWidget {
       height: 2.h,
       margin: EdgeInsets.symmetric(horizontal: 6.w),
       decoration: BoxDecoration(
-        color: completed
-            ? TradeWinTheme.stepperLineCompleted
-            : TradeWinTheme.stepperLinePending,
+        color: completed ? AppColors.primary : AppColors.neutralTrack,
         borderRadius: BorderRadius.circular(1.r),
       ),
     );

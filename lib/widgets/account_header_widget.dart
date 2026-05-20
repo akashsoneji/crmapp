@@ -306,7 +306,7 @@ class AccountHeaderWidget extends StatelessWidget {
 
     final accountType = primaryAccount?.accountType.toLowerCase() ?? 'live';
     if (accountType == 'demo') {
-      return AppColors.brandPrimary.withValues(
+      return AppColors.primary.withValues(
         alpha: AppColors.isDarkMode ? 0.28 : 0.2,
       );
     }

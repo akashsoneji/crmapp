@@ -22,6 +22,7 @@ class TradeWinRedeemController extends GetxController {
   final RxInt currentStep = 1.obs;
   final RxInt quantity = 1.obs;
   final RxBool isSubmitting = false.obs;
+  final RxString claimReferenceNo = ''.obs;
 
   static const _prefPrefix = 'trade_win_shipping_';
   static const redeemTag = 'trade_win_redeem';
@@ -72,7 +73,25 @@ class TradeWinRedeemController extends GetxController {
   }
 
   void goToStep(int step) {
-    currentStep.value = step.clamp(1, 2);
+    currentStep.value = step.clamp(1, 3);
+  }
+
+  Future<void> completeAndGoHome() async {
+    if (Get.isRegistered<TradeWinController>()) {
+      final tradeWin = Get.find<TradeWinController>();
+      tradeWin.mainTabIndex.value = 0;
+      await tradeWin.fetchProducts(showLoader: false);
+      await tradeWin.fetchPastWins(reset: true);
+    }
+
+    FocusManager.instance.primaryFocus?.unfocus();
+    if (Get.currentRoute == AppPages.TRADE_WIN_MAIN) {
+      Get.back(closeOverlays: true);
+      return;
+    }
+    Get.until(
+      (route) => route.settings.name == AppPages.TRADE_WIN_MAIN,
+    );
   }
 
   Future<void> submitRedemption({
@@ -105,33 +124,40 @@ class TradeWinRedeemController extends GetxController {
         await saveAddress(shipping);
       }
 
-      final apiMessage = response.message?.trim();
-      final successMessage = apiMessage != null && apiMessage.isNotEmpty
-          ? apiMessage
-          : Get.find<LanguageService>().tr('tw_claim_success');
-
-      CustomToastService.showSuccess(message: successMessage);
+      claimReferenceNo.value = _parseClaimReference(response.data);
 
       if (Get.isRegistered<TradeWinController>()) {
         final tradeWin = Get.find<TradeWinController>();
-        tradeWin.mainTabIndex.value = 0;
-        await tradeWin.fetchProducts(showLoader: false);
+        tradeWin.fetchProducts(showLoader: false);
+        tradeWin.fetchPastWins(reset: true);
       }
 
-      _navigateToTradeWinHome();
+      currentStep.value = 3;
     } catch (e) {
       CustomToastService.showError(message: e.toString());
+    } finally {
       isSubmitting.value = false;
     }
   }
 
-  void _navigateToTradeWinHome() {
-    if (Get.currentRoute == AppPages.TRADE_WIN_MAIN) return;
-
-    FocusManager.instance.primaryFocus?.unfocus();
-    Get.offNamedUntil(
-      AppPages.TRADE_WIN_MAIN,
-      (route) => route.settings.name == AppPages.TRADE_WIN_MAIN,
-    );
+  String _parseClaimReference(dynamic raw) {
+    final maps = <Map<String, dynamic>>[];
+    void collect(dynamic node) {
+      if (node is Map) {
+        maps.add(Map<String, dynamic>.from(node));
+        final inner = node['data'];
+        if (inner is Map) collect(inner);
+      }
+    }
+    collect(raw);
+    for (final m in maps) {
+      for (final key in ['reference_no', 'reference', 'reference_number']) {
+        final v = m[key];
+        if (v != null && v.toString().trim().isNotEmpty) {
+          return v.toString().trim();
+        }
+      }
+    }
+    return '';
   }
 }
