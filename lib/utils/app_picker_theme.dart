@@ -5,8 +5,6 @@ import 'package:crm_app/constants/color.dart';
 class AppPickerTheme {
   AppPickerTheme._();
 
-  static const Color _white = Color(0xFFFFFFFF);
-
   /// Background for open dropdown menus.
   static Color get dropdownMenuColor => AppColors.card;
 
@@ -14,12 +12,11 @@ class AppPickerTheme {
   static TextStyle dropdownTextStyle(
     double fontSize, {
     FontWeight? fontWeight,
-  }) =>
-      TextStyle(
-        fontSize: fontSize,
-        color: AppColors.textPrimary,
-        fontWeight: fontWeight,
-      );
+  }) => TextStyle(
+    fontSize: fontSize,
+    color: AppColors.textPrimary,
+    fontWeight: fontWeight,
+  );
 
   /// Hint / placeholder text in dropdowns.
   static TextStyle dropdownHintStyle(double fontSize) =>
@@ -29,36 +26,39 @@ class AppPickerTheme {
   static Color get dropdownIconColor => AppColors.textGrey;
 
   static DatePickerThemeData _calendarDayTheme({required bool isDark}) {
-    final selectedBg = _white.withValues(alpha: 0.1);
-    const selectedFg = _white;
-    final todayBg = _white.withValues(alpha: 0.1);
-
-    if (isDark) {
-      return DatePickerThemeData(
-        dayBackgroundColor: WidgetStateProperty<Color?>.fromMap({
-          WidgetState.selected: selectedBg,
-        }),
-        dayForegroundColor: WidgetStateProperty<Color?>.fromMap({
-          WidgetState.selected: selectedFg,
-        }),
-        todayForegroundColor: WidgetStateProperty.all(selectedFg),
-        todayBackgroundColor: WidgetStateProperty.all(todayBg),
-      );
-    }
-
-    // Light mode: dark text + subtle dark tint (white alpha is invisible on white).
-    final lightFg = AppColors.textPrimaryLight;
-    final lightSelectedBg = lightFg.withValues(alpha: 0.1);
+    final selectedBg = AppColors.primary.withValues(alpha: 0.6);
+    final selectedFg = AppColors.onColoredBackground;
+    final todayBg = AppColors.primary.withValues(alpha: isDark ? 0.35 : 0.15);
+    final todayFg =
+        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
+    final dayFg =
+        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
 
     return DatePickerThemeData(
+      backgroundColor: AppColors.card,
+      headerBackgroundColor: AppColors.primary.withValues(alpha: 0.1),
+      headerForegroundColor: AppColors.onColoredBackground,
+      weekdayStyle: TextStyle(
+        color: AppColors.textGrey,
+        fontWeight: FontWeight.w600,
+      ),
+      yearStyle: TextStyle(color: dayFg),
+      dayStyle: TextStyle(color: dayFg),
       dayBackgroundColor: WidgetStateProperty<Color?>.fromMap({
-        WidgetState.selected: lightSelectedBg,
+        WidgetState.selected: selectedBg,
       }),
       dayForegroundColor: WidgetStateProperty<Color?>.fromMap({
-        WidgetState.selected: lightFg,
+        WidgetState.selected: selectedFg,
+        WidgetState.disabled: AppColors.textGrey.withValues(alpha: 0.4),
       }),
-      todayForegroundColor: WidgetStateProperty.all(lightFg),
-      todayBackgroundColor: WidgetStateProperty.all(lightSelectedBg),
+      todayForegroundColor: WidgetStateProperty.all(todayFg),
+      todayBackgroundColor: WidgetStateProperty.all(todayBg),
+      rangeSelectionBackgroundColor: AppColors.brandPrimary.withValues(
+        alpha: 0.2,
+      ),
+      rangeSelectionOverlayColor: WidgetStateProperty.all(
+        AppColors.brandPrimary.withValues(alpha: 0.12),
+      ),
     );
   }
 
@@ -70,23 +70,26 @@ class AppPickerTheme {
     required DateTime lastDate,
   }) {
     final isDark = AppColors.isDarkMode;
-    final selectedBg = _white.withValues(alpha: 0.1);
-    const selectedFg = _white;
+    final surface = AppColors.primary.withValues(alpha: 0.1);
+    final onSurface = AppColors.textPrimary;
 
-    // primary/onPrimary drive the selected-day circle when theme props fall through.
     final colorScheme =
         isDark
             ? ColorScheme.dark(
-              primary: selectedBg,
-              onPrimary: selectedFg,
-              surface: AppColors.cardDarkTheme,
-              onSurface: AppColors.textPrimaryDark,
+              primary: AppColors.primary,
+              onPrimary: AppColors.onColoredBackground,
+              surface: surface,
+              onSurface: onSurface,
+              secondary: AppColors.primary,
+              onSecondary: AppColors.onColoredBackground,
             )
             : ColorScheme.light(
-              primary: AppColors.textPrimaryLight.withValues(alpha: 0.1),
-              onPrimary: AppColors.textPrimaryLight,
-              surface: AppColors.cardLightTheme,
-              onSurface: AppColors.textPrimaryLight,
+              primary: AppColors.primary,
+              onPrimary: AppColors.onColoredBackground,
+              surface: surface,
+              onSurface: onSurface,
+              secondary: AppColors.primary,
+              onSecondary: AppColors.onColoredBackground,
             );
 
     return showDatePicker(
@@ -95,16 +98,19 @@ class AppPickerTheme {
       firstDate: firstDate,
       lastDate: lastDate,
       builder: (context, child) {
-        final actionTextColor =
-            isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
-
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: colorScheme,
-            dialogTheme: DialogThemeData(backgroundColor: colorScheme.surface),
+            dialogTheme: DialogThemeData(
+              backgroundColor: surface,
+              surfaceTintColor: Colors.transparent,
+            ),
             datePickerTheme: _calendarDayTheme(isDark: isDark),
             textButtonTheme: TextButtonThemeData(
-              style: TextButton.styleFrom(foregroundColor: actionTextColor),
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.primary,
+                textStyle: const TextStyle(fontWeight: FontWeight.w600),
+              ),
             ),
           ),
           child: child!,

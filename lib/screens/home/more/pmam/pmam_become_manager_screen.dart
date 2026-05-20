@@ -85,7 +85,7 @@ class _PmamBecomeManagerScreenState extends State<PmamBecomeManagerScreen> {
         scrolledUnderElevation: 0,
         backgroundColor: AppColors.tradeBackgroundCenterColor,
         elevation: 0,
-        leading:  AppSvgBackButton(
+        leading: AppSvgBackButton(
           onPressed: () => Get.back(closeOverlays: true),
           iconWidth: 30.w,
           iconHeight: 30.h,
@@ -115,7 +115,7 @@ class _PmamBecomeManagerScreenState extends State<PmamBecomeManagerScreen> {
                 ),
                 SizedBox(height: 12.h),
                 Text(
-                  'PMAM Manager Application',
+                  'PAMM Manager Application',
                   style: TextStyle(
                     fontSize: 20.sp,
                     fontWeight: FontWeight.w700,
@@ -125,7 +125,7 @@ class _PmamBecomeManagerScreenState extends State<PmamBecomeManagerScreen> {
                 ),
                 SizedBox(height: 6.h),
                 Text(
-                  'Complete all steps to become a PMAM Manager',
+                  'Complete all steps to become a PAMM Manager',
                   style: TextStyle(fontSize: 13.sp, color: AppColors.textGrey),
                   textAlign: TextAlign.center,
                 ),
@@ -154,7 +154,7 @@ class _PmamBecomeManagerScreenState extends State<PmamBecomeManagerScreen> {
                         done: _personalInfoDone,
                       ),
                       _StepCard(
-                        label: 'PMAM Application',
+                        label: 'PAMM Application',
                         done: _pmamApplied,
                         notApplied: !_pmamApplied,
                       ),
@@ -193,7 +193,7 @@ class _PmamBecomeManagerScreenState extends State<PmamBecomeManagerScreen> {
                           children: [
                             const TextSpan(text: 'I accept the '),
                             TextSpan(
-                              text: 'PMAM Manager Terms and Conditions',
+                              text: 'PAMM Manager Terms and Conditions',
                               style: TextStyle(
                                 color: AppColors.primary,
                                 fontWeight: FontWeight.w600,
