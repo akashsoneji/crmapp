@@ -439,7 +439,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
               ),
               SizedBox(width: 4.w),
               Expanded(
-                flex: 4,
+                flex: 5,
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
@@ -513,7 +513,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
                 ),
               ),
               Expanded(
-                flex: 2,
+                flex: 3,
                 child: _BidPriceColumn(
                   symbol: instrument.symbol,
                   controller: _controller,
@@ -523,7 +523,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
               ),
               SizedBox(width: 12.w),
               Expanded(
-                flex: 2,
+                flex: 3,
                 child: _AskPriceColumn(
                   symbol: instrument.symbol,
                   controller: _controller,
@@ -582,11 +582,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
       future: _swipeDeleteIconFuture,
       builder: (context, snapshot) {
         if (snapshot.hasData) {
-          return SizedBox(
-            width: 28.w,
-            height: 28.h,
-            child: snapshot.data,
-          );
+          return SizedBox(width: 28.w, height: 28.h, child: snapshot.data);
         }
         return SizedBox(width: 28.w, height: 28.h);
       },
@@ -967,7 +963,7 @@ class _BidPriceColumn extends StatelessWidget {
       WidgetSpan(
         alignment: PlaceholderAlignment.top,
         child: Transform.translate(
-          offset: const Offset(0, -4),
+          offset: const Offset(0, -11),
           child: Text(
             lastDigit,
             style: TextStyle(
@@ -1105,7 +1101,7 @@ class _AskPriceColumn extends StatelessWidget {
       WidgetSpan(
         alignment: PlaceholderAlignment.top,
         child: Transform.translate(
-          offset: const Offset(0, -4),
+          offset: const Offset(0, -11),
           child: Text(
             lastDigit,
             style: TextStyle(
