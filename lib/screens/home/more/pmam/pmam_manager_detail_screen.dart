@@ -480,37 +480,37 @@ class _PmamManagerDetailScreenState extends State<PmamManagerDetailScreen> {
 
             // Use the selected plan for displaying detailed stats if needed,
             // but usually aum/investors are manager-level in PMAM context.
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Wrap(
-                children: [
-                  _DetailStatCard(
-                    label: 'GAIN',
-                    value: '${gain >= 0 ? '+' : ''}${gain.toStringAsFixed(2)}%',
-                    icon: Icons.trending_up_rounded,
-                    color: gain >= 0 ? AppColors.green : AppColors.error,
-                  ),
-                  SizedBox(width: 8.w),
-                  _DetailStatCard(
-                    label: 'TOTAL AUM',
-                    value: aum,
-                    icon: Icons.account_balance_wallet_rounded,
-                  ),
-                  SizedBox(width: 8.w),
-                  _DetailStatCard(
-                    label: 'INVESTORS',
-                    value: investors,
-                    icon: Icons.people_rounded,
-                  ),
-                  SizedBox(width: 8.w),
-                  _DetailStatCard(
-                    label: 'COMMISSION',
-                    value: commission,
-                    icon: Icons.percent_rounded,
-                    color: AppColors.primary,
-                  ),
-                ],
-              ),
+            GridView.count(
+              crossAxisCount: 2,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              mainAxisSpacing: 6.h,
+              crossAxisSpacing: 6.w,
+              childAspectRatio: 1.9,
+              children: [
+                _DetailStatCard(
+                  label: 'GAIN',
+                  value: '${gain >= 0 ? '+' : ''}${gain.toStringAsFixed(2)}%',
+                  icon: Icons.trending_up_rounded,
+                  color: gain >= 0 ? AppColors.green : AppColors.error,
+                ),
+                _DetailStatCard(
+                  label: 'TOTAL AUM',
+                  value: aum,
+                  icon: Icons.account_balance_wallet_rounded,
+                ),
+                _DetailStatCard(
+                  label: 'INVESTORS',
+                  value: investors,
+                  icon: Icons.people_rounded,
+                ),
+                _DetailStatCard(
+                  label: 'COMMISSION',
+                  value: commission,
+                  icon: Icons.percent_rounded,
+                  color: AppColors.primary,
+                ),
+              ],
             ),
             SizedBox(height: 14.h),
 

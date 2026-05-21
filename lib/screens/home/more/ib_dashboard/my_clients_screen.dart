@@ -423,7 +423,13 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
           ),
         ),
         leading: IconButton(
-          icon: SvgPicture.asset("assets/svg/ib_dashboard/home.svg", colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn)),
+          icon: SvgPicture.asset(
+            "assets/svg/ib_dashboard/home.svg",
+            colorFilter: ColorFilter.mode(
+              AppColors.textPrimary,
+              BlendMode.srcIn,
+            ),
+          ),
           onPressed: () => Get.offAll(() => const TradingMainScreen()),
         ),
         centerTitle: true,
@@ -543,19 +549,41 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           // Statistics Cards Grid (4 cards in 2x2)
-                          Theme(
-                            data: Theme.of(
-                              context,
-                            ).copyWith(dividerColor: Colors.transparent),
+                          Container(
+                            padding: EdgeInsets.symmetric(horizontal: 8.w),
+                            child: Theme(
+                              data: Theme.of(
+                                context,
+                              ).copyWith(dividerColor: Colors.transparent),
 
-                            child: ExpansionTile(
-                              iconColor: AppColors.primary,
-                              backgroundColor: AppColors.whiteColor,
-                              title: Text("Show More"),
-                              children: [
-                                _buildStatisticsGrid(stats, userFullName),
-                                SizedBox(height: 16.h),
-                              ],
+                              child: ExpansionTile(
+                                iconColor: AppColors.primary,
+                                collapsedIconColor: AppColors.primary,
+                                backgroundColor: AppColors.primary.withValues(
+                                  alpha: 0.1,
+                                ),
+                                collapsedBackgroundColor: AppColors.primary
+                                    .withValues(alpha: 0.1),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12.r),
+                                ),
+                                collapsedShape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12.r),
+                                ),
+                                title: Text(
+                                  "Show More",
+                                  style: TextStyle(
+                                    fontSize: 14.sp,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                                collapsedTextColor: AppColors.whiteColor,
+                                children: [
+                                  _buildStatisticsGrid(stats, userFullName),
+                                  SizedBox(height: 16.h),
+                                ],
+                              ),
                             ),
                           ),
 
@@ -620,7 +648,11 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.star, color: AppColors.whiteColor, size: 16.sp),
+                      Icon(
+                        Icons.star,
+                        color: AppColors.whiteColor,
+                        size: 16.sp,
+                      ),
                       SizedBox(width: 6.w),
                       Flexible(
                         child: Text(
@@ -654,7 +686,11 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
                       ),
                       elevation: 0,
                     ),
-                    icon: Icon(Icons.people, color: AppColors.whiteColor, size: 16.sp),
+                    icon: Icon(
+                      Icons.people,
+                      color: AppColors.whiteColor,
+                      size: 16.sp,
+                    ),
                     // NOTE: Do NOT wrap label in Flexible here because
                     // ElevatedButton.icon already manages its own Flexible/Expanded
                     // internally. Wrapping Text in another Flexible causes
@@ -688,7 +724,11 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
                       ),
                       elevation: 0,
                     ),
-                    icon: Icon(Icons.person, color: AppColors.whiteColor, size: 16.sp),
+                    icon: Icon(
+                      Icons.person,
+                      color: AppColors.whiteColor,
+                      size: 16.sp,
+                    ),
                     // NOTE: Same as above – avoid nesting Flexible inside the
                     // internal Row used by ElevatedButton.icon.
                     label: Text(
@@ -1010,9 +1050,7 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
                   fontSize: 12.sp,
                   fontWeight: FontWeight.w600,
                   color:
-                      isHighlighted
-                          ? AppColors.green
-                          : AppColors.textPrimary,
+                      isHighlighted ? AppColors.green : AppColors.textPrimary,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,

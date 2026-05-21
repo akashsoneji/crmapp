@@ -1087,7 +1087,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                       widget.onVolumeChanged(volume);
                     });
                   },
-                  icon: Icon(Icons.remove, size: 20.h, color: AppColors.textGrey),
+                  icon: Icon(Icons.remove_circle, size: 20.h, color: AppColors.textGrey),
                   padding: EdgeInsets.zero,
                   constraints: BoxConstraints(),
                 ),
@@ -1188,7 +1188,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                       widget.onVolumeChanged(volume);
                     });
                   },
-                  icon: Icon(Icons.add, size: 20.h, color: AppColors.primary),
+                  icon: Icon(Icons.add_circle, size: 20.h, color: AppColors.primary),
                   padding: EdgeInsets.zero,
                   constraints: BoxConstraints(),
                 ),
@@ -1352,7 +1352,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                     onPressed: () {
                       onAdjust(true); // Increase price by pip
                     },
-                    icon: Icon(Icons.add, size: 18.h, color: AppColors.primary),
+                    icon: Icon(Icons.add_circle, size: 18.h, color: AppColors.primary),
                     padding: EdgeInsets.zero,
                     constraints: BoxConstraints(),
                   ),
@@ -1604,7 +1604,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                   _pnlCalculationKey++;
                 });
               },
-              icon: Icon(Icons.remove, size: 10.h, color: AppColors.textGrey),
+              icon: Icon(Icons.remove_circle, size: 10.h, color: AppColors.textGrey),
               padding: EdgeInsets.zero,
               constraints: BoxConstraints(),
             ),
@@ -1701,7 +1701,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                   _pnlCalculationKey++;
                 });
               },
-              icon: Icon(Icons.add, size: 10.h, color: AppColors.primary),
+              icon: Icon(Icons.add_circle, size: 10.h, color: AppColors.primary),
               padding: EdgeInsets.zero,
               constraints: BoxConstraints(),
             ),

@@ -2755,7 +2755,7 @@ Placing Order:
                     _volumeController.text = volume.toStringAsFixed(2);
                   });
                 },
-                icon: Icon(Icons.remove, size: 18.h, color: AppColors.icongrey),
+                icon: Icon(Icons.remove_circle, size: 18.h, color: AppColors.icongrey),
                 padding: EdgeInsets.zero,
                 constraints: BoxConstraints(),
               ),
@@ -2855,7 +2855,7 @@ Placing Order:
                     _volumeController.text = volume.toStringAsFixed(2);
                   });
                 },
-                icon: Icon(Icons.add, size: 18.h, color: AppColors.primary),
+                icon: Icon(Icons.add_circle, size: 18.h, color: AppColors.primary),
                 padding: EdgeInsets.zero,
                 constraints: BoxConstraints(),
               ),
@@ -3106,7 +3106,7 @@ Placing Order:
                                   });
                                 },
                                 icon: Icon(
-                                  Icons.remove,
+                                  Icons.remove_circle,
                                   size: 16.h,
                                   color: AppColors.icongrey,
                                 ),
@@ -3244,7 +3244,7 @@ Placing Order:
                                   });
                                 },
                                 icon: Icon(
-                                  Icons.add,
+                                  Icons.add_circle,
                                   size: 16.h,
                                   color: AppColors.primary,
                                 ),
@@ -3363,7 +3363,7 @@ Placing Order:
                                   });
                                 },
                                 icon: Icon(
-                                  Icons.remove,
+                                  Icons.remove_circle,
                                   size: 16.h,
                                   color: AppColors.icongrey,
                                 ),
@@ -3451,7 +3451,7 @@ Placing Order:
                                   });
                                 },
                                 icon: Icon(
-                                  Icons.add,
+                                  Icons.add_circle,
                                   size: 16.h,
                                   color: AppColors.primary,
                                 ),
@@ -3684,7 +3684,7 @@ Placing Order:
                       });
                     },
                     icon: Icon(
-                      Icons.remove,
+                      Icons.remove_circle,
                       size: 16.h,
                       color: AppColors.icongrey,
                     ),
@@ -3772,7 +3772,7 @@ Placing Order:
                         _volumeController.text = volume.toStringAsFixed(2);
                       });
                     },
-                    icon: Icon(Icons.add, size: 16.h, color: AppColors.primary),
+                    icon: Icon(Icons.add_circle, size: 16.h, color: AppColors.primary),
                     padding: EdgeInsets.zero,
                     constraints: BoxConstraints(),
                   ),
@@ -3896,7 +3896,7 @@ Placing Order:
                     }
                   });
                 },
-                icon: Icon(Icons.remove, size: 18.h, color: AppColors.icongrey),
+                icon: Icon(Icons.remove_circle, size: 18.h, color: AppColors.icongrey),
                 padding: EdgeInsets.zero,
                 constraints: BoxConstraints(),
               ),
@@ -3959,7 +3959,7 @@ Placing Order:
                     _volumeController.text = volume.toStringAsFixed(2);
                   });
                 },
-                icon: Icon(Icons.add, size: 18.h, color: AppColors.primary),
+                icon: Icon(Icons.add_circle, size: 18.h, color: AppColors.primary),
                 padding: EdgeInsets.zero,
                 constraints: BoxConstraints(),
               ),
@@ -4007,7 +4007,7 @@ Placing Order:
                     );
                   }
                 },
-                icon: Icon(Icons.remove, size: 16.h, color: AppColors.icongrey),
+                icon: Icon(Icons.remove_circle, size: 16.h, color: AppColors.icongrey),
                 padding: EdgeInsets.zero,
                 constraints: BoxConstraints(),
               ),
@@ -4076,7 +4076,7 @@ Placing Order:
                     decimals: _getCurrentDigits(),
                   );
                 },
-                icon: Icon(Icons.add, size: 16.h, color: AppColors.primary),
+                icon: Icon(Icons.add_circle, size: 16.h, color: AppColors.primary),
                 padding: EdgeInsets.zero,
                 constraints: BoxConstraints(),
               ),
@@ -4113,7 +4113,7 @@ Placing Order:
                     if (price > 0.01) priceNotifier.value = price - 0.01;
                   },
                   icon: Icon(
-                    Icons.remove,
+                    Icons.remove_circle,
                     size: 16.h,
                     color: AppColors.textGrey,
                   ),
@@ -4147,7 +4147,7 @@ Placing Order:
                   onPressed: () {
                     priceNotifier.value = price + 0.01;
                   },
-                  icon: Icon(Icons.add, size: 16.h, color: AppColors.primary),
+                  icon: Icon(Icons.add_circle, size: 16.h, color: AppColors.primary),
                   padding: EdgeInsets.zero,
                   constraints: BoxConstraints(),
                 ),
@@ -4498,7 +4498,7 @@ Placing Order:
                               }
                             },
                             icon: Icon(
-                              Icons.remove,
+                              Icons.remove_circle,
                               size: 16.h,
                               color: AppColors.icongrey,
                             ),
@@ -4584,7 +4584,7 @@ Placing Order:
                                   .toStringAsFixed(2);
                             },
                             icon: Icon(
-                              Icons.add,
+                              Icons.add_circle,
                               size: 16.h,
                               color: AppColors.primary,
                             ),
@@ -4613,7 +4613,7 @@ Placing Order:
             //           if (distance > 10) _distance.value = distance - 10;
             //         },
             //         icon: Icon(
-            //           Icons.remove,
+            //           Icons.remove_circle,
             //           size: 16.h,
             //           color: AppColors.textGrey,
             //         ),
@@ -4645,7 +4645,7 @@ Placing Order:
             //           _distance.value = distance + 10;
             //         },
             //         icon: Icon(
-            //           Icons.add,
+            //           Icons.add_circle,
             //           size: 16.h,
             //           color: AppColors.primary,
             //         ),

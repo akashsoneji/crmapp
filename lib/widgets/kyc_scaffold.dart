@@ -34,15 +34,15 @@ class KycScaffold extends StatelessWidget {
           actions: [
             IconButton(
               icon: Container(
-                width: 24.w,
-                height: 24.h,
+                width: 28.w,
+                height: 28.h,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.textPrimary),
+                  color: AppColors.textGrey.withAlpha(30),
                 ),
                 child: Icon(
                   Icons.close,
-                  size: 20.w,
+                  size: 18.w,
                   color: AppColors.textPrimary,
                 ),
               ),
@@ -75,16 +75,16 @@ class KycScaffold extends StatelessWidget {
                 child: GestureDetector(
                   onTap: () => Get.back(closeOverlays: true),
                   child: Container(
-                    width: 24.w,
-                    height: 24.h,
+                    width: 28.w,
+                    height: 28.h,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      border: Border.all(color: AppColors.icongrey),
+                      color: AppColors.textGrey.withAlpha(30),
                     ),
                     child: Icon(
                       Icons.close,
-                      size: 16.w,
-                      color: AppColors.icongrey,
+                      size: 18.w,
+                      color: AppColors.textPrimary,
                     ),
                   ),
                 ),
