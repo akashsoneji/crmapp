@@ -79,6 +79,9 @@ import '../screens/trade_win/trade_win_past_win_detail_screen.dart';
 import '../bindings/auth_binding.dart';
 import '../bindings/account_binding.dart';
 import '../bindings/trading_binding.dart';
+import '../screens/common/webview_screen.dart';
+import '../screens/home/more/finance/cregis_address_screen.dart';
+import '../screens/home/more/finance/cregis_success_screen.dart';
 
 part 'app_routes.dart';
 
@@ -161,6 +164,9 @@ class AppPages {
   static const TRADE_WIN_REDEEM = _Paths.TRADE_WIN_REDEEM;
   static const TRADE_WIN_REDEMPTION_SUCCESS = _Paths.TRADE_WIN_REDEMPTION_SUCCESS;
   static const TRADE_WIN_PAST_WIN_DETAIL = _Paths.TRADE_WIN_PAST_WIN_DETAIL;
+  static const CREGIS_CHECKOUT = _Paths.CREGIS_CHECKOUT;
+  static const CREGIS_ADDRESS = _Paths.CREGIS_ADDRESS;
+  static const CREGIS_SUCCESS = _Paths.CREGIS_SUCCESS;
 
   static final routes = [
     GetPage(
@@ -393,6 +399,39 @@ class AppPages {
     GetPage(
       name: _Paths.TRADE_WIN_PAST_WIN_DETAIL,
       page: () => const TradeWinPastWinDetailScreen(),
+    ),
+    GetPage(
+      name: _Paths.CREGIS_CHECKOUT,
+      page: () {
+        final args = Get.arguments as Map<String, dynamic>?;
+        return WebViewScreen(
+          url: args?['checkoutUrl'] ?? '',
+          title: args?['title'] ?? 'Cregis Payment',
+        );
+      },
+    ),
+    GetPage(
+      name: _Paths.CREGIS_ADDRESS,
+      page: () {
+        final args = Get.arguments as Map<String, dynamic>?;
+        return CregisAddressScreen(
+          cregisAddress: args?['cregisAddress'] ?? '',
+          referenceNumber: args?['referenceNumber'] ?? '',
+          amount: args?['amount'] ?? '',
+          networkKey: args?['networkKey'] ?? 'trc20',
+        );
+      },
+    ),
+    GetPage(
+      name: _Paths.CREGIS_SUCCESS,
+      page: () {
+        final args = Get.arguments as Map<String, dynamic>?;
+        return CregisSuccessScreen(
+          referenceNumber: args?['referenceNumber'] ?? '',
+          amount: args?['amount'] ?? '',
+          checkoutUrl: args?['checkoutUrl'] ?? '',
+        );
+      },
     ),
   ];
 }

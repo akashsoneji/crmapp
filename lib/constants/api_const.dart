@@ -46,6 +46,8 @@ class ApiConstants {
   static const String logout = '${ajax}logout';
   static const String depositList = '${ajax}deposit';
   static const String depositRequest = '${ajax}deposit/depositrequest';
+  static const String cregisDepositCreate = '${ajax}deposit/cregis';
+  static const String cregisDepositStatus = '${ajax}deposit/by-reference';
   static const String realPlanDetails = '${ajax}mt5accounts/plandetails';
   static const String getTransactions = '${ajax}transactions';
   static const String depositProofProxy = '${ajax}deposit-proof-proxy/';
