@@ -338,9 +338,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
           hintText: 'Start typing to search',
           prefixIcon: Icon(Icons.search, color: AppColors.textGrey),
           border: OutlineInputBorder(
-            borderSide: BorderSide(
-              color: AppColors.border,
-            ),
+            borderSide: BorderSide(color: AppColors.border),
           ),
         ),
       ),
@@ -396,7 +394,10 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
               children:
                   _tradingExperienceOptions.map((option) {
                     return ListTile(
-                      title: Text(option, style: TextStyle(color: AppColors.textPrimary)),
+                      title: Text(
+                        option,
+                        style: TextStyle(color: AppColors.textPrimary),
+                      ),
                       onTap: () {
                         Navigator.of(context).pop();
                         setState(() {
@@ -678,7 +679,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                 _selectedCountryFlag.isNotEmpty
                     ? _selectedCountryFlag
                     : "🌐 +--",
-                style: TextStyle(fontSize: 16.sp),
+                style: TextStyle(fontSize: 16.sp, color: AppColors.textPrimary),
               ),
             ),
           ),
@@ -722,7 +723,10 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
           onTap: _showTradingExperiencePopup,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 14),
-            child: RTLHelper.rtlIcon(Icons.arrow_drop_down, color: AppColors.textGrey),
+            child: RTLHelper.rtlIcon(
+              Icons.arrow_drop_down,
+              color: AppColors.textGrey,
+            ),
           ),
         ),
         validator:
@@ -784,8 +788,10 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
         height: 46.h,
         text: _languageService.tr("onboarding_next"),
         onPressed: _isFormValid ? _navigateToNextScreen : null,
-        backgroundColor: AppColors.primary,
-        foregroundColor: _isFormValid ? AppColors.whiteColor : AppColors.textGrey,
+        backgroundColor:
+            AppColors.isDarkMode ? AppColors.primary : AppColors.primary,
+        foregroundColor:
+            _isFormValid ? AppColors.whiteColor : AppColors.textGrey,
       ),
     );
   }
@@ -840,7 +846,10 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
       ),
       child: IconButton(
         onPressed: () => Navigator.pop(context),
-        icon: RTLHelper.rtlIcon(Icons.arrow_back_ios, color: AppColors.textPrimary),
+        icon: RTLHelper.rtlIcon(
+          Icons.arrow_back_ios,
+          color: AppColors.textPrimary,
+        ),
         iconSize: 17.h,
         padding: RTLHelper.getRTLPadding(left: 5.w),
       ),
