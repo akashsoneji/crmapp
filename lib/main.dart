@@ -49,6 +49,7 @@ import 'services/connectivity/connectivity_overlay.dart';
 import 'services/app_lock_service.dart';
 import 'services/app_lock/app_lock_overlay.dart';
 import 'services/app_lock/app_lock_lifecycle.dart';
+import 'services/deep_link_service.dart';
 
 // Firebase Background Message Handler
 @pragma('vm:entry-point')
@@ -192,6 +193,9 @@ Future<void> initServices() async {
     permanent: true,
   );
   Get.put<ConnectivityController>(ConnectivityController(), permanent: true);
+
+  // Initialize deep link service for handling crmapp:// URLs
+  Get.put<DeepLinkService>(DeepLinkService(), permanent: true);
 }
 
 /// Build light theme

@@ -415,6 +415,7 @@ class DepositInstructionController extends GetxController {
           'amount': amount,
           'mt5_account_id': mt5AccountId,
           'crypto_network': selectedCregisNetwork.value,
+          'is_mobile_app': 1,
         },
       );
 
