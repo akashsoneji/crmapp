@@ -70,6 +70,9 @@ abstract class Routes {
   static const TRADE_WIN_REDEEM = _Paths.TRADE_WIN_REDEEM;
   static const TRADE_WIN_REDEMPTION_SUCCESS = _Paths.TRADE_WIN_REDEMPTION_SUCCESS;
   static const TRADE_WIN_PAST_WIN_DETAIL = _Paths.TRADE_WIN_PAST_WIN_DETAIL;
+  static const CREGIS_CHECKOUT = _Paths.CREGIS_CHECKOUT;
+  static const CREGIS_ADDRESS = _Paths.CREGIS_ADDRESS;
+  static const CREGIS_SUCCESS = _Paths.CREGIS_SUCCESS;
 }
 
 abstract class _Paths {
@@ -154,4 +157,7 @@ abstract class _Paths {
   static const TRADE_WIN_REDEEM = '/trade-win-redeem';
   static const TRADE_WIN_REDEMPTION_SUCCESS = '/trade-win-redemption-success';
   static const TRADE_WIN_PAST_WIN_DETAIL = '/trade-win-past-win-detail';
+  static const CREGIS_CHECKOUT = '/cregis-checkout';
+  static const CREGIS_ADDRESS = '/cregis-address';
+  static const CREGIS_SUCCESS = '/cregis-success';
 }
