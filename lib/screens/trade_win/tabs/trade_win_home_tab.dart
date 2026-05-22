@@ -602,7 +602,10 @@ class _ProductCatalogCard extends StatelessWidget {
             child: ElevatedButton(
               onPressed: () => _onRedeem(context),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                backgroundColor:
+                    AppColors.isDarkMode
+                        ? AppColors.primary.withValues(alpha: 0.1)
+                        : AppColors.primary,
                 foregroundColor: AppColors.onColoredBackground,
                 padding: EdgeInsets.symmetric(vertical: 12.h),
                 shape: RoundedRectangleBorder(

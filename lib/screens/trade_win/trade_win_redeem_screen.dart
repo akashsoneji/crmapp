@@ -405,7 +405,10 @@ class _StepSuccess extends StatelessWidget {
                 Text(
                   reference.isNotEmpty ? reference : '—',
                   style: AppTextStyles.centerbodyHeading.copyWith(
-                    color: AppColors.primary,
+                    color:
+                        AppColors.isDarkMode
+                            ? AppColors.primary.withValues(alpha: 0.1)
+                            : AppColors.primary,
                     fontSize: 22.sp,
                   ),
                   textAlign: TextAlign.center,
@@ -819,7 +822,10 @@ class _BottomActions extends StatelessWidget {
                   child: ElevatedButton(
                     onPressed: onDone,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                      backgroundColor:
+                          AppColors.isDarkMode
+                              ? AppColors.primary.withValues(alpha: 0.1)
+                              : AppColors.primary,
                       foregroundColor: AppColors.onColoredBackground,
                       padding: EdgeInsets.symmetric(vertical: 14.h),
                       shape: RoundedRectangleBorder(
@@ -842,7 +848,10 @@ class _BottomActions extends StatelessWidget {
                   child: ElevatedButton(
                     onPressed: () => controller.goToStep(2),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                      backgroundColor:
+                          AppColors.isDarkMode
+                              ? AppColors.primary.withValues(alpha: 0.1)
+                              : AppColors.primary,
                       foregroundColor: AppColors.onColoredBackground,
                       padding: EdgeInsets.symmetric(vertical: 12.h),
                       shape: RoundedRectangleBorder(
@@ -877,7 +886,10 @@ class _BottomActions extends StatelessWidget {
                   child: ElevatedButton(
                     onPressed: submitting ? null : onSubmit,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                      backgroundColor:
+                          AppColors.isDarkMode
+                              ? AppColors.primary.withValues(alpha: 0.1)
+                              : AppColors.primary,
                       foregroundColor: AppColors.onColoredBackground,
                       padding: EdgeInsets.symmetric(vertical: 12.h),
                       shape: RoundedRectangleBorder(

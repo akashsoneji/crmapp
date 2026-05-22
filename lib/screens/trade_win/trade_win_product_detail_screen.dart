@@ -318,7 +318,9 @@ class _TradeWinProductDetailScreenState
                 style: ElevatedButton.styleFrom(
                   backgroundColor:
                       _canRedeem
-                          ? AppColors.primary.withValues(alpha: 0.1)
+                          ? AppColors.isDarkMode
+                              ? AppColors.primary.withValues(alpha: 0.1)
+                              : AppColors.primary
                           : AppColors.icongrey.withValues(alpha: 0.35),
                   foregroundColor: AppColors.primary,
                   disabledBackgroundColor: AppColors.icongrey.withValues(
@@ -335,6 +337,7 @@ class _TradeWinProductDetailScreenState
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 14.sp,
+                    color: AppColors.textPrimaryDark,
                   ),
                 ),
               ),
