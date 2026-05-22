@@ -875,9 +875,9 @@ class DashboardController extends GetxController {
         var accountNumber = primaryAccount.metaAccountNumber;
         if (accountNumber.isNotEmpty && accountNumber != "0") {
           if (kDebugMode) {
-            dev.log(
-              'Dashboard WS: Requesting data for PRIMARY account: $accountNumber (Trading Server: ${primaryAccount.tradingServer})',
-            );
+            // dev.log(
+            //   'Dashboard WS: Requesting data for PRIMARY account: $accountNumber (Trading Server: ${primaryAccount.tradingServer})',
+            // );
           }
 
           // Send request with primary account number
@@ -1272,34 +1272,34 @@ class DashboardController extends GetxController {
               : "Not connected";
 
       if (kDebugMode) {
-        dev.log(
-          '═══════════════════════════════════════════════════════════',
-          name: 'DASHBOARD_WS_REQUEST',
-        );
-        dev.log(
-          '📤 WEBSOCKET REQUEST (Dashboard - AccountInfoBottomSheet Data Source)',
-          name: 'DASHBOARD_WS_REQUEST',
-        );
-        dev.log('Endpoint: $endpoint', name: 'DASHBOARD_WS_REQUEST');
-        dev.log('Request:', name: 'DASHBOARD_WS_REQUEST');
+        // dev.log(
+        //   '═══════════════════════════════════════════════════════════',
+        //   name: 'DASHBOARD_WS_REQUEST',
+        // );
+        // dev.log(
+        //   '📤 WEBSOCKET REQUEST (Dashboard - AccountInfoBottomSheet Data Source)',
+        //   name: 'DASHBOARD_WS_REQUEST',
+        // );
+        // dev.log('Endpoint: $endpoint', name: 'DASHBOARD_WS_REQUEST');
+        // dev.log('Request:', name: 'DASHBOARD_WS_REQUEST');
 
         try {
           final formatted = JsonEncoder.withIndent('  ').convert(event);
-          dev.log(formatted, name: 'DASHBOARD_WS_REQUEST');
+          // dev.log(formatted, name: 'DASHBOARD_WS_REQUEST');
         } catch (e) {
-          dev.log('  $event', name: 'DASHBOARD_WS_REQUEST');
+          // dev.log('  $event', name: 'DASHBOARD_WS_REQUEST');
         }
-        dev.log(
-          '═══════════════════════════════════════════════════════════',
-          name: 'DASHBOARD_WS_REQUEST',
-        );
+        // dev.log(
+        //   '═══════════════════════════════════════════════════════════',
+        //   name: 'DASHBOARD_WS_REQUEST',
+        // );
       }
     } catch (e) {
       if (kDebugMode) {
-        dev.log(
-          'Dashboard WS: Error sending event: $e',
-          name: 'DASHBOARD_WS_REQUEST',
-        );
+        // dev.log(
+        //   'Dashboard WS: Error sending event: $e',
+        //   name: 'DASHBOARD_WS_REQUEST',
+        // );
       }
     }
   }
@@ -1398,9 +1398,9 @@ class DashboardController extends GetxController {
         if (!hasAccountInfo) {
           // Account info not yet received, request it
           if (kDebugMode) {
-            dev.log(
-              'Dashboard WS: Account info not yet received, requesting data',
-            );
+            // dev.log(
+            //   'Dashboard WS: Account info not yet received, requesting data',
+            // );
           }
           _requestAccountData();
         }

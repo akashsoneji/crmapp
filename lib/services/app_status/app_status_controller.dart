@@ -245,36 +245,32 @@ class AppStatusController extends GetxController {
     await _service.checkAppStatus();
   }
 
-  /// Open app store/play store
+  /// Open app store (Play Store) or handle in-app APK install.
+  ///
+  /// This is called when the URL is NOT a direct APK file URL.
+  /// APK install flow is handled separately by ForceUpdateDialog via InAppUpdateService.
   Future<void> openAppStore() async {
     try {
       final packageName = await AppVersionService.instance.getPackageName();
       String url;
 
       if (Platform.isAndroid) {
-        // Android Play Store
-        url = 'https://play.google.com/store/apps/details?id=$packageName';
-      } else if (Platform.isIOS) {
-        // iOS App Store
-        url = 'https://apps.apple.com/app/id$packageName';
-
-        // Use backend provided URL if available
-        if (statusData.value?.updateUrlIos != null &&
-            statusData.value!.updateUrlIos!.isNotEmpty) {
-          url = statusData.value!.updateUrlIos!;
+        final androidUrl = statusData.value?.updateUrlAndroid;
+        if (androidUrl != null && androidUrl.isNotEmpty) {
+          url = androidUrl;
+        } else {
+          url = 'https://play.google.com/store/apps/details?id=$packageName';
         }
+      } else if (Platform.isIOS) {
+        // Prefer backend URL for iOS; fallback to App Store URL using package name
+        url = statusData.value?.updateUrlIos?.isNotEmpty == true
+            ? statusData.value!.updateUrlIos!
+            : 'https://apps.apple.com/app/id$packageName';
       } else {
         AppLogger.error(
           'AppStatusController: Unsupported platform for app store',
         );
         return;
-      }
-
-      // Android custom URL check
-      if (Platform.isAndroid &&
-          statusData.value?.updateUrlAndroid != null &&
-          statusData.value!.updateUrlAndroid!.isNotEmpty) {
-        url = statusData.value!.updateUrlAndroid!;
       }
 
       final uri = Uri.parse(url);
