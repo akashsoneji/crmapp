@@ -123,15 +123,15 @@ class _ForceUpdateDialogState extends State<ForceUpdateDialog> {
   Color get _accentColor {
     switch (_state) {
       case UpdateDialogState.downloading:
-        return AppColors.brandPrimary;
+        return AppColors.primary;
       case UpdateDialogState.installing:
         return AppColors.success;
       case UpdateDialogState.openingStore:
-        return AppColors.brandPrimary;
+        return AppColors.primary;
       case UpdateDialogState.error:
         return AppColors.error;
       case UpdateDialogState.idle:
-        return AppColors.brandPrimary;
+        return AppColors.primary;
     }
   }
 
@@ -146,20 +146,12 @@ class _ForceUpdateDialogState extends State<ForceUpdateDialog> {
         controller.statusData.value?.updateUrlAndroid?.isNotEmpty == true;
 
     final bool isDark = AppColors.isDarkMode;
-    final Color cardColor = isDark
-        ? const Color(0xFF1E1E2E)
-        : AppColors.whiteColor;
+    final Color cardColor = AppColors.whiteColor;
     final Color titleColor = AppColors.textPrimary;
     final Color subtitleColor = AppColors.textSecondary;
-    final Color cardBorder = isDark
-        ? const Color(0xFF2A2A3E)
-        : const Color(0xFFE5E7EB);
-    final Color cardSurface = isDark
-        ? const Color(0xFF252535)
-        : const Color(0xFFF9FAFB);
-    final Color shadowColor = isDark
-        ? Colors.black.withValues(alpha: 0.5)
-        : Colors.black;
+    final Color cardBorder = AppColors.border;
+    final Color cardSurface = AppColors.surface;
+    final Color shadowColor = Colors.black.withValues(alpha: 0.5);
 
     return PopScope(
       canPop: !widget.isForceUpdate,
@@ -205,7 +197,6 @@ class _ForceUpdateDialogState extends State<ForceUpdateDialog> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Top color bar
                        
         
                         Padding(
@@ -227,25 +218,26 @@ class _ForceUpdateDialogState extends State<ForceUpdateDialog> {
                                 ),
                                 textAlign: TextAlign.center,
                               ),
+                              
                               SizedBox(height: 8.h),
-        
-                              // Subtitle
-                              Text(
-                                _getSubtitle(latestVersion),
-                                style: TextStyle(
-                                  fontSize: 14.sp,
-                                  color: subtitleColor,
-                                  height: 1.5,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-        
-                              // State content
-                              if (_state != UpdateDialogState.idle &&
-                                  _state != UpdateDialogState.error) ...[
-                                SizedBox(height: 24.h),
-                                _buildStateContent(isDark),
-                              ],
+                               Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                 children: [
+                                  Icon(Icons.lock_outline_rounded, size: 12.w, color: AppColors.textGrey),
+                                  SizedBox(width: 4.w),
+                                  Text('Do not close the app', style: AppTextStyles.bodyText.copyWith(fontSize: 14.sp, fontWeight: FontWeight.w400, color: subtitleColor), textAlign: TextAlign.center),
+                                 ],
+                               ),
+                                SizedBox(height: 8.h),
+                                // Text(
+                                //   'New version $latestVersion available',
+                                //   style: AppTextStyles.bodyText.copyWith(
+                                //     fontSize: 14.sp,
+                                //     fontWeight: FontWeight.w400,
+                                //     color: subtitleColor,
+                                //   ),
+                                //   textAlign: TextAlign.center,
+                                // ),
         
                               // Release notes
                               if (releaseNotes != null && releaseNotes.isNotEmpty) ...[
@@ -334,6 +326,8 @@ class _ForceUpdateDialogState extends State<ForceUpdateDialog> {
   }
 
   String _getTitle() {
+    final controller = Get.find<AppStatusController>();
+    final latestVersion = controller.statusData.value?.appVersion ?? controller.latestVersion.value;
     switch (_state) {
       case UpdateDialogState.downloading:
         return 'Downloading Update';
@@ -344,7 +338,7 @@ class _ForceUpdateDialogState extends State<ForceUpdateDialog> {
       case UpdateDialogState.error:
         return 'Download Failed';
       case UpdateDialogState.idle:
-        return 'Update Available';
+        return '${latestVersion} Update Available';
     }
   }
 
@@ -367,41 +361,29 @@ class _ForceUpdateDialogState extends State<ForceUpdateDialog> {
     final bool isDownloading = _state == UpdateDialogState.downloading;
 
     return SizedBox(
-      width: 96.w,
-      height: 96.w,
+      width: 120.w,
+      height: 120.w,
       child: Stack(
         alignment: Alignment.center,
         children: [
-          // Progress ring background (idle glow when not downloading)
+          // Progress ring background
           SizedBox(
-            width: 96.w,
-            height: 96.w,
+            width: 120.w,
+            height: 120.w,
             child: CircularProgressIndicator(
-              value: 1.0,
+              value: isDownloading ? (_downloadProgress ?? 0) : 0,
               strokeWidth: 4.w,
-              backgroundColor: Colors.transparent,
+              backgroundColor: _accentColor.withValues(alpha: 0.15),
               valueColor: AlwaysStoppedAnimation<Color>(
-                _accentColor.withValues(alpha: isDownloading ? 0.2 : 0.15),
+                _accentColor.withValues(alpha: isDownloading ? 0.6 : 0.15),
               ),
+              strokeCap: StrokeCap.round,
             ),
           ),
-          // Progress ring fill (only during download)
-          if (isDownloading)
-            SizedBox(
-              width: 96.w,
-              height: 96.w,
-              child: CircularProgressIndicator(
-                value: _downloadProgress ?? 0,
-                strokeWidth: 4.w,
-                backgroundColor: Colors.transparent,
-                valueColor: AlwaysStoppedAnimation<Color>(_accentColor),
-                strokeCap: StrokeCap.round,
-              ),
-            ),
           // Brand logo container
           Container(
-            width: 88.w,
-            height: 88.w,
+            width: 90.w,
+            height: 90.w,
             decoration: BoxDecoration(
               color: _accentColor.withValues(alpha: isDark ? 0.15 : 0.1),
               shape: BoxShape.circle,
@@ -419,31 +401,11 @@ class _ForceUpdateDialogState extends State<ForceUpdateDialog> {
                 color: FlavorConfig.isONSA() && !FlavorConfig.hasRemoteLogo
                     ? AppColors.primary
                     : null,
-                height: 80.w,
-                width: 100.w,
+                height: 70.w,
+                width: 85.w,
               ),
             ),
           ),
-          // Percentage text when downloading
-          if (isDownloading)
-            Positioned(
-              bottom: 4.h,
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
-                decoration: BoxDecoration(
-                  color: _accentColor,
-                  borderRadius: BorderRadius.circular(8.r),
-                ),
-                child: Text(
-                  '${((_downloadProgress ?? 0) * 100).toStringAsFixed(0)}%',
-                  style: TextStyle(
-                    fontSize: 10.sp,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
         ],
       ),
     );
@@ -464,42 +426,40 @@ class _ForceUpdateDialogState extends State<ForceUpdateDialog> {
   }
 
   Widget _buildDownloadingContent(bool isDark) {
-    final Color trackColor = isDark
-        ? const Color(0xFF3A3A4A)
-        : const Color(0xFFE5E7EB);
+    final int percent = ((_downloadProgress ?? 0) * 100).toInt();
 
     return Column(
       children: [
-        Container(
-          height: 8.h,
-          decoration: BoxDecoration(
-            color: trackColor,
-            borderRadius: BorderRadius.circular(4.h),
-          ),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              return Stack(
-                children: [
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
-                    width: constraints.maxWidth *
-                        ((_downloadProgress ?? 0).clamp(0.0, 1.0)),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          _accentColor,
-                          _accentColor.withValues(alpha: 0.8),
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(4.h),
-                    ),
-                  ),
-                ],
-              );
-            },
+        // Circular progress with percentage
+        SizedBox(
+          width: 60.w,
+          height: 60.w,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              SizedBox(
+                width: 60.w,
+                height: 60.w,
+                child: CircularProgressIndicator(
+                  value: _downloadProgress ?? 0,
+                  strokeWidth: 4.w,
+                  backgroundColor: Colors.transparent,
+                  valueColor: AlwaysStoppedAnimation<Color>(_accentColor),
+                  strokeCap: StrokeCap.round,
+                ),
+              ),
+              Text(
+                '$percent%',
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w700,
+                  color: _accentColor,
+                ),
+              ),
+            ],
           ),
         ),
-        SizedBox(height: 10.h),
+        SizedBox(height: 16.h),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -629,8 +589,8 @@ class _ForceUpdateDialogState extends State<ForceUpdateDialog> {
         onPressed: _handleUpdateTap,
         style: ElevatedButton.styleFrom(
           backgroundColor: _accentColor,
-          padding: EdgeInsets.symmetric(vertical: 16.h),
-          elevation: 0,
+          padding: EdgeInsets.symmetric(vertical: 4.h),
+          elevation: 2,
           shadowColor: _accentColor.withValues(alpha: 0.4),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14.r),
@@ -648,7 +608,7 @@ class _ForceUpdateDialogState extends State<ForceUpdateDialog> {
             Text(
               hasApkUrl ? 'Download & Install' : 'Update Now',
               style: TextStyle(
-                color: AppColors.onColoredBackground,
+                color: AppColors.whiteColor,
                 fontSize: 15.sp,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.3,
@@ -661,39 +621,34 @@ class _ForceUpdateDialogState extends State<ForceUpdateDialog> {
   }
 
   Widget _buildDownloadingActions(bool hasApkUrl, bool isDark) {
-    final Color btnBg = isDark
-        ? _accentColor.withValues(alpha: 0.15)
-        : _accentColor.withValues(alpha: 0.08);
-    final Color btnBorder = isDark
-        ? _accentColor.withValues(alpha: 0.3)
-        : _accentColor.withValues(alpha: 0.2);
+    final int percent = ((_downloadProgress ?? 0) * 100).toInt();
+    final controller = Get.find<AppStatusController>();
 
     return Column(
       children: [
         Container(
           width: double.infinity,
-          padding: EdgeInsets.symmetric(vertical: 16.h),
+          padding: EdgeInsets.symmetric(vertical: 12.h),
           decoration: BoxDecoration(
-            color: btnBg,
+            color: AppColors.primary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(14.r),
-            border: Border.all(color: btnBorder, width: 1),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               SizedBox(
-                width: 20.w,
-                height: 20.w,
+                width: 18.w,
+                height: 18.w,
                 child: CircularProgressIndicator(
                   strokeWidth: 2.5.w,
-                  valueColor: AlwaysStoppedAnimation<Color>(_accentColor),
+                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
                 ),
               ),
               SizedBox(width: 12.w),
               Text(
-                'Downloading... ${((_downloadProgress ?? 0) * 100).toStringAsFixed(0)}%',
+                'Downloading... $percent%',
                 style: TextStyle(
-                  color: _accentColor,
+                  color: AppColors.primary,
                   fontSize: 14.sp,
                   fontWeight: FontWeight.w600,
                 ),
@@ -702,14 +657,19 @@ class _ForceUpdateDialogState extends State<ForceUpdateDialog> {
           ),
         ),
         if (!widget.isForceUpdate) ...[
-          SizedBox(height: 12.h),
+          SizedBox(height: 16.h),
           GestureDetector(
-            onTap: null,
+            onTap: () {
+              controller.skipUpdateFor24Hours();
+              Get.back(closeOverlays: true);
+              controller.resetForceUpdateDialogFlag();
+            },
             child: Text(
               'Remind me later',
               style: TextStyle(
-                fontSize: 13.sp,
+                fontSize: 14.sp,
                 color: AppColors.textGrey,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ),
@@ -736,6 +696,13 @@ class _ForceUpdateDialogState extends State<ForceUpdateDialog> {
             color: bgColor,
             borderRadius: BorderRadius.circular(14.r),
             border: Border.all(color: borderColor, width: 1),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.success.withValues(alpha: 0.1),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -821,7 +788,7 @@ class _ForceUpdateDialogState extends State<ForceUpdateDialog> {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.error,
               padding: EdgeInsets.symmetric(vertical: 16.h),
-              elevation: 0,
+              elevation: 4,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(14.r),
               ),
@@ -847,7 +814,7 @@ class _ForceUpdateDialogState extends State<ForceUpdateDialog> {
             ),
           ),
         ),
-        SizedBox(height: 10.h),
+        SizedBox(height: 16.h),
         GestureDetector(
           onTap: () {
             Get.back(closeOverlays: true);
@@ -856,8 +823,9 @@ class _ForceUpdateDialogState extends State<ForceUpdateDialog> {
           child: Text(
             'Skip this version',
             style: TextStyle(
-              fontSize: 13.sp,
+              fontSize: 14.sp,
               color: AppColors.textGrey,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ),
