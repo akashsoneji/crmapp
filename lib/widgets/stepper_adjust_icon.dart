@@ -23,7 +23,7 @@ class StepperAdjustIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final iconColor = color ?? switch (kind) {
-      StepperAdjustKind.decrement => AppColors.onColoredBackground,
+      StepperAdjustKind.decrement => AppColors.primary,
       StepperAdjustKind.increment => AppColors.primary,
     };
 

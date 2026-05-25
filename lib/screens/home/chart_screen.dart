@@ -2739,11 +2739,10 @@ Placing Order:
           children: [
             // Minus button
             Container(
-              height: 24.h,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 // color: AppColors.icongrey,
-                border: Border.all(color: AppColors.icongrey),
+                border: Border.all(color: AppColors.primary, width: 2),
               ),
               width: 24.w,
               child: IconButton(

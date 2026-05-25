@@ -221,19 +221,21 @@ class _ChangeLeverageScreenState extends State<ChangeLeverageScreen> {
             Container(
               padding: EdgeInsets.all(16.w),
               decoration: BoxDecoration(
-                color: AppColors.secondary,
+                color: AppColors.isDarkMode ? AppColors.primary.withValues(alpha: 0.1) : AppColors.primary,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.account_circle, color: AppColors.primary),
+                  Icon(Icons.account_circle, 
+                      color: AppColors.isDarkMode ? AppColors.primary : AppColors.whiteColor,
+                  ),
                   SizedBox(width: 12.w),
                   Text(
                     'Account: ${widget.accountNumber}',
                     style: TextStyle(
                       fontSize: 16.sp,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
+                      color: AppColors.isDarkMode ? AppColors.primary : AppColors.whiteColor,
                     ),
                   ),
                 ],

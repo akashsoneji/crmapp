@@ -1130,7 +1130,7 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
                             alignment: Alignment.center,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              border: Border.all(color: AppColors.textGrey!),
+                              border: Border.all(color: AppColors.primary!),
                             ),
                             child: IconButton(
                               onPressed: () {
@@ -1149,7 +1149,7 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
                               icon: Icon(
                                 Icons.remove,
                                 size: 20.h,
-                                color: AppColors.textGrey,
+                                color: AppColors.primary,
                               ),
                               padding: EdgeInsets.zero,
                               constraints: BoxConstraints(),
@@ -1760,7 +1760,7 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
             height: 20.h,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: AppColors.textGrey!),
+              border: Border.all(color: AppColors.primary!),
             ),
             child: IconButton(
               onPressed: () {
@@ -1781,7 +1781,7 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
                   _pnlCalculationKey++;
                 });
               },
-              icon: Icon(Icons.remove, size: 10.h, color: AppColors.textGrey),
+              icon: Icon(Icons.remove, size: 10.h, color: AppColors.primary),
               padding: EdgeInsets.zero,
               constraints: BoxConstraints(),
             ),
