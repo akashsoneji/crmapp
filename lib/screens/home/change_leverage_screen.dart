@@ -1,3 +1,4 @@
+import 'package:crm_app/widgets/app_svg_back_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -9,11 +10,13 @@ import 'package:crm_app/utils/trl_helper.dart';
 class ChangeLeverageScreen extends StatefulWidget {
   final String accountNumber;
   final int? currentLeverage; // Optional current leverage value
+  final List<int> leverageOptions; // Options from API
 
   const ChangeLeverageScreen({
     Key? key,
     required this.accountNumber,
     this.currentLeverage,
+    this.leverageOptions = const [],
   }) : super(key: key);
 
   @override
@@ -22,13 +25,17 @@ class ChangeLeverageScreen extends StatefulWidget {
 
 class _ChangeLeverageScreenState extends State<ChangeLeverageScreen> {
   final AuthService _authService = Get.find<AuthService>();
-  final List<int> _leverageValues = [30, 50, 100, 300, 400, 500];
+  late List<int> _leverageValues;
   int? _selectedLeverage;
   bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
+    // Use leverage options from API, fallback to default if empty
+    _leverageValues = widget.leverageOptions.isNotEmpty
+        ? widget.leverageOptions
+        : [100, 150, 200, 300, 400, 500];
     // Set to current leverage if provided and valid, otherwise default to first value
     if (widget.currentLeverage != null &&
         _leverageValues.contains(widget.currentLeverage)) {
@@ -204,7 +211,7 @@ class _ChangeLeverageScreenState extends State<ChangeLeverageScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Change Leverage'), centerTitle: true),
+      appBar: AppBar(title: Text('Change Leverage'), centerTitle: true,leading: AppSvgBackButton(onPressed: () => Get.back(closeOverlays: true), iconWidth: 30.w, iconHeight: 30.h),),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(24.w),
         child: Column(

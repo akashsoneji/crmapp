@@ -1325,8 +1325,8 @@ class AccountMenuBottomSheet extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.whiteColor,
         borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(40),
-          topRight: Radius.circular(40),
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
         ),
       ),
       child: Column(
@@ -1334,7 +1334,7 @@ class AccountMenuBottomSheet extends StatelessWidget {
         children: [
           // Drag indicator
           Container(
-            margin: EdgeInsets.only(top: 12, bottom: 20),
+            margin: EdgeInsets.only(top: 8, bottom: 16),
             width: 40,
             height: 4,
             decoration: BoxDecoration(
@@ -1345,7 +1345,7 @@ class AccountMenuBottomSheet extends StatelessWidget {
 
           // Menu Items
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24),
+            padding: EdgeInsets.symmetric(horizontal: 20),
             child: Column(
               children: [
                 _buildMenuItem(
@@ -1356,7 +1356,7 @@ class AccountMenuBottomSheet extends StatelessWidget {
                     Get.to(() => InternalTransferScreen());
                   },
                 ),
-                SizedBox(height: 16),
+                SizedBox(height: 8),
                 _buildMenuItem(
                   icon: Icons.card_giftcard,
                   label: languageService.tr('dashboard_bonus'),
@@ -1372,7 +1372,7 @@ class AccountMenuBottomSheet extends StatelessWidget {
                     }
                   },
                 ),
-                SizedBox(height: 16),
+                SizedBox(height: 8),
                 _buildMenuItem(
                   icon: Icons.history,
                   label: languageService.tr('dashboard_history'),
@@ -1384,8 +1384,9 @@ class AccountMenuBottomSheet extends StatelessWidget {
                     );
                   },
                 ),
-                if (account.tradingServer.toLowerCase() == 'mt5') ...[
-                  SizedBox(height: 16),
+                // if (account.tradingServer.toLowerCase() == 'mt5' &&
+                //     account.masterGroupId.toLowerCase() != 'scratchcard') ...[
+                  SizedBox(height: 8),
                   _buildMenuItem(
                     icon: Icons.lock,
                     label: languageService.tr('change_password'),
@@ -1394,7 +1395,9 @@ class AccountMenuBottomSheet extends StatelessWidget {
                       _showMT5ChangePasswordDialog();
                     },
                   ),
-                  SizedBox(height: 16),
+                // ],
+                if (account.leverageChangeAllowed) ...[
+                  SizedBox(height: 8),
                   _buildMenuItem(
                     icon: Icons.trending_up,
                     label: 'Leverage',
@@ -1405,29 +1408,21 @@ class AccountMenuBottomSheet extends StatelessWidget {
                         () => ChangeLeverageScreen(
                           accountNumber: account.metaAccountNumber,
                           currentLeverage: account.leverageId,
+                          leverageOptions: account.leverageOptions,
                         ),
                       );
                     },
                   ),
                 ],
-                // SizedBox(height: 16),
-                // _buildMenuItem(
-                //   icon: Icons.settings,
-                //   label: languageService.tr('more_settings'),
-                //   onTap: () {
-                //     Get.back(closeOverlays: true);
-                //     Get.to(() => MoreScreen());
-                //   },
-                // ),
               ],
             ),
           ),
 
-          SizedBox(height: 24),
+          SizedBox(height: 16),
 
           // Cancel Button
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24),
+            padding: EdgeInsets.symmetric(horizontal: 12),
             child: Container(
               margin: EdgeInsets.only(bottom: 10.h),
 
@@ -1460,25 +1455,26 @@ class AccountMenuBottomSheet extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+        padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(10),
         ),
         child: Row(
           children: [
-            Icon(icon, size: 24, color: AppColors.primary),
-            SizedBox(width: 16),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 16.sp,
-                fontWeight: FontWeight.w500,
-                color: AppColors.textPrimary,
+            Icon(icon, size: 22, color: AppColors.primary),
+            SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textPrimary,
+                ),
               ),
             ),
-            Spacer(),
-            Icon(Icons.arrow_forward_ios, size: 16, color: AppColors.icongrey),
+            Icon(Icons.arrow_forward_ios, size: 14, color: AppColors.icongrey),
           ],
         ),
       ),
