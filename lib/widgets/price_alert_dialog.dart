@@ -380,7 +380,10 @@ class _PriceAlertDialogState extends State<PriceAlertDialog> {
                       child: ElevatedButton(
                         onPressed: _isLoading ? null : _setPriceAlert,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.isDarkMode ?  AppColors.primary.withValues(alpha: 0.1) : AppColors.primary  ,
+                          backgroundColor:
+                              AppColors.isDarkMode
+                                  ? AppColors.primary.withValues(alpha: 0.1)
+                                  : AppColors.brandPrimary,
                           padding: EdgeInsets.symmetric(vertical: 12.h),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12.r),
@@ -391,7 +394,7 @@ class _PriceAlertDialogState extends State<PriceAlertDialog> {
                                 ? SizedBox(
                                   height: 20.h,
                                   width: 20.w,
-                                  child:   CircularProgressIndicator(
+                                  child: CircularProgressIndicator(
                                     strokeWidth: 2,
                                     valueColor: AlwaysStoppedAnimation<Color>(
                                       AppColors.whiteColor,
