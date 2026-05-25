@@ -4065,14 +4065,11 @@ class PurpleToAppColorMapper extends ColorMapper {
         // opaqueHex == '5F259E' ||
         opaqueHex == '9D63D8';
 
-    if (opaqueHex == '7E41B8') {
-      return AppColors.primary.withOpacity(0.9);
-    }
-    if (opaqueHex == '5F259E') {
-      return AppColors.primary.withOpacity(0.9);
+    if (opaqueHex == '7E41B8' || opaqueHex == '5F259E') {
+      return targetColor.withOpacity(0.9);
     }
     if (isPurple) {
-      return AppColors.primary.withOpacity(0.7);
+      return targetColor.withOpacity(0.7);
     }
     return color;
   }
