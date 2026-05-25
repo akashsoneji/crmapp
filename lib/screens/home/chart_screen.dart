@@ -32,6 +32,7 @@ import '../../utils/precision_helper.dart';
 import '../../models/order_types.dart';
 import '../../utils/app_logger.dart';
 import '../../widgets/custom_toast.dart';
+import '../../widgets/stepper_adjust_icon.dart';
 import '../../routes/app_pages.dart';
 import 'dashboard_screen.dart';
 import 'pending_order_content.dart';
@@ -2755,7 +2756,10 @@ Placing Order:
                     _volumeController.text = volume.toStringAsFixed(2);
                   });
                 },
-                icon: Icon(Icons.remove_circle, size: 18.h, color: AppColors.icongrey),
+                icon: StepperAdjustIcon(
+                  kind: StepperAdjustKind.decrement,
+                  size: 14,
+                ),
                 padding: EdgeInsets.zero,
                 constraints: BoxConstraints(),
               ),
@@ -2855,7 +2859,10 @@ Placing Order:
                     _volumeController.text = volume.toStringAsFixed(2);
                   });
                 },
-                icon: Icon(Icons.add_circle, size: 18.h, color: AppColors.primary),
+                icon: StepperAdjustIcon(
+                  kind: StepperAdjustKind.increment,
+                  size: 14,
+                ),
                 padding: EdgeInsets.zero,
                 constraints: BoxConstraints(),
               ),
@@ -3105,10 +3112,9 @@ Placing Order:
                                     }
                                   });
                                 },
-                                icon: Icon(
-                                  Icons.remove_circle,
-                                  size: 16.h,
-                                  color: AppColors.icongrey,
+                                icon: StepperAdjustIcon(
+                                  kind: StepperAdjustKind.decrement,
+                                  size: 12,
                                 ),
                                 padding: EdgeInsets.zero,
                                 constraints: BoxConstraints(),
@@ -3243,10 +3249,9 @@ Placing Order:
                                         .toStringAsFixed(2);
                                   });
                                 },
-                                icon: Icon(
-                                  Icons.add_circle,
-                                  size: 16.h,
-                                  color: AppColors.primary,
+                                icon: StepperAdjustIcon(
+                                  kind: StepperAdjustKind.increment,
+                                  size: 12,
                                 ),
                                 padding: EdgeInsets.zero,
                                 constraints: BoxConstraints(),
@@ -3362,10 +3367,9 @@ Placing Order:
                                     }
                                   });
                                 },
-                                icon: Icon(
-                                  Icons.remove_circle,
-                                  size: 16.h,
-                                  color: AppColors.icongrey,
+                                icon: StepperAdjustIcon(
+                                  kind: StepperAdjustKind.decrement,
+                                  size: 12,
                                 ),
                                 padding: EdgeInsets.zero,
                                 constraints: BoxConstraints(),
@@ -3450,10 +3454,9 @@ Placing Order:
                                         .toStringAsFixed(2);
                                   });
                                 },
-                                icon: Icon(
-                                  Icons.add_circle,
-                                  size: 16.h,
-                                  color: AppColors.primary,
+                                icon: StepperAdjustIcon(
+                                  kind: StepperAdjustKind.increment,
+                                  size: 12,
                                 ),
                                 padding: EdgeInsets.zero,
                                 constraints: BoxConstraints(),
@@ -3683,10 +3686,9 @@ Placing Order:
                         }
                       });
                     },
-                    icon: Icon(
-                      Icons.remove_circle,
-                      size: 16.h,
-                      color: AppColors.icongrey,
+                    icon: StepperAdjustIcon(
+                      kind: StepperAdjustKind.decrement,
+                      size: 12,
                     ),
                     padding: EdgeInsets.zero,
                     constraints: BoxConstraints(),
@@ -3772,7 +3774,10 @@ Placing Order:
                         _volumeController.text = volume.toStringAsFixed(2);
                       });
                     },
-                    icon: Icon(Icons.add_circle, size: 16.h, color: AppColors.primary),
+                    icon: StepperAdjustIcon(
+                      kind: StepperAdjustKind.increment,
+                      size: 12,
+                    ),
                     padding: EdgeInsets.zero,
                     constraints: BoxConstraints(),
                   ),
@@ -3896,7 +3901,10 @@ Placing Order:
                     }
                   });
                 },
-                icon: Icon(Icons.remove_circle, size: 18.h, color: AppColors.icongrey),
+                icon: StepperAdjustIcon(
+                  kind: StepperAdjustKind.decrement,
+                  size: 14,
+                ),
                 padding: EdgeInsets.zero,
                 constraints: BoxConstraints(),
               ),
@@ -3959,7 +3967,10 @@ Placing Order:
                     _volumeController.text = volume.toStringAsFixed(2);
                   });
                 },
-                icon: Icon(Icons.add_circle, size: 18.h, color: AppColors.primary),
+                icon: StepperAdjustIcon(
+                  kind: StepperAdjustKind.increment,
+                  size: 14,
+                ),
                 padding: EdgeInsets.zero,
                 constraints: BoxConstraints(),
               ),
@@ -4007,7 +4018,10 @@ Placing Order:
                     );
                   }
                 },
-                icon: Icon(Icons.remove_circle, size: 16.h, color: AppColors.icongrey),
+                icon: StepperAdjustIcon(
+                  kind: StepperAdjustKind.decrement,
+                  size: 12,
+                ),
                 padding: EdgeInsets.zero,
                 constraints: BoxConstraints(),
               ),
@@ -4076,7 +4090,10 @@ Placing Order:
                     decimals: _getCurrentDigits(),
                   );
                 },
-                icon: Icon(Icons.add_circle, size: 16.h, color: AppColors.primary),
+                icon: StepperAdjustIcon(
+                  kind: StepperAdjustKind.increment,
+                  size: 12,
+                ),
                 padding: EdgeInsets.zero,
                 constraints: BoxConstraints(),
               ),
@@ -4112,10 +4129,9 @@ Placing Order:
                   onPressed: () {
                     if (price > 0.01) priceNotifier.value = price - 0.01;
                   },
-                  icon: Icon(
-                    Icons.remove_circle,
-                    size: 16.h,
-                    color: AppColors.textGrey,
+                  icon: StepperAdjustIcon(
+                    kind: StepperAdjustKind.decrement,
+                    size: 12,
                   ),
                   padding: EdgeInsets.zero,
                   constraints: BoxConstraints(),
@@ -4147,7 +4163,10 @@ Placing Order:
                   onPressed: () {
                     priceNotifier.value = price + 0.01;
                   },
-                  icon: Icon(Icons.add_circle, size: 16.h, color: AppColors.primary),
+                  icon: StepperAdjustIcon(
+                    kind: StepperAdjustKind.increment,
+                    size: 12,
+                  ),
                   padding: EdgeInsets.zero,
                   constraints: BoxConstraints(),
                 ),
@@ -4497,10 +4516,9 @@ Placing Order:
                                     .toStringAsFixed(2);
                               }
                             },
-                            icon: Icon(
-                              Icons.remove_circle,
-                              size: 16.h,
-                              color: AppColors.icongrey,
+                            icon: StepperAdjustIcon(
+                              kind: StepperAdjustKind.decrement,
+                              size: 12,
                             ),
                             padding: EdgeInsets.zero,
                             constraints: BoxConstraints(),
@@ -4583,10 +4601,9 @@ Placing Order:
                               distanceController.text = _distance.value
                                   .toStringAsFixed(2);
                             },
-                            icon: Icon(
-                              Icons.add_circle,
-                              size: 16.h,
-                              color: AppColors.primary,
+                            icon: StepperAdjustIcon(
+                              kind: StepperAdjustKind.increment,
+                              size: 12,
                             ),
                             padding: EdgeInsets.zero,
                             constraints: BoxConstraints(),

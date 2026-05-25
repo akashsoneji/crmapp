@@ -181,8 +181,7 @@ class _PmamManagerDetailScreenState extends State<PmamManagerDetailScreen> {
                         options:
                             _ctrl.eligibleAccounts.map((acc) {
                               final accNo =
-                                  acc['meta_account_number']?.toString() ??
-                                  '-';
+                                  acc['meta_account_number']?.toString() ?? '-';
                               final bal =
                                   double.tryParse(
                                     acc['balance']?.toString() ?? '0',
@@ -190,8 +189,7 @@ class _PmamManagerDetailScreenState extends State<PmamManagerDetailScreen> {
                                   0;
                               final availBal =
                                   double.tryParse(
-                                    acc['available_balance']?.toString() ??
-                                        '0',
+                                    acc['available_balance']?.toString() ?? '0',
                                   ) ??
                                   0;
                               return AppSelectOption<Map<String, dynamic>>(
@@ -295,11 +293,11 @@ class _PmamManagerDetailScreenState extends State<PmamManagerDetailScreen> {
                           onPressed:
                               canInvest
                                   ? () {
-//                                     print('''
-//  _selectedAccount!['id'],${ _selectedAccount!['id']},
-                                     
-//                                       _selectedPlan!.id,${ _selectedPlan!.id},
-//                                       invest_amount(balance),$balance,''');
+                                    //                                     print('''
+                                    //  _selectedAccount!['id'],${ _selectedAccount!['id']},
+
+                                    //                                       _selectedPlan!.id,${ _selectedPlan!.id},
+                                    //                                       invest_amount(balance),$balance,''');
                                     Navigator.pop(ctx);
                                     _ctrl.joinPlan(
                                       _selectedAccount!['id'],
@@ -359,7 +357,7 @@ class _PmamManagerDetailScreenState extends State<PmamManagerDetailScreen> {
         scrolledUnderElevation: 0,
         backgroundColor: AppColors.tradeBackgroundCenterColor,
         elevation: 0,
-        leading:  AppSvgBackButton(
+        leading: AppSvgBackButton(
           onPressed: () => Get.back(closeOverlays: true),
           iconWidth: 30.w,
           iconHeight: 30.h,
@@ -486,7 +484,7 @@ class _PmamManagerDetailScreenState extends State<PmamManagerDetailScreen> {
               physics: const NeverScrollableScrollPhysics(),
               mainAxisSpacing: 6.h,
               crossAxisSpacing: 6.w,
-              childAspectRatio: 1.9,
+              childAspectRatio: 2.5,
               children: [
                 _DetailStatCard(
                   label: 'GAIN',
@@ -512,7 +510,7 @@ class _PmamManagerDetailScreenState extends State<PmamManagerDetailScreen> {
                 ),
               ],
             ),
-            SizedBox(height: 14.h),
+            SizedBox(height: 4.h),
 
             // Plan Details card
             if (_selectedPlan != null)
@@ -653,24 +651,35 @@ class _DetailStatCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: c, size: 18.sp),
-          SizedBox(height: 6.h),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 13.sp,
-              fontWeight: FontWeight.w700,
-              color: c,
-            ),
-            overflow: TextOverflow.ellipsis,
-          ),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 9.sp,
-              color: AppColors.textGrey,
-              letterSpacing: 0.5,
-            ),
+          Row(
+            children: [
+              Icon(icon, color: c, size: 18.sp),
+              SizedBox(width: 6.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      value,
+                      style: TextStyle(
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w700,
+                        color: c,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 9.sp,
+                        color: AppColors.textGrey,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),

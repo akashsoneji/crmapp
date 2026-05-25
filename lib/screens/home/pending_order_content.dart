@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:crm_app/services/language_service.dart';
 import '../../constants/color.dart';
 import '../../widgets/app_switch_tile.dart';
+import '../../widgets/stepper_adjust_icon.dart';
 import '../../constants/text_styles.dart';
 import '../../controllers/chart_socket_controller.dart';
 import '../../controllers/account_controller.dart';
@@ -1087,7 +1088,10 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                       widget.onVolumeChanged(volume);
                     });
                   },
-                  icon: Icon(Icons.remove_circle, size: 20.h, color: AppColors.textGrey),
+                  icon: StepperAdjustIcon(
+                    kind: StepperAdjustKind.decrement,
+                    size: 14,
+                  ),
                   padding: EdgeInsets.zero,
                   constraints: BoxConstraints(),
                 ),
@@ -1188,7 +1192,10 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                       widget.onVolumeChanged(volume);
                     });
                   },
-                  icon: Icon(Icons.add_circle, size: 20.h, color: AppColors.primary),
+                  icon: StepperAdjustIcon(
+                    kind: StepperAdjustKind.increment,
+                    size: 14,
+                  ),
                   padding: EdgeInsets.zero,
                   constraints: BoxConstraints(),
                 ),
@@ -1291,10 +1298,9 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                     onPressed: () {
                       onAdjust(false); // Decrease price by pip
                     },
-                    icon: Icon(
-                      Icons.remove,
-                      size: 18.h,
-                      color: AppColors.icongrey,
+                    icon: StepperAdjustIcon(
+                      kind: StepperAdjustKind.decrement,
+                      size: 14,
                     ),
                     padding: EdgeInsets.zero,
                     constraints: BoxConstraints(),
@@ -1352,7 +1358,10 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                     onPressed: () {
                       onAdjust(true); // Increase price by pip
                     },
-                    icon: Icon(Icons.add_circle, size: 18.h, color: AppColors.primary),
+                    icon: StepperAdjustIcon(
+                      kind: StepperAdjustKind.increment,
+                      size: 14,
+                    ),
                     padding: EdgeInsets.zero,
                     constraints: BoxConstraints(),
                   ),
@@ -1400,11 +1409,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
     return ValueListenableBuilder<bool>(
       valueListenable: valueNotifier,
       builder: (context, value, child) {
-        return AppSwitchTile(
-          title: title,
-          value: value,
-          onChanged: onChanged,
-        );
+        return AppSwitchTile(title: title, value: value, onChanged: onChanged);
       },
     );
   }
@@ -1604,7 +1609,10 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                   _pnlCalculationKey++;
                 });
               },
-              icon: Icon(Icons.remove_circle, size: 10.h, color: AppColors.textGrey),
+              icon: StepperAdjustIcon(
+                kind: StepperAdjustKind.decrement,
+                size: 10,
+              ),
               padding: EdgeInsets.zero,
               constraints: BoxConstraints(),
             ),
@@ -1701,7 +1709,10 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                   _pnlCalculationKey++;
                 });
               },
-              icon: Icon(Icons.add_circle, size: 10.h, color: AppColors.primary),
+              icon: StepperAdjustIcon(
+                kind: StepperAdjustKind.increment,
+                size: 10,
+              ),
               padding: EdgeInsets.zero,
               constraints: BoxConstraints(),
             ),
