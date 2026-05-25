@@ -297,11 +297,18 @@ afterEvaluate {
     enabled = false
   }
 
-  // Goldenwolffx flavor currently has no Firebase config.
+// Goldenwolffx flavor currently has no Firebase config.
   tasks.matching {
-    it.name.startsWith("processGoldenwolffx") && it.name.endsWith("GoogleServices")
+      it.name.startsWith("processGoldenwolffx") && it.name.endsWith("GoogleServices")
   }.configureEach {
-    enabled = false
+      enabled = false
+  }
+
+  // Tradoxy flavor currently has no Firebase config.
+  tasks.matching {
+      it.name.startsWith("processTradoxy") && it.name.endsWith("GoogleServices")
+  }.configureEach {
+      enabled = false
   }
 }
 
