@@ -7,7 +7,6 @@ import 'package:crm_app/controllers/account_controller.dart';
 import 'package:crm_app/controllers/auth_controller.dart';
 import 'package:crm_app/controllers/trading_controller.dart';
 import 'package:crm_app/controllers/instruments_controller.dart';
-import 'package:crm_app/models/order_types.dart';
 import 'package:crm_app/models/websocket_trading_response.dart';
 import 'package:crm_app/services/secure_storage_service.dart';
 import 'package:crm_app/services/websocket_endpoint_helper.dart';
@@ -2825,44 +2824,36 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
                 ).toIso8601String()
                 : DateHelper.nowUtc().toIso8601String();
 
-        // Convert action code to proper format
+        // Convert action code to proper format using switch-case
         String action;
-        // Map action code to OrderType enum
-        // For pending orders, action codes 0-1 (market) shouldn't appear, but handle them
-        if (actionCode >= 2 && actionCode <= 5) {
-          // Valid pending order types: 2=Buy Limit, 3=Sell Limit, 4=Buy Stop, 5=Sell Stop
-          final orderType = OrderType.fromValue(actionCode);
-          action = orderType.displayName;
-        } else if (actionCode == 0 || actionCode == 1) {
-          // Market orders (0 or 1) shouldn't be pending, but if they appear, determine from price
-          // This is a fallback - determine order type from price relationship
-          if (priceOrder > 0 && priceCurrent > 0) {
-            if (priceOrder < priceCurrent) {
-              // Buy below current price = Buy Limit
-              action = 'Buy Limit';
+        switch (actionCode) {
+          case 0:
+            action = 'Buy';
+          case 1:
+            action = 'Sell';
+          case 2:
+            action = 'Buy Limit';
+          case 3:
+            action = 'Sell Limit';
+          case 4:
+            action = 'Buy Stop';
+          case 5:
+            action = 'Sell Stop';
+          case 6:
+            action = 'Buy Stop Limit';
+          case 7:
+            action = 'Sell Stop Limit';
+          default:
+            // For codes 0-1 (market) or unknown codes, determine from price relationship
+            if (priceOrder > 0 && priceCurrent > 0) {
+              if (priceOrder < priceCurrent) {
+                action = 'Buy Limit';
+              } else {
+                action = 'Sell Limit';
+              }
             } else {
-              // Sell above current price = Sell Limit
-              action = 'Sell Limit';
-            }
-          } else {
-            action = 'Buy Limit'; // Default fallback
-          }
-        } else {
-          // Invalid action code - determine from price relationship
-          if (priceOrder > 0 && priceCurrent > 0) {
-            if (priceOrder < priceCurrent) {
-              // Buy below current price = Buy Limit
-              action = 'Buy Limit';
-            } else if (priceOrder > priceCurrent) {
-              // Sell above current price = Sell Limit
-              action = 'Sell Limit';
-            } else {
-              // Prices equal - default to Buy Limit
               action = 'Buy Limit';
             }
-          } else {
-            action = 'Buy Limit'; // Default fallback
-          }
         }
 
         final pendingOrder = PendingOrder(
@@ -2954,7 +2945,6 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           final priceOrder = double.tryParse(orderData[3].toString()) ?? 0.0;
           final priceCurrent = double.tryParse(orderData[4].toString()) ?? 0.0;
           final volume = double.tryParse(orderData[5].toString()) ?? 0.0;
-          final actionStr = orderData[6].toString().toLowerCase();
 
           // Parse optional SL and TP (indices 7 and 8)
           final priceSL =
@@ -2966,18 +2956,43 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
                   ? (double.tryParse(orderData[8].toString()) ?? 0.0)
                   : 0.0;
 
-          // Convert action string to proper format
+          // Convert action string/code to proper format using switch-case
+          // actionCode at [6] can be either a number (2-7) or a string ("buy", "sell", etc.)
+          final actionCodeRaw = orderData[6];
           String action;
-          if (actionStr.contains('buy')) {
-            action = 'Buy Limit';
-          } else if (actionStr.contains('sell')) {
-            action = 'Sell Limit';
+          if (actionCodeRaw is num) {
+            final actionCode = actionCodeRaw.toInt();
+            switch (actionCode) {
+              case 0:
+                action = 'Buy';
+              case 1:
+                action = 'Sell';
+              case 2:
+                action = 'Buy Limit';
+              case 3:
+                action = 'Sell Limit';
+              case 4:
+                action = 'Buy Stop';
+              case 5:
+                action = 'Sell Stop';
+              case 6:
+                action = 'Buy Stop Limit';
+              case 7:
+                action = 'Sell Stop Limit';
+              default:
+                action = 'Buy Limit';
+            }
           } else {
-            // Try to parse as is or default
-            action =
-                actionStr.isEmpty
-                    ? 'Buy Limit'
-                    : actionStr[0].toUpperCase() + actionStr.substring(1);
+            final actionStr = actionCodeRaw.toString().toLowerCase();
+            if (actionStr.contains('buy')) {
+              action = 'Buy Limit';
+            } else if (actionStr.contains('sell')) {
+              action = 'Sell Limit';
+            } else {
+              action = actionStr.isEmpty
+                  ? 'Buy Limit'
+                  : actionStr[0].toUpperCase() + actionStr.substring(1);
+            }
           }
 
           final pendingOrder = PendingOrder(

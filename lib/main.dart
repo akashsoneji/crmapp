@@ -469,7 +469,9 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
 
   Future<void> _checkAuthAndNavigate() async {
     try {
-      unawaited(Get.find<AppStatusService>().checkAppStatus());
+      if (!FlavorConfig.isMultiBrokerEnabled) {
+        unawaited(Get.find<AppStatusService>().checkAppStatus());
+      }
 
       final isLoggedIn = await SecureStorageService.isUserLoggedIn();
       await _applySavedTenaxBrokerSelection();

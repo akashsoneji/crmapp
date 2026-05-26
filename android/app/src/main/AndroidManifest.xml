@@ -16,7 +16,7 @@
     <uses-permission android:name="android.permission.USE_FINGERPRINT" />
 
     <!-- APK in-app install permission -->
-    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" tools:node="remove" />
 
     <!-- Audio permissions for sound playback -->
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
@@ -35,7 +35,7 @@
         android:icon="@mipmap/ic_launcher"
         android:usesCleartextTraffic="true"
         tools:replace="android:label">
-        
+
         <!-- Disable WebView logging -->
         <meta-data
             android:name="android.webkit.WebView.EnableSafeBrowsing"
