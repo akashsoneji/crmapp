@@ -82,6 +82,17 @@ android {
             manifestPlaceholders["FLAVOR"] = "pipze"
         }
 
+        create("amirifx") {
+            dimension = "brand"
+            applicationId = "com.amirifx.app"
+            resValue("string", "app_name", "Amirifx")
+            resValue("color", "primary_color", "#E8C25A")
+            resValue("color", "secondary_color", "#0A1F44")
+            resValue("color", "accent_color", "#E8C25A")
+            buildConfigField("String", "FLAVOR", "\"amirifx\"")
+            manifestPlaceholders["FLAVOR"] = "amirifx"
+        }
+
         create("goldenwolffx") {
             dimension = "brand"
             applicationId = "com.goldenwolffx.app"
@@ -297,7 +308,14 @@ afterEvaluate {
     enabled = false
   }
 
-// Goldenwolffx flavor currently has no Firebase config.
+// Amirifx flavor currently has no Firebase config (copied from pipze).
+  tasks.matching {
+      it.name.startsWith("processAmirifx") && it.name.endsWith("GoogleServices")
+  }.configureEach {
+      enabled = false
+  }
+
+  // Goldenwolffx flavor currently has no Firebase config.
   tasks.matching {
       it.name.startsWith("processGoldenwolffx") && it.name.endsWith("GoogleServices")
   }.configureEach {

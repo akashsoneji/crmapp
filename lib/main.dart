@@ -740,6 +740,9 @@ Future<void> _initializeFlavor() async {
       } else if (packageName.contains('goldenwolffx')) {
         FlavorConfig.goldenwolffx;
         AppLogger.debug('Flavor initialized from package id: goldenwolffx');
+      } else if (packageName.contains('amirifx')) {
+        FlavorConfig.amirifx;
+        AppLogger.debug('Flavor initialized from package id: amirifx');
       } else {
         FlavorConfig.pipze;
         AppLogger.debug('Flavor initialized: pipze (default)');
@@ -795,6 +798,9 @@ void _initializeFlavorByName(String flavorName) {
       break;
     case 'goldenwolffx':
       FlavorConfig.goldenwolffx;
+      break;
+    case 'amirifx':
+      FlavorConfig.amirifx;
       break;
 
     default:

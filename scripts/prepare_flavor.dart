@@ -52,6 +52,7 @@ Future<void> cleanOtherClientAssets(String currentFlavor) async {
     'tenax3',
     'celestial',
     'pipze',
+    'amirifx',
 
     'afx',
     'kantara',
@@ -155,6 +156,7 @@ Future<void> updatePubspec(String flavor) async {
     'tenax3',
     'celestial',
     'pipze',
+    'amirifx',
 
     'afx',
     'kantara',

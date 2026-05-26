@@ -239,7 +239,7 @@ if [ $# -lt 2 ]; then
     echo "  All clients:   ./build.sh all {build_type} [mode] [universal]"
     echo ""
     echo "Arguments:"
-    echo "  flavor: afx, kantara, pipze, onsa, tenax, celestial, profx, tradoxy, askbid, sr, vr19, goldenwolffx, or 'all'"
+    echo "  flavor: afx, kantara, pipze, onsa, tenax, celestial, profx, tradoxy, askbid, sr, vr19, goldenwolffx, amirifx, or 'all'"
 
     echo "  build_type: apk, appbundle"
     echo "  mode: release (default), debug, profile"
@@ -280,7 +280,7 @@ fi
 # Build all clients if "all" is specified
 if [ "$FLAVOR" == "all" ]; then
     # Define all clients to build
-    CLIENTS=("tradoxy" "tenax" "celestial" "afx" "kantara" "onsa" "pipze" "askbid" "profx" "sr" "vr19" "goldenwolffx")
+    CLIENTS=("tradoxy" "tenax" "celestial" "afx" "kantara" "onsa" "pipze" "askbid" "profx" "sr" "vr19" "goldenwolffx" "amirifx")
 
     
     echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"

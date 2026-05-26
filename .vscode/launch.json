@@ -8,8 +8,219 @@
     // This will hide logs containing these patterns.
     "version": "0.2.0",
     "configurations": [
+        // ─── AFX ────────────────────────────────────────────────────────────────
         {
-            "name": "🔵 Kantara (Debug)",
+            "name": "🟦 AFX (Debug)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "afx",
+                "--dart-define=FLAVOR=afx",
+                "--no-enable-impeller"
+            ],
+            "flutterMode": "debug",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "🟦 AFX (Profile)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "afx",
+                "--dart-define=FLAVOR=afx"
+            ],
+            "flutterMode": "profile",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "🟦 AFX (Release)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "afx",
+                "--dart-define=FLAVOR=afx"
+            ],
+            "flutterMode": "release",
+            "console": "integratedTerminal"
+        },
+
+        // ─── Amirifx ─────────────────────────────────────────────────────────────
+        {
+            "name": "🟨 Amirifx (Debug)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "amirifx",
+                "--dart-define=FLAVOR=amirifx",
+                "--no-enable-impeller"
+            ],
+            "flutterMode": "debug",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "🟨 Amirifx (Profile)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "amirifx",
+                "--dart-define=FLAVOR=amirifx"
+            ],
+            "flutterMode": "profile",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "🟨 Amirifx (Release)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "amirifx",
+                "--dart-define=FLAVOR=amirifx"
+            ],
+            "flutterMode": "release",
+            "console": "integratedTerminal"
+        },
+
+        // ─── Askbid ─────────────────────────────────────────────────────────────
+        {
+            "name": "🟪 Askbid (Debug)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "askbid",
+                "--dart-define=FLAVOR=askbid",
+                "--no-enable-impeller"
+            ],
+            "flutterMode": "debug",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "🟪 Askbid (Profile)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "askbid",
+                "--dart-define=FLAVOR=askbid"
+            ],
+            "flutterMode": "profile",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "🟪 Askbid (Release)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "askbid",
+                "--dart-define=FLAVOR=askbid"
+            ],
+            "flutterMode": "release",
+            "console": "integratedTerminal"
+        },
+
+        // ─── Celestial ─────────────────────────────────────────────────────────
+        {
+            "name": "🟪 Celestial (Debug)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "celestial",
+                "--dart-define=FLAVOR=celestial",
+                "--no-enable-impeller"
+            ],
+            "flutterMode": "debug",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "🟪 Celestial (Profile)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "celestial",
+                "--dart-define=FLAVOR=celestial"
+            ],
+            "flutterMode": "profile",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "🟪 Celestial (Release)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "celestial",
+                "--dart-define=FLAVOR=celestial"
+            ],
+            "flutterMode": "release",
+            "console": "integratedTerminal"
+        },
+
+        // ─── Goldenwolffx ───────────────────────────────────────────────────────
+        {
+            "name": "🟪 Goldenwolffx (Debug)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "goldenwolffx",
+                "--dart-define=FLAVOR=goldenwolffx",
+                "--no-enable-impeller"
+            ],
+            "flutterMode": "debug",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "🟪 Goldenwolffx (Profile)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "goldenwolffx",
+                "--dart-define=FLAVOR=goldenwolffx"
+            ],
+            "flutterMode": "profile",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "🟪 Goldenwolffx (Release)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "goldenwolffx",
+                "--dart-define=FLAVOR=goldenwolffx"
+            ],
+            "flutterMode": "release",
+            "console": "integratedTerminal"
+        },
+
+        // ─── Kantara ────────────────────────────────────────────────────────────
+        {
+            "name": "🟦 Kantara (Debug)",
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
@@ -22,6 +233,370 @@
             "flutterMode": "debug",
             "console": "integratedTerminal"
         },
+        {
+            "name": "🟦 Kantara (Profile)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "Kantara",
+                "--dart-define=FLAVOR=Kantara"
+            ],
+            "flutterMode": "profile",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "🟦 Kantara (Release)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "Kantara",
+                "--dart-define=FLAVOR=Kantara"
+            ],
+            "flutterMode": "release",
+            "console": "integratedTerminal"
+        },
+
+        // ─── Octa ───────────────────────────────────────────────────────────────
+        {
+            "name": "🟧 Octa (Debug)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "octa",
+                "--dart-define=FLAVOR=octa",
+                "--no-enable-impeller"
+            ],
+            "flutterMode": "debug",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "🟧 Octa (Profile)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "octa",
+                "--dart-define=FLAVOR=octa"
+            ],
+            "flutterMode": "profile",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "🟧 Octa (Release)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "octa",
+                "--dart-define=FLAVOR=octa"
+            ],
+            "flutterMode": "release",
+            "console": "integratedTerminal"
+        },
+
+        // ─── Onsa ────────────────────────────────────────────────────────────────
+        {
+            "name": "🔵 Onsa (Debug)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "onsa",
+                "--dart-define=FLAVOR=onsa",
+                "--no-enable-impeller"
+            ],
+            "flutterMode": "debug",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "🔵 Onsa (Profile)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "onsa",
+                "--dart-define=FLAVOR=onsa"
+            ],
+            "flutterMode": "profile",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "🔵 Onsa (Release)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "onsa",
+                "--dart-define=FLAVOR=onsa"
+            ],
+            "flutterMode": "release",
+            "console": "integratedTerminal"
+        },
+
+        // ─── Pipze ─────────────────────────────────────────────────────────────
+        {
+            "name": "🟪 Pipze (Debug)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "pipze",
+                "--dart-define=FLAVOR=pipze",
+                "--no-enable-impeller"
+            ],
+            "flutterMode": "debug",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "🟪 Pipze (Profile)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "pipze",
+                "--dart-define=FLAVOR=pipze"
+            ],
+            "flutterMode": "profile",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "🟪 Pipze (Release)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "pipze",
+                "--dart-define=FLAVOR=pipze"
+            ],
+            "flutterMode": "release",
+            "console": "integratedTerminal"
+        },
+
+        // ─── Profx ─────────────────────────────────────────────────────────────
+        {
+            "name": "🟩 Profx (Debug)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "profx",
+                "--dart-define=FLAVOR=profx",
+                "--no-enable-impeller"
+            ],
+            "flutterMode": "debug",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "🟩 Profx (Profile)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "profx",
+                "--dart-define=FLAVOR=profx"
+            ],
+            "flutterMode": "profile",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "🟩 Profx (Release)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "profx",
+                "--dart-define=FLAVOR=profx"
+            ],
+            "flutterMode": "release",
+            "console": "integratedTerminal"
+        },
+
+        // ─── SR ────────────────────────────────────────────────────────────────
+        {
+            "name": "⚪ SR (Debug)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "sr",
+                "--dart-define=FLAVOR=sr",
+                "--no-enable-impeller"
+            ],
+            "flutterMode": "debug",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "⚪ SR (Profile)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "sr",
+                "--dart-define=FLAVOR=sr"
+            ],
+            "flutterMode": "profile",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "⚪ SR (Release)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "sr",
+                "--dart-define=FLAVOR=sr"
+            ],
+            "flutterMode": "release",
+            "console": "integratedTerminal"
+        },
+
+        // ─── Tenax ─────────────────────────────────────────────────────────────
+        {
+            "name": "🟪 Tenax (Debug)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "tenax",
+                "--dart-define=FLAVOR=tenax",
+                "--no-enable-impeller"
+            ],
+            "flutterMode": "debug",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "🟪 Tenax (Profile)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "tenax",
+                "--dart-define=FLAVOR=tenax"
+            ],
+            "flutterMode": "profile",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "🟪 Tenax (Release)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "tenax",
+                "--dart-define=FLAVOR=tenax"
+            ],
+            "flutterMode": "release",
+            "console": "integratedTerminal"
+        },
+
+        // ─── Tenax3 ────────────────────────────────────────────────────────────
+        {
+            "name": "🟪 Tenax3 (Debug)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "tenax3",
+                "--dart-define=FLAVOR=tenax3",
+                "--no-enable-impeller"
+            ],
+            "flutterMode": "debug",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "🟪 Tenax3 (Profile)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "tenax3",
+                "--dart-define=FLAVOR=tenax3"
+            ],
+            "flutterMode": "profile",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "🟪 Tenax3 (Release)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "tenax3",
+                "--dart-define=FLAVOR=tenax3"
+            ],
+            "flutterMode": "release",
+            "console": "integratedTerminal"
+        },
+
+        // ─── Tradoxy ────────────────────────────────────────────────────────────
+        {
+            "name": "🔷 Tradoxy (Debug)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "tradoxy",
+                "--dart-define=FLAVOR=tradoxy",
+                "--no-enable-impeller"
+            ],
+            "flutterMode": "debug",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "🔷 Tradoxy (Profile)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "tradoxy",
+                "--dart-define=FLAVOR=tradoxy"
+            ],
+            "flutterMode": "profile",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "🔷 Tradoxy (Release)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "tradoxy",
+                "--dart-define=FLAVOR=tradoxy"
+            ],
+            "flutterMode": "release",
+            "console": "integratedTerminal"
+        },
+
+        // ─── VR19 ─────────────────────────────────────────────────────────────
         {
             "name": "🔵 VR19 (Debug)",
             "request": "launch",
@@ -37,377 +612,27 @@
             "console": "integratedTerminal"
         },
         {
-            "name": "🔵 Askbid (Debug)",
+            "name": "🔵 VR19 (Profile)",
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
             "args": [
                 "--flavor",
-                "askbid",
-                "--dart-define=FLAVOR=askbid",
-                "--no-enable-impeller"
-            ],
-            "flutterMode": "debug",
-            "console": "integratedTerminal"
-        },
-        {
-            "name": "🔴 SR (Debug)",
-            "request": "launch",
-            "type": "dart",
-            "program": "lib/main.dart",
-            "args": [
-                "--flavor",
-                "sr",
-                "--dart-define=FLAVOR=sr",
-                "--no-enable-impeller"
-            ],
-            "flutterMode": "debug",
-            "console": "integratedTerminal"
-        },
-        {
-            "name": "🔵 Tradoxy (Debug)",
-            "request": "launch",
-            "type": "dart",
-            "program": "lib/main.dart",
-            "args": [
-                "--flavor",
-                "tradoxy",
-                "--dart-define=FLAVOR=tradoxy",
-                "--no-enable-impeller"
-            ],
-            "flutterMode": "debug",
-            "console": "integratedTerminal"
-        },
-        {
-            "name": "🔵 AFX (Debug)",
-            "request": "launch",
-            "type": "dart",
-            "program": "lib/main.dart",
-            "args": [
-                "--flavor",
-                "afx",
-                "--dart-define=FLAVOR=afx",
-                "--no-enable-impeller"
-            ],
-            "flutterMode": "debug",
-            "console": "integratedTerminal"
-        },
-        {
-            "name": "🟣 Pipze (Debug)",
-            "request": "launch",
-            "type": "dart",
-            "program": "lib/main.dart",
-            "args": [
-                "--flavor",
-                "pipze",
-                "--dart-define=FLAVOR=pipze",
-                "--no-enable-impeller"
-            ],
-            "flutterMode": "debug",
-            "console": "integratedTerminal"
-        },
-        {
-            "name": "🏆 Goldenwolffx (Debug)",
-            "request": "launch",
-            "type": "dart",
-            "program": "lib/main.dart",
-            "args": [
-                "--flavor",
-                "goldenwolffx",
-                "--dart-define=FLAVOR=goldenwolffx",
-                "--no-enable-impeller"
-            ],
-            "flutterMode": "debug",
-            "console": "integratedTerminal"
-        },
-        {
-            "name": "🟠 Octa (Debug)",
-            "request": "launch",
-            "type": "dart",
-            "program": "lib/main.dart",
-            "args": [
-                "--flavor",
-                "octa",
-                "--dart-define=FLAVOR=octa",
-                "--no-enable-impeller"
-            ],
-            "flutterMode": "debug",
-            "console": "integratedTerminal"
-        },
-        {
-            "name": "🟢 Onsa (Debug)",
-            "request": "launch",
-            "type": "dart",
-            "program": "lib/main.dart",
-            "args": [
-                "--flavor",
-                "onsa",
-                "--dart-define=FLAVOR=onsa",
-                "--no-enable-impeller"
-            ],
-            "flutterMode": "debug",
-            "console": "integratedTerminal"
-        },
-        {
-            "name": "🔴 Tenax (Debug)",
-            "request": "launch",
-            "type": "dart",
-            "program": "lib/main.dart",
-            "args": [
-                "--flavor",
-                "tenax",
-                "--dart-define=FLAVOR=tenax",
-                "--no-enable-impeller"
-            ],
-            "flutterMode": "debug",
-            "console": "integratedTerminal"
-        },
-        {
-            "name": "🔴 Tenax 3 (Debug)",
-            "request": "launch",
-            "type": "dart",
-            "program": "lib/main.dart",
-            "args": [
-                "--flavor",
-                "tenax3",
-                "--dart-define=FLAVOR=tenax3",
-                "--no-enable-impeller"
-            ],
-            "flutterMode": "debug",
-            "console": "integratedTerminal"
-        },
-        {
-            "name": "🟣 Celestial (Debug)",
-            "request": "launch",
-            "type": "dart",
-            "program": "lib/main.dart",
-            "args": [
-                "--flavor",
-                "celestial",
-                "--dart-define=FLAVOR=celestial",
-                "--no-enable-impeller"
-            ],
-            "flutterMode": "debug",
-            "console": "integratedTerminal"
-        },
-        {
-            "name": "🟡 Profx (Debug)",
-            "request": "launch",
-            "type": "dart",
-            "program": "lib/main.dart",
-            "args": [
-                "--flavor",
-                "profx",
-                "--dart-define=FLAVOR=profx",
-                "--no-enable-impeller"
-            ],
-            "flutterMode": "debug",
-            "console": "integratedTerminal"
-        },
-        {
-            "name": "🔵 AFX (Profile)",
-            "request": "launch",
-            "type": "dart",
-            "program": "lib/main.dart",
-            "args": [
-                "--flavor",
-                "afx",
-                "--dart-define=FLAVOR=afx"
+                "vr19",
+                "--dart-define=FLAVOR=vr19"
             ],
             "flutterMode": "profile",
             "console": "integratedTerminal"
         },
         {
-            "name": "🟣 Pipze (Profile)",
+            "name": "🔵 VR19 (Release)",
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
             "args": [
                 "--flavor",
-                "pipze",
-                "--dart-define=FLAVOR=pipze"
-            ],
-            "flutterMode": "profile",
-            "console": "integratedTerminal"
-        },
-        {
-            "name": "🏆 Goldenwolffx (Profile)",
-            "request": "launch",
-            "type": "dart",
-            "program": "lib/main.dart",
-            "args": [
-                "--flavor",
-                "goldenwolffx",
-                "--dart-define=FLAVOR=goldenwolffx"
-            ],
-            "flutterMode": "profile",
-            "console": "integratedTerminal"
-        },
-        {
-            "name": "🟠 Octa (Profile)",
-            "request": "launch",
-            "type": "dart",
-            "program": "lib/main.dart",
-            "args": [
-                "--flavor",
-                "octa",
-                "--dart-define=FLAVOR=octa"
-            ],
-            "flutterMode": "profile",
-            "console": "integratedTerminal"
-        },
-        {
-            "name": "🟢 Onsa (Profile)",
-            "request": "launch",
-            "type": "dart",
-            "program": "lib/main.dart",
-            "args": [
-                "--flavor",
-                "onsa",
-                "--dart-define=FLAVOR=onsa"
-            ],
-            "flutterMode": "profile",
-            "console": "integratedTerminal"
-        },
-        {
-            "name": "🔴 Tenax (Profile)",
-            "request": "launch",
-            "type": "dart",
-            "program": "lib/main.dart",
-            "args": [
-                "--flavor",
-                "tenax",
-                "--dart-define=FLAVOR=tenax"
-            ],
-            "flutterMode": "profile",
-            "console": "integratedTerminal"
-        },
-        {
-            "name": "🟣 Celestial (Profile)",
-            "request": "launch",
-            "type": "dart",
-            "program": "lib/main.dart",
-            "args": [
-                "--flavor",
-                "celestial",
-                "--dart-define=FLAVOR=celestial"
-            ],
-            "flutterMode": "profile",
-            "console": "integratedTerminal"
-        },
-        {
-            "name": "🟡 Profx (Profile)",
-            "request": "launch",
-            "type": "dart",
-            "program": "lib/main.dart",
-            "args": [
-                "--flavor",
-                "profx",
-                "--dart-define=FLAVOR=profx"
-            ],
-            "flutterMode": "profile",
-            "console": "integratedTerminal"
-        },
-        {
-            "name": "🔵 AFX (Release)",
-            "request": "launch",
-            "type": "dart",
-            "program": "lib/main.dart",
-            "args": [
-                "--flavor",
-                "afx",
-                "--dart-define=FLAVOR=afx"
-            ],
-            "flutterMode": "release",
-            "console": "integratedTerminal"
-        },
-        {
-            "name": "🟣 Pipze (Release)",
-            "request": "launch",
-            "type": "dart",
-            "program": "lib/main.dart",
-            "args": [
-                "--flavor",
-                "pipze",
-                "--dart-define=FLAVOR=pipze"
-            ],
-            "flutterMode": "release",
-            "console": "integratedTerminal"
-        },
-        {
-            "name": "🏆 Goldenwolffx (Release)",
-            "request": "launch",
-            "type": "dart",
-            "program": "lib/main.dart",
-            "args": [
-                "--flavor",
-                "goldenwolffx",
-                "--dart-define=FLAVOR=goldenwolffx"
-            ],
-            "flutterMode": "release",
-            "console": "integratedTerminal"
-        },
-        {
-            "name": "🟠 Octa (Release)",
-            "request": "launch",
-            "type": "dart",
-            "program": "lib/main.dart",
-            "args": [
-                "--flavor",
-                "octa",
-                "--dart-define=FLAVOR=octa"
-            ],
-            "flutterMode": "release",
-            "console": "integratedTerminal"
-        },
-        {
-            "name": "🟢 Onsa (Release)",
-            "request": "launch",
-            "type": "dart",
-            "program": "lib/main.dart",
-            "args": [
-                "--flavor",
-                "onsa",
-                "--dart-define=FLAVOR=onsa"
-            ],
-            "flutterMode": "release",
-            "console": "integratedTerminal"
-        },
-        {
-            "name": "🔴 Tenax (Release)",
-            "request": "launch",
-            "type": "dart",
-            "program": "lib/main.dart",
-            "args": [
-                "--flavor",
-                "tenax",
-                "--dart-define=FLAVOR=tenax"
-            ],
-            "flutterMode": "release",
-            "console": "integratedTerminal"
-        },
-        {
-            "name": "🟣 Celestial (Release)",
-            "request": "launch",
-            "type": "dart",
-            "program": "lib/main.dart",
-            "args": [
-                "--flavor",
-                "celestial",
-                "--dart-define=FLAVOR=celestial"
-            ],
-            "flutterMode": "release",
-            "console": "integratedTerminal"
-        },
-        {
-            "name": "🟡 Profx (Release)",
-            "request": "launch",
-            "type": "dart",
-            "program": "lib/main.dart",
-            "args": [
-                "--flavor",
-                "profx",
-                "--dart-define=FLAVOR=profx"
+                "vr19",
+                "--dart-define=FLAVOR=vr19"
             ],
             "flutterMode": "release",
             "console": "integratedTerminal"

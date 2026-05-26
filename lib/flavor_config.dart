@@ -13,6 +13,7 @@ import 'clients/askbid/config.dart';
 import 'clients/sr/config.dart';
 import 'clients/vr19/config.dart';
 import 'clients/goldenwolffx/config.dart';
+import 'clients/amirifx/config.dart';
 
 
 enum Flavor {
@@ -30,6 +31,7 @@ enum Flavor {
   sr,
   vr19,
   goldenwolffx,
+  amirifx,
 }
 
 
@@ -140,6 +142,7 @@ class FlavorConfig {
   static bool isSR() => _instance?.flavor == Flavor.sr;
   static bool isVr19() => _instance?.flavor == Flavor.vr19;
   static bool isGoldenwolffx() => _instance?.flavor == Flavor.goldenwolffx;
+  static bool isAmirifx() => _instance?.flavor == Flavor.amirifx;
 
   static String get svgLogoAsset => instance.svgLogoPath;
   static String? get remoteLogo => instance.remoteLogoUrl;
@@ -632,6 +635,27 @@ class FlavorConfig {
       selectedBrokerData: null,
     );
     return _instance!;
+  }
+
+  static FlavorConfig get amirifx {
+    _selectedFlavor = Flavor.amirifx;
+    const config = AmirifxConfig(); // Load centralized config
+    return FlavorConfig(
+      flavor: Flavor.amirifx,
+      appName: config.brandName,
+      appTitle: config.appTitle,
+      primaryColor: config.primaryColor,
+      secondaryColor: config.secondaryColor,
+      accentColor: config.accentColor,
+      apiBaseUrl: config.apiBaseUrl,
+      websocketUrl: config.websocketUrl,
+      chartBaseUrl: config.chartBaseUrl,
+      appIconPath: config.getAssetPath('amirifx', config.appIconPath),
+      svgLogoPath: config.getAssetPath('amirifx', config.logoSvgPath),
+      splashLogoPath: config.getAssetPath('amirifx', config.splashLogoPath),
+      remoteLogoUrl: null,
+      selectedBrokerData: null,
+    );
   }
 }
 
