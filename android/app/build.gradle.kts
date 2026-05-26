@@ -328,6 +328,48 @@ afterEvaluate {
   }.configureEach {
       enabled = false
   }
+
+  // Octa flavor currently has no Firebase config.
+  tasks.matching {
+      it.name.startsWith("processOcta") && it.name.endsWith("GoogleServices")
+  }.configureEach {
+      enabled = false
+  }
+
+  // Tenax3 flavor currently has no Firebase config.
+  tasks.matching {
+      it.name.startsWith("processTenax3") && it.name.endsWith("GoogleServices")
+  }.configureEach {
+      enabled = false
+  }
+
+  // SR flavor currently has no Firebase config.
+  tasks.matching {
+      it.name.startsWith("processSr") && it.name.endsWith("GoogleServices")
+  }.configureEach {
+      enabled = false
+  }
+
+  // VR19 flavor currently has no Firebase config.
+  tasks.matching {
+      it.name.startsWith("processVr19") && it.name.endsWith("GoogleServices")
+  }.configureEach {
+      enabled = false
+  }
+
+  // Onsa flavor currently has no Firebase config.
+  tasks.matching {
+      it.name.startsWith("processOnsa") && it.name.endsWith("GoogleServices")
+  }.configureEach {
+      enabled = false
+  }
+
+  // Profx flavor currently has no Firebase config.
+  tasks.matching {
+      it.name.startsWith("processProfx") && it.name.endsWith("GoogleServices")
+  }.configureEach {
+      enabled = false
+  }
 }
 
 

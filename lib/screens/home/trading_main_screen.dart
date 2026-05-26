@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
+import 'package:crm_app/flavor_config.dart';
 import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/utils/rtl_wrapper.dart';
 import 'package:crm_app/widgets/exit_confirmation_wrapper.dart';
@@ -119,7 +120,8 @@ class _TradingMainScreenState extends State<TradingMainScreen> {
     // away quickly and a dialog can be dismissed by route changes.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       try {
-        if (Get.isRegistered<AppStatusService>()) {
+        if (!FlavorConfig.isMultiBrokerEnabled &&
+            Get.isRegistered<AppStatusService>()) {
           unawaited(Get.find<AppStatusService>().checkAppStatus());
         }
       } catch (_) {}
@@ -196,7 +198,8 @@ class _TradingMainScreenState extends State<TradingMainScreen> {
 
           // Also re-check app update on dashboard open, so returning users
           // still get the popup when a new version is available.
-          if (Get.isRegistered<AppStatusService>()) {
+          if (!FlavorConfig.isMultiBrokerEnabled &&
+              Get.isRegistered<AppStatusService>()) {
             unawaited(Get.find<AppStatusService>().checkAppStatus());
           }
         } catch (e) {
