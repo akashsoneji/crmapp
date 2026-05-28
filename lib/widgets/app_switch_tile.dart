@@ -19,7 +19,7 @@ class AppSwitchTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 35,
+      height: 33.h,
       width: double.infinity,
       padding: EdgeInsets.symmetric(vertical: 2.h),
       child: Row(

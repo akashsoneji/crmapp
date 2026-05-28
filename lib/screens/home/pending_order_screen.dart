@@ -651,65 +651,111 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
 
   Widget _buildCurrentPrices() {
     return Container(
-      padding: EdgeInsets.all(5.w),
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
       decoration: BoxDecoration(
         color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(12.r),
         border: Border.all(color: AppColors.border),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          // Bid Price (from Chart Socket)
-          Column(
-            children: [
-              Text(
-                'Bid',
-                style: AppTextStyles.label.copyWith(
-                  fontSize: 10.sp,
-                  color: AppColors.textGrey,
-                  fontWeight: FontWeight.w500,
-                ),
+          // Bid Box
+          Expanded(
+            child: Container(
+              padding: EdgeInsets.symmetric(vertical: 8.h),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF2F2),
+                borderRadius: BorderRadius.circular(8.r),
               ),
-              SizedBox(height: 2.h),
-              Obx(() {
-                final bid = chartSocketController.getBidPrice() ?? 0.0;
-                return Text(
-                  bid.toString(),
-                  style: AppTextStyles.heading.copyWith(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.error,
+              child: Column(
+                children: [
+                  Text(
+                    'BID',
+                    style: AppTextStyles.label.copyWith(
+                      fontSize: 10.sp,
+                      color: AppColors.textGrey,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                );
-              }),
-            ],
+                  SizedBox(height: 2.h),
+                  Obx(() {
+                    final bid = chartSocketController.getBidPrice() ?? 0.0;
+                    return Text(
+                      bid.toString(),
+                      style: AppTextStyles.label.copyWith(
+                        fontSize: 15.sp,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.error,
+                      ),
+                    );
+                  }),
+                ],
+              ),
+            ),
           ),
-          Container(width: 2.w, height: 30.h, color: AppColors.border),
-          // Ask Price (from Chart Socket)
-          Column(
-            children: [
-              Text(
-                'Ask',
-                style: AppTextStyles.label.copyWith(
-                  fontSize: 10.sp,
-                  color: AppColors.textGrey,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              SizedBox(height: 2.h),
-              Obx(() {
-                final ask = chartSocketController.getAskPrice() ?? 0.0;
-                return Text(
-                  ask.toString(),
-                  style: AppTextStyles.heading.copyWith(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
+          // SPREAD indicator
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+            child: Column(
+              children: [
+                Text(
+                  'SPREAD',
+                  style: AppTextStyles.label.copyWith(
+                    fontSize: 9.sp,
+                    color: AppColors.textGrey,
+                    fontWeight: FontWeight.w500,
                   ),
-                );
-              }),
-            ],
+                ),
+                SizedBox(height: 2.h),
+                Obx(() {
+                  final bid = chartSocketController.getBidPrice() ?? 0.0;
+                  final ask = chartSocketController.getAskPrice() ?? 0.0;
+                  final spread = chartSocketController.getDifference()?.toString() ?? '0';
+                  return Text(
+                    spread,
+                    style: AppTextStyles.label.copyWith(
+                      fontSize: 11.sp,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textGrey,
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+          // Ask Box
+          Expanded(
+            child: Container(
+              padding: EdgeInsets.symmetric(vertical: 8.h),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEDF7EE),
+                borderRadius: BorderRadius.circular(8.r),
+              ),
+              child: Column(
+                children: [
+                  Text(
+                    'ASK',
+                    style: AppTextStyles.label.copyWith(
+                      fontSize: 10.sp,
+                      color: AppColors.textGrey,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  SizedBox(height: 2.h),
+                  Obx(() {
+                    final ask = chartSocketController.getAskPrice() ?? 0.0;
+                    return Text(
+                      ask.toString(),
+                      style: AppTextStyles.label.copyWith(
+                        fontSize: 15.sp,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.success,
+                      ),
+                    );
+                  }),
+                ],
+              ),
+            ),
           ),
         ],
       ),
@@ -725,7 +771,7 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
       child: Column(
         children: [
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+            padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
             child: Container(
               padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
               decoration: BoxDecoration(
