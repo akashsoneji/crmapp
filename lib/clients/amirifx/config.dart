@@ -13,8 +13,8 @@ class AmirifxConfig extends BaseClientConfig {
         logoSvgPath: 'logo.svg',
         splashLogoPath: 'splash_logo.svg',
         appIconPath: 'app_icon.png',
-        apiBaseUrl: 'https://my.pipze.com/api/',
-        websocketUrl: 'wss://my.pipze.com/trade-engine',
-        chartBaseUrl: 'https://my.pipze.com',
+        apiBaseUrl: 'https://client.amirifx.com/api/',
+        websocketUrl: 'wss://client.amirifx.com/trade-engine',
+        chartBaseUrl: 'https://client.amirifx.com',
       );
 }

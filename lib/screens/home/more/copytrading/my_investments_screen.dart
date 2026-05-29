@@ -1,6 +1,7 @@
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/copy_trading/copy_trading_copier_subscriptions_controller.dart' show CopierSubscriptionItem, CopyTradingCopierSubscriptionsController, TradeItem;
+import 'package:crm_app/screens/home/more/copytrading/explore_masters_screen.dart';
 import 'package:crm_app/widgets/app_svg_back_button.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
 import 'package:flutter/material.dart';
@@ -983,7 +984,7 @@ class _EmptyInvestmentsState extends StatelessWidget {
             Text('Start copying successful traders to grow your portfolio.', style: AppTextStyles.caption, textAlign: TextAlign.center),
             SizedBox(height: 20.h),
             ElevatedButton.icon(
-              onPressed: () => Get.back(),
+              onPressed: () => Get.to(() => const ExploreMastersScreen()),
               icon: Icon(Icons.explore_outlined, size: 16.r),
               label: Text('Explore Masters', style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600)),
               style: ElevatedButton.styleFrom(

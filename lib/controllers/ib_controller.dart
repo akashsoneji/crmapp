@@ -12,6 +12,23 @@ class IBController extends GetxController {
   // Selected Sub-IB ID for hierarchy navigation
   int? selectedSubIBId;
 
+  // Trade history pagination
+  int tradeHistoryPage = 1;
+  int tradeHistoryTotalPages = 1;
+  bool isLoadingMoreTrades = false;
+
+  // Client selector search pagination
+  String clientSearchQuery = '';
+  int clientsPage = 1;
+  int clientsTotalPages = 1;
+  bool isLoadingMoreClients = false;
+  bool isSearchingClients = false;
+  final RxList<IBClient> _clientSearchResults = <IBClient>[].obs;
+
+  // Selected client for trade history
+  final Rxn<int> selectedClientId = Rxn<int>();
+  final RxnString selectedClientName = RxnString();
+
   // IB Status
   final Rx<IBStatusResponse?> ibStatusResponse = Rxn<IBStatusResponse>();
 
@@ -348,6 +365,192 @@ class IBController extends GetxController {
         isHistoryLoading.value = false;
       }
     }
+  }
+
+  /// Get trade history for a specific client (with pagination)
+  Future<List<IBTradeHistory>?> getIBTradeHistoryByClientId({
+    required int clientId,
+    int page = 1,
+    bool showLoading = true,
+  }) async {
+    try {
+      if (showLoading) isHistoryLoading.value = true;
+      errorMessage.value = '';
+
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final response = await ApiService.get(
+        endpoint: ApiConstants.ibTradeHistory,
+        queryParameters: {
+          '_t': timestamp.toString(),
+          'page': page.toString(),
+          'per_page': '10',
+          'client_id': clientId.toString(),
+        },
+      );
+
+      if (response.success && response.data != null) {
+        final rawData = response.data as Map<String, dynamic>;
+        final tradeList = rawData['data'] as List<dynamic>? ?? [];
+        final meta = rawData['meta'] as Map<String, dynamic>?;
+
+        tradeHistoryPage = meta?['page'] ?? 1;
+        tradeHistoryTotalPages = meta?['last_page'] ?? 1;
+
+        if (page == 1) {
+          ibTradeHistory.clear();
+        }
+
+        try {
+          ibTradeHistory.addAll(
+            tradeList.map((json) {
+              try {
+                return IBTradeHistory.fromJson(json as Map<String, dynamic>);
+              } catch (e, st) {
+                print('❌ IBTradeHistory.fromJson FAILED: $e');
+                print('❌ Stack: $st');
+                print('❌ JSON: $json');
+                rethrow;
+              }
+            }).toList(),
+          );
+        } catch (e) {
+          print('❌ addAll FAILED: $e');
+        }
+        print('🔵 IBController: AFTER addAll — ibTradeHistory.length=${ibTradeHistory.length}');
+        update(['ib_clients']);
+        return ibTradeHistory;
+      } else {
+        errorMessage.value = response.message ?? 'Failed to get trade history';
+        return null;
+      }
+    } catch (e) {
+      errorMessage.value = 'Error getting trade history: $e';
+      return null;
+    } finally {
+      if (showLoading) isHistoryLoading.value = false;
+    }
+  }
+
+  /// Load more trade history (next page)
+  Future<void> loadMoreTradeHistory() async {
+    if (isLoadingMoreTrades) return;
+    if (tradeHistoryPage >= tradeHistoryTotalPages) return;
+    if (selectedClientId.value == null) return;
+
+    isLoadingMoreTrades = true;
+    try {
+      await getIBTradeHistoryByClientId(
+        clientId: selectedClientId.value!,
+        page: tradeHistoryPage + 1,
+        showLoading: false,
+      );
+    } finally {
+      isLoadingMoreTrades = false;
+    }
+  }
+
+  /// Select a client and load their trade history
+  Future<void> selectClientForTradeHistory({
+    required int clientId,
+    required String clientName,
+  }) async {
+    selectedClientId.value = clientId;
+    selectedClientName.value = clientName;
+    tradeHistoryPage = 1;
+    tradeHistoryTotalPages = 1;
+    ibTradeHistory.clear();
+    await getIBTradeHistoryByClientId(clientId: clientId, page: 1);
+  }
+
+  /// Clear selected client trade history
+  void clearTradeHistory() {
+    selectedClientId.value = null;
+    selectedClientName.value = null;
+    tradeHistoryPage = 1;
+    tradeHistoryTotalPages = 1;
+    ibTradeHistory.clear();
+    _clientSearchResults.clear();
+  }
+
+  /// Search clients for trade history selector (with pagination)
+  Future<void> searchClients({
+    required String query,
+    int page = 1,
+    bool showLoading = true,
+  }) async {
+    try {
+      if (showLoading) isSearchingClients = true;
+      clientSearchQuery = query;
+
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final response = await ApiService.get(
+        endpoint: ApiConstants.ibClients,
+        queryParameters: {
+          '_t': timestamp.toString(),
+          'page': page.toString(),
+          'per_page': '10',
+          if (query.isNotEmpty) 'search': query,
+        },
+      );
+
+      if (response.success && response.data != null) {
+        final clientsResponse = IBClientsResponse.fromJson(response.data!);
+
+        clientsPage = clientsResponse.meta?['page'] ?? 1;
+        clientsTotalPages = clientsResponse.meta?['last_page'] ?? 1;
+
+        if (page == 1) {
+          _clientSearchResults.clear();
+        }
+        _clientSearchResults.addAll(clientsResponse.data ?? []);
+        update(['ib_clients']);
+      }
+    } catch (e) {
+      // Silent fail for search
+    } finally {
+      if (showLoading) isSearchingClients = false;
+    }
+  }
+
+  /// Load more search clients (next page)
+  Future<void> loadMoreSearchClients() async {
+    if (isLoadingMoreClients) return;
+    if (clientsPage >= clientsTotalPages) return;
+    if (clientSearchQuery.isEmpty) return;
+
+    isLoadingMoreClients = true;
+    try {
+      await searchClients(
+        query: clientSearchQuery,
+        page: clientsPage + 1,
+        showLoading: false,
+      );
+    } finally {
+      isLoadingMoreClients = false;
+    }
+  }
+
+  /// Getter for search results (public access)
+  List<IBClient> get clientSearchResults => _clientSearchResults;
+
+  /// Select a client for trade history
+  void selectClient(int clientId, String clientName) {
+    selectedClientId.value = clientId;
+    selectedClientName.value = clientName;
+    tradeHistoryPage = 1;
+    tradeHistoryTotalPages = 1;
+    ibTradeHistory.clear();
+    getIBTradeHistoryByClientId(clientId: clientId, page: 1);
+  }
+
+  /// Clear client selection and search results
+  void clearClientSelection() {
+    selectedClientId.value = null;
+    selectedClientName.value = null;
+    _clientSearchResults.clear();
+    clientSearchQuery = '';
+    clientsPage = 1;
+    clientsTotalPages = 1;
   }
 
   /// Get IB Stats

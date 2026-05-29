@@ -725,7 +725,7 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
       child: Column(
         children: [
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+            padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
             child: Container(
               padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
               decoration: BoxDecoration(

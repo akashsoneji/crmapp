@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:crm_app/screens/home/trading_main_screen.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
 import 'package:flutter/material.dart';
@@ -27,6 +29,8 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
   bool _isLoadingMoreTrades = false;
   late IBController ibController;
   late AuthController authController;
+  final TextEditingController _clientSearchController = TextEditingController();
+  Timer? _clientSearchDebounce;
 
   @override
   void initState() {
@@ -43,6 +47,20 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
     _selectedSubIB = null;
     // Load all data on screen load
     _loadMyClientsData();
+  }
+
+  @override
+  void dispose() {
+    _clientSearchController.dispose();
+    _clientSearchDebounce?.cancel();
+    super.dispose();
+  }
+
+  void _onClientSearchChanged(IBController controller, String value) {
+    _clientSearchDebounce?.cancel();
+    _clientSearchDebounce = Timer(const Duration(milliseconds: 400), () {
+      controller.searchClients(query: value, page: 1);
+    });
   }
 
   Future<void> _loadMyClientsData({int? subIbId}) async {
@@ -363,43 +381,6 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
         .toList();
   }
 
-  List<IBTradeHistory> _getFilteredTradeHistory() {
-    final allTradeHistory = ibController.ibTradeHistory;
-    if (allTradeHistory.isEmpty) return [];
-
-    List<IBTradeHistory> filtered;
-
-    if (_searchQuery.isEmpty) {
-      filtered = allTradeHistory;
-    } else {
-      filtered =
-          allTradeHistory
-              .where(
-                (trade) =>
-                    (trade.clientName?.toLowerCase().contains(
-                          _searchQuery.toLowerCase(),
-                        ) ??
-                        false) ||
-                    (trade.clientEmail?.toLowerCase().contains(
-                          _searchQuery.toLowerCase(),
-                        ) ??
-                        false) ||
-                    (trade.symbol?.toLowerCase().contains(
-                          _searchQuery.toLowerCase(),
-                        ) ??
-                        false),
-              )
-              .toList();
-    }
-
-    // Limit displayed items (for performance)
-    // If search is active, show all filtered results
-    if (_searchQuery.isEmpty && filtered.length > _tradeHistoryDisplayLimit) {
-      return filtered.take(_tradeHistoryDisplayLimit).toList();
-    }
-    return filtered;
-  }
-
   void _toggleExpand(int index) {
     setState(() {
       _expandedItems[index] = !(_expandedItems[index] ?? false);
@@ -543,6 +524,7 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
 
                   // Scrollable Content
                   Expanded(
+                    flex: 1,
                     child: SingleChildScrollView(
                       physics: const AlwaysScrollableScrollPhysics(),
                       child: Column(
@@ -586,21 +568,23 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
                               ),
                             ),
                           ),
-
-                          // Tabs
-                          _buildTabs(),
-
-                          SizedBox(height: 12.h),
-
-                          // Tab Content
-                          _getTabContent(controller),
-
-                          // Bottom padding for floating navigation bar (safe area + nav bar height + extra spacing)
-                          SizedBox(height: 100.h),
                         ],
                       ),
                     ),
                   ),
+
+                  // Tabs
+                  _buildTabs(),
+
+                  SizedBox(height: 12.h),
+
+                  // Tab Content — fills the rest of the screen below tabs
+                  Expanded(
+                    child: _getTabContent(controller),
+                  ),
+
+                  // Bottom padding for floating navigation bar (safe area + nav bar height + extra spacing)
+                  SizedBox(height: 100.h),
                 ],
               ),
             );
@@ -820,7 +804,6 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
           _selectedTabIndex = index;
           _expandedItems.clear();
         });
-        // If switching to Trade History tab, trigger background loading if needed
         if (index == 2) {
           _loadMoreTradesInBackground();
         }
@@ -841,12 +824,15 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
               color: isSelected ? AppColors.whiteColor : AppColors.primary,
             ),
             SizedBox(width: 4.w),
-            Text(
-              text,
-              style: TextStyle(
-                fontSize: 12.sp,
-                fontWeight: FontWeight.w600,
-                color: isSelected ? AppColors.whiteColor : AppColors.primary,
+            Flexible(
+              child: Text(
+                text,
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w600,
+                  color: isSelected ? AppColors.whiteColor : AppColors.primary,
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
             if (index == 2 && ibController.isHistoryLoading.value) ...[
@@ -1549,299 +1535,544 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
   }
 
   Widget _buildTradeHistory(IBController controller) {
-    final allTradeHistory = controller.ibTradeHistory;
-    final filteredTradeHistory = _getFilteredTradeHistory();
-    final hasMore =
-        allTradeHistory.length > _tradeHistoryDisplayLimit &&
-        _searchQuery.isEmpty;
+    return Obx(() {
+      final selectedId = controller.selectedClientId.value;
 
-    // Show loading if controller is loading history and no data yet
-    if (controller.isHistoryLoading.value && allTradeHistory.isEmpty) {
-      return Padding(
-        padding: EdgeInsets.all(40.w),
-        child: Center(
-          child: Column(
-            children: [
-              CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
-              ),
-              SizedBox(height: 16.h),
-              Text(
-                'Fetching trade history...',
-                style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    if (filteredTradeHistory.isEmpty && !controller.isLoading.value) {
-      return Padding(
-        padding: EdgeInsets.all(20.w),
-        child: Center(
-          child: Text(
-            'No trade history found',
-            style: TextStyle(fontSize: 14.sp, color: AppColors.textGrey),
-          ),
-        ),
-      );
-    }
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // Display filtered trade history (limited to _tradeHistoryDisplayLimit)
-        ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          padding: EdgeInsets.symmetric(
-            horizontal: 16.w,
-            vertical: 16.h,
-          ).copyWith(bottom: 20.h),
-          itemCount: filteredTradeHistory.length,
-          itemBuilder: (context, index) {
-            final trade = filteredTradeHistory[index];
-            final isExpanded = _expandedItems[index] ?? false;
-            return _buildExpandableTradeCard(trade, index, isExpanded);
-          },
-        ),
-        // Show loading indicator if loading more in background (local processing)
-        if (_isLoadingMoreTrades && hasMore)
-          Padding(
-            padding: EdgeInsets.symmetric(vertical: 20.h),
+      // ── Trade history view ─────────────────────────────────────────
+      if (selectedId != null) {
+      return Column(
+        children: [
+          // Header with back button + selected client name
+          Container(
+            margin: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 8.h),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                SizedBox(
-                  width: 16.w,
-                  height: 16.w,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      AppColors.primary,
-                    ),
+                GestureDetector(
+                  onTap: () {
+                    controller.clearClientSelection();
+                    controller.clearTradeHistory();
+                  },
+                  child: Row(
+                    children: [
+                      Icon(Icons.arrow_back, size: 18.sp, color: AppColors.primary),
+                      SizedBox(width: 6.w),
+                      Text(
+                        'Select Client',
+                        style: TextStyle(
+                          fontSize: 13.sp,
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                SizedBox(width: 8.w),
-                Text(
-                  'Processing more trades...',
-                  style: TextStyle(fontSize: 11.sp, color: AppColors.textGrey),
+                const Spacer(),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(6.r),
+                  ),
+                  child: Text(
+                    controller.selectedClientName.value ?? 'Client',
+                    style: TextStyle(
+                      fontSize: 11.sp,
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
               ],
             ),
           ),
-        // Show message if all trades are loaded
-        if (!_isLoadingMoreTrades &&
-            hasMore &&
-            filteredTradeHistory.length >= allTradeHistory.length)
-          Padding(
-            padding: EdgeInsets.all(8.w),
-            child: Text(
-              'All ${allTradeHistory.length} trades loaded',
-              style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey),
+          // Trade list
+          Expanded(
+            child: Obx(() {
+              final trades = controller.ibTradeHistory;
+              final isEmpty = trades.isEmpty && !controller.isHistoryLoading.value;
+              final hasMore = controller.tradeHistoryPage < controller.tradeHistoryTotalPages;
+              if (isEmpty) {
+                return Center(
+                  child: Text(
+                    'No trade history found.',
+                    style: TextStyle(fontSize: 14.sp, color: AppColors.textGrey),
+                  ),
+                );
+              }
+              return ListView.builder(
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                itemCount: trades.length + (hasMore ? 1 : 0),
+                itemBuilder: (context, index) {
+                  if (index == trades.length) {
+                    return _buildLoadMoreButton(
+                      isLoading: controller.isLoadingMoreTrades,
+                      onTap: () => controller.loadMoreTradeHistory(),
+                    );
+                  }
+                  final trade = trades[index];
+                  return _buildTradeDetailCard(trade, index, false);
+                },
+              );
+            }),
+          ),
+          // Loading bar at top of list
+          Obx(() => controller.isHistoryLoading.value && controller.ibTradeHistory.isEmpty
+              ? Padding(
+                  padding: EdgeInsets.all(40.w),
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                    ),
+                  ),
+                )
+              : const SizedBox.shrink(),
+          ),
+        ],
+      );
+    }
+
+    // ── Client selector (search + dropdown list) ───────────────────
+    return _buildClientSearchView(controller);
+    });
+  }
+
+  /// Search + client list dropdown for trade history selector
+  Widget _buildClientSearchView(IBController controller) {
+    return Column(
+      children: [
+        // Search input + Search button
+        Container(
+          margin: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 0),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _clientSearchController,
+                  style: TextStyle(fontSize: 13.sp),
+                  decoration: InputDecoration(
+                    hintText: 'Search name, email, or account...',
+                    hintStyle: TextStyle(fontSize: 13.sp, color: AppColors.textGrey),
+                    prefixIcon: Icon(Icons.search, size: 20.sp, color: AppColors.textGrey),
+                    filled: true,
+                    fillColor: AppColors.whiteColor,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8.r),
+                      borderSide: BorderSide(color: AppColors.border),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8.r),
+                      borderSide: BorderSide(color: AppColors.border),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8.r),
+                      borderSide: BorderSide(color: AppColors.primary),
+                    ),
+                  ),
+                  onChanged: (value) {
+                    _onClientSearchChanged(controller, value);
+                  },
+                  onSubmitted: (value) {
+                    controller.searchClients(query: value, page: 1);
+                  },
+                ),
+              ),
+              SizedBox(width: 8.w),
+              GestureDetector(
+                onTap: () {
+                  controller.searchClients(
+                    query: _clientSearchController.text,
+                    page: 1,
+                  );
+                },
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                  child: Text(
+                    'Search',
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      color: AppColors.whiteColor,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // Hint when no search yet
+        Obx(() => Visibility(
+          visible: _clientSearchController.text.isEmpty && controller.clientSearchResults.isEmpty && !controller.isSearchingClients,
+          child: Padding(
+            padding: EdgeInsets.all(24.w),
+            child: Column(
+              children: [
+                Icon(Icons.person_search, size: 48.sp, color: AppColors.textGrey.withValues(alpha: 0.4)),
+                SizedBox(height: 12.h),
+                Text(
+                  'Search for a client to view their trade history',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 13.sp, color: AppColors.textGrey),
+                ),
+              ],
             ),
           ),
+        )),
+
+        // Client results list
+        Expanded(
+          child: Obx(() {
+            if (controller.isSearchingClients) {
+              return Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                ),
+              );
+            }
+            final results = controller.clientSearchResults;
+            if (results.isEmpty) {
+              if (_clientSearchController.text.isNotEmpty) {
+                return Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(16.w),
+                    child: Text(
+                      'No clients found for "${_clientSearchController.text}"',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 13.sp, color: AppColors.textGrey),
+                    ),
+                  ),
+                );
+              }
+              return const SizedBox.shrink();
+            }
+            return ListView.builder(
+              padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 0),
+              itemCount: results.length + (controller.clientsPage < controller.clientsTotalPages ? 1 : 0),
+              itemBuilder: (context, index) {
+                if (index == results.length) {
+                  return _buildLoadMoreButton(
+                    isLoading: controller.isLoadingMoreClients,
+                    onTap: () => controller.loadMoreSearchClients(),
+                  );
+                }
+                final client = results[index];
+                return _buildClientSelectCard(client, controller);
+              },
+            );
+          }),
+        ),
       ],
     );
   }
 
-  Widget _buildExpandableTradeCard(
-    IBTradeHistory trade,
-    int index,
-    bool isExpanded,
-  ) {
+  /// Load more button widget
+  Widget _buildLoadMoreButton({
+    required bool isLoading,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: isLoading ? null : onTap,
+      child: Container(
+        margin: EdgeInsets.symmetric(vertical: 8.h, horizontal: 16.w),
+        padding: EdgeInsets.all(12.w),
+        decoration: BoxDecoration(
+          color: AppColors.whiteColor,
+          borderRadius: BorderRadius.circular(8.r),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Center(
+          child: isLoading
+              ? SizedBox(
+                  width: 20.w,
+                  height: 20.w,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                  ),
+                )
+              : Text(
+                  'Load More',
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+        ),
+      ),
+    );
+  }
+
+  /// Client selector card
+  Widget _buildClientSelectCard(IBClient client, IBController controller) {
+    return Obx(() =>
+     GestureDetector(
+        onTap: () {
+          _clientSearchController.clear();
+          controller.selectClient(client.id ?? 0, client.name ?? 'Client');
+          setState(() {});
+        },
+        child: Container(
+          margin: EdgeInsets.only(bottom: 10.h),
+          padding: EdgeInsets.all(12.w),
+          decoration: BoxDecoration(
+            color: AppColors.whiteColor,
+            borderRadius: BorderRadius.circular(12.r),
+            border: Border.all(color: AppColors.border.withOpacity(0.3)),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.textPrimary.withValues(alpha: 0.05),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              // Avatar
+              Container(
+                width: 48.w,
+                height: 48.w,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: Text(
+                    _getInitials(client.name),
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      client.name ?? 'N/A',
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    SizedBox(height: 2.h),
+                    Text(
+                      client.email ?? 'N/A',
+                      style: TextStyle(
+                        fontSize: 11.sp,
+                        color: AppColors.textGrey,
+                      ),
+                    ),
+                    SizedBox(height: 4.h),
+                    Row(
+                      children: [
+                        _buildClientBadge('AC: ${client.accountNumber ?? 'N/A'}', AppColors.blue),
+                        SizedBox(width: 6.w),
+                        _buildClientBadge('Lots: ${client.lots?.toStringAsFixed(1) ?? '0.0'}', AppColors.primary),
+                        SizedBox(width: 6.w),
+                        _buildClientBadge('Rebate: \$${client.rebate?.toStringAsFixed(2) ?? '0.00'}', AppColors.green),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.chevron_right,
+                color: AppColors.textGrey,
+                size: 22.sp,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildClientBadge(String text, Color color) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(4.r),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 10.sp,
+          fontWeight: FontWeight.w600,
+          color: color,
+        ),
+      ),
+    );
+  }
+
+  /// Trade detail card (per trade, with expandable details)
+  Widget _buildTradeDetailCard(IBTradeHistory trade, int index, bool isExpanded) {
     final isProfit = (trade.profit ?? 0) >= 0;
-    // Calculate deposit and withdrawal from trade data
-    // Assuming profit > 0 means deposit, profit < 0 means withdrawal
-    final deposit = isProfit ? (trade.profit ?? 0) : 0.0;
-    final withdrawal = !isProfit ? ((trade.profit ?? 0) * -1) : 0.0;
+    final isBuy = trade.type?.toLowerCase() == 'buy';
 
     return Container(
       margin: EdgeInsets.only(bottom: 8.h),
       decoration: BoxDecoration(
         color: AppColors.whiteColor,
-        borderRadius: BorderRadius.circular(8.r),
+        borderRadius: BorderRadius.circular(10.r),
         border: Border.all(color: AppColors.border.withOpacity(0.3)),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.textPrimary.withValues(alpha: 0.04),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         children: [
+          // Header row
           InkWell(
-            onTap: () => _toggleExpand(index),
+            onTap: () {
+              setState(() {
+                _expandedItems[index] = !isExpanded;
+              });
+            },
             child: Padding(
               padding: EdgeInsets.all(12.w),
               child: Row(
                 children: [
-                  // Avatar
+                  // Type indicator (colored circle)
                   Container(
-                    width: 40.w,
-                    height: 40.w,
+                    width: 36.w,
+                    height: 36.w,
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.2),
+                      color: isBuy
+                          ? AppColors.success.withValues(alpha: 0.12)
+                          : AppColors.error.withValues(alpha: 0.12),
                       shape: BoxShape.circle,
                     ),
                     child: Center(
                       child: Text(
-                        _getInitials(trade.clientName),
+                        (trade.symbol?.length ?? 0) > 3
+                            ? trade.symbol!.substring(0, 3)
+                            : (trade.symbol ?? '--'),
                         style: TextStyle(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.primary,
+                          fontSize: 10.sp,
+                          fontWeight: FontWeight.w700,
+                          color: isBuy ? AppColors.success : AppColors.error,
                         ),
                       ),
                     ),
                   ),
-                  SizedBox(width: 12.w),
-                  // Name and Symbol
+                  SizedBox(width: 10.w),
+                  // Symbol and type
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          trade.clientName ?? 'N/A',
-                          style: TextStyle(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
-                          ),
+                        Row(
+                          children: [
+                            Text(
+                              trade.symbol ?? 'N/A',
+                              style: TextStyle(
+                                fontSize: 13.sp,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            SizedBox(width: 6.w),
+                            Container(
+                              padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 1.h),
+                              decoration: BoxDecoration(
+                                color: isBuy
+                                    ? AppColors.success.withValues(alpha: 0.1)
+                                    : AppColors.error.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(4.r),
+                              ),
+                              child: Text(
+                                trade.type?.toUpperCase() ?? '--',
+                                style: TextStyle(
+                                  fontSize: 10.sp,
+                                  fontWeight: FontWeight.w700,
+                                  color: isBuy ? AppColors.success : AppColors.error,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                         SizedBox(height: 2.h),
                         Text(
-                          '${trade.symbol ?? ''} - ${trade.type ?? ''}',
+                          'Vol: ${trade.volume?.toStringAsFixed(2) ?? '0.00'} | ${_formatDate(trade.openTime)}',
                           style: TextStyle(
-                            fontSize: 12.sp,
+                            fontSize: 11.sp,
                             color: AppColors.textGrey,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  // Profit/Loss
-                  Text(
-                    '\$${trade.profit?.toStringAsFixed(2) ?? '0.00'}',
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w600,
-                      color: isProfit ? AppColors.green : AppColors.error,
-                    ),
+                  // P/L and commission column
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        '${isProfit ? '+' : ''}\$${trade.profit?.toStringAsFixed(2) ?? '0.00'}',
+                        style: TextStyle(
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w700,
+                          color: isProfit ? AppColors.success : AppColors.error,
+                        ),
+                      ),
+                      SizedBox(height: 2.h),
+                      Text(
+                        'Comm: \$${trade.commission?.toStringAsFixed(2) ?? '0.00'}',
+                        style: TextStyle(
+                          fontSize: 10.sp,
+                          color: AppColors.textGrey,
+                        ),
+                      ),
+                    ],
                   ),
                   SizedBox(width: 8.w),
                   Icon(
-                    isExpanded
-                        ? Icons.keyboard_arrow_up
-                        : Icons.keyboard_arrow_down,
-                    color: AppColors.textPrimary,
+                    isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                    size: 20.sp,
+                    color: AppColors.textGrey,
                   ),
                 ],
               ),
             ),
           ),
+          // Expanded details
           if (isExpanded)
             Container(
               padding: EdgeInsets.all(12.w),
               decoration: BoxDecoration(
                 color: AppColors.backgroundLight,
                 borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(8.r),
-                  bottomRight: Radius.circular(8.r),
+                  bottomLeft: Radius.circular(10.r),
+                  bottomRight: Radius.circular(10.r),
                 ),
               ),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildDetailRow('Client Email', trade.clientEmail ?? 'N/A'),
-                  _buildDetailRow('MT5 Account', trade.mt5Account ?? 'N/A'),
-                  _buildDetailRow('Volume', '${trade.volume ?? 0}'),
-                  _buildDetailRow(
-                    'Commission',
-                    '\$${trade.commission ?? '0.00'}',
-                  ),
-                  if (trade.openTime != null)
-                    _buildDetailRow('Open Time', trade.openTime!),
-                  if (trade.closeTime != null)
-                    _buildDetailRow('Close Time', trade.closeTime!),
-                  SizedBox(height: 8.h),
-                  // Deposit and Withdrawal with colors
-                  if (deposit > 0)
-                    Container(
-                      padding: EdgeInsets.all(8.w),
-                      decoration: BoxDecoration(
-                        color: AppColors.green.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(6.r),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.arrow_downward,
-                                size: 16.sp,
-                                color: AppColors.green,
-                              ),
-                              SizedBox(width: 4.w),
-                              Text(
-                                'Deposit',
-                                style: TextStyle(
-                                  fontSize: 12.sp,
-                                  color: AppColors.green,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                          Text(
-                            '\$${deposit.toStringAsFixed(2)}',
-                            style: TextStyle(
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.green,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  if (withdrawal > 0) ...[
-                    if (deposit > 0) SizedBox(height: 8.h),
-                    Container(
-                      padding: EdgeInsets.all(8.w),
-                      decoration: BoxDecoration(
-                        color: AppColors.error.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(6.r),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.arrow_upward,
-                                size: 16.sp,
-                                color: AppColors.error,
-                              ),
-                              SizedBox(width: 4.w),
-                              Text(
-                                'Withdrawal',
-                                style: TextStyle(
-                                  fontSize: 12.sp,
-                                  color: AppColors.error,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                          Text(
-                            '\$${withdrawal.toStringAsFixed(2)}',
-                            style: TextStyle(
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.error,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                  _buildDetailRow('Account', trade.mt5Account ?? 'N/A'),
+                  _buildDetailRow('Open Price', trade.openPrice ?? 'N/A'),
+                  _buildDetailRow('Close Price', trade.closePrice ?? 'N/A'),
+                  _buildDetailRow('Volume', '${trade.volume?.toString() ?? '0'} lots'),
+                  _buildDetailRow('Commission', '\$${trade.commission?.toStringAsFixed(2) ?? '0.00'}'),
+                  _buildDetailRow('P/L', '${isProfit ? '+' : ''}\$${trade.profit?.toStringAsFixed(2) ?? '0.00'}'),
+                  _buildDetailRow('Open Time', _formatDateTime(trade.openTime)),
+                  _buildDetailRow('Close Time', _formatDateTime(trade.closeTime)),
                 ],
               ),
             ),
@@ -1849,4 +2080,25 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
       ),
     );
   }
+
+  String _formatDate(String? dateStr) {
+    if (dateStr == null || dateStr.isEmpty) return 'N/A';
+    try {
+      final dt = DateTime.parse(dateStr);
+      return '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}:${dt.second.toString().padLeft(2, '0')}';
+    } catch (_) {
+      return dateStr;
+    }
+  }
+
+  String _formatDateTime(String? dateStr) {
+    if (dateStr == null || dateStr.isEmpty) return 'N/A';
+    try {
+      final dt = DateTime.parse(dateStr);
+      return '${dt.day}/${dt.month}/${dt.year} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+    } catch (_) {
+      return dateStr;
+    }
+  }
+
 }
