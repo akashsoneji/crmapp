@@ -9,7 +9,6 @@ import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/controllers/ib_controller.dart';
 import 'package:crm_app/models/ib_models.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
-import 'package:intl/intl.dart';
 
 class IBRequestsScreen extends StatefulWidget {
   const IBRequestsScreen({super.key});
@@ -47,7 +46,7 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
         .toList();
   }
 
-  Color _getStatusColor(String? status) {
+  Color _getApprovalStatusColor(String? status) {
     switch (status?.toLowerCase()) {
       case 'inreview':
         return AppColors.warning;
@@ -73,17 +72,6 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
     }
   }
 
-  String _formatSubmissionDate(String? createdAt) {
-    if (createdAt == null || createdAt.isEmpty) return 'N/A';
-    try {
-      final dt = DateTime.tryParse(createdAt);
-      if (dt == null) return createdAt;
-      return DateFormat('MMM d, yyyy').format(dt.toLocal());
-    } catch (_) {
-      return createdAt;
-    }
-  }
-
   String _getRequestName(IBApprovalRequest request) {
     final name = (request.fullname ?? '').trim();
     if (name.isNotEmpty) return name;
@@ -96,19 +84,6 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
     final email = (request.email ?? '').trim();
     if (email.isNotEmpty) return email;
     return (request.user?.email ?? '').trim();
-  }
-
-  Color _getKycColor(String? kycStatus) {
-    switch (kycStatus?.toLowerCase()) {
-      case 'verified':
-        return AppColors.green;
-      case 'unverified':
-        return AppColors.warning;
-      case 'rejected':
-        return AppColors.error;
-      default:
-        return AppColors.textGrey;
-    }
   }
 
   @override
@@ -286,18 +261,13 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
   }
 
   Widget _buildRequestCard(IBApprovalRequest request) {
-    final statusColor = _getStatusColor(request.status);
+    final statusColor = _getApprovalStatusColor(request.status);
     final name = _getRequestName(request);
     final email = _getRequestEmail(request);
-    final phone = request.mobile?.toString() ?? 'N/A';
     final assignedPlan =
         (request.assignedPlan ?? '').isNotEmpty
             ? request.assignedPlan!
             : 'Not Assigned';
-    final submissionDate = _formatSubmissionDate(request.createdAt);
-    final kycColor = _getKycColor(request.kycStatus);
-    final kycLabel =
-        request.kycStatus?.isNotEmpty == true ? request.kycStatus! : 'N/A';
 
     return Container(
       margin: EdgeInsets.only(bottom: 16.h),

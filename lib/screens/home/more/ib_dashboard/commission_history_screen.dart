@@ -87,7 +87,7 @@ class _CommissionHistoryScreenState extends State<CommissionHistoryScreen> {
                     padding: EdgeInsets.all(16.w),
                     decoration: BoxDecoration(
                       color: AppColors.whiteColor,
-                      borderRadius: BorderRadius.circular(8.r),
+                      borderRadius: BorderRadius.circular(12.r),
                       boxShadow: [
                         BoxShadow(
                           color: AppColors.textPrimary.withValues(alpha: 0.1),
@@ -150,7 +150,7 @@ class _CommissionHistoryScreenState extends State<CommissionHistoryScreen> {
                     padding: EdgeInsets.all(16.w),
                     decoration: BoxDecoration(
                       color: AppColors.whiteColor,
-                      borderRadius: BorderRadius.circular(8.r),
+                      borderRadius: BorderRadius.circular(12.r),
                       boxShadow: [
                         BoxShadow(
                           color: AppColors.textPrimary.withValues(alpha: 0.1),
@@ -237,7 +237,7 @@ class _CommissionHistoryScreenState extends State<CommissionHistoryScreen> {
                       padding: EdgeInsets.all(16.w),
                       decoration: BoxDecoration(
                         color: AppColors.whiteColor,
-                        borderRadius: BorderRadius.circular(8.r),
+                        borderRadius: BorderRadius.circular(12.r),
                         boxShadow: [
                           BoxShadow(
                             color: AppColors.textPrimary.withValues(alpha: 0.1),
@@ -283,7 +283,7 @@ class _CommissionHistoryScreenState extends State<CommissionHistoryScreen> {
       padding: EdgeInsets.all(12.w),
       decoration: BoxDecoration(
         color: AppColors.whiteColor,
-        borderRadius: BorderRadius.circular(8.r),
+        borderRadius: BorderRadius.circular(12.r),
         boxShadow: const [
           BoxShadow(
             color: Color(0x1A000000),

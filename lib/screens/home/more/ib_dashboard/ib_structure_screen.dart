@@ -146,42 +146,6 @@ class _IBStructureScreenState extends State<IBStructureScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Tab Navigation
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(
-                          color: AppColors.textGrey.withOpacity(0.2),
-                          width: 1,
-                        ),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: EdgeInsets.only(bottom: 12.h),
-                          decoration: BoxDecoration(
-                            border: Border(
-                              bottom: BorderSide(
-                                color: AppColors.primary,
-                                width: 2,
-                              ),
-                            ),
-                          ),
-                          child: Text(
-                            'Standard Groups',
-                            style: TextStyle(
-                              fontSize: 16.sp,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.primary,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: 16.h),
-
                   // Header with Add Button
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -189,38 +153,40 @@ class _IBStructureScreenState extends State<IBStructureScreen> {
                     children: [
                       Flexible(
                         child: Text(
-                          'Existing Standard Groups',
+                          'Commission Groups',
                           style: TextStyle(
                             fontSize: 16.sp,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.primary,
+                            color: AppColors.textPrimary,
                           ),
                         ),
                       ),
                       SizedBox(width: 8.w),
-                      Flexible(
-                        child: ElevatedButton(
-                          onPressed: _navigateToAddGroup,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 12.w,
-                              vertical: 12.h,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8.r),
-                            ),
+                      GestureDetector(
+                        onTap: _navigateToAddGroup,
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 14.w,
+                            vertical: 10.h,
                           ),
-                          child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Text(
-                              'Add New Standard Group',
-                              style: TextStyle(
-                                fontSize: 12.sp,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.whiteColor,
+                          decoration: BoxDecoration(
+                            color: AppColors.primary,
+                            borderRadius: BorderRadius.circular(10.r),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.add, color: AppColors.whiteColor, size: 16.sp),
+                              SizedBox(width: 4.w),
+                              Text(
+                                'Add Group',
+                                style: TextStyle(
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.whiteColor,
+                                ),
                               ),
-                            ),
+                            ],
                           ),
                         ),
                       ),
@@ -292,7 +258,7 @@ class _IBStructureScreenState extends State<IBStructureScreen> {
               decoration: BoxDecoration(
                 border: Border(
                   bottom: BorderSide(
-                    color: AppColors.textGrey.withOpacity(0.2),
+                    color: AppColors.border,
                     width: 1,
                   ),
                 ),

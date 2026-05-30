@@ -25,6 +25,16 @@ class _CommissionGroupFormScreenState extends State<CommissionGroupFormScreen> {
   final Map<int, bool> _expandedGroups =
       {}; // Track expanded state for each group
   bool _isLoading = false;
+  /// True while this screen is waiting for its first structure fetch (avoids error flash).
+  bool _isPageLoading = true;
+
+  bool _isStructureDataValid(IBStructureData? data) {
+    return data != null &&
+        data.masterGroups != null &&
+        data.masterGroups!.isNotEmpty &&
+        data.symbolCategories != null &&
+        data.symbolCategories!.isNotEmpty;
+  }
 
   @override
   void initState() {
@@ -35,18 +45,26 @@ class _CommissionGroupFormScreenState extends State<CommissionGroupFormScreen> {
     } else {
       ibController = Get.put(IBController());
     }
-    _loadStructureDataAndInitialize();
+    final cachedStructure = ibController.ibStructureData.value;
+    if (_isStructureDataValid(cachedStructure)) {
+      _isPageLoading = false;
+      _initializeForm();
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadStructureDataAndInitialize();
+    });
   }
 
   Future<void> _loadStructureDataAndInitialize() async {
-    // Always load structure data to ensure we have latest data
-    await ibController.getIBStructure(showLoading: true);
-    if (mounted) {
-      setState(() {
-        // Force rebuild after data loads
-      });
-      _initializeForm();
+    if (!_isStructureDataValid(ibController.ibStructureData.value)) {
+      if (mounted) {
+        setState(() => _isPageLoading = true);
+      }
     }
+    await ibController.getIBStructure(showLoading: true);
+    if (!mounted) return;
+    _initializeForm();
+    setState(() => _isPageLoading = false);
   }
 
   void _initializeForm() {
@@ -198,10 +216,10 @@ class _CommissionGroupFormScreenState extends State<CommissionGroupFormScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.tradeBackgroundCenterColor,
       appBar: AppBar(
         scrolledUnderElevation: 0,
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.tradeBackgroundCenterColor,
         elevation: 0,
         leading: AppSvgBackButton(
           onPressed: () => Get.back(closeOverlays: true),
@@ -209,7 +227,7 @@ class _CommissionGroupFormScreenState extends State<CommissionGroupFormScreen> {
           iconHeight: 30.h,
         ),
         title: Text(
-          widget.group != null ? 'Edit Standard Group' : 'Add Standard Group',
+          widget.group != null ? 'Edit Commission Group' : 'Add Commission Group',
           style: TextStyle(
             fontSize: 18.sp,
             fontWeight: FontWeight.w600,
@@ -221,61 +239,32 @@ class _CommissionGroupFormScreenState extends State<CommissionGroupFormScreen> {
       body: GetBuilder<IBController>(
         id: 'ib_structure',
         builder: (controller) {
-          return Obx(() {
-            final isLoading = controller.isLoading.value;
-            final structureData = controller.ibStructureData.value;
+          final structureData = controller.ibStructureData.value;
 
-            if (isLoading) {
-              return Center(
-                child: CommonLoadingWidget(
-                  message: 'Loading structure data...',
-                  size: 50.0,
-                  color: AppColors.primary,
-                ),
-              );
-            }
+          if (_isPageLoading) {
+            return Center(
+              child: CommonLoadingWidget(
+                message: 'Loading structure data...',
+                size: 50.0,
+                color: AppColors.primary,
+              ),
+            );
+          }
 
-            if (structureData == null ||
-                structureData.masterGroups == null ||
-                structureData.masterGroups!.isEmpty ||
-                structureData.symbolCategories == null ||
-                structureData.symbolCategories!.isEmpty) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.error_outline,
-                      size: 48.sp,
-                      color: AppColors.textGrey,
-                    ),
-                    SizedBox(height: 16.h),
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 32.w),
-                      child: Text(
-                        controller.errorMessage.value.isNotEmpty
-                            ? controller.errorMessage.value
-                            : 'Failed to load structure data',
-                        style: TextStyle(
-                          fontSize: 14.sp,
-                          color: AppColors.textGrey,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                    SizedBox(height: 16.h),
-                    ElevatedButton(
-                      onPressed: () {
-                        _loadStructureDataAndInitialize();
-                      },
-                      child: const Text('Retry'),
-                    ),
-                  ],
-                ),
-              );
-            }
+          if (controller.errorMessage.value.isNotEmpty &&
+              !_isStructureDataValid(structureData)) {
+            return _buildStructureErrorState(
+              message: controller.errorMessage.value,
+            );
+          }
 
-            return SingleChildScrollView(
+          if (!_isStructureDataValid(structureData)) {
+            return _buildStructureErrorState(
+              message: 'Failed to load structure data',
+            );
+          }
+
+          return SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -380,8 +369,8 @@ class _CommissionGroupFormScreenState extends State<CommissionGroupFormScreen> {
                         ),
                         SizedBox(height: 16.h),
                         _buildCommissionList(
-                          structureData.masterGroups!,
-                          structureData.symbolCategories!,
+                          structureData?.masterGroups ?? [],
+                          structureData?.symbolCategories ?? [],
                         ),
                       ],
                     ),
@@ -390,7 +379,6 @@ class _CommissionGroupFormScreenState extends State<CommissionGroupFormScreen> {
                 ],
               ),
             );
-          });
         },
       ),
       bottomNavigationBar: Container(
@@ -412,17 +400,17 @@ class _CommissionGroupFormScreenState extends State<CommissionGroupFormScreen> {
                 child: OutlinedButton(
                   onPressed:
                       _isLoading ? null : () => Navigator.of(context).pop(),
-                  style: OutlinedButton.styleFrom(
+style: OutlinedButton.styleFrom(
                     padding: EdgeInsets.symmetric(vertical: 14.h),
                     side: BorderSide(color: AppColors.border),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(6.r),
+                      borderRadius: BorderRadius.circular(12.r),
                     ),
                   ),
                   child: Text(
                     'Cancel',
                     style: TextStyle(
-                      fontSize: 15.sp,
+                      fontSize: 14.sp,
                       fontWeight: FontWeight.w600,
                       color: AppColors.textPrimary,
                     ),
@@ -437,7 +425,7 @@ class _CommissionGroupFormScreenState extends State<CommissionGroupFormScreen> {
                     backgroundColor: AppColors.primary,
                     padding: EdgeInsets.symmetric(vertical: 14.h),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(6.r),
+                      borderRadius: BorderRadius.circular(12.r),
                     ),
                     elevation: 0,
                   ),
@@ -454,9 +442,9 @@ class _CommissionGroupFormScreenState extends State<CommissionGroupFormScreen> {
                             ),
                           )
                           : Text(
-                            'Save Standard Group',
+                            'Save Commission Group',
                             style: TextStyle(
-                              fontSize: 15.sp,
+                              fontSize: 14.sp,
                               fontWeight: FontWeight.w600,
                               color: AppColors.whiteColor,
                             ),
@@ -466,6 +454,58 @@ class _CommissionGroupFormScreenState extends State<CommissionGroupFormScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildStructureErrorState({required String message}) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.error_outline,
+            size: 48.sp,
+            color: AppColors.textGrey,
+          ),
+          SizedBox(height: 16.h),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 32.w),
+            child: Text(
+              message,
+              style: TextStyle(
+                fontSize: 14.sp,
+                color: AppColors.textGrey,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          SizedBox(height: 16.h),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 12.w),
+            child: SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _loadStructureDataAndInitialize,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  padding: EdgeInsets.symmetric(vertical: 14.h),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                ),
+                child: Text(
+                  'Retry',
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.whiteColor,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

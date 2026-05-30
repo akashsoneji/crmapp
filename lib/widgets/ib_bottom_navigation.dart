@@ -52,8 +52,8 @@ class IbBottomNavigation extends StatelessWidget {
                   ),
                   _buildNavItem(
                     1,
-                    "assets/svg/ib_dashboard/myclient.svg",
-                    "assets/svg/ib_dashboard/myclient_bold.svg",
+                    "assets/svg/ib_dashboard/coin.svg",
+                    "assets/svg/ib_dashboard/coin_bold.svg",
                     "Structure",
                   ),
                   _buildNavItem(

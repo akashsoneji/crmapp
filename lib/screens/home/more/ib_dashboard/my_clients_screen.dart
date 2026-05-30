@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:crm_app/screens/home/trading_main_screen.dart';
+import 'package:crm_app/utils/trl_helper.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -21,6 +22,11 @@ class MyClientsScreen extends StatefulWidget {
 class _MyClientsScreenState extends State<MyClientsScreen> {
   int _selectedTabIndex = 0; // 0: Client List, 1: IB List, 2: Trade History
   String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
+  final FocusNode _tradeHistorySearchFocusNode = FocusNode();
+  final ScrollController _pageScrollController = ScrollController();
+  bool _statsExpanded = false;
   IBClient? _selectedSubIB;
   List<IBClient> _ibHierarchy =
       []; // Track hierarchy: [Master, Sub-IB, Sub-IB's Sub-IB, ...]
@@ -45,15 +51,64 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
     // Initialize hierarchy
     _ibHierarchy = [];
     _selectedSubIB = null;
+    _searchFocusNode.addListener(_onSearchFocusChanged);
+    _tradeHistorySearchFocusNode.addListener(_onSearchFocusChanged);
     // Load all data on screen load
     _loadMyClientsData();
   }
 
+  void _onSearchFocusChanged() {
+    if (_searchFocusNode.hasFocus || _tradeHistorySearchFocusNode.hasFocus) {
+      if (_statsExpanded && mounted) {
+        setState(() => _statsExpanded = false);
+      }
+    }
+  }
+
   @override
   void dispose() {
+    _searchController.dispose();
+    _searchFocusNode.removeListener(_onSearchFocusChanged);
+    _searchFocusNode.dispose();
+    _tradeHistorySearchFocusNode.removeListener(_onSearchFocusChanged);
+    _tradeHistorySearchFocusNode.dispose();
+    _pageScrollController.dispose();
     _clientSearchController.dispose();
     _clientSearchDebounce?.cancel();
     super.dispose();
+  }
+
+  /// Opens Trade History tab and loads trades for [client].
+  Future<void> _openTradeHistoryForClient(IBClient client) async {
+    FocusManager.instance.primaryFocus?.unfocus();
+    final clientId = client.id;
+    if (clientId == null) {
+      Get.snackbar(
+        'Unavailable',
+        'Cannot load trade history without a client ID',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: AppColors.error,
+        colorText: AppColors.whiteColor,
+      );
+      return;
+    }
+
+    setState(() {
+      _selectedTabIndex = 2;
+      _expandedItems.clear();
+    });
+
+    await ibController.selectClientForTradeHistory(
+      clientId: clientId,
+      clientName: client.name ?? 'Client',
+    );
+    if (mounted) setState(() {});
+  }
+
+  void _clearSearch() {
+    _searchController.clear();
+    _searchQuery = '';
+    _expandedItems.clear();
   }
 
   void _onClientSearchChanged(IBController controller, String value) {
@@ -240,7 +295,7 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
         _ibHierarchy.add(subIB);
       }
       _selectedSubIB = subIB;
-      _expandedItems.clear();
+      _clearSearch();
     });
 
     // CRITICAL: Clear old data immediately when switching sub-IBs
@@ -271,7 +326,7 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
       } else {
         _selectedSubIB = null;
       }
-      _expandedItems.clear();
+      _clearSearch();
     });
     // Load data for the parent level
     final parentId = _ibHierarchy.isNotEmpty ? _ibHierarchy.last.id : null;
@@ -389,7 +444,10 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
+
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
         scrolledUnderElevation: 0,
@@ -422,12 +480,8 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
         //   onPressed: () => Navigator.of(context).pop(),
         // ),
       ),
-      body: RefreshIndicator(
-        onRefresh: () => _loadMyClientsData(subIbId: _selectedSubIB?.id),
-        backgroundColor: AppColors.whiteColor,
-        color: AppColors.primary,
-        child: GetBuilder<IBController>(
-          builder: (controller) {
+      body: GetBuilder<IBController>(
+        builder: (controller) {
             if (controller.isLoading.value) {
               return Center(
                 child: CommonLoadingWidget(
@@ -512,266 +566,382 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
               );
             }
 
-            return SafeArea(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Hierarchy Breadcrumb at top (Master IB -> Sub IB -> Sub IB's Sub IB)
-                  _buildHierarchyBreadcrumb(userFullName),
+            return Obx(() {
+              final compactTradeSearch =
+                  keyboardOpen &&
+                  _selectedTabIndex == 2 &&
+                  controller.selectedClientId.value == null;
 
-                  // Search Bar
-                  _buildSearchBar(),
+              // Subscribe to trade-history reactive updates.
+              if (_selectedTabIndex == 2) {
+                controller.selectedClientId.value;
+                controller.isHistoryLoading.value;
+                controller.ibTradeHistory.length;
+              }
 
-                  // Scrollable Content
-                  Expanded(
-                    flex: 1,
-                    child: SingleChildScrollView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      child: Column(
+              return SafeArea(
+                bottom: false,
+                child: RefreshIndicator(
+                  onRefresh: () =>
+                      _loadMyClientsData(subIbId: _selectedSubIB?.id),
+                  backgroundColor: AppColors.whiteColor,
+                  color: AppColors.primary,
+                  child: GestureDetector(
+                    onTap: () =>
+                        FocusManager.instance.primaryFocus?.unfocus(),
+                    behavior: HitTestBehavior.translucent,
+                    child: CustomScrollView(
+                      controller: _pageScrollController,
+                      keyboardDismissBehavior:
+                          ScrollViewKeyboardDismissBehavior.onDrag,
+                      physics: const AlwaysScrollableScrollPhysics(
+                        parent: ClampingScrollPhysics(),
+                      ),
+                      slivers: _buildPageSlivers(
+                        controller,
+                        stats,
+                        userFullName,
+                        keyboardOpen,
+                        compactTradeSearch,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            });
+        },
+      ),
+    );
+  }
+
+  /// Space so last list row can scroll above the IB floating nav (extendBody).
+  double _fabScrollExtent(BuildContext context) =>
+      MediaQuery.paddingOf(context).bottom + 24.h;
+
+  List<Widget> _buildPageSlivers(
+    IBController controller,
+    dynamic stats,
+    String userFullName,
+    bool keyboardOpen,
+    bool compactTradeSearch,
+  ) {
+    if (compactTradeSearch) {
+      return [
+        ..._tradeHistorySearchSlivers(controller, keyboardOpen),
+        SliverPadding(
+          padding: EdgeInsets.only(bottom: _fabScrollExtent(context)),
+        ),
+      ];
+    }
+
+    final slivers = <Widget>[
+      SliverToBoxAdapter(child: _buildHierarchyBreadcrumb(userFullName)),
+      if (_selectedTabIndex != 2)
+        SliverToBoxAdapter(child: _buildSearchBar()),
+      if (stats != null && !keyboardOpen)
+        SliverToBoxAdapter(child: _buildStatsExpandable(stats, userFullName)),
+      SliverToBoxAdapter(child: _buildTabs()),
+      ..._tabContentSlivers(controller, keyboardOpen),
+      SliverPadding(
+        padding: EdgeInsets.only(bottom: _fabScrollExtent(context)),
+      ),
+    ];
+    return slivers;
+  }
+
+  List<Widget> _tabContentSlivers(IBController controller, bool keyboardOpen) {
+    switch (_selectedTabIndex) {
+      case 0:
+        return _clientListSlivers();
+      case 1:
+        return _ibListSlivers();
+      case 2:
+        return _tradeHistorySlivers(controller, keyboardOpen);
+      default:
+        return _clientListSlivers();
+    }
+  }
+
+  List<Widget> _clientListSlivers() {
+    final filteredClients = _getFilteredClients();
+    if (filteredClients.isEmpty) {
+      return [
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: Center(
+            child: Text(
+              'No clients found',
+              style: TextStyle(fontSize: 14.sp, color: AppColors.textGrey),
+            ),
+          ),
+        ),
+      ];
+    }
+
+    return [
+      SliverPadding(
+        padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 0),
+        sliver: SliverList(
+          delegate: SliverChildBuilderDelegate(
+            (context, index) {
+              final client = filteredClients[index];
+              final isExpanded = _expandedItems[index] ?? false;
+              return _buildExpandableClientCard(client, index, isExpanded);
+            },
+            childCount: filteredClients.length,
+          ),
+        ),
+      ),
+    ];
+  }
+
+  List<Widget> _ibListSlivers() {
+    final filteredSubIBs = _getFilteredSubIBs();
+    if (filteredSubIBs.isEmpty) {
+      return [
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: Center(
+            child: Text(
+              'No Sub-IBs found',
+              style: TextStyle(fontSize: 14.sp, color: AppColors.textGrey),
+            ),
+          ),
+        ),
+      ];
+    }
+
+    return [
+      SliverPadding(
+        padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 0),
+        sliver: SliverList(
+          delegate: SliverChildBuilderDelegate(
+            (context, index) {
+              final subIB = filteredSubIBs[index];
+              final isExpanded = _expandedItems[index] ?? false;
+              return _buildExpandableSubIBCard(subIB, index, isExpanded);
+            },
+            childCount: filteredSubIBs.length,
+          ),
+        ),
+      ),
+    ];
+  }
+
+  List<Widget> _tradeHistorySlivers(
+    IBController controller,
+    bool keyboardOpen,
+  ) {
+    final selectedId = controller.selectedClientId.value;
+    if (selectedId == null) {
+      return _tradeHistorySearchSlivers(controller, keyboardOpen);
+    }
+
+    final slivers = <Widget>[
+      SliverToBoxAdapter(child: _buildTradeHistoryHeader(controller)),
+    ];
+
+    if (controller.isHistoryLoading.value &&
+        controller.ibTradeHistory.isEmpty) {
+      slivers.add(
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+            ),
+          ),
+        ),
+      );
+      return slivers;
+    }
+
+    final trades = controller.ibTradeHistory;
+    if (trades.isEmpty) {
+      slivers.add(
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: Center(
+            child: Text(
+              'No trade history found.',
+              style: TextStyle(fontSize: 14.sp, color: AppColors.textGrey),
+            ),
+          ),
+        ),
+      );
+      return slivers;
+    }
+
+    final hasMore =
+        controller.tradeHistoryPage < controller.tradeHistoryTotalPages;
+    slivers.add(
+      SliverPadding(
+        padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 0),
+        sliver: SliverList(
+          delegate: SliverChildBuilderDelegate(
+            (context, index) {
+              if (index == trades.length) {
+                return _buildLoadMoreButton(
+                  isLoading: controller.isLoadingMoreTrades,
+                  onTap: () => controller.loadMoreTradeHistory(),
+                );
+              }
+              return _buildTradeDetailCard(trades[index], index, false);
+            },
+            childCount: trades.length + (hasMore ? 1 : 0),
+          ),
+        ),
+      ),
+    );
+    return slivers;
+  }
+
+  Widget _buildTradeHistoryHeader(IBController controller) {
+    return Container(
+      margin: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 8.h),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: () {
+              controller.clearClientSelection();
+              controller.clearTradeHistory();
+            },
+            child: Row(
+              children: [
+                Icon(Icons.arrow_back, size: 18.sp, color: AppColors.primary),
+                SizedBox(width: 6.w),
+                Text(
+                  'Select Client',
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Spacer(),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(6.r),
+            ),
+            child: Text(
+              controller.selectedClientName.value ?? 'Client',
+              style: TextStyle(
+                fontSize: 11.sp,
+                color: AppColors.primary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHierarchyBreadcrumb(String userFullName) {
+    final bannerTitle =
+        _selectedSubIB == null
+            ? '$userFullName (You)'
+            : (_selectedSubIB!.name ?? 'Sub IB');
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+            decoration: BoxDecoration(
+              color: AppColors.primary,
+              borderRadius: BorderRadius.circular(12.r),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withValues(alpha: 0.22),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.star_rounded,
+                  color: AppColors.whiteColor,
+                  size: 22.sp,
+                ),
+                SizedBox(width: 10.w),
+                Expanded(
+                  child: Text(
+                    bannerTitle,
+                    style: TextStyle(
+                      fontSize: 15.sp,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.whiteColor,
+                      letterSpacing: 0.2,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (_selectedSubIB != null) ...[
+            SizedBox(height: 10.h),
+            Row(
+              children: [
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: _backToMasterIB,
+                    borderRadius: BorderRadius.circular(8.r),
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 10.w,
+                        vertical: 6.h,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(8.r),
+                        border: Border.all(
+                          color: AppColors.primary.withValues(alpha: 0.2),
+                        ),
+                      ),
+                      child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          // Statistics Cards Grid (4 cards in 2x2)
-                          Container(
-                            padding: EdgeInsets.symmetric(horizontal: 8.w),
-                            child: Theme(
-                              data: Theme.of(
-                                context,
-                              ).copyWith(dividerColor: Colors.transparent),
-
-                              child: ExpansionTile(
-                                iconColor: AppColors.primary,
-                                collapsedIconColor: AppColors.primary,
-                                backgroundColor: AppColors.primary.withValues(
-                                  alpha: 0.1,
-                                ),
-                                collapsedBackgroundColor: AppColors.primary
-                                    .withValues(alpha: 0.1),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12.r),
-                                ),
-                                collapsedShape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12.r),
-                                ),
-                                title: Text(
-                                  "Show More",
-                                  style: TextStyle(
-                                    fontSize: 14.sp,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.textPrimary,
-                                  ),
-                                ),
-                                collapsedTextColor: AppColors.whiteColor,
-                                children: [
-                                  _buildStatisticsGrid(stats, userFullName),
-                                  SizedBox(height: 16.h),
-                                ],
-                              ),
+                          Icon(
+                            Icons.arrow_back_ios_new_rounded,
+                            color: AppColors.primary,
+                            size: 14.sp,
+                          ),
+                          SizedBox(width: 4.w),
+                          Text(
+                            _ibHierarchy.length > 1
+                                ? 'Back to Sub IB'
+                                : 'Back to Master IB',
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.primary,
                             ),
                           ),
                         ],
                       ),
                     ),
                   ),
-
-                  // Tabs
-                  _buildTabs(),
-
-                  SizedBox(height: 12.h),
-
-                  // Tab Content — fills the rest of the screen below tabs
-                  Expanded(
-                    child: _getTabContent(controller),
-                  ),
-
-                  // Bottom padding for floating navigation bar (safe area + nav bar height + extra spacing)
-                  SizedBox(height: 100.h),
-                ],
-              ),
-            );
-          },
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHierarchyBreadcrumb(String userFullName) {
-    return Container(
-      margin: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 8.h),
-      padding: EdgeInsets.all(12.w),
-      decoration: BoxDecoration(
-        color: AppColors.whiteColor,
-        borderRadius: BorderRadius.circular(12.r),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.border.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          // First row: Master IB and Sub IB buttons
-          Row(
-            children: [
-              // Master IB (You)
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 12.w,
-                      vertical: 10.h,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.r),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.star,
-                        color: AppColors.whiteColor,
-                        size: 16.sp,
-                      ),
-                      SizedBox(width: 6.w),
-                      Flexible(
-                        child: Text(
-                          '$userFullName (You)',
-                          style: TextStyle(
-                            fontSize: 12.sp,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.whiteColor,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
                 ),
-              ),
-              // Show Sub IB if exists
-              if (_ibHierarchy.isNotEmpty && _ibHierarchy.length >= 1) ...[
                 SizedBox(width: 8.w),
                 Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () {},
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 12.w,
-                        vertical: 10.h,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8.r),
-                      ),
-                      elevation: 0,
-                    ),
-                    icon: Icon(
-                      Icons.people,
-                      color: AppColors.whiteColor,
-                      size: 16.sp,
-                    ),
-                    // NOTE: Do NOT wrap label in Flexible here because
-                    // ElevatedButton.icon already manages its own Flexible/Expanded
-                    // internally. Wrapping Text in another Flexible causes
-                    // "Incorrect use of ParentDataWidget" errors.
-                    label: Text(
-                      _ibHierarchy[0].name ?? 'Sub IB',
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.whiteColor,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                  child: Text(
+                    '${ibController.ibClients.length} clients under ${_selectedSubIB?.name ?? "Sub IB"}',
+                    style: TextStyle(fontSize: 11.sp, color: AppColors.textGrey),
+                    textAlign: TextAlign.end,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-              ],
-              // Show Sub IB's Sub IB if exists (current selected)
-              if (_selectedSubIB != null && _ibHierarchy.length >= 2) ...[
-                SizedBox(width: 8.w),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () {},
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 12.w,
-                        vertical: 10.h,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8.r),
-                      ),
-                      elevation: 0,
-                    ),
-                    icon: Icon(
-                      Icons.person,
-                      color: AppColors.whiteColor,
-                      size: 16.sp,
-                    ),
-                    // NOTE: Same as above – avoid nesting Flexible inside the
-                    // internal Row used by ElevatedButton.icon.
-                    label: Text(
-                      _selectedSubIB!.name ?? 'Sub IB',
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.whiteColor,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ),
-          // Second row: Back button and client count
-          if (_selectedSubIB != null) ...[
-            SizedBox(height: 12.h),
-            Row(
-              children: [
-                InkWell(
-                  onTap: _backToMasterIB,
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 8.w,
-                      vertical: 4.h,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(6.r),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.arrow_back,
-                          color: AppColors.primary,
-                          size: 16.sp,
-                        ),
-                        SizedBox(width: 4.w),
-                        Text(
-                          _ibHierarchy.length > 1
-                              ? 'Back to Sub IB'
-                              : 'Back to Master IB',
-                          style: TextStyle(
-                            fontSize: 12.sp,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const Spacer(),
-                Text(
-                  'Showing ${ibController.ibClients.length} clients under ${_selectedSubIB?.name ?? "Sub IB"}',
-                  style: TextStyle(fontSize: 11.sp, color: AppColors.textGrey),
                 ),
               ],
             ),
@@ -781,9 +951,83 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
     );
   }
 
+  Widget _buildStatsExpandable(dynamic stats, String userFullName) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 4.h),
+      child: Material(
+        color: AppColors.whiteColor,
+        elevation: 0,
+        borderRadius: BorderRadius.circular(12.r),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12.r),
+            border: Border.all(color: AppColors.border.withValues(alpha: 0.6)),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.border.withValues(alpha: 0.06),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              InkWell(
+                onTap: () => setState(() => _statsExpanded = !_statsExpanded),
+                borderRadius: BorderRadius.circular(12.r),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 14.h,
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Show More',
+                              style: TextStyle(
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            SizedBox(height: 2.h),
+                            Text(
+                              'View statistics & performance overview',
+                              style: TextStyle(
+                                fontSize: 11.sp,
+                                color: AppColors.textGrey,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Icon(
+                        _statsExpanded
+                            ? Icons.keyboard_arrow_up_rounded
+                            : Icons.keyboard_arrow_down_rounded,
+                        color: AppColors.primary,
+                        size: 24.sp,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              if (_statsExpanded)
+                _buildStatisticsGrid(stats, userFullName),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildTabs() {
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+      margin: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 8.h),
       child: Row(
         children: [
           Expanded(child: _buildTabButton('Client List', 0, Icons.person)),
@@ -800,6 +1044,7 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
     final isSelected = _selectedTabIndex == index;
     return GestureDetector(
       onTap: () {
+        FocusManager.instance.primaryFocus?.unfocus();
         setState(() {
           _selectedTabIndex = index;
           _expandedItems.clear();
@@ -808,12 +1053,25 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
           _loadMoreTradesInBackground();
         }
       },
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
         padding: EdgeInsets.symmetric(vertical: 10.h),
         decoration: BoxDecoration(
           color: isSelected ? AppColors.primary : AppColors.whiteColor,
-          borderRadius: BorderRadius.circular(8.r),
-          border: Border.all(color: AppColors.primary, width: 1),
+          borderRadius: BorderRadius.circular(10.r),
+          border: Border.all(
+            color: isSelected ? AppColors.primary : AppColors.border,
+            width: 1,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.2),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -855,34 +1113,91 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
   }
 
   Widget _buildSearchBar() {
-    String hintText;
-    if (_selectedSubIB == null) {
-      hintText = 'Search Sub IBs...';
-    } else {
-      hintText = 'Search Sub IB\'s Sub IBs...';
+    final String hintText;
+    switch (_selectedTabIndex) {
+      case 0:
+        hintText =
+            _selectedSubIB == null
+                ? 'Search clients by name or email...'
+                : 'Search clients under ${_selectedSubIB!.name ?? "Sub IB"}...';
+        break;
+      case 1:
+        hintText =
+            _selectedSubIB == null
+                ? 'Search Sub IBs by name or email...'
+                : 'Search nested Sub IBs...';
+        break;
+      default:
+        hintText = 'Search trade history...';
     }
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
-      padding: EdgeInsets.symmetric(horizontal: 8.w),
-      decoration: BoxDecoration(
-        color: AppColors.backgroundLight,
-        borderRadius: BorderRadius.circular(8.r),
-      ),
-      child: TextField(
-        onChanged: (value) {
-          setState(() {
-            _searchQuery = value;
-            _expandedItems.clear();
-          });
-        },
-        decoration: InputDecoration(
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 0),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14.r),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.border.withValues(alpha: 0.08),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: RTLHelper.rtlTextField(
+          controller: _searchController,
+          focusNode: _searchFocusNode,
           hintText: hintText,
-          hintStyle: TextStyle(fontSize: 14.sp, color: AppColors.textGrey),
-          border: InputBorder.none,
+          onChanged: (value) {
+            setState(() {
+              _searchQuery = value;
+              _expandedItems.clear();
+            });
+          },
+          style: TextStyle(
+            fontSize: 14.sp,
+            fontWeight: FontWeight.w400,
+            color: AppColors.textPrimary,
+          ),
           prefixIcon: Icon(
-            Icons.search,
-            size: 20.sp,
+            Icons.search_rounded,
+            size: 22.sp,
             color: AppColors.textGrey,
+          ),
+          suffixIcon:
+              _searchQuery.isNotEmpty
+                  ? IconButton(
+                    onPressed: () {
+                      setState(() => _clearSearch());
+                    },
+                    icon: Icon(
+                      Icons.close_rounded,
+                      size: 20.sp,
+                      color: AppColors.textGrey,
+                    ),
+                  )
+                  : null,
+          decoration: InputDecoration(
+            hintText: hintText,
+            hintStyle: TextStyle(fontSize: 14.sp, color: AppColors.textGrey),
+            filled: true,
+            fillColor: AppColors.whiteColor,
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: 12.w,
+              vertical: 12.h,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14.r),
+              borderSide: BorderSide(color: AppColors.border),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14.r),
+              borderSide: BorderSide(color: AppColors.border),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14.r),
+              borderSide: BorderSide(color: AppColors.primary, width: 1.5),
+            ),
           ),
         ),
       ),
@@ -909,17 +1224,20 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
             ? (double.tryParse(stats.totalRebateGenerated.toString()) ?? 0.0)
             : 0.0;
 
-    // Show 10 cards in 4-column grid (4+4+2 layout) matching the image
-    return Container(
-      padding: EdgeInsets.all(16.w),
-      child: GridView.count(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        crossAxisCount: 3,
-        crossAxisSpacing: 12.w,
-        mainAxisSpacing: 12.h,
-        childAspectRatio: 0.85,
-        children: [
+    final maxGridHeight = MediaQuery.sizeOf(context).height * 0.32;
+
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxHeight: maxGridHeight),
+      child: SingleChildScrollView(
+        padding: EdgeInsets.fromLTRB(12.w, 0, 12.w, 12.h),
+        child: GridView.count(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisCount: 3,
+          crossAxisSpacing: 12.w,
+          mainAxisSpacing: 12.h,
+          childAspectRatio: 0.85,
+          children: [
           // Row 1: First card - Show "Master IB" or "Sub IB" based on selection
           _buildStatCard(
             icon: Icons.account_balance_wallet,
@@ -977,6 +1295,7 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
             isHighlighted: true,
           ),
         ],
+        ),
       ),
     );
   }
@@ -1049,49 +1368,6 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
     );
   }
 
-  Widget _getTabContent(IBController controller) {
-    switch (_selectedTabIndex) {
-      case 0:
-        return _buildClientList(controller);
-      case 1:
-        return _buildIbList(controller);
-      case 2:
-        return _buildTradeHistory(controller);
-      default:
-        return _buildClientList(controller);
-    }
-  }
-
-  Widget _buildClientList(IBController controller) {
-    final filteredClients = _getFilteredClients();
-    if (filteredClients.isEmpty) {
-      return Padding(
-        padding: EdgeInsets.all(20.w),
-        child: Center(
-          child: Text(
-            'No clients found',
-            style: TextStyle(fontSize: 14.sp, color: AppColors.textGrey),
-          ),
-        ),
-      );
-    }
-
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      padding: EdgeInsets.symmetric(
-        horizontal: 16.w,
-        vertical: 16.h,
-      ).copyWith(bottom: 20.h),
-      itemCount: filteredClients.length,
-      itemBuilder: (context, index) {
-        final client = filteredClients[index];
-        final isExpanded = _expandedItems[index] ?? false;
-        return _buildExpandableClientCard(client, index, isExpanded);
-      },
-    );
-  }
-
   Widget _buildExpandableClientCard(
     IBClient client,
     int index,
@@ -1110,26 +1386,35 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
     final clientCount = client.totalClients ?? 0;
 
     return Container(
-      margin: EdgeInsets.only(bottom: 8.h),
+      margin: EdgeInsets.only(bottom: 10.h),
       decoration: BoxDecoration(
         color: AppColors.whiteColor,
-        borderRadius: BorderRadius.circular(8.r),
-        border: Border.all(color: AppColors.border.withOpacity(0.3)),
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.45)),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.border.withValues(alpha: 0.06),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         children: [
           InkWell(
-            onTap: () => _toggleExpand(index),
+            onTap: () => _openTradeHistoryForClient(client),
+            onLongPress: () => _toggleExpand(index),
+            borderRadius: BorderRadius.circular(12.r),
             child: Padding(
-              padding: EdgeInsets.all(12.w),
+              padding: EdgeInsets.all(14.w),
               child: Row(
                 children: [
                   // Avatar
                   Container(
-                    width: 40.w,
-                    height: 40.w,
+                    width: 44.w,
+                    height: 44.w,
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.2),
+                      color: AppColors.primary.withValues(alpha: 0.12),
                       shape: BoxShape.circle,
                     ),
                     child: Center(
@@ -1202,41 +1487,69 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
                     ),
                   ),
                   // View and Arrow buttons
-                  IconButton(
-                    icon: Icon(
-                      Icons.visibility_outlined,
-                      size: 18.sp,
-                      color: AppColors.primary,
-                    ),
-                    onPressed: () {
-                      // View details
-                      _toggleExpand(index);
-                    },
-                  ),
                   Container(
-                    width: 32.w,
-                    height: 32.w,
-                    decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(6.r),
-                    ),
+                      width: 32.w,
+                      height: 32.w,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(6.r),
+                      ),
                     child: IconButton(
+                      iconSize: 20.sp,
                       padding: EdgeInsets.zero,
+                      tooltip: 'View details',
                       icon: Icon(
-                        Icons.arrow_forward,
-                        size: 16.sp,
+                        Icons.visibility_outlined,
+                        size: 18.sp,
                         color: AppColors.whiteColor,
                       ),
-                      onPressed: () {
-                        // Only navigate if this is a sub-IB
-                        if (client.ibType == 'sub-ib' &&
-                            client.isSubIbApproved == true &&
-                            client.id != null) {
-                          _onSubIBClicked(client);
-                        }
-                      },
+                      onPressed: () => _toggleExpand(index),
                     ),
                   ),
+                  SizedBox(width: 6.w),
+                  Container(
+                      width: 32.w,
+                      height: 32.w,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(6.r),
+                      ),
+                    child: IconButton(
+                      iconSize: 20.sp,
+                      padding: EdgeInsets.zero,
+                      tooltip: 'Trade history',
+                      icon: Icon(
+                        Icons.menu,
+                        size: 18.sp,
+                        color: AppColors.whiteColor,
+                      ),
+                      onPressed: () => _openTradeHistoryForClient(client),
+                    ),
+                  ),
+                  if (client.ibType == 'sub-ib' &&
+                      client.isSubIbApproved == true &&
+                      client.id != null)...[
+                    
+                    SizedBox(width: 6.w),
+
+                    Container(
+                      width: 32.w,
+                      height: 32.w,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(6.r),
+                      ),
+                      child: IconButton(
+                        padding: EdgeInsets.zero,
+                        tooltip: 'Open Sub IB',
+                        icon: Icon(
+                          Icons.arrow_forward,
+                          size: 16.sp,
+                          color: AppColors.whiteColor,
+                        ),
+                        onPressed: () => _onSubIBClicked(client),
+                      ),
+                    ),]
                 ],
               ),
             ),
@@ -1313,36 +1626,6 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
     );
   }
 
-  Widget _buildIbList(IBController controller) {
-    final filteredSubIBs = _getFilteredSubIBs();
-    if (filteredSubIBs.isEmpty) {
-      return Padding(
-        padding: EdgeInsets.all(20.w),
-        child: Center(
-          child: Text(
-            'No Sub-IBs found',
-            style: TextStyle(fontSize: 14.sp, color: AppColors.textGrey),
-          ),
-        ),
-      );
-    }
-
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      padding: EdgeInsets.symmetric(
-        horizontal: 16.w,
-        vertical: 16.h,
-      ).copyWith(bottom: 20.h),
-      itemCount: filteredSubIBs.length,
-      itemBuilder: (context, index) {
-        final subIB = filteredSubIBs[index];
-        final isExpanded = _expandedItems[index] ?? false;
-        return _buildExpandableSubIBCard(subIB, index, isExpanded);
-      },
-    );
-  }
-
   Widget _buildExpandableSubIBCard(IBClient subIB, int index, bool isExpanded) {
     // Get ALL data dynamically from API response - NO static data
     // Sub-IB count from API
@@ -1363,26 +1646,35 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
     }
 
     return Container(
-      margin: EdgeInsets.only(bottom: 8.h),
+      margin: EdgeInsets.only(bottom: 10.h),
       decoration: BoxDecoration(
         color: AppColors.whiteColor,
-        borderRadius: BorderRadius.circular(8.r),
-        border: Border.all(color: AppColors.border.withOpacity(0.3)),
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.45)),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.border.withValues(alpha: 0.06),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         children: [
           InkWell(
-            onTap: () => _toggleExpand(index),
+            onTap: () => _openTradeHistoryForClient(subIB),
+            onLongPress: () => _toggleExpand(index),
+            borderRadius: BorderRadius.circular(12.r),
             child: Padding(
-              padding: EdgeInsets.all(12.w),
+              padding: EdgeInsets.all(14.w),
               child: Row(
                 children: [
                   // Avatar
                   Container(
-                    width: 40.w,
-                    height: 40.w,
+                    width: 44.w,
+                    height: 44.w,
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.2),
+                      color: AppColors.primary.withValues(alpha: 0.12),
                       shape: BoxShape.circle,
                     ),
                     child: Center(
@@ -1453,16 +1745,23 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
                       ],
                     ),
                   ),
-                  // View and Arrow buttons
                   IconButton(
+                    tooltip: 'View details',
                     icon: Icon(
                       Icons.visibility_outlined,
                       size: 18.sp,
                       color: AppColors.primary,
                     ),
-                    onPressed: () {
-                      // View details
-                    },
+                    onPressed: () => _toggleExpand(index),
+                  ),
+                  IconButton(
+                    tooltip: 'Trade history',
+                    icon: Icon(
+                      Icons.history_rounded,
+                      size: 18.sp,
+                      color: AppColors.primary,
+                    ),
+                    onPressed: () => _openTradeHistoryForClient(subIB),
                   ),
                   Container(
                     width: 32.w,
@@ -1473,6 +1772,7 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
                     ),
                     child: IconButton(
                       padding: EdgeInsets.zero,
+                      tooltip: 'Open Sub IB',
                       icon: Icon(
                         Icons.arrow_forward,
                         size: 16.sp,
@@ -1534,129 +1834,38 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
     );
   }
 
-  Widget _buildTradeHistory(IBController controller) {
-    return Obx(() {
-      final selectedId = controller.selectedClientId.value;
-
-      // ── Trade history view ─────────────────────────────────────────
-      if (selectedId != null) {
-      return Column(
-        children: [
-          // Header with back button + selected client name
-          Container(
-            margin: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 8.h),
-            child: Row(
-              children: [
-                GestureDetector(
-                  onTap: () {
-                    controller.clearClientSelection();
-                    controller.clearTradeHistory();
-                  },
-                  child: Row(
-                    children: [
-                      Icon(Icons.arrow_back, size: 18.sp, color: AppColors.primary),
-                      SizedBox(width: 6.w),
-                      Text(
-                        'Select Client',
-                        style: TextStyle(
-                          fontSize: 13.sp,
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const Spacer(),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(6.r),
-                  ),
-                  child: Text(
-                    controller.selectedClientName.value ?? 'Client',
-                    style: TextStyle(
-                      fontSize: 11.sp,
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // Trade list
-          Expanded(
-            child: Obx(() {
-              final trades = controller.ibTradeHistory;
-              final isEmpty = trades.isEmpty && !controller.isHistoryLoading.value;
-              final hasMore = controller.tradeHistoryPage < controller.tradeHistoryTotalPages;
-              if (isEmpty) {
-                return Center(
-                  child: Text(
-                    'No trade history found.',
-                    style: TextStyle(fontSize: 14.sp, color: AppColors.textGrey),
-                  ),
-                );
-              }
-              return ListView.builder(
-                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-                itemCount: trades.length + (hasMore ? 1 : 0),
-                itemBuilder: (context, index) {
-                  if (index == trades.length) {
-                    return _buildLoadMoreButton(
-                      isLoading: controller.isLoadingMoreTrades,
-                      onTap: () => controller.loadMoreTradeHistory(),
-                    );
-                  }
-                  final trade = trades[index];
-                  return _buildTradeDetailCard(trade, index, false);
-                },
-              );
-            }),
-          ),
-          // Loading bar at top of list
-          Obx(() => controller.isHistoryLoading.value && controller.ibTradeHistory.isEmpty
-              ? Padding(
-                  padding: EdgeInsets.all(40.w),
-                  child: Center(
-                    child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
-                    ),
-                  ),
-                )
-              : const SizedBox.shrink(),
-          ),
-        ],
-      );
-    }
-
-    // ── Client selector (search + dropdown list) ───────────────────
-    return _buildClientSearchView(controller);
-    });
-  }
-
-  /// Search + client list dropdown for trade history selector
-  Widget _buildClientSearchView(IBController controller) {
-    return Column(
-      children: [
-        // Search input + Search button
-        Container(
-          margin: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 0),
+  List<Widget> _tradeHistorySearchSlivers(
+    IBController controller,
+    bool keyboardOpen,
+  ) {
+    return [
+      SliverToBoxAdapter(
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 8.h),
           child: Row(
             children: [
               Expanded(
                 child: TextField(
                   controller: _clientSearchController,
+                  focusNode: _tradeHistorySearchFocusNode,
                   style: TextStyle(fontSize: 13.sp),
                   decoration: InputDecoration(
                     hintText: 'Search name, email, or account...',
-                    hintStyle: TextStyle(fontSize: 13.sp, color: AppColors.textGrey),
-                    prefixIcon: Icon(Icons.search, size: 20.sp, color: AppColors.textGrey),
+                    hintStyle: TextStyle(
+                      fontSize: 13.sp,
+                      color: AppColors.textGrey,
+                    ),
+                    prefixIcon: Icon(
+                      Icons.search,
+                      size: 20.sp,
+                      color: AppColors.textGrey,
+                    ),
                     filled: true,
                     fillColor: AppColors.whiteColor,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 12.w,
+                      vertical: 12.h,
+                    ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8.r),
                       borderSide: BorderSide(color: AppColors.border),
@@ -1687,7 +1896,10 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
                   );
                 },
                 child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 12.h,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.primary,
                     borderRadius: BorderRadius.circular(8.r),
@@ -1705,70 +1917,103 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
             ],
           ),
         ),
+      ),
+      ..._tradeHistorySearchResultSlivers(controller, keyboardOpen),
+    ];
+  }
 
-        // Hint when no search yet
-        Obx(() => Visibility(
-          visible: _clientSearchController.text.isEmpty && controller.clientSearchResults.isEmpty && !controller.isSearchingClients,
-          child: Padding(
-            padding: EdgeInsets.all(24.w),
-            child: Column(
-              children: [
-                Icon(Icons.person_search, size: 48.sp, color: AppColors.textGrey.withValues(alpha: 0.4)),
-                SizedBox(height: 12.h),
-                Text(
-                  'Search for a client to view their trade history',
+  List<Widget> _tradeHistorySearchResultSlivers(
+    IBController controller,
+    bool keyboardOpen,
+  ) {
+    if (controller.isSearchingClients) {
+      return [
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+            ),
+          ),
+        ),
+      ];
+    }
+
+    final results = controller.clientSearchResults;
+
+    if (results.isEmpty) {
+      if (_clientSearchController.text.isNotEmpty) {
+        return [
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: Center(
+              child: Padding(
+                padding: EdgeInsets.all(16.w),
+                child: Text(
+                  'No clients found for "${_clientSearchController.text}"',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 13.sp, color: AppColors.textGrey),
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    color: AppColors.textGrey,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ];
+      }
+
+      if (!keyboardOpen) {
+        return [
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.person_search,
+                  size: 40.sp,
+                  color: AppColors.textGrey.withValues(alpha: 0.4),
+                ),
+                SizedBox(height: 8.h),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 24.w),
+                  child: Text(
+                    'Search for a client to view their trade history',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      color: AppColors.textGrey,
+                    ),
+                  ),
                 ),
               ],
             ),
           ),
-        )),
+        ];
+      }
 
-        // Client results list
-        Expanded(
-          child: Obx(() {
-            if (controller.isSearchingClients) {
-              return Center(
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
-                ),
+      return [const SliverToBoxAdapter(child: SizedBox.shrink())];
+    }
+
+    return [
+      SliverList(
+        delegate: SliverChildBuilderDelegate(
+          (context, index) {
+            if (index == results.length) {
+              return _buildLoadMoreButton(
+                isLoading: controller.isLoadingMoreClients,
+                onTap: () => controller.loadMoreSearchClients(),
               );
             }
-            final results = controller.clientSearchResults;
-            if (results.isEmpty) {
-              if (_clientSearchController.text.isNotEmpty) {
-                return Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(16.w),
-                    child: Text(
-                      'No clients found for "${_clientSearchController.text}"',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 13.sp, color: AppColors.textGrey),
-                    ),
-                  ),
-                );
-              }
-              return const SizedBox.shrink();
-            }
-            return ListView.builder(
-              padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 0),
-              itemCount: results.length + (controller.clientsPage < controller.clientsTotalPages ? 1 : 0),
-              itemBuilder: (context, index) {
-                if (index == results.length) {
-                  return _buildLoadMoreButton(
-                    isLoading: controller.isLoadingMoreClients,
-                    onTap: () => controller.loadMoreSearchClients(),
-                  );
-                }
-                final client = results[index];
-                return _buildClientSelectCard(client, controller);
-              },
-            );
-          }),
+            return _buildClientSelectCard(results[index], controller);
+          },
+          childCount:
+              results.length +
+              (controller.clientsPage < controller.clientsTotalPages ? 1 : 0),
         ),
-      ],
-    );
+      ),
+    ];
   }
 
   /// Load more button widget
