@@ -294,10 +294,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
     return Obx(
       () => RTLHelper.rtlTextField(
         controller: TextEditingController(
-          text:
-              controller.selectedWithdrawalMethod.value != null
-                  ? '${controller.selectedWithdrawalMethod.value!.methodName ?? ''}'
-                  : controller.selectedPaymentMethod.value ?? '',
+          text: controller.selectedPaymentMethodDisplayLabel,
         ),
         readOnly: true,
         onTap: () => _showWithdrawalMethodDropdown(),
@@ -312,7 +309,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
           ),
         ),
         decoration: InputDecoration(
-          labelText: 'Withdrawal Method',
+          labelText: 'Payment Method',
           labelStyle: TextStyle(color: AppColors.textGrey),
           floatingLabelStyle: TextStyle(color: AppColors.primary),
           contentPadding: EdgeInsets.symmetric(
@@ -464,13 +461,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
 
   Widget _buildCryptoFromField() {
     return Obx(() {
-      final userWithdrawalMethods =
-          controller
-              .withdrawalMethodDetail
-              .value
-              ?.data
-              ?.userWithdrawalMethods ??
-          [];
+      final userWithdrawalMethods = controller.userWithdrawalMethods;
       final hasMethods = userWithdrawalMethods.isNotEmpty;
 
       // If no methods available, show "Add Method" button
@@ -541,48 +532,10 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
         );
       }
 
-      // Show dropdown if methods are available
-      // Get display text for selected crypto account
-      String displayText = '';
-      if (controller.selectedCryptoAccount.value != null &&
-          controller.selectedCryptoAccount.value!.isNotEmpty) {
-        // Find the selected method to get display text
-        final selectedValue = controller.selectedCryptoAccount.value!;
-        for (var method in userWithdrawalMethods) {
-          final methodMap = method as Map<String, dynamic>;
-          final cryptoAddress = methodMap['crypto_address']?.toString() ?? '';
-          final holderName = methodMap['holder_name']?.toString() ?? '';
-          final currency = methodMap['currency']?.toString() ?? '';
-
-          if (cryptoAddress == selectedValue ||
-              selectedValue.contains(cryptoAddress)) {
-            // Build display text
-            if (cryptoAddress.isNotEmpty) {
-              if (cryptoAddress.length > 12) {
-                displayText =
-                    '${cryptoAddress.substring(0, 8)}...${cryptoAddress.substring(cryptoAddress.length - 4)}';
-              } else {
-                displayText = cryptoAddress;
-              }
-            } else if (holderName.isNotEmpty) {
-              displayText = holderName;
-            }
-
-            if (currency.isNotEmpty) {
-              displayText += ' ($currency)';
-            }
-            break;
-          }
-        }
-
-        // If not found, use the stored value
-        if (displayText.isEmpty) {
-          displayText = selectedValue;
-        }
-      }
-
       return RTLHelper.rtlTextField(
-        controller: TextEditingController(text: displayText),
+        controller: TextEditingController(
+          text: controller.selectedCryptoDisplayLabel,
+        ),
         readOnly: true,
         onTap: () => _showCryptoTypeDropdown(),
         suffixIcon: InkWell(
@@ -596,7 +549,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
           ),
         ),
         decoration: InputDecoration(
-          labelText: 'Crypto Type',
+          labelText: 'To Account',
           labelStyle: TextStyle(color: AppColors.textGrey),
           floatingLabelStyle: TextStyle(color: AppColors.primary),
           contentPadding: EdgeInsets.symmetric(
@@ -1023,7 +976,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
     if (controller.selectedPaymentMethod.value.toLowerCase() == 'crypto') {
       if (controller.selectedCryptoAccount.value == null ||
           controller.selectedCryptoAccount.value!.isEmpty) {
-        _validationMessage.value = 'Please select a crypto account';
+        _validationMessage.value = 'Please select a destination account';
         _showValidationError.value = true;
         return false;
       }
@@ -1494,13 +1447,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
       ),
       builder:
           (context) => Obx(() {
-            final userWithdrawalMethods =
-                controller
-                    .withdrawalMethodDetail
-                    .value
-                    ?.data
-                    ?.userWithdrawalMethods ??
-                [];
+            final userWithdrawalMethods = controller.userWithdrawalMethods;
 
             return Container(
               padding: EdgeInsets.all(24.w),
@@ -1591,15 +1538,10 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
                         shrinkWrap: true,
                         itemCount: userWithdrawalMethods.length,
                         itemBuilder: (context, index) {
-                          final methodMap =
-                              userWithdrawalMethods[index]
-                                  as Map<String, dynamic>;
-                          final bankName =
-                              methodMap['bank_name']?.toString() ?? '';
-                          final accountNumber =
-                              methodMap['account_number']?.toString() ?? '';
-                          final holderName =
-                              methodMap['holder_name']?.toString() ?? '';
+                          final method = userWithdrawalMethods[index];
+                          final bankName = method.bankName ?? '';
+                          final accountNumber = method.bankAccountNo ?? '';
+                          final holderName = method.holderName ?? '';
                           final displayLabel =
                               bankName.isNotEmpty ? bankName : holderName;
                           final isSelected =
@@ -1757,13 +1699,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
       ),
       builder:
           (context) => Obx(() {
-            final userWithdrawalMethods =
-                controller
-                    .withdrawalMethodDetail
-                    .value
-                    ?.data
-                    ?.userWithdrawalMethods ??
-                [];
+            final userWithdrawalMethods = controller.userWithdrawalMethods;
 
             if (userWithdrawalMethods.isEmpty) {
               return Container(
@@ -1859,7 +1795,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
                   ),
                   SizedBox(height: 16.h),
                   Text(
-                    'Select Crypto Type',
+                    'Select To Account',
                     style: TextStyle(
                       fontSize: 18.sp,
                       fontWeight: FontWeight.w600,
@@ -1869,63 +1805,23 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
                   SizedBox(height: 16.h),
                   Container(
                     constraints: BoxConstraints(maxHeight: 400.h),
-                    child: ListView.separated(
+                    child: ListView.builder(
                       shrinkWrap: true,
                       itemCount: userWithdrawalMethods.length,
-                      separatorBuilder:
-                          (_, __) =>
-                              Divider(height: 1, color: AppColors.border),
                       itemBuilder: (context, index) {
-                        final method =
-                            userWithdrawalMethods[index]
-                                as Map<String, dynamic>;
-                        final cryptoAddress =
-                            method['crypto_address']?.toString() ?? '';
-                        final holderName =
-                            method['holder_name']?.toString() ?? '';
-                        final currency = method['currency']?.toString() ?? '';
-                        final status =
-                            method['status']?.toString()?.toLowerCase() ?? '';
-
-                        // Create display text
-                        String displayText = '';
-                        if (cryptoAddress.isNotEmpty) {
-                          // Show first 8 and last 4 characters of address
-                          if (cryptoAddress.length > 12) {
-                            displayText =
-                                '${cryptoAddress.substring(0, 8)}...${cryptoAddress.substring(cryptoAddress.length - 4)}';
-                          } else {
-                            displayText = cryptoAddress;
-                          }
-                        } else if (holderName.isNotEmpty) {
-                          displayText = holderName;
-                        } else {
-                          displayText = 'Crypto Method ${index + 1}';
-                        }
-
-                        // Add currency if available
-                        if (currency.isNotEmpty) {
-                          displayText += ' ($currency)';
-                        }
-
+                        final method = userWithdrawalMethods[index];
+                        final displayText = method.toAccountDisplayLabel;
+                        final methodId = method.id ?? '';
                         final isSelected =
-                            controller.selectedCryptoAccount.value ==
-                                cryptoAddress ||
-                            controller.selectedCryptoAccount.value ==
-                                displayText;
+                            controller.selectedCryptoAccount.value == methodId;
 
-                        // Only show approved methods
-                        if (status != 'approved') {
+                        if (!method.isApproved) {
                           return SizedBox.shrink();
                         }
 
                         return InkWell(
                           onTap: () {
-                            // Store the crypto address or a unique identifier
-                            controller.selectedCryptoAccount.value =
-                                cryptoAddress.isNotEmpty
-                                    ? cryptoAddress
-                                    : displayText;
+                            controller.selectedCryptoAccount.value = methodId;
                             Navigator.pop(context);
                           },
                           child: Container(
@@ -1943,25 +1839,19 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
                             child: Row(
                               children: [
                                 Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        displayText,
-                                        style: TextStyle(
-                                          fontSize: 16.sp,
-                                          color:
-                                              isSelected
-                                                  ? AppColors.primary
-                                                  : AppColors.textPrimary,
-                                          fontWeight:
-                                              isSelected
-                                                  ? FontWeight.w600
-                                                  : FontWeight.w400,
-                                        ),
-                                      ),
-                                    ],
+                                  child: Text(
+                                    displayText,
+                                    style: TextStyle(
+                                      fontSize: 16.sp,
+                                      color:
+                                          isSelected
+                                              ? AppColors.primary
+                                              : AppColors.textPrimary,
+                                      fontWeight:
+                                          isSelected
+                                              ? FontWeight.w600
+                                              : FontWeight.w400,
+                                    ),
                                   ),
                                 ),
                                 if (isSelected)

@@ -49,6 +49,7 @@ class KycBankController extends GetxController {
   final RxString confirmBankAccountNumber = ''.obs;
   final RxString bankSwiftCode = ''.obs;
   final RxString cryptoAddress = ''.obs;
+  final RxString selectedCryptoNetwork = ''.obs;
   final RxString upiAddress = ''.obs;
   final RxString optRadio = 'IFSC'.obs; // For IFSC/IBAN selection
   final RxString ifscIbanCode = ''.obs; // For IFSC/IBAN selection
@@ -138,6 +139,32 @@ class KycBankController extends GetxController {
 
   bool get requiresBankAccountValidation => accountTypeCategory == 'bank';
 
+  WithdrawalMethod? get selectedWithdrawalMethod {
+    if (withdrawalMethods.isEmpty) return null;
+    try {
+      return withdrawalMethods.firstWhere(
+        (m) =>
+            (m.methodName ?? '').toLowerCase() ==
+            selectedAccountType.value.toLowerCase(),
+      );
+    } catch (_) {
+      return withdrawalMethods.first;
+    }
+  }
+
+  List<AllowedCryptoNetwork> get availableCryptoNetworks =>
+      selectedWithdrawalMethod?.allowedCryptoNetworks ?? [];
+
+  String get selectedCryptoNetworkLabel {
+    if (selectedCryptoNetwork.value.isEmpty) return '';
+    for (final network in availableCryptoNetworks) {
+      if (network.slug == selectedCryptoNetwork.value) {
+        return network.label ?? selectedCryptoNetwork.value;
+      }
+    }
+    return selectedCryptoNetwork.value;
+  }
+
   // Fetch withdrawal methods for account type dropdown
   Future<void> fetchWithdrawalMethods() async {
     try {
@@ -166,6 +193,7 @@ class KycBankController extends GetxController {
               !accountTypes.contains(selectedAccountType.value)) {
             selectedAccountType.value = accountTypes.first;
           }
+          _applyAccountTypeDefaults();
           print(
             '✅ Loaded ${accountTypes.length} withdrawal methods for account type',
           );
@@ -253,6 +281,29 @@ class KycBankController extends GetxController {
     // Reset OTP state when changing account type
     isOtpSent.value = false;
     otp.value = '';
+    _applyAccountTypeDefaults();
+  }
+
+  void _applyAccountTypeDefaults() {
+    if (accountTypeCategory == 'crypto') {
+      selectedCurrency.value = 'USDT';
+      _applyDefaultCryptoNetwork();
+    } else if (selectedCurrency.value == 'USDT') {
+      selectedCurrency.value = 'USD';
+    }
+  }
+
+  void _applyDefaultCryptoNetwork() {
+    final networks = availableCryptoNetworks;
+    if (networks.isNotEmpty) {
+      selectedCryptoNetwork.value = networks.first.slug ?? '';
+    } else {
+      selectedCryptoNetwork.value = '';
+    }
+  }
+
+  void setCryptoNetwork(String slug) {
+    selectedCryptoNetwork.value = slug;
   }
 
   void setRelationShip(String relation) {
@@ -269,6 +320,7 @@ class KycBankController extends GetxController {
     confirmBankAccountNumber.value = '';
     bankSwiftCode.value = '';
     cryptoAddress.value = '';
+    selectedCryptoNetwork.value = '';
     upiAddress.value = '';
     otp.value = '';
     isOtpSent.value = false;
@@ -443,7 +495,7 @@ class KycBankController extends GetxController {
       return false;
     }
 
-    if (accountHolderName.value.isEmpty) {
+    if (accountTypeCategory != 'crypto' && accountHolderName.value.isEmpty) {
       errorMessage.value = 'Please enter account holder name';
       if (Get.isRegistered<AppNotificationController>()) {
         Get.find<AppNotificationController>().showError(
@@ -501,11 +553,32 @@ class KycBankController extends GetxController {
         return false;
       }
     } else if (accountTypeCategory == "crypto") {
+      if (selectedCryptoNetwork.value.isEmpty) {
+        errorMessage.value = 'Please select network';
+        if (Get.isRegistered<AppNotificationController>()) {
+          Get.find<AppNotificationController>().showError(
+            message: 'Please select network',
+          );
+        }
+        return false;
+      }
       if (cryptoAddress.value.isEmpty) {
         errorMessage.value = 'Please enter crypto address';
         if (Get.isRegistered<AppNotificationController>()) {
           Get.find<AppNotificationController>().showError(
             message: 'Please enter crypto address',
+          );
+        }
+        return false;
+      }
+      if (accountHolderName.value.isNotEmpty &&
+          !_isValidCryptoHolderName(accountHolderName.value)) {
+        errorMessage.value =
+            'Crypto holder name can only contain letters, spaces, hyphens, apostrophes, and periods';
+        if (Get.isRegistered<AppNotificationController>()) {
+          Get.find<AppNotificationController>().showError(
+            message:
+                'Crypto holder name can only contain letters, spaces, hyphens, apostrophes, and periods',
           );
         }
         return false;
@@ -537,8 +610,23 @@ class KycBankController extends GetxController {
     return true;
   }
 
+  bool _isValidCryptoHolderName(String value) {
+    return RegExp(r"^[a-zA-Z\s\-'.]+$").hasMatch(value.trim());
+  }
+
   // Build OTP request parameters - Dynamic based on account type
   Map<String, dynamic> _buildOtpRequestParams() {
+    if (accountTypeCategory == 'crypto') {
+      return {
+        'withdrawal_method': 'crypto',
+        'relationship': selectedRelationship.value.toLowerCase(),
+        'crypto_holder_name': accountHolderName.value.trim(),
+        'crypto_address': cryptoAddress.value.trim(),
+        'crypto_network': selectedCryptoNetwork.value,
+        'currency': selectedCurrency.value,
+      };
+    }
+
     final params = <String, dynamic>{};
 
     // Add conditional parameters based on account type

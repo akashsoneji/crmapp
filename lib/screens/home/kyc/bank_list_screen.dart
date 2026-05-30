@@ -342,7 +342,11 @@ class _BankListScreenState extends State<BankListScreen> {
         detailRows.add(_buildDetailRow('UPI Address', method.upiAddress!));
       }
     } else if (methodType == 'crypto') {
-      // Crypto method: show cryptoAddress, holderName, currency, relationship
+      if (_hasValue(method.cryptoNetwork)) {
+        detailRows.add(
+          _buildDetailRow('Network', _formatCryptoNetworkLabel(method.cryptoNetwork!)),
+        );
+      }
       if (_hasValue(method.cryptoAddress)) {
         detailRows.add(
           _buildDetailRow('Crypto Address', method.cryptoAddress!),
@@ -407,6 +411,19 @@ class _BankListScreenState extends State<BankListScreen> {
     );
   }
 
+  String _formatCryptoNetworkLabel(String slug) {
+    switch (slug.toLowerCase()) {
+      case 'trc20':
+        return 'TRC-20';
+      case 'bep20':
+        return 'BEP-20';
+      case 'erc20':
+        return 'ERC-20';
+      default:
+        return slug.toUpperCase();
+    }
+  }
+
   // Get display title for withdrawal method
   String _getDisplayTitle(WithdrawalMethods method) {
     switch (method.withdrawalMethod?.toLowerCase()) {
@@ -435,6 +452,10 @@ class _BankListScreenState extends State<BankListScreen> {
       case 'upi':
         return method.upiAddress ?? '';
       case 'crypto':
+        final network = method.cryptoNetwork ?? '';
+        if (network.isNotEmpty) {
+          return '${_formatCryptoNetworkLabel(network)} - ${method.cryptoAddress ?? ''}';
+        }
         return method.cryptoAddress ?? '';
       default:
         return '';

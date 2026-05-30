@@ -186,22 +186,21 @@ class _KycBankScreenState extends State<KycBankScreen> {
                                     _buildAccountTypeField(),
                                     SizedBox(height: 8.h),
                                     _buildRelationShipTypeField(),
-                                    // Currency field
-                                    _buildCurrencyField(),
-                                    // SizedBox(height: 8.h),
-
-                                    // Account Holder Name (common field)
-                                    _buildFormField(
-                                      languageService.tr(
-                                        'kyc_account_holder_name',
+                                    if (controller.accountTypeCategory !=
+                                        'crypto') ...[
+                                      _buildCurrencyField(),
+                                      _buildFormField(
+                                        languageService.tr(
+                                          'kyc_account_holder_name',
+                                        ),
+                                        _accountHolderController,
+                                        onChanged:
+                                            (value) =>
+                                                controller
+                                                    .accountHolderName
+                                                    .value = value,
                                       ),
-                                      _accountHolderController,
-                                      onChanged:
-                                          (value) =>
-                                              controller
-                                                  .accountHolderName
-                                                  .value = value,
-                                    ),
+                                    ],
 
                                     // Dynamic fields based on account type
                                     ..._buildDynamicFields(),
@@ -294,22 +293,21 @@ class _KycBankScreenState extends State<KycBankScreen> {
                                     _buildAccountTypeField(),
                                     SizedBox(height: 8.h),
                                     _buildRelationShipTypeField(),
-                                    // Currency field
-                                    _buildCurrencyField(),
-                                    // SizedBox(height: 8.h),
-
-                                    // Account Holder Name (common field)
-                                    _buildFormField(
-                                      languageService.tr(
-                                        'kyc_account_holder_name',
+                                    if (controller.accountTypeCategory !=
+                                        'crypto') ...[
+                                      _buildCurrencyField(),
+                                      _buildFormField(
+                                        languageService.tr(
+                                          'kyc_account_holder_name',
+                                        ),
+                                        _accountHolderController,
+                                        onChanged:
+                                            (value) =>
+                                                controller
+                                                    .accountHolderName
+                                                    .value = value,
                                       ),
-                                      _accountHolderController,
-                                      onChanged:
-                                          (value) =>
-                                              controller
-                                                  .accountHolderName
-                                                  .value = value,
-                                    ),
+                                    ],
 
                                     // Dynamic fields based on account type
                                     ..._buildDynamicFields(),
@@ -392,32 +390,40 @@ class _KycBankScreenState extends State<KycBankScreen> {
     }
   }
 
-  // Account Type field
+  // Account Type dropdown field
   Widget _buildAccountTypeField() {
     try {
-      return Padding(
-        padding: EdgeInsets.only(bottom: 16.h),
-        child: RTLHelper.rtlTextField(
-          readOnly: true,
-          onTap: _showAccountTypeOptions,
-          controller: TextEditingController(
-            text: controller.selectedAccountType.value,
-          ),
-          labelText: 'Account Type *',
-          suffixIcon: InkWell(
+      return Obx(
+        () => Padding(
+          padding: EdgeInsets.only(bottom: 16.h),
+          child: RTLHelper.rtlTextField(
+            readOnly: true,
             onTap: _showAccountTypeOptions,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              child: RTLHelper.rtlIcon(
-                Icons.keyboard_arrow_down,
-                color: AppColors.icongrey,
+            controller: TextEditingController(
+              text:
+                  controller.selectedAccountType.value.isEmpty
+                      ? ''
+                      : _getMethodTypeLabel(
+                        controller.selectedAccountType.value,
+                      ),
+            ),
+            labelText: '${languageService.tr('kyc_withdrawal_method_type')} *',
+            suffixIcon: InkWell(
+              onTap: _showAccountTypeOptions,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                child: RTLHelper.rtlIcon(
+                  Icons.keyboard_arrow_down,
+                  color: AppColors.icongrey,
+                ),
               ),
             ),
-          ),
-          decoration: InputDecoration(
-            labelText: 'Account Type *',
-            labelStyle: TextStyle(color: AppColors.textGrey),
-            floatingLabelStyle: TextStyle(color: AppColors.primary),
+            decoration: InputDecoration(
+              labelText:
+                  '${languageService.tr('kyc_withdrawal_method_type')} *',
+              labelStyle: TextStyle(color: AppColors.textGrey),
+              floatingLabelStyle: TextStyle(color: AppColors.primary),
+            ),
           ),
         ),
       );
@@ -437,6 +443,108 @@ class _KycBankScreenState extends State<KycBankScreen> {
           ),
         ),
       );
+    }
+  }
+
+  void _showAccountTypeOptions() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.background,
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.5,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40.w,
+                  height: 4.h,
+                  margin: EdgeInsets.only(top: 12.h),
+                  decoration: BoxDecoration(
+                    color: AppColors.border,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsets.all(16.w),
+                  child: Text(
+                    languageService.tr('kyc_withdrawal_method_type'),
+                    style: TextStyle(
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+                Flexible(
+                  child: Obx(() {
+                    if (controller.accountTypes.isEmpty) {
+                      return Padding(
+                        padding: EdgeInsets.all(24.w),
+                        child: Text(
+                          'Loading account types...',
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 14.sp,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      );
+                    }
+                    return ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: controller.accountTypes.length,
+                      itemBuilder: (context, index) {
+                        final type = controller.accountTypes[index];
+                        final label = _getMethodTypeLabel(type);
+                        return ListTile(
+                          title: Text(
+                            label,
+                            style: TextStyle(color: AppColors.textPrimary),
+                          ),
+                          trailing:
+                              controller.selectedAccountType.value == type
+                                  ? Icon(Icons.check, color: AppColors.primary)
+                                  : null,
+                          onTap: () {
+                            controller.setAccountType(type);
+                            _accountHolderController.clear();
+                            _cryptoAddressController.clear();
+                            Navigator.pop(context);
+                          },
+                        );
+                      },
+                    );
+                  }),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  String _getMethodTypeLabel(String type) {
+    switch (type.toLowerCase()) {
+      case 'crypto':
+        return 'Crypto Currency';
+      case 'local':
+        return 'Local Transfer';
+      case 'bank':
+        return 'Bank Transfer';
+      case 'upi':
+        return 'UPI';
+      default:
+        if (type.isEmpty) return type;
+        return type[0].toUpperCase() + type.substring(1);
     }
   }
 
@@ -581,16 +689,157 @@ class _KycBankScreenState extends State<KycBankScreen> {
   // Crypto fields
   List<Widget> _buildCryptoFields() {
     return [
-      // Crypto section header
-      // _buildSectionHeader("Crypto Details", Icons.currency_bitcoin),
+      _buildCryptoHolderNameField(),
+      _buildCryptoNetworkField(),
       _buildFormField(
         languageService.tr('kyc_crypto_address'),
         _cryptoAddressController,
         onChanged: (value) => controller.cryptoAddress.value = value,
-        // icon: Icons.currency_bitcoin,
         keyboardType: TextInputType.text,
+        hintText: 'Enter crypto wallet address',
       ),
     ];
+  }
+
+  Widget _buildCryptoHolderNameField() {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 16.h),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          RTLHelper.rtlTextField(
+            controller: _accountHolderController,
+            onChanged: (value) => controller.accountHolderName.value = value,
+            labelText: languageService.tr('kyc_crypto_holder_name'),
+            hintText: languageService.tr('kyc_crypto_holder_name_hint'),
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r"[a-zA-Z\s\-'.]")),
+            ],
+            decoration: InputDecoration(
+              labelText: languageService.tr('kyc_crypto_holder_name'),
+              hintText: languageService.tr('kyc_crypto_holder_name_hint'),
+              labelStyle: TextStyle(color: AppColors.textGrey),
+              floatingLabelStyle: TextStyle(color: AppColors.primary),
+              hintStyle: TextStyle(color: AppColors.textGrey),
+            ),
+          ),
+          SizedBox(height: 6.h),
+          Text(
+            languageService.tr('kyc_crypto_holder_name_helper'),
+            style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCryptoNetworkField() {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 16.h),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Obx(
+            () => RTLHelper.rtlTextField(
+              readOnly: true,
+              onTap: _showCryptoNetworkOptions,
+              controller: TextEditingController(
+                text:
+                    controller.selectedCryptoNetworkLabel.isEmpty
+                        ? languageService.tr('kyc_select_network')
+                        : controller.selectedCryptoNetworkLabel,
+              ),
+              labelText: languageService.tr('kyc_crypto_network'),
+              suffixIcon: InkWell(
+                onTap: _showCryptoNetworkOptions,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  child: RTLHelper.rtlIcon(
+                    Icons.keyboard_arrow_down,
+                    color: AppColors.icongrey,
+                  ),
+                ),
+              ),
+              decoration: InputDecoration(
+                labelText: languageService.tr('kyc_crypto_network'),
+                labelStyle: TextStyle(color: AppColors.textGrey),
+                floatingLabelStyle: TextStyle(color: AppColors.primary),
+              ),
+            ),
+          ),
+          SizedBox(height: 6.h),
+          Text(
+            languageService.tr('kyc_crypto_network_helper'),
+            style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showCryptoNetworkOptions() {
+    final networks = controller.availableCryptoNetworks;
+    if (networks.isEmpty) {
+      if (Get.isRegistered<AppNotificationController>()) {
+        Get.find<AppNotificationController>().showError(
+          message: 'No crypto networks available for this method',
+        );
+      }
+      return;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.background,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40.w,
+                height: 4.h,
+                margin: EdgeInsets.only(top: 12.h),
+                decoration: BoxDecoration(
+                  color: AppColors.border,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.all(16.w),
+                child: Text(
+                  languageService.tr('kyc_select_network'),
+                  style: TextStyle(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+              ...networks.map((network) {
+                final slug = network.slug ?? '';
+                final label = network.label ?? slug;
+                return ListTile(
+                  title: Text(label, style: TextStyle(color: AppColors.textPrimary)),
+                  trailing:
+                      controller.selectedCryptoNetwork.value == slug
+                          ? Icon(Icons.check, color: AppColors.primary)
+                          : null,
+                  onTap: () {
+                    controller.setCryptoNetwork(slug);
+                    Navigator.pop(context);
+                  },
+                );
+              }),
+              SizedBox(height: 8.h),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   // UPI fields
@@ -609,22 +858,28 @@ class _KycBankScreenState extends State<KycBankScreen> {
 
   // Proof upload section
   Widget _buildProofUploadSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          languageService.tr('kyc_add_proof'),
-          style: TextStyle(
-            fontSize: 14.sp,
-            fontWeight: FontWeight.w500,
-            color: AppColors.textPrimary,
+    return Obx(() {
+      final isCrypto = controller.accountTypeCategory == 'crypto';
+      final label =
+          isCrypto
+              ? languageService.tr('kyc_crypto_proof')
+              : languageService.tr('kyc_add_proof');
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w500,
+              color: AppColors.textPrimary,
+            ),
           ),
-        ),
-        SizedBox(height: 8.h),
-        GestureDetector(
-          onTap: _showProofOptions,
-          child: Obx(
-            () => Container(
+          SizedBox(height: 8.h),
+          GestureDetector(
+            onTap: _showProofOptions,
+            child: Container(
               height: 120.h,
               width: double.infinity,
               decoration: BoxDecoration(
@@ -654,9 +909,9 @@ class _KycBankScreenState extends State<KycBankScreen> {
                       ),
             ),
           ),
-        ),
-      ],
-    );
+        ],
+      );
+    });
   }
 
   // OTP field
@@ -1035,90 +1290,6 @@ class _KycBankScreenState extends State<KycBankScreen> {
     );
   }
 
-  // Helper for Account Type bottom sheet
-  void _showAccountTypeOptions() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: AppColors.background,
-      isScrollControlled: true,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return SafeArea(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxHeight: MediaQuery.of(context).size.height * 0.5,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 40.w,
-                  height: 4.h,
-                  margin: EdgeInsets.only(top: 12.h),
-                  decoration: BoxDecoration(
-                    color: AppColors.border,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                Padding(
-                  padding: EdgeInsets.all(16.w),
-                  child: Text(
-                    'Select Account Type',
-                    style: TextStyle(
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                ),
-                Flexible(
-                  child: Obx(() {
-                    if (controller.accountTypes.isEmpty) {
-                      return Padding(
-                        padding: EdgeInsets.all(24.w),
-                        child: Text(
-                          'Loading account types...',
-                          style: TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 14.sp,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      );
-                    }
-                    return ListView.builder(
-                      shrinkWrap: true,
-                      itemCount: controller.accountTypes.length,
-                      itemBuilder: (context, index) {
-                        final type = controller.accountTypes[index];
-                        return ListTile(
-                          title: Text(
-                            type,
-                            style: TextStyle(color: AppColors.textPrimary),
-                          ),
-                          trailing:
-                              controller.selectedAccountType.value == type
-                                  ? Icon(Icons.check, color: AppColors.primary)
-                                  : null,
-                          onTap: () {
-                            controller.setAccountType(type);
-                            Navigator.pop(context);
-                          },
-                        );
-                      },
-                    );
-                  }),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
   Widget _buildRelationShipTypeField() {
     try {
       return Padding(
@@ -1463,6 +1634,8 @@ class _KycBankScreenState extends State<KycBankScreen> {
     TextInputType? keyboardType,
     IconData? icon,
     bool obscureText = false,
+    String? hintText,
+    List<TextInputFormatter>? inputFormatters,
   }) {
     return Padding(
       padding: EdgeInsets.only(bottom: 16.h),
@@ -1471,7 +1644,9 @@ class _KycBankScreenState extends State<KycBankScreen> {
         onChanged: onChanged,
         keyboardType: keyboardType,
         labelText: label,
+        hintText: hintText,
         obscureText: obscureText,
+        inputFormatters: inputFormatters,
         prefixIcon:
             icon != null
                 ? RTLHelper.rtlIcon(
@@ -1482,8 +1657,10 @@ class _KycBankScreenState extends State<KycBankScreen> {
                 : null,
         decoration: InputDecoration(
           labelText: label,
+          hintText: hintText,
           labelStyle: TextStyle(color: AppColors.textGrey),
           floatingLabelStyle: TextStyle(color: AppColors.primary),
+          hintStyle: hintText != null ? TextStyle(color: AppColors.textGrey) : null,
         ),
       ),
     );
