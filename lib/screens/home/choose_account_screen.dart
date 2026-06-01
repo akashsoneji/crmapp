@@ -199,11 +199,6 @@ class _ChooseAccountScreenState extends State<ChooseAccountScreen> {
                       ),
                     ),
                   ),
-                  SvgPicture.asset(
-                    "assets/svg/deshboard/mt5_chose_account.svg",
-                    height: 24.h,
-                    width: 28.w,
-                  ),
                 ],
               ),
               SizedBox(height: 12.h),

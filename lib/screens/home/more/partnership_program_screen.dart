@@ -28,10 +28,10 @@ class _PartnershipProgramScreenState extends State<PartnershipProgramScreen> {
     final moreController = Get.find<MoreController>();
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         scrolledUnderElevation: 0.0,
-        backgroundColor: AppColors.backgroundLight,
+        backgroundColor: AppColors.background,
         elevation: 0,
         title: Text(
           languageService.tr('partnership_program'),
@@ -257,35 +257,38 @@ class _PartnershipProgramScreenState extends State<PartnershipProgramScreen> {
     final canSubmit =
         isEmailVerified && isMobileVerified && isPersonalInfoVerified;
 
-    return ElevatedButton(
-      onPressed:
-          _isApplicationSubmitted
-              ? () {
-                // Navigate to IB Main Screen
-                Navigator.of(context).pushReplacementNamed('/ib-main');
-              }
-              : canSubmit
-              ? _showIbApplicationDialog
-              : null,
-      style: ElevatedButton.styleFrom(
-        padding: EdgeInsets.zero,
-        backgroundColor:
-            _isApplicationSubmitted || canSubmit
-                ? AppColors.primary
-                : AppColors.textGrey,
-        foregroundColor: AppColors.whiteColor,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12.r),
+    return Padding(
+      padding:  EdgeInsets.only(top:16.h),
+      child: ElevatedButton(
+        onPressed:
+            _isApplicationSubmitted
+                ? () {
+                  // Navigate to IB Main Screen
+                  Navigator.of(context).pushReplacementNamed('/ib-main');
+                }
+                : canSubmit
+                ? _showIbApplicationDialog
+                : null,
+        style: ElevatedButton.styleFrom(
+          padding: EdgeInsets.zero,
+          backgroundColor:
+              _isApplicationSubmitted || canSubmit
+                  ? AppColors.primary
+                  : AppColors.textGrey,
+          foregroundColor: AppColors.whiteColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12.r),
+          ),
+          elevation: 0,
         ),
-        elevation: 0,
-      ),
-      child: Text(
-        _isApplicationSubmitted
-            ? 'IB Dashboard'
-            : languageService.tr('submit_ib_application'),
-        style: AppTextStyles.button.copyWith(
-          fontSize: 16.sp,
-          fontWeight: FontWeight.w600,
+        child: Text(
+          _isApplicationSubmitted
+              ? 'IB Dashboard'
+              : languageService.tr('submit_ib_application'),
+          style: AppTextStyles.button.copyWith(
+            fontSize: 16.sp,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
     );
@@ -300,6 +303,7 @@ class _PartnershipProgramScreenState extends State<PartnershipProgramScreen> {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return Dialog(
+              backgroundColor: AppColors.background,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12.r),
               ),
@@ -307,7 +311,8 @@ class _PartnershipProgramScreenState extends State<PartnershipProgramScreen> {
                 padding: EdgeInsets.all(20.w),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12.r),
-                  color: AppColors.whiteColor,
+                  color: AppColors.card,
+                  border: Border.all(color: AppColors.border),
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -344,6 +349,10 @@ class _PartnershipProgramScreenState extends State<PartnershipProgramScreen> {
                                   'assets/svg/partnership_program/cancel.svg',
                                   width: 30.55.w,
                                   height: 30.55.w,
+                                  colorFilter: ColorFilter.mode(
+                                    AppColors.textPrimary,
+                                    BlendMode.srcIn,
+                                  ),
                                 ),
                               ),
                             ),
@@ -360,7 +369,7 @@ class _PartnershipProgramScreenState extends State<PartnershipProgramScreen> {
                       style: TextStyle(
                         fontSize: 12.sp,
                         fontWeight: FontWeight.w400,
-                        color: AppColors.icongrey,
+                        color: AppColors.textSecondary,
                         height: 1.33,
                       ),
                     ),
@@ -378,17 +387,21 @@ class _PartnershipProgramScreenState extends State<PartnershipProgramScreen> {
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(4.r),
                             ),
-                            side: BorderSide(color: AppColors.icongrey),
-                            overlayColor: WidgetStateProperty.all(
-                              AppColors.icongrey,
-                            ),
+                            activeColor: AppColors.primary,
+                            checkColor: AppColors.whiteColor,
+                            side: BorderSide(color: AppColors.textGrey, width: 1.5),
+                            fillColor: WidgetStateProperty.resolveWith((states) {
+                              if (states.contains(WidgetState.selected)) {
+                                return AppColors.primary;
+                              }
+                              return AppColors.card;
+                            }),
                             value: isAgreed,
                             onChanged: (value) {
                               setDialogState(() {
                                 isAgreed = value ?? false;
                               });
                             },
-                            activeColor: AppColors.primary,
                           ),
                         ),
                         SizedBox(width: 8.w),
@@ -399,7 +412,7 @@ class _PartnershipProgramScreenState extends State<PartnershipProgramScreen> {
                               fontSize: 12.sp,
                               fontWeight: FontWeight.w400,
                               height: 1.58,
-                              color: AppColors.icongrey,
+                              color: AppColors.textPrimary,
                             ),
                           ),
                         ),
@@ -422,7 +435,9 @@ class _PartnershipProgramScreenState extends State<PartnershipProgramScreen> {
                                 : null,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
-                          foregroundColor: AppColors.whiteColor,
+                          foregroundColor: AppColors.darkThemeOnPrimary,
+                          disabledBackgroundColor: AppColors.neutralTrack,
+                          disabledForegroundColor: AppColors.textSecondary,
                           padding: EdgeInsets.zero,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12.r),
@@ -434,6 +449,7 @@ class _PartnershipProgramScreenState extends State<PartnershipProgramScreen> {
                           style: TextStyle(
                             fontSize: 16.sp,
                             fontWeight: FontWeight.w600,
+                            color: AppColors.whiteColor,
                           ),
                         ),
                       ),
