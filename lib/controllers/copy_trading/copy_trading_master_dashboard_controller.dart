@@ -27,6 +27,131 @@ class CopyTradingMasterDashboardStats {
   }
 }
 
+class CopyTradingPerformanceWindow {
+  final int closedTradesCount;
+  final num profitFactor;
+  final num avgTradeDurationSeconds;
+  final num bestTradeProfit;
+  final num worstTradeProfit;
+
+  const CopyTradingPerformanceWindow({
+    required this.closedTradesCount,
+    required this.profitFactor,
+    required this.avgTradeDurationSeconds,
+    required this.bestTradeProfit,
+    required this.worstTradeProfit,
+  });
+
+  factory CopyTradingPerformanceWindow.fromJson(Map<String, dynamic> json) {
+    num toNum(dynamic v) => v is num ? v : num.tryParse(v?.toString() ?? '') ?? 0;
+    return CopyTradingPerformanceWindow(
+      closedTradesCount: (json['closed_trades_count'] ?? 0) is num
+          ? (json['closed_trades_count'] as num).toInt()
+          : int.tryParse(json['closed_trades_count']?.toString() ?? '') ?? 0,
+      profitFactor: toNum(json['profit_factor']),
+      avgTradeDurationSeconds: toNum(json['avg_trade_duration_seconds']),
+      bestTradeProfit: toNum(json['best_trade_profit']),
+      worstTradeProfit: toNum(json['worst_trade_profit']),
+    );
+  }
+}
+
+class CopyTradingMasterProfile {
+  final String masterCode;
+  final String masterNickname;
+  final String masterName;
+  final String serverType;
+  final String lpProviderName;
+  final String strategyDescription;
+  final String riskInformation;
+  final int riskScore;
+  final String memberSince;
+  final int withUsDays;
+  final int totalPlans;
+  final int totalCopiers;
+  final num totalPnl;
+  final num totalGain;
+  final num totalGainPercent;
+  final num winRate;
+  final num maxDrawdown;
+  final num masterEquity;
+  final List<CopyTradingMasterPlanItem> plans;
+  final List<dynamic> openPositions;
+  final CopyTradingPerformanceWindow? performanceWindow;
+  final String timeframe;
+  final String profileScope;
+  final String selectedPlanId;
+
+  const CopyTradingMasterProfile({
+    required this.masterCode,
+    required this.masterNickname,
+    required this.masterName,
+    required this.serverType,
+    required this.lpProviderName,
+    required this.strategyDescription,
+    required this.riskInformation,
+    required this.riskScore,
+    required this.memberSince,
+    required this.withUsDays,
+    required this.totalPlans,
+    required this.totalCopiers,
+    required this.totalPnl,
+    required this.totalGain,
+    required this.totalGainPercent,
+    required this.winRate,
+    required this.maxDrawdown,
+    required this.masterEquity,
+    required this.plans,
+    required this.openPositions,
+    this.performanceWindow,
+    required this.timeframe,
+    required this.profileScope,
+    required this.selectedPlanId,
+  });
+
+  factory CopyTradingMasterProfile.fromJson(Map<String, dynamic> json) {
+    num toNum(dynamic v) => v is num ? v : num.tryParse(v?.toString() ?? '') ?? 0;
+    var plansList = json['plans'] as List? ?? [];
+    return CopyTradingMasterProfile(
+      masterCode: (json['master_code'] ?? '').toString(),
+      masterNickname: (json['master_nickname'] ?? '').toString(),
+      masterName: (json['master_name'] ?? '').toString(),
+      serverType: (json['server_type'] ?? '').toString(),
+      lpProviderName: (json['lp_provider_name'] ?? '').toString(),
+      strategyDescription: (json['strategy_description'] ?? '').toString(),
+      riskInformation: (json['risk_information'] ?? '').toString(),
+      riskScore: (json['risk_score'] ?? 0) is num
+          ? (json['risk_score'] as num).toInt()
+          : int.tryParse(json['risk_score']?.toString() ?? '') ?? 0,
+      memberSince: (json['member_since'] ?? '').toString(),
+      withUsDays: (json['with_us_days'] ?? 0) is num
+          ? (json['with_us_days'] as num).toInt()
+          : int.tryParse(json['with_us_days']?.toString() ?? '') ?? 0,
+      totalPlans: (json['total_plans'] ?? 0) is num
+          ? (json['total_plans'] as num).toInt()
+          : int.tryParse(json['total_plans']?.toString() ?? '') ?? 0,
+      totalCopiers: (json['total_copiers'] ?? 0) is num
+          ? (json['total_copiers'] as num).toInt()
+          : int.tryParse(json['total_copiers']?.toString() ?? '') ?? 0,
+      totalPnl: toNum(json['total_pnl']),
+      totalGain: toNum(json['total_gain']),
+      totalGainPercent: toNum(json['total_gain_percent']),
+      winRate: toNum(json['win_rate']),
+      maxDrawdown: toNum(json['max_drawdown']),
+      masterEquity: toNum(json['master_equity']),
+      plans: plansList.whereType<Map>().map((p) => CopyTradingMasterPlanItem.fromJson(p.cast<String, dynamic>())).toList(),
+      openPositions: json['open_positions'] as List? ?? [],
+      performanceWindow: json['performance_window'] != null
+          ? CopyTradingPerformanceWindow.fromJson(json['performance_window'].cast<String, dynamic>())
+          : null,
+      timeframe: (json['timeframe'] ?? '').toString(),
+      profileScope: (json['profile_scope'] ?? '').toString(),
+      selectedPlanId: (json['selected_plan_id'] ?? '').toString(),
+    );
+  }
+}
+
+
 class CopyTradingEligibleAccount {
   final int id;
   final String metaAccountNumber;
@@ -86,6 +211,10 @@ class CopyTradingMasterPlanItem {
   final num totalCapital;
   final bool isFull;
   final String status;
+  final bool copyingPaused;
+  final String copyingPausedAt;
+  final String strategyDescription;
+  final String riskInformation;
   final String createdAt;
 
   const CopyTradingMasterPlanItem({
@@ -106,6 +235,10 @@ class CopyTradingMasterPlanItem {
     required this.totalCapital,
     required this.isFull,
     required this.status,
+    required this.copyingPaused,
+    required this.copyingPausedAt,
+    required this.strategyDescription,
+    required this.riskInformation,
     required this.createdAt,
   });
 
@@ -129,6 +262,10 @@ class CopyTradingMasterPlanItem {
       totalCapital: (json['total_capital'] ?? json['total_aum'] ?? 0) as num? ?? 0,
       isFull: json['is_full'] == true,
       status: (json['status'] ?? '').toString(),
+      copyingPaused: json['copying_paused'] == true,
+      copyingPausedAt: (json['copying_paused_at'] ?? '').toString(),
+      strategyDescription: (json['strategy_description'] ?? '').toString(),
+      riskInformation: (json['risk_information'] ?? '').toString(),
       createdAt: (json['created_at'] ?? '').toString(),
     );
   }
@@ -142,6 +279,7 @@ class CopyTradingMasterDashboardController extends GetxController {
   final RxString errorMessage = ''.obs;
 
   final Rxn<CopyTradingMasterDashboardStats> stats = Rxn<CopyTradingMasterDashboardStats>();
+  final Rxn<CopyTradingMasterProfile> profile = Rxn<CopyTradingMasterProfile>();
   final RxList<CopyTradingMasterPlanItem> plans = <CopyTradingMasterPlanItem>[].obs;
 
   final RxList<MT5Account> mt5Accounts = <MT5Account>[].obs;
@@ -162,7 +300,7 @@ class CopyTradingMasterDashboardController extends GetxController {
     if (showLoading) isLoading.value = true;
     errorMessage.value = '';
     try {
-      await Future.wait([_loadStats(), _loadPlans(), _loadMt5Accounts()]);
+      await Future.wait([_loadStats(), _loadProfile(), _loadPlans(), _loadMt5Accounts()]);
     } catch (e) {
       errorMessage.value = 'Failed to load dashboard: $e';
     } finally {
@@ -179,6 +317,23 @@ class CopyTradingMasterDashboardController extends GetxController {
     final data = res.data?['data'];
     if (data is Map) {
       stats.value = CopyTradingMasterDashboardStats.fromJson(data.cast<String, dynamic>());
+    }
+  }
+
+  Future<void> _loadProfile() async {
+    final res = await ApiService.get(
+      endpoint: ApiConstants.copyTradingMasterProfile(masterCode, timeframe: '1m'),
+      queryParameters: {'_t': DateTime.now().millisecondsSinceEpoch.toString()},
+    );
+    if (!res.success || res.data == null) {
+      profile.value = null;
+      return;
+    }
+    final data = res.data?['data'];
+    if (data is Map) {
+      profile.value = CopyTradingMasterProfile.fromJson(data.cast<String, dynamic>());
+    } else {
+      profile.value = null;
     }
   }
 
@@ -280,6 +435,72 @@ class CopyTradingMasterDashboardController extends GetxController {
       return res;
     } catch (e) {
       errorMessage.value = 'Inactivate plan error: $e';
+      return ApiResponse.error(errorMessage.value);
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  /// Pause a master plan copying
+  Future<ApiResponse> pausePlan({required int planId}) async {
+    isLoading.value = true;
+    errorMessage.value = '';
+    try {
+      final endpoint = '${ApiConstants.copyTradingMasterPlans}/$planId/pause';
+      final res = await ApiService.post(endpoint: endpoint, data: <String, dynamic>{});
+      if (res.success) {
+        await _loadPlans();
+        await _loadStats();
+      } else {
+        errorMessage.value = res.message ?? 'Failed to pause plan';
+      }
+      return res;
+    } catch (e) {
+      errorMessage.value = 'Pause plan error: $e';
+      return ApiResponse.error(errorMessage.value);
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  /// Resume a master plan copying
+  Future<ApiResponse> resumePlan({required int planId}) async {
+    isLoading.value = true;
+    errorMessage.value = '';
+    try {
+      final endpoint = '${ApiConstants.copyTradingMasterPlans}/$planId/resume';
+      final res = await ApiService.post(endpoint: endpoint, data: <String, dynamic>{});
+      if (res.success) {
+        await _loadPlans();
+        await _loadStats();
+      } else {
+        errorMessage.value = res.message ?? 'Failed to resume plan';
+      }
+      return res;
+    } catch (e) {
+      errorMessage.value = 'Resume plan error: $e';
+      return ApiResponse.error(errorMessage.value);
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  /// Update a master plan (name, strategy, risk)
+  Future<ApiResponse> updatePlan({required int planId, required Map<String, dynamic> body}) async {
+    isLoading.value = true;
+    errorMessage.value = '';
+    try {
+      final endpoint = '${ApiConstants.copyTradingMasterPlans}/$planId';
+      final res = await ApiService.post(endpoint: endpoint, data: body);
+      if (res.success) {
+        await _loadPlans();
+        await _loadStats();
+      } else {
+        errorMessage.value = res.message ?? 'Failed to update plan';
+      }
+      return res;
+    } catch (e) {
+      errorMessage.value = 'Update plan error: $e';
       return ApiResponse.error(errorMessage.value);
     } finally {
       isLoading.value = false;

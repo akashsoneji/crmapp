@@ -31,6 +31,9 @@ class CopyTradingMasterPlanDetail {
   final num takeProfitPips;
   final num stopLossPips;
 
+  final bool copyingPaused;
+  final String copyingPausedAt;
+
   final List<CopyTradingMasterTradeHistoryItem> tradeHistory;
   final List<CopyTradingMasterCommissionHistoryItem> commissionHistory;
 
@@ -57,6 +60,8 @@ class CopyTradingMasterPlanDetail {
     required this.commissionPercentage,
     required this.takeProfitPips,
     required this.stopLossPips,
+    required this.copyingPaused,
+    required this.copyingPausedAt,
     required this.tradeHistory,
     required this.commissionHistory,
   });
@@ -95,6 +100,8 @@ class CopyTradingMasterPlanDetail {
       commissionPercentage: toNum(json['commission_percentage']),
       takeProfitPips: toNum(json['take_profit_pips']),
       stopLossPips: toNum(json['stop_loss_pips']),
+      copyingPaused: json['copying_paused'] == true,
+      copyingPausedAt: (json['copying_paused_at'] ?? '').toString(),
       tradeHistory: toMapList(json['trade_history']).map(CopyTradingMasterTradeHistoryItem.fromJson).toList(),
       commissionHistory: toMapList(json['commission_history']).map(CopyTradingMasterCommissionHistoryItem.fromJson).toList(),
     );
@@ -250,6 +257,98 @@ class CopyTradingMasterPlanDetailController extends GetxController {
       update();
     } finally {
       if (showLoading) isLoading.value = false;
+      update();
+    }
+  }
+
+  /// Pause a master plan copying
+  Future<ApiResponse> pausePlan() async {
+    isLoading.value = true;
+    update();
+    errorMessage.value = '';
+    try {
+      final endpoint = '${ApiConstants.copyTradingMasterPlans}/$planId/pause';
+      final res = await ApiService.post(endpoint: endpoint, data: <String, dynamic>{});
+      if (res.success) {
+        await loadPlanDetail(showLoading: false);
+      } else {
+        errorMessage.value = res.message ?? 'Failed to pause plan';
+      }
+      return res;
+    } catch (e) {
+      errorMessage.value = 'Pause plan error: $e';
+      return ApiResponse.error(errorMessage.value);
+    } finally {
+      isLoading.value = false;
+      update();
+    }
+  }
+
+  /// Resume a master plan copying
+  Future<ApiResponse> resumePlan() async {
+    isLoading.value = true;
+    update();
+    errorMessage.value = '';
+    try {
+      final endpoint = '${ApiConstants.copyTradingMasterPlans}/$planId/resume';
+      final res = await ApiService.post(endpoint: endpoint, data: <String, dynamic>{});
+      if (res.success) {
+        await loadPlanDetail(showLoading: false);
+      } else {
+        errorMessage.value = res.message ?? 'Failed to resume plan';
+      }
+      return res;
+    } catch (e) {
+      errorMessage.value = 'Resume plan error: $e';
+      return ApiResponse.error(errorMessage.value);
+    } finally {
+      isLoading.value = false;
+      update();
+    }
+  }
+
+  /// Update a master plan (name, strategy, risk)
+  Future<ApiResponse> updatePlan({required Map<String, dynamic> body}) async {
+    isLoading.value = true;
+    update();
+    errorMessage.value = '';
+    try {
+      final endpoint = '${ApiConstants.copyTradingMasterPlans}/$planId';
+      final res = await ApiService.post(endpoint: endpoint, data: body);
+      if (res.success) {
+        await loadPlanDetail(showLoading: false);
+      } else {
+        errorMessage.value = res.message ?? 'Failed to update plan';
+      }
+      return res;
+    } catch (e) {
+      errorMessage.value = 'Update plan error: $e';
+      return ApiResponse.error(errorMessage.value);
+    } finally {
+      isLoading.value = false;
+      update();
+    }
+  }
+
+  /// Inactivate a master plan
+  Future<ApiResponse> inactivatePlan() async {
+    isLoading.value = true;
+    update();
+    errorMessage.value = '';
+    try {
+      final endpoint = '${ApiConstants.copyTradingMasterPlans}/$planId/inactivate';
+      final res = await ApiService.post(endpoint: endpoint, data: <String, dynamic>{});
+      if (res.success) {
+        await loadPlanDetail(showLoading: false);
+      } else {
+        errorMessage.value = res.message ?? 'Failed to inactivate plan';
+      }
+      return res;
+    } catch (e) {
+      errorMessage.value = 'Inactivate plan error: $e';
+      return ApiResponse.error(errorMessage.value);
+    } finally {
+      isLoading.value = false;
       update();
     }
   }

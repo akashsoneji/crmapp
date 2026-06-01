@@ -90,7 +90,7 @@ class CopyTradingBottomNavigation extends StatelessWidget {
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
             child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
+              padding: EdgeInsets.symmetric(horizontal: isMaster ? 4.w : 8.w, vertical: 8.h),
               decoration: BoxDecoration(
                 color: AppColors.whiteColor,
                 borderRadius: BorderRadius.circular(32.r),
@@ -127,7 +127,7 @@ class CopyTradingBottomNavigation extends StatelessWidget {
       ),
     );
   }
-
+ 
   Widget _buildNavItem(
     BuildContext context,
     int index,
@@ -136,7 +136,7 @@ class CopyTradingBottomNavigation extends StatelessWidget {
     String label,
   ) {
     final bool isSelected = currentIndex == index;
-
+ 
     return InkWell(
       borderRadius: BorderRadius.circular(50.r),
       onTap: () => onTap(index),
@@ -145,7 +145,7 @@ class CopyTradingBottomNavigation extends StatelessWidget {
         curve: Curves.easeOut,
         padding: EdgeInsets.symmetric(
           horizontal:
-              isSelected ? (isMaster ? 16.w : 26.w) : (isMaster ? 8.w : 10.w),
+              isSelected ? (isMaster ? 10.w : 26.w) : (isMaster ? 4.w : 10.w),
           vertical: 6.h,
         ),
         decoration: BoxDecoration(
@@ -167,6 +167,8 @@ class CopyTradingBottomNavigation extends StatelessWidget {
             SizedBox(height: 1.h),
             Text(
               label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: AppTextStyles.subheading.copyWith(
                 fontSize: 10.sp,
                 color: isSelected ? AppColors.primary : AppColors.textGrey,
