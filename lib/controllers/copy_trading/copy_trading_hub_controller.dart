@@ -79,6 +79,12 @@ class CopyTradingHubController extends GetxController {
     }
 
     final data = res.data?['data'];
+    if (data == null || (data is List && data.isEmpty)) {
+      masterStatus.value = CopyTradingMasterApplicationStatus.none;
+      masterCode.value = '';
+      return;
+    }
+
     if (data is! Map) {
       masterStatus.value = CopyTradingMasterApplicationStatus.unknown;
       masterCode.value = '';

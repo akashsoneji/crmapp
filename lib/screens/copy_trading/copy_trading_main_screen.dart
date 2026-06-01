@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/widgets/copy_trading_bottom_navigation.dart';
+import 'package:crm_app/controllers/copy_trading/copy_trading_hub_controller.dart';
 
-import 'tabs/investment_tab.dart';
-import 'tabs/traders_tab.dart';
-import 'tabs/clients_tab.dart';
-import 'tabs/settings_tab.dart';
+import 'tabs/become_master_tab.dart';
+import 'tabs/my_plans_tab.dart';
+import '../home/more/copytrading/master_dashboard_screen.dart';
+import '../home/more/copytrading/my_copies_screen.dart';
+import '../home/more/copytrading/explore_masters_screen.dart';
+import '../home/more/copytrading/my_investments_screen.dart';
 
 class CopyTradingMainScreen extends StatefulWidget {
   final int? initialIndex;
@@ -16,18 +20,18 @@ class CopyTradingMainScreen extends StatefulWidget {
 }
 
 class _CopyTradingMainScreenState extends State<CopyTradingMainScreen> {
-  // ValueNotifier lets us update the tab index without rebuilding the whole tree.
-  // ValueListenableBuilder subscribes only the nav bar + IndexedStack to changes.
-  late final ValueNotifier<int> _currentIndex = ValueNotifier<int>(
-    widget.initialIndex ?? 1,
-  ); // Default: Traders tab
+  late final CopyTradingHubController _hubController;
+  late final ValueNotifier<int> _currentIndex;
 
-  final List<Widget> _tabs = const [
-    InvestmentTab(),
-    TradersTab(),
-    ClientsTab(),
-    SettingsTab(),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _hubController = Get.put(CopyTradingHubController());
+    final isMaster = _hubController.masterStatus.value == CopyTradingMasterApplicationStatus.approved;
+    _currentIndex = ValueNotifier<int>(
+      widget.initialIndex ?? (isMaster ? 0 : 1),
+    );
+  }
 
   @override
   void dispose() {
@@ -41,35 +45,67 @@ class _CopyTradingMainScreenState extends State<CopyTradingMainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.tradeBackgroundCenterColor,
-      body: SafeArea(
-        // ValueListenableBuilder rebuilds only the IndexedStack when tab changes
-        child: ValueListenableBuilder<int>(
+    return Obx(() {
+      if (_hubController.isLoading.value && _hubController.masterStatus.value == CopyTradingMasterApplicationStatus.none) {
+        return Scaffold(
+          backgroundColor: AppColors.tradeBackgroundCenterColor,
+          body: const Center(
+            child: CircularProgressIndicator(),
+          ),
+        );
+      }
+
+      final isMaster = _hubController.masterStatus.value == CopyTradingMasterApplicationStatus.approved;
+
+      return Scaffold(
+        backgroundColor: AppColors.tradeBackgroundCenterColor,
+        body: SafeArea(
+          // ValueListenableBuilder rebuilds only the IndexedStack when tab changes
+          child: ValueListenableBuilder<int>(
+            valueListenable: _currentIndex,
+            builder: (context, index, _) {
+              final maxIndex = isMaster ? 4 : 2;
+              final activeIndex = index.clamp(0, maxIndex);
+
+              final List<Widget> tabs = isMaster
+                  ? [
+                      MasterDashboardScreen(masterCode: _hubController.masterCode.value),
+                      const MyPlansTab(),
+                      const MyCopiesScreen(),
+                      const ExploreMastersScreen(),
+                      const MyInvestmentsScreen(),
+                    ]
+                  : [
+                      const BecomeMasterTab(),
+                      const ExploreMastersScreen(),
+                      const MyInvestmentsScreen(),
+                    ];
+
+              return Padding(
+                padding: const EdgeInsets.only(
+                  bottom: kBottomNavigationBarHeight,
+                ),
+                child: IndexedStack(index: activeIndex, children: tabs),
+              );
+            },
+          ),
+        ),
+
+        // Floating pill navigation — same pattern as TradingMainScreen
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+        floatingActionButtonAnimator: FloatingActionButtonAnimator.scaling,
+        floatingActionButton: ValueListenableBuilder<int>(
           valueListenable: _currentIndex,
           builder: (context, index, _) {
-            return Padding(
-              padding: const EdgeInsets.only(
-                bottom: kBottomNavigationBarHeight,
-              ),
-              child: IndexedStack(index: index, children: _tabs),
+            final maxIndex = isMaster ? 4 : 2;
+            return CopyTradingBottomNavigation(
+              currentIndex: index.clamp(0, maxIndex),
+              onTap: _onTabChanged,
+              isMaster: isMaster,
             );
           },
         ),
-      ),
-
-      // Floating pill navigation — same pattern as TradingMainScreen
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      floatingActionButtonAnimator: FloatingActionButtonAnimator.scaling,
-      floatingActionButton: ValueListenableBuilder<int>(
-        valueListenable: _currentIndex,
-        builder: (context, index, _) {
-          return CopyTradingBottomNavigation(
-            currentIndex: index,
-            onTap: _onTabChanged,
-          );
-        },
-      ),
-    );
+      );
+    });
   }
 }
