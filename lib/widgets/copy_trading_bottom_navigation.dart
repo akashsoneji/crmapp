@@ -95,7 +95,7 @@ class CopyTradingBottomNavigation extends StatelessWidget {
                 color: AppColors.whiteColor,
                 borderRadius: BorderRadius.circular(32.r),
                 border: Border.all(
-                  color: AppColors.primary.withOpacity(0.70),
+                  color: AppColors.whiteColor.withOpacity(0.35),
                   width: 1,
                 ),
                 boxShadow: [
