@@ -42,7 +42,8 @@ class CopyTradingBottomNavigation extends StatelessWidget {
     CopyTradingBottomNavItem(
       label: 'Investments',
       icon: 'assets/svg/copy_trading/bottom_navigation/Investment.svg',
-      iconActive: 'assets/svg/copy_trading/bottom_navigation/Investment_bold.svg',
+      iconActive:
+          'assets/svg/copy_trading/bottom_navigation/Investment_bold.svg',
     ),
   ];
 
@@ -50,7 +51,8 @@ class CopyTradingBottomNavigation extends StatelessWidget {
     CopyTradingBottomNavItem(
       label: 'Dashboard',
       icon: 'assets/svg/copy_trading/bottom_navigation/Investment.svg',
-      iconActive: 'assets/svg/copy_trading/bottom_navigation/Investment_bold.svg',
+      iconActive:
+          'assets/svg/copy_trading/bottom_navigation/Investment_bold.svg',
     ),
     CopyTradingBottomNavItem(
       label: 'My Plans',
@@ -60,7 +62,8 @@ class CopyTradingBottomNavigation extends StatelessWidget {
     CopyTradingBottomNavItem(
       label: 'My Copiers',
       icon: "assets/svg/copy_trading/bottom_navigation/profile-circle.svg",
-      iconActive: "assets/svg/copy_trading/bottom_navigation/profile-circle_bold.svg",
+      iconActive:
+          "assets/svg/copy_trading/bottom_navigation/profile-circle_bold.svg",
     ),
     CopyTradingBottomNavItem(
       label: 'Explore',
@@ -70,7 +73,8 @@ class CopyTradingBottomNavigation extends StatelessWidget {
     CopyTradingBottomNavItem(
       label: 'Investments',
       icon: 'assets/svg/copy_trading/bottom_navigation/Investment.svg',
-      iconActive: 'assets/svg/copy_trading/bottom_navigation/Investment_bold.svg',
+      iconActive:
+          'assets/svg/copy_trading/bottom_navigation/Investment_bold.svg',
     ),
   ];
 
@@ -91,7 +95,7 @@ class CopyTradingBottomNavigation extends StatelessWidget {
                 color: AppColors.whiteColor,
                 borderRadius: BorderRadius.circular(32.r),
                 border: Border.all(
-                  color: AppColors.whiteColor.withOpacity(0.35),
+                  color: AppColors.primary.withOpacity(0.70),
                   width: 1,
                 ),
                 boxShadow: [
@@ -104,17 +108,18 @@ class CopyTradingBottomNavigation extends StatelessWidget {
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: items.asMap().entries.map((entry) {
-                  final idx = entry.key;
-                  final item = entry.value;
-                  return _buildNavItem(
-                    context,
-                    idx,
-                    item.icon,
-                    item.iconActive,
-                    item.label,
-                  );
-                }).toList(),
+                children:
+                    items.asMap().entries.map((entry) {
+                      final idx = entry.key;
+                      final item = entry.value;
+                      return _buildNavItem(
+                        context,
+                        idx,
+                        item.icon,
+                        item.iconActive,
+                        item.label,
+                      );
+                    }).toList(),
               ),
             ),
           ),
@@ -139,9 +144,8 @@ class CopyTradingBottomNavigation extends StatelessWidget {
         duration: const Duration(milliseconds: 220),
         curve: Curves.easeOut,
         padding: EdgeInsets.symmetric(
-          horizontal: isSelected
-              ? (isMaster ? 16.w : 26.w)
-              : (isMaster ? 8.w : 10.w),
+          horizontal:
+              isSelected ? (isMaster ? 16.w : 26.w) : (isMaster ? 8.w : 10.w),
           vertical: 6.h,
         ),
         decoration: BoxDecoration(

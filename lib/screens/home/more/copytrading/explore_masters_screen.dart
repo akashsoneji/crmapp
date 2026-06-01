@@ -30,11 +30,12 @@ class ExploreMastersScreen extends StatelessWidget {
             fontWeight: FontWeight.w600,
           ),
         ),
-        leading: AppSvgBackButton(
-          onPressed: () => AppSvgBackButton.popRoute(context),
-          iconWidth: 30.w,
-          iconHeight: 30.h,
-        ),
+        leading: SizedBox.shrink(),
+        // leading: AppSvgBackButton(
+        //   onPressed: () => AppSvgBackButton.popRoute(context),
+        //   iconWidth: 30.w,
+        //   iconHeight: 30.h,
+        // ),
         actions: [
           IconButton(
             onPressed: () => controller.loadMasters(showLoading: true),
@@ -53,7 +54,8 @@ class ExploreMastersScreen extends StatelessWidget {
                     onChanged: (v) {
                       controller.search.value = v;
                     },
-                    onSubmitted: (_) => controller.loadMasters(showLoading: true),
+                    onSubmitted:
+                        (_) => controller.loadMasters(showLoading: true),
                   ),
                 ),
                 SizedBox(width: 10.w),
@@ -86,7 +88,9 @@ class ExploreMastersScreen extends StatelessWidget {
 
               final visible = controller.filteredMasters;
               if (visible.isEmpty) {
-                return _NoSearchMatchesState(query: controller.search.value.trim());
+                return _NoSearchMatchesState(
+                  query: controller.search.value.trim(),
+                );
               }
 
               return RefreshIndicator(
@@ -99,11 +103,15 @@ class ExploreMastersScreen extends StatelessWidget {
                     final m = visible[index];
                     return _MasterCard(
                       item: m,
-                      onTap: () => Get.to(
-                        () => MasterDetailsScreen(masterCode: m.masterCode, masterNickname: m.nickname),
-                        transition: Transition.rightToLeft,
-                        duration: const Duration(milliseconds: 250),
-                      ),
+                      onTap:
+                          () => Get.to(
+                            () => MasterDetailsScreen(
+                              masterCode: m.masterCode,
+                              masterNickname: m.nickname,
+                            ),
+                            transition: Transition.rightToLeft,
+                            duration: const Duration(milliseconds: 250),
+                          ),
                     );
                   },
                 ),
@@ -172,7 +180,10 @@ class _SortButton extends StatelessWidget {
           sheetTitle: 'Sort by',
           borderRadius: 12,
           fontSize: 12.sp,
-          contentPadding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 12.h),
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: 10.w,
+            vertical: 12.h,
+          ),
           options: _options,
           onChanged: (v) async {
             if (v == null) return;
@@ -232,7 +243,11 @@ class _MasterCard extends StatelessWidget {
                     color: AppColors.primary.withOpacity(0.10),
                     borderRadius: BorderRadius.circular(12.r),
                   ),
-                  child: Icon(Icons.person, color: AppColors.primary, size: 22.r),
+                  child: Icon(
+                    Icons.person,
+                    color: AppColors.primary,
+                    size: 22.r,
+                  ),
                 ),
                 SizedBox(width: 10.w),
                 Expanded(
@@ -252,18 +267,26 @@ class _MasterCard extends StatelessWidget {
                       SizedBox(height: 2.h),
                       Text(
                         '${item.planCount} plan • ${item.activeDays} days',
-                        style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey),
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          color: AppColors.textGrey,
+                        ),
                       ),
                     ],
                   ),
                 ),
                 if (item.isEnrolled)
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 10.w,
+                      vertical: 4.h,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.green.withOpacity(0.12),
                       borderRadius: BorderRadius.circular(999),
-                      border: Border.all(color: AppColors.green.withOpacity(0.25)),
+                      border: Border.all(
+                        color: AppColors.green.withOpacity(0.25),
+                      ),
                     ),
                     child: Text(
                       'Enrolled',
@@ -279,17 +302,30 @@ class _MasterCard extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  _MiniStat(label: 'Gain', value: '$gain%', valueColor: gainColor),
+                  _MiniStat(
+                    label: 'Gain',
+                    value: '$gain%',
+                    valueColor: gainColor,
+                  ),
                   SizedBox(width: 10.w),
-                  _MiniStat(label: 'Copiers', value: item.totalCopiers.toString()),
+                  _MiniStat(
+                    label: 'Copiers',
+                    value: item.totalCopiers.toString(),
+                  ),
                 ],
               ),
               SizedBox(height: 12.h),
               Row(
                 children: [
-                  _MiniStat(label: 'AUM', value: item.totalAum.toStringAsFixed(2)),
+                  _MiniStat(
+                    label: 'AUM',
+                    value: item.totalAum.toStringAsFixed(2),
+                  ),
                   SizedBox(width: 10.w),
-                  _MiniStat(label: 'Risk', value: (item.riskScore ?? 0).toString()),
+                  _MiniStat(
+                    label: 'Risk',
+                    value: (item.riskScore ?? 0).toString(),
+                  ),
                 ],
               ),
               SizedBox(height: 12.h),
@@ -297,7 +333,10 @@ class _MasterCard extends StatelessWidget {
                 alignment: Alignment.centerRight,
                 child: OutlinedButton(
                   style: OutlinedButton.styleFrom(
-                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 12.w,
+                      vertical: 8.h,
+                    ),
                     foregroundColor: AppColors.primary,
                     side: BorderSide(color: AppColors.primary),
                     shape: RoundedRectangleBorder(
@@ -333,8 +372,7 @@ class _MiniStat extends StatelessWidget {
           border: Border.all(color: AppColors.border.withValues(alpha: 0.10)),
           boxShadow: [
             BoxShadow(
-              color: 
-              AppColors.primary.withOpacity(0.10),
+              color: AppColors.primary.withOpacity(0.10),
               blurRadius: 1,
               offset: const Offset(0, 0),
             ),
@@ -343,7 +381,10 @@ class _MiniStat extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label, style: TextStyle(fontSize: 11.sp, color: AppColors.textGrey)),
+            Text(
+              label,
+              style: TextStyle(fontSize: 11.sp, color: AppColors.textGrey),
+            ),
             SizedBox(height: 4.h),
             Text(
               value,
@@ -371,14 +412,17 @@ class _LoadingList extends StatelessWidget {
       padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 90.h),
       itemCount: 6,
       separatorBuilder: (_, __) => SizedBox(height: 12.h),
-      itemBuilder: (_, __) => Container(
-        height: 92.h,
-        decoration: BoxDecoration(
-          color: AppColors.whiteColor,
-          borderRadius: BorderRadius.circular(14.r),
-          border: Border.all(color: AppColors.border.withValues(alpha: 0.15)),
-        ),
-      ),
+      itemBuilder:
+          (_, __) => Container(
+            height: 92.h,
+            decoration: BoxDecoration(
+              color: AppColors.whiteColor,
+              borderRadius: BorderRadius.circular(14.r),
+              border: Border.all(
+                color: AppColors.border.withValues(alpha: 0.15),
+              ),
+            ),
+          ),
     );
   }
 }
@@ -417,7 +461,9 @@ class _NoSearchMatchesState extends StatelessWidget {
             Text(
               'No Masters Match "${query}"',
               textAlign: TextAlign.center,
-              style: AppTextStyles.subheading.copyWith(color: AppColors.textGrey),
+              style: AppTextStyles.subheading.copyWith(
+                color: AppColors.textGrey,
+              ),
             ),
             SizedBox(height: 6.h),
             Text(
@@ -447,11 +493,17 @@ class _ErrorState extends StatelessWidget {
           children: [
             Icon(Icons.error_outline, size: 40.r, color: AppColors.error),
             SizedBox(height: 10.h),
-            Text(message, textAlign: TextAlign.center, style: TextStyle(color: AppColors.textGrey)),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppColors.textGrey),
+            ),
             SizedBox(height: 12.h),
             ElevatedButton(
               onPressed: onRetry,
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+              ),
               child: const Text('Retry'),
             ),
           ],
@@ -460,4 +512,3 @@ class _ErrorState extends StatelessWidget {
     );
   }
 }
-

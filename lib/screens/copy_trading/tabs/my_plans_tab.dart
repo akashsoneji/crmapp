@@ -23,7 +23,11 @@ class MyPlansTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hubController = Get.find<CopyTradingHubController>();
-    final controller = Get.put(CopyTradingMasterDashboardController(masterCode: hubController.masterCode.value));
+    final controller = Get.put(
+      CopyTradingMasterDashboardController(
+        masterCode: hubController.masterCode.value,
+      ),
+    );
 
     return Scaffold(
       backgroundColor: AppColors.tradeBackgroundCenterColor,
@@ -71,9 +75,10 @@ class MyPlansTab extends StatelessWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openCreatePlanScreen(controller),
         backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.primary.computeLuminance() > 0.5
-            ? AppColors.textPrimaryLight
-            : AppColors.onColoredBackground,
+        foregroundColor:
+            AppColors.primary.computeLuminance() > 0.5
+                ? AppColors.textPrimaryLight
+                : AppColors.onColoredBackground,
         icon: const Icon(Icons.add),
         label: const Text('Create Plan'),
       ),
@@ -118,9 +123,10 @@ class MyPlansTab extends StatelessWidget {
               label: const Text('Create First Plan'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
-                foregroundColor: AppColors.primary.computeLuminance() > 0.5
-                    ? AppColors.textPrimaryLight
-                    : AppColors.onColoredBackground,
+                foregroundColor:
+                    AppColors.primary.computeLuminance() > 0.5
+                        ? AppColors.textPrimaryLight
+                        : AppColors.onColoredBackground,
               ),
             ),
           ],
@@ -155,8 +161,12 @@ class _PlanTileItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final status = plan.status;
     final statusLower = status.toLowerCase();
-    final canInactivate = statusLower == 'approved' && plan.activeCopiersCount == 0;
-    final planSubtitle = (plan.commissionLabel.isNotEmpty ? plan.commissionLabel : plan.commissionType);
+    final canInactivate =
+        statusLower == 'approved' && plan.activeCopiersCount == 0;
+    final planSubtitle =
+        (plan.commissionLabel.isNotEmpty
+            ? plan.commissionLabel
+            : plan.commissionType);
 
     return Container(
       decoration: BoxDecoration(
@@ -213,7 +223,10 @@ class _PlanTileItem extends StatelessWidget {
                     ),
                   ),
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 8.w,
+                      vertical: 3.h,
+                    ),
                     decoration: BoxDecoration(
                       color: _getStatusColor(status).withOpacity(0.12),
                       borderRadius: BorderRadius.circular(999),
@@ -235,9 +248,18 @@ class _PlanTileItem extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _metric(label: 'Copiers', value: plan.activeCopiersCount.toString()),
-                  _metric(label: 'AUM', value: '\$${plan.totalCapital.toStringAsFixed(2)}'),
-                  _metric(label: 'Min. Capital', value: '\$${plan.minimumCapital.toStringAsFixed(2)}'),
+                  _metric(
+                    label: 'Copiers',
+                    value: plan.activeCopiersCount.toString(),
+                  ),
+                  _metric(
+                    label: 'AUM',
+                    value: '\$${plan.totalCapital.toStringAsFixed(2)}',
+                  ),
+                  _metric(
+                    label: 'Min. Capital',
+                    value: '\$${plan.minimumCapital.toStringAsFixed(2)}',
+                  ),
                 ],
               ),
 
@@ -248,15 +270,28 @@ class _PlanTileItem extends StatelessWidget {
                   alignment: Alignment.centerRight,
                   child: TextButton.icon(
                     onPressed: () => _confirmInactivate(context),
-                    icon: Icon(Icons.power_settings_new, size: 14.r, color: AppColors.error),
+                    icon: Icon(
+                      Icons.power_settings_new,
+                      size: 14.r,
+                      color: AppColors.error,
+                    ),
                     label: Text(
                       'Inactivate',
-                      style: TextStyle(fontSize: 11.sp, fontWeight: FontWeight.w600, color: AppColors.error),
+                      style: TextStyle(
+                        fontSize: 11.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.error,
+                      ),
                     ),
                     style: TextButton.styleFrom(
-                      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 10.w,
+                        vertical: 4.h,
+                      ),
                       backgroundColor: AppColors.error.withOpacity(0.08),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8.r),
+                      ),
                     ),
                   ),
                 ),
@@ -292,37 +327,40 @@ class _PlanTileItem extends StatelessWidget {
   void _confirmInactivate(BuildContext context) {
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Inactivate Plan'),
-        content: Text('Are you sure you want to inactivate the plan "${plan.planName}"? This action cannot be undone.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () async {
-              Navigator.of(ctx).pop();
-              final res = await controller.inactivatePlan(planId: plan.id);
-              if (res.success) {
-                CustomToastService.showSuccess(
-                  title: 'Success',
-                  message: res.message ?? 'Plan inactivated successfully',
-                );
-              } else {
-                CustomToastService.showError(
-                  title: 'Failed',
-                  message: res.message ?? 'Failed to inactivate plan',
-                );
-              }
-            },
-            child: Text(
-              'Inactivate',
-              style: TextStyle(color: AppColors.error),
+      builder:
+          (ctx) => AlertDialog(
+            title: const Text('Inactivate Plan'),
+            content: Text(
+              'Are you sure you want to inactivate the plan "${plan.planName}"? This action cannot be undone.',
             ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () async {
+                  Navigator.of(ctx).pop();
+                  final res = await controller.inactivatePlan(planId: plan.id);
+                  if (res.success) {
+                    CustomToastService.showSuccess(
+                      title: 'Success',
+                      message: res.message ?? 'Plan inactivated successfully',
+                    );
+                  } else {
+                    CustomToastService.showError(
+                      title: 'Failed',
+                      message: res.message ?? 'Failed to inactivate plan',
+                    );
+                  }
+                },
+                child: Text(
+                  'Inactivate',
+                  style: TextStyle(color: AppColors.error),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 }

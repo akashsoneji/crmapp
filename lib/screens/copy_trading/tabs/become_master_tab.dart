@@ -4,9 +4,9 @@ import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/auth_controller.dart';
+import 'package:crm_app/controllers/more/more_controller.dart';
 import 'package:crm_app/controllers/copy_trading/copy_trading_hub_controller.dart';
 import 'package:crm_app/widgets/labeled_app_text_field.dart';
-import 'package:crm_app/widgets/app_select_field.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
 
 class BecomeMasterTab extends StatefulWidget {
@@ -18,6 +18,8 @@ class BecomeMasterTab extends StatefulWidget {
 
 class _BecomeMasterTabState extends State<BecomeMasterTab> {
   final _nicknameCtrl = TextEditingController();
+  final _strategyCtrl = TextEditingController();
+  final _riskInfoCtrl = TextEditingController();
 
   @override
   void initState() {
@@ -25,14 +27,15 @@ class _BecomeMasterTabState extends State<BecomeMasterTab> {
     final hub = Get.find<CopyTradingHubController>();
     hub.resetMasterApplyForm();
     _nicknameCtrl.clear();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      hub.loadEligibleAccountsForMasterApply();
-    });
+    _strategyCtrl.clear();
+    _riskInfoCtrl.clear();
   }
 
   @override
   void dispose() {
     _nicknameCtrl.dispose();
+    _strategyCtrl.dispose();
+    _riskInfoCtrl.dispose();
     super.dispose();
   }
 
@@ -42,7 +45,17 @@ class _BecomeMasterTabState extends State<BecomeMasterTab> {
     final auth = Get.find<AuthController>();
     final user = auth.profileData?.data.user;
 
-    final userName = user != null ? '${user.firstName} ${user.lastName}'.trim() : 'demo account';
+    MoreController? moreController;
+    if (Get.isRegistered<MoreController>()) {
+      moreController = Get.find<MoreController>();
+    } else {
+      moreController = Get.put(MoreController());
+    }
+
+    final userName =
+        user != null
+            ? '${user.firstName} ${user.lastName}'.trim()
+            : 'demo account';
 
     return Scaffold(
       backgroundColor: AppColors.tradeBackgroundCenterColor,
@@ -51,6 +64,7 @@ class _BecomeMasterTabState extends State<BecomeMasterTab> {
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: true,
+        leading: SizedBox.shrink(),
         title: Text(
           'Become a Master Trader',
           style: AppTextStyles.screenTitle.copyWith(fontSize: 16.sp),
@@ -61,11 +75,14 @@ class _BecomeMasterTabState extends State<BecomeMasterTab> {
         child: Obx(() {
           final status = hub.masterStatus.value;
           final code = hub.masterCode.value;
-          final eligibleLoading = hub.masterApplyEligibleLoading.value;
-          final accounts = hub.masterApplyEligibleAccounts;
-          final err = hub.masterApplyEligibleError.value;
           final canSubmit = hub.canSubmitMasterApply;
           final applying = hub.isLoading.value;
+
+          final stage =
+              moreController?.dashboardModel.value?.data?.stageCompletion;
+          final isEmailVerified = stage?.emailVerified != null;
+          final isMobileVerified = stage?.mobileVerified != null;
+          final isPersonalInfoVerified = stage?.personalDetails == true;
 
           // If pending, show the pending review message
           if (status == CopyTradingMasterApplicationStatus.pending) {
@@ -77,9 +94,14 @@ class _BecomeMasterTabState extends State<BecomeMasterTab> {
                   ? AppColors.textPrimaryLight
                   : AppColors.onColoredBackground;
           final isDark = AppColors.isDarkMode;
-          final checkBorder = isDark ? AppColors.textPrimaryDark : AppColors.primary;
-          final checkFill = isDark ? AppColors.textPrimaryDark : AppColors.primary;
-          final checkMark = isDark ? AppColors.textPrimaryLight : AppColors.onColoredBackground;
+          final checkBorder =
+              isDark ? AppColors.textPrimaryDark : AppColors.primary;
+          final checkFill =
+              isDark ? AppColors.textPrimaryDark : AppColors.primary;
+          final checkMark =
+              isDark
+                  ? AppColors.textPrimaryLight
+                  : AppColors.onColoredBackground;
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -106,24 +128,50 @@ class _BecomeMasterTabState extends State<BecomeMasterTab> {
                 children: [
                   _buildStepCard(
                     title: 'Email Verification',
-                    completed: user?.email.isNotEmpty == true,
-                    icon: Icons.check_circle,
+                    completed: isEmailVerified,
+                    icon:
+                        isEmailVerified
+                            ? Icons.check_circle_rounded
+                            : Icons.info_outline_rounded,
                   ),
                   _buildStepCard(
                     title: 'Mobile Verification',
-                    completed: user?.mobile.isNotEmpty == true,
-                    icon: Icons.check_circle,
+                    completed: isMobileVerified,
+                    icon:
+                        isMobileVerified
+                            ? Icons.check_circle_rounded
+                            : Icons.info_outline_rounded,
                   ),
                   _buildStepCard(
                     title: 'Personal Information',
-                    completed: user?.firstName.isNotEmpty == true,
-                    icon: Icons.check_circle,
+                    completed: isPersonalInfoVerified,
+                    icon:
+                        isPersonalInfoVerified
+                            ? Icons.check_circle_rounded
+                            : Icons.info_outline_rounded,
                   ),
                   _buildStepCard(
                     title: 'Copy Trading Application',
-                    completed: status == CopyTradingMasterApplicationStatus.approved,
-                    icon: status == CopyTradingMasterApplicationStatus.none ? Icons.notifications_none : Icons.check_circle,
-                    labelOverride: status == CopyTradingMasterApplicationStatus.none ? 'Not Applied' : 'Pending',
+                    completed:
+                        status == CopyTradingMasterApplicationStatus.approved,
+                    icon:
+                        status == CopyTradingMasterApplicationStatus.approved
+                            ? Icons.check_circle_rounded
+                            : (status ==
+                                    CopyTradingMasterApplicationStatus.pending
+                                ? Icons.hourglass_empty_rounded
+                                : Icons.notifications_none_rounded),
+                    labelOverride:
+                        status == CopyTradingMasterApplicationStatus.none
+                            ? 'Not Applied'
+                            : (status ==
+                                    CopyTradingMasterApplicationStatus.pending
+                                ? 'Pending'
+                                : (status ==
+                                        CopyTradingMasterApplicationStatus
+                                            .rejected
+                                    ? 'Rejected'
+                                    : 'Completed')),
                   ),
                 ],
               ),
@@ -135,13 +183,15 @@ class _BecomeMasterTabState extends State<BecomeMasterTab> {
                 decoration: BoxDecoration(
                   color: AppColors.card,
                   borderRadius: BorderRadius.circular(14.r),
-                  border: Border.all(color: AppColors.textGrey.withOpacity(0.12)),
+                  border: Border.all(
+                    color: AppColors.textGrey.withOpacity(0.12),
+                  ),
                   boxShadow: [
                     BoxShadow(
                       color: AppColors.textPrimary.withOpacity(0.02),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
-                    )
+                    ),
                   ],
                 ),
                 child: Column(
@@ -150,15 +200,24 @@ class _BecomeMasterTabState extends State<BecomeMasterTab> {
                     // Your name
                     Text(
                       'Your name',
-                      style: AppTextStyles.label.copyWith(fontWeight: FontWeight.w600),
+                      style: AppTextStyles.label.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     SizedBox(height: 6.h),
                     Container(
-                      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 12.w,
+                        vertical: 12.h,
+                      ),
                       decoration: BoxDecoration(
-                        color: AppColors.tradeBackgroundCenterColor.withOpacity(0.5),
+                        color: AppColors.tradeBackgroundCenterColor.withOpacity(
+                          0.5,
+                        ),
                         borderRadius: BorderRadius.circular(10.r),
-                        border: Border.all(color: AppColors.textGrey.withOpacity(0.15)),
+                        border: Border.all(
+                          color: AppColors.textGrey.withOpacity(0.15),
+                        ),
                       ),
                       child: Text(
                         userName,
@@ -172,55 +231,11 @@ class _BecomeMasterTabState extends State<BecomeMasterTab> {
                     SizedBox(height: 4.h),
                     Text(
                       'Shown for admin reference; update in profile if incorrect.',
-                      style: TextStyle(fontSize: 10.sp, color: AppColors.textGrey),
-                    ),
-                    SizedBox(height: 16.h),
-
-                    // Trading Account select dropdown
-                    Text(
-                      'Trading account *',
-                      style: AppTextStyles.label.copyWith(fontWeight: FontWeight.w600),
-                    ),
-                    SizedBox(height: 6.h),
-                    if (eligibleLoading)
-                      Padding(
-                        padding: EdgeInsets.symmetric(vertical: 14.h),
-                        child: Center(
-                          child: SizedBox(
-                            width: 20.r,
-                            height: 20.r,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
-                          ),
-                        ),
-                      )
-                    else if (accounts.isEmpty)
-                      Padding(
-                        padding: EdgeInsets.only(bottom: 8.h),
-                        child: Text(
-                          err.isNotEmpty ? err : 'No eligible accounts found.',
-                          style: AppTextStyles.cardSubtitle.copyWith(color: AppColors.textGrey),
-                        ),
-                      )
-                    else
-                      AppSelectField<int>(
-                        value: hub.masterApplySelectedAccountId.value,
-                        hint: '-- Select account --',
-                        sheetTitle: 'Trading account',
-                        borderRadius: 10,
-                        fontSize: 14.sp,
-                        contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
-                        options: accounts
-                            .map(
-                              (a) => AppSelectOption<int>(
-                                value: a.id,
-                                title: '${a.metaAccountNumber} · ${a.accountType}',
-                                subtitle: '\$${a.equity.toStringAsFixed(2)}',
-                              ),
-                            )
-                            .toList(),
-                        onChanged: (v) => hub.masterApplySelectedAccountId.value = v,
+                      style: TextStyle(
+                        fontSize: 10.sp,
+                        color: AppColors.textGrey,
                       ),
-                    SizedBox(height: 16.h),
+                    ),
 
                     // Public nickname
                     LabeledAppTextField(
@@ -233,7 +248,46 @@ class _BecomeMasterTabState extends State<BecomeMasterTab> {
                     SizedBox(height: 4.h),
                     Text(
                       'Displayed on the public leaderboard and master profile.',
-                      style: TextStyle(fontSize: 10.sp, color: AppColors.textGrey),
+                      style: TextStyle(
+                        fontSize: 10.sp,
+                        color: AppColors.textGrey,
+                      ),
+                    ),
+                    SizedBox(height: 16.h),
+
+                    // Strategy Description
+                    LabeledAppTextField(
+                      label: 'Strategy Description *',
+                      controller: _strategyCtrl,
+                      keyboardType: TextInputType.text,
+                      hintText: 'e.g. Conservative gold scalping strategy',
+                      onChanged: (s) => hub.masterApplyStrategyDraft.value = s,
+                    ),
+                    SizedBox(height: 4.h),
+                    Text(
+                      'Explain your trading logic and strategy to copy investors.',
+                      style: TextStyle(
+                        fontSize: 10.sp,
+                        color: AppColors.textGrey,
+                      ),
+                    ),
+                    SizedBox(height: 16.h),
+
+                    // Risk Info
+                    LabeledAppTextField(
+                      label: 'Risk Info *',
+                      controller: _riskInfoCtrl,
+                      keyboardType: TextInputType.text,
+                      hintText: 'e.g. Drawdown can reach up to 15%.',
+                      onChanged: (s) => hub.masterApplyRiskInfoDraft.value = s,
+                    ),
+                    SizedBox(height: 4.h),
+                    Text(
+                      'Provide information about expected drawdown, leverage, or risk constraints.',
+                      style: TextStyle(
+                        fontSize: 10.sp,
+                        color: AppColors.textGrey,
+                      ),
                     ),
                     SizedBox(height: 16.h),
 
@@ -247,16 +301,22 @@ class _BecomeMasterTabState extends State<BecomeMasterTab> {
                           child: Checkbox(
                             value: hub.masterApplyTermsAccepted.value,
                             side: BorderSide(color: checkBorder, width: 1.5),
-                            fillColor: WidgetStateProperty.resolveWith((states) {
+                            fillColor: WidgetStateProperty.resolveWith((
+                              states,
+                            ) {
                               if (states.contains(WidgetState.selected)) {
                                 return checkFill;
                               }
                               return Colors.transparent;
                             }),
                             checkColor: checkMark,
-                            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            materialTapTargetSize:
+                                MaterialTapTargetSize.shrinkWrap,
                             visualDensity: VisualDensity.compact,
-                            onChanged: (v) => hub.masterApplyTermsAccepted.value = v ?? false,
+                            onChanged:
+                                (v) =>
+                                    hub.masterApplyTermsAccepted.value =
+                                        v ?? false,
                           ),
                         ),
                         SizedBox(width: 8.w),
@@ -279,54 +339,72 @@ class _BecomeMasterTabState extends State<BecomeMasterTab> {
                       width: double.infinity,
                       height: 44.h,
                       child: ElevatedButton(
-                        onPressed: canSubmit && !applying
-                            ? () async {
-                                final id = hub.masterApplySelectedAccountId.value!;
-                                final nick = hub.masterApplyNicknameDraft.value.trim();
-                                final res = await hub.applyForMaster(
-                                  mt5AccountId: id,
-                                  nickname: nick,
-                                  termsAccepted: hub.masterApplyTermsAccepted.value,
-                                );
-                                if (res.success) {
-                                  CustomToastService.showSuccess(
-                                    title: 'Submitted',
-                                    message: res.message ?? 'Application submitted',
-                                    duration: const Duration(milliseconds: 2500),
+                        onPressed:
+                            canSubmit && !applying
+                                ? () async {
+                                  final nick =
+                                      hub.masterApplyNicknameDraft.value.trim();
+                                  final strategy =
+                                      hub.masterApplyStrategyDraft.value.trim();
+                                  final riskInfo =
+                                      hub.masterApplyRiskInfoDraft.value.trim();
+                                  final res = await hub.applyForMaster(
+                                    nickname: nick,
+                                    termsAccepted:
+                                        hub.masterApplyTermsAccepted.value,
+                                    strategy: strategy,
+                                    riskInfo: riskInfo,
                                   );
-                                } else {
-                                  CustomToastService.showError(
-                                    title: 'Failed',
-                                    message: res.message ?? hub.errorMessage.value,
-                                    duration: const Duration(milliseconds: 2500),
-                                  );
+                                  if (res.success) {
+                                    CustomToastService.showSuccess(
+                                      title: 'Submitted',
+                                      message:
+                                          res.message ??
+                                          'Application submitted',
+                                      duration: const Duration(
+                                        milliseconds: 2500,
+                                      ),
+                                    );
+                                  } else {
+                                    CustomToastService.showError(
+                                      title: 'Failed',
+                                      message:
+                                          res.message ?? hub.errorMessage.value,
+                                      duration: const Duration(
+                                        milliseconds: 2500,
+                                      ),
+                                    );
+                                  }
                                 }
-                              }
-                            : null,
+                                : null,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
                           foregroundColor: applyBtnFg,
-                          disabledBackgroundColor: AppColors.textGrey.withOpacity(0.2),
+                          disabledBackgroundColor: AppColors.textGrey
+                              .withOpacity(0.2),
                           disabledForegroundColor: applyBtnFg.withOpacity(0.4),
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10.r),
+                          ),
                         ),
-                        child: applying
-                            ? SizedBox(
-                                width: 18.r,
-                                height: 18.r,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: applyBtnFg,
+                        child:
+                            applying
+                                ? SizedBox(
+                                  width: 18.r,
+                                  height: 18.r,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: applyBtnFg,
+                                  ),
+                                )
+                                : Text(
+                                  'Submit Application',
+                                  style: AppTextStyles.button.copyWith(
+                                    color: applyBtnFg,
+                                    fontSize: 14.sp,
+                                  ),
                                 ),
-                              )
-                            : Text(
-                                'Submit Application',
-                                style: AppTextStyles.button.copyWith(
-                                  color: applyBtnFg,
-                                  fontSize: 14.sp,
-                                ),
-                              ),
                       ),
                     ),
                   ],
@@ -345,7 +423,7 @@ class _BecomeMasterTabState extends State<BecomeMasterTab> {
     required IconData icon,
     String? labelOverride,
   }) {
-    final statusColor = completed ? AppColors.green : AppColors.warning;
+    final statusColor = AppColors.primary;
     final statusText = labelOverride ?? (completed ? 'Completed' : 'Pending');
 
     return Container(
@@ -373,11 +451,7 @@ class _BecomeMasterTabState extends State<BecomeMasterTab> {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              Icon(
-                icon,
-                size: 18.r,
-                color: statusColor,
-              ),
+              Icon(icon, size: 18.r, color: statusColor),
             ],
           ),
           const Spacer(),
@@ -413,7 +487,7 @@ class _BecomeMasterTabState extends State<BecomeMasterTab> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.access_time, size: 48.r, color: AppColors.warning),
+          Icon(Icons.access_time, size: 48.r, color: AppColors.primary),
           SizedBox(height: 14.h),
           Text(
             'Under Review',

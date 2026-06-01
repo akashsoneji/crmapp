@@ -21,89 +21,77 @@ class CopyTradingMainScreen extends StatefulWidget {
 
 class _CopyTradingMainScreenState extends State<CopyTradingMainScreen> {
   late final CopyTradingHubController _hubController;
-  late final ValueNotifier<int> _currentIndex;
 
   @override
   void initState() {
     super.initState();
     _hubController = Get.put(CopyTradingHubController());
-    final isMaster = _hubController.masterStatus.value == CopyTradingMasterApplicationStatus.approved;
-    _currentIndex = ValueNotifier<int>(
-      widget.initialIndex ?? (isMaster ? 0 : 1),
-    );
+    final isMaster =
+        _hubController.masterStatus.value ==
+        CopyTradingMasterApplicationStatus.approved;
+    _hubController.currentTabIndex.value =
+        widget.initialIndex ?? (isMaster ? 0 : 1);
   }
 
   @override
   void dispose() {
-    _currentIndex.dispose();
     super.dispose();
-  }
-
-  void _onTabChanged(int index) {
-    _currentIndex.value = index;
   }
 
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      if (_hubController.isLoading.value && _hubController.masterStatus.value == CopyTradingMasterApplicationStatus.none) {
+      if (_hubController.isLoading.value &&
+          _hubController.masterStatus.value ==
+              CopyTradingMasterApplicationStatus.none) {
         return Scaffold(
           backgroundColor: AppColors.tradeBackgroundCenterColor,
-          body: const Center(
-            child: CircularProgressIndicator(),
-          ),
+          body: const Center(child: CircularProgressIndicator()),
         );
       }
 
-      final isMaster = _hubController.masterStatus.value == CopyTradingMasterApplicationStatus.approved;
+      final isMaster =
+          _hubController.masterStatus.value ==
+          CopyTradingMasterApplicationStatus.approved;
+
+      final maxIndex = isMaster ? 4 : 2;
+      final activeIndex = _hubController.currentTabIndex.value.clamp(0, maxIndex);
+
+      final List<Widget> tabs =
+          isMaster
+              ? [
+                MasterDashboardScreen(
+                  masterCode: _hubController.masterCode.value,
+                ),
+                const MyPlansTab(),
+                const MyCopiesScreen(),
+                const ExploreMastersScreen(),
+                const MyInvestmentsScreen(),
+              ]
+              : [
+                const BecomeMasterTab(),
+                const ExploreMastersScreen(),
+                const MyInvestmentsScreen(),
+              ];
 
       return Scaffold(
         backgroundColor: AppColors.tradeBackgroundCenterColor,
         body: SafeArea(
-          // ValueListenableBuilder rebuilds only the IndexedStack when tab changes
-          child: ValueListenableBuilder<int>(
-            valueListenable: _currentIndex,
-            builder: (context, index, _) {
-              final maxIndex = isMaster ? 4 : 2;
-              final activeIndex = index.clamp(0, maxIndex);
-
-              final List<Widget> tabs = isMaster
-                  ? [
-                      MasterDashboardScreen(masterCode: _hubController.masterCode.value),
-                      const MyPlansTab(),
-                      const MyCopiesScreen(),
-                      const ExploreMastersScreen(),
-                      const MyInvestmentsScreen(),
-                    ]
-                  : [
-                      const BecomeMasterTab(),
-                      const ExploreMastersScreen(),
-                      const MyInvestmentsScreen(),
-                    ];
-
-              return Padding(
-                padding: const EdgeInsets.only(
-                  bottom: kBottomNavigationBarHeight,
-                ),
-                child: IndexedStack(index: activeIndex, children: tabs),
-              );
-            },
+          child: Padding(
+            padding: const EdgeInsets.only(
+              bottom: kBottomNavigationBarHeight,
+            ),
+            child: IndexedStack(index: activeIndex, children: tabs),
           ),
         ),
 
         // Floating pill navigation — same pattern as TradingMainScreen
         floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
         floatingActionButtonAnimator: FloatingActionButtonAnimator.scaling,
-        floatingActionButton: ValueListenableBuilder<int>(
-          valueListenable: _currentIndex,
-          builder: (context, index, _) {
-            final maxIndex = isMaster ? 4 : 2;
-            return CopyTradingBottomNavigation(
-              currentIndex: index.clamp(0, maxIndex),
-              onTap: _onTabChanged,
-              isMaster: isMaster,
-            );
-          },
+        floatingActionButton: CopyTradingBottomNavigation(
+          currentIndex: activeIndex,
+          onTap: (idx) => _hubController.currentTabIndex.value = idx,
+          isMaster: isMaster,
         ),
       );
     });
