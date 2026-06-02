@@ -8,12 +8,15 @@ import 'package:crm_app/controllers/copy_trading/copy_trading_copier_subscriptio
 import 'package:crm_app/screens/home/more/copytrading/explore_masters_screen.dart';
 import 'package:crm_app/screens/home/more/copytrading/master_details_screen.dart';
 import 'package:crm_app/screens/home/more/copytrading/subscribe_to_plan_screen.dart';
-import 'package:crm_app/controllers/copy_trading/copy_trading_master_details_controller.dart' show CopyTradingPlan;
+import 'package:crm_app/controllers/copy_trading/copy_trading_master_details_controller.dart'
+    show CopyTradingPlan;
 import 'package:crm_app/controllers/copy_trading/copy_trading_hub_controller.dart';
+import 'package:crm_app/screens/home/trading_main_screen.dart';
 import 'package:crm_app/widgets/app_svg_back_button.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 
 class MyInvestmentsScreen extends StatefulWidget {
@@ -80,6 +83,16 @@ class _MyInvestmentsScreenState extends State<MyInvestmentsScreen>
         scrolledUnderElevation: 0,
         backgroundColor: AppColors.background,
         elevation: 0,
+        leading: IconButton(
+          icon: SvgPicture.asset(
+            'assets/svg/ib_dashboard/home.svg',
+            colorFilter: ColorFilter.mode(
+              AppColors.textPrimary,
+              BlendMode.srcIn,
+            ),
+          ),
+          onPressed: () => Get.offAll(() => const TradingMainScreen()),
+        ),
         centerTitle: true,
         title: Text('My Investments', style: AppTextStyles.screenTitle),
         automaticallyImplyLeading: false,
@@ -346,7 +359,8 @@ class _MyInvestmentsScreenState extends State<MyInvestmentsScreen>
     Get.to(
       () => MasterDetailsScreen(
         masterCode: sub.masterCode,
-        masterNickname: sub.masterName.isNotEmpty ? sub.masterName : sub.masterCode,
+        masterNickname:
+            sub.masterName.isNotEmpty ? sub.masterName : sub.masterCode,
       ),
       transition: Transition.rightToLeft,
       duration: const Duration(milliseconds: 250),

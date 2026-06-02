@@ -1,10 +1,11 @@
 import 'package:crm_app/constants/color.dart';
-import 'package:crm_app/widgets/app_svg_back_button.dart';
+import 'package:crm_app/screens/home/trading_main_screen.dart';
 import 'package:crm_app/widgets/app_select_field.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/copy_trading/copy_trading_masters_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 
 import 'master_details_screen.dart';
@@ -30,12 +31,16 @@ class ExploreMastersScreen extends StatelessWidget {
             fontWeight: FontWeight.w600,
           ),
         ),
-        leading: SizedBox.shrink(),
-        // leading: AppSvgBackButton(
-        //   onPressed: () => AppSvgBackButton.popRoute(context),
-        //   iconWidth: 30.w,
-        //   iconHeight: 30.h,
-        // ),
+        leading: IconButton(
+          icon: SvgPicture.asset(
+            'assets/svg/ib_dashboard/home.svg',
+            colorFilter: ColorFilter.mode(
+              AppColors.textPrimary,
+              BlendMode.srcIn,
+            ),
+          ),
+          onPressed: () => Get.offAll(() => const TradingMainScreen()),
+        ),
         actions: [
           IconButton(
             onPressed: () => controller.loadMasters(showLoading: true),
@@ -95,10 +100,15 @@ class ExploreMastersScreen extends StatelessWidget {
 
               return RefreshIndicator(
                 onRefresh: () => controller.loadMasters(showLoading: false),
-                child: ListView.separated(
+                child: GridView.builder(
                   padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 90.h),
                   itemCount: visible.length,
-                  separatorBuilder: (_, __) => SizedBox(height: 12.h),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 12.h,
+                    crossAxisSpacing: 12.w,
+                    childAspectRatio: 0.60,
+                  ),
                   itemBuilder: (context, index) {
                     final m = visible[index];
                     return _MasterCard(
@@ -142,15 +152,21 @@ class _SearchField extends StatelessWidget {
         contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12.r),
-          borderSide: BorderSide(color: AppColors.primary.withOpacity(0.28)),
+          borderSide: BorderSide(
+            color: AppColors.primary.withValues(alpha: 0.28),
+          ),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12.r),
-          borderSide: BorderSide(color: AppColors.primary.withOpacity(0.28)),
+          borderSide: BorderSide(
+            color: AppColors.primary.withValues(alpha: 0.28),
+          ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12.r),
-          borderSide: BorderSide(color: AppColors.primary.withOpacity(0.55)),
+          borderSide: BorderSide(
+            color: AppColors.primary.withValues(alpha: 0.55),
+          ),
         ),
       ),
     );
@@ -200,19 +216,38 @@ class _MasterCard extends StatelessWidget {
   final VoidCallback onTap;
   const _MasterCard({required this.item, required this.onTap});
 
+  Color _getRiskColor(int? risk) {
+    if (risk == null) return AppColors.textGrey;
+    if (risk <= 2) return AppColors.blue;
+    if (risk <= 4) return AppColors.warning;
+    return AppColors.error;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final gain = item.totalGain.toStringAsFixed(2);
-    final gainColor = item.totalGain >= 0 ? AppColors.green : AppColors.error;
+    final gainPercent = item.totalGainPercent;
+    final gainColor = gainPercent >= 0 ? AppColors.green : AppColors.error;
+    final gainText =
+        "${gainPercent >= 0 ? '+' : ''}${gainPercent.toStringAsFixed(2)}%";
 
-    return InkWell(
+    final pnl = item.totalPnl;
+    final pnlColor = pnl >= 0 ? AppColors.green : AppColors.error;
+    final pnlText = "${pnl >= 0 ? '+' : '-'}\$${pnl.abs().toStringAsFixed(2)}";
+
+    final drawdownText =
+        "-${item.maxDrawdown.toStringAsFixed(item.maxDrawdown % 1 == 0 ? 0 : 2)}%";
+    final minInvestmentText =
+        "\$${item.minInvestment.toStringAsFixed(item.minInvestment % 1 == 0 ? 0 : 2)}";
+
+    final displayName = item.nickname.isNotEmpty ? item.nickname : item.name;
+
+    return GestureDetector(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(14.r),
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 4.h),
+        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
         decoration: BoxDecoration(
           color: AppColors.whiteColor,
-          borderRadius: BorderRadius.circular(14.r),
+          borderRadius: BorderRadius.circular(16.r),
           border: Border.all(color: AppColors.border.withValues(alpha: 0.15)),
           boxShadow: [
             BoxShadow(
@@ -222,178 +257,277 @@ class _MasterCard extends StatelessWidget {
             ),
           ],
         ),
-        child: Theme(
-          data: Theme.of(context).copyWith(
-            dividerColor: Colors.transparent,
-            splashColor: Colors.transparent,
-            highlightColor: Colors.transparent,
-            iconTheme: IconThemeData(color: AppColors.textPrimary),
-          ),
-          child: ExpansionTile(
-            tilePadding: EdgeInsets.zero,
-            childrenPadding: EdgeInsets.only(bottom: 10.h, top: 4.h),
-            iconColor: AppColors.textPrimary,
-            collapsedIconColor: AppColors.textPrimary,
-            title: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Top Row: Avatar & Risk Badge
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Container(
-                  width: 42.r,
-                  height: 42.r,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.10),
-                    borderRadius: BorderRadius.circular(12.r),
-                  ),
-                  child: Icon(
-                    Icons.person,
-                    color: AppColors.primary,
-                    size: 22.r,
-                  ),
-                ),
-                SizedBox(width: 10.w),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        item.nickname.isNotEmpty ? item.nickname : item.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      SizedBox(height: 2.h),
-                      Text(
-                        '${item.planCount} plan • ${item.activeDays} days',
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          color: AppColors.textGrey,
-                        ),
-                      ),
-                    ],
+                CircleAvatar(
+                  radius: 20.r,
+                  backgroundColor: AppColors.primary,
+                  child: Text(
+                    (displayName.isNotEmpty ? displayName[0] : '?')
+                        .toUpperCase(),
+                    style: TextStyle(
+                      color: AppColors.whiteColor,
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
-                if (item.isEnrolled)
+                if (item.riskScore != null)
                   Container(
                     padding: EdgeInsets.symmetric(
                       horizontal: 10.w,
-                      vertical: 4.h,
+                      vertical: 6.h,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.green.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(999),
-                      border: Border.all(
-                        color: AppColors.green.withOpacity(0.25),
-                      ),
+                      color: _getRiskColor(
+                        item.riskScore,
+                      ).withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(6.r),
                     ),
                     child: Text(
-                      'Enrolled',
+                      'RISK ${item.riskScore}',
                       style: TextStyle(
-                        fontSize: 11.sp,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.green,
+                        color: _getRiskColor(item.riskScore),
+                        fontSize: 10.sp,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
               ],
             ),
-            children: [
-              Row(
-                children: [
-                  _MiniStat(
-                    label: 'Gain',
-                    value: '$gain%',
-                    valueColor: gainColor,
-                  ),
-                  SizedBox(width: 10.w),
-                  _MiniStat(
-                    label: 'Copiers',
-                    value: item.totalCopiers.toString(),
-                  ),
-                ],
-              ),
-              SizedBox(height: 12.h),
-              Row(
-                children: [
-                  _MiniStat(
-                    label: 'AUM',
-                    value: item.totalAum.toStringAsFixed(2),
-                  ),
-                  SizedBox(width: 10.w),
-                  _MiniStat(
-                    label: 'Risk',
-                    value: (item.riskScore ?? 0).toString(),
-                  ),
-                ],
-              ),
-              SizedBox(height: 12.h),
-              Align(
-                alignment: Alignment.centerRight,
-                child: OutlinedButton(
-                  style: OutlinedButton.styleFrom(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 12.w,
-                      vertical: 8.h,
-                    ),
-                    foregroundColor: AppColors.primary,
-                    side: BorderSide(color: AppColors.primary),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.r),
-                    ),
-                  ),
-                  onPressed: onTap,
-                  child: Text('View details'),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _MiniStat extends StatelessWidget {
-  final String label;
-  final String value;
-  final Color? valueColor;
-  const _MiniStat({required this.label, required this.value, this.valueColor});
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 10.h),
-        decoration: BoxDecoration(
-          color: AppColors.tradeBackgroundCenterColor.withOpacity(0.35),
-          borderRadius: BorderRadius.circular(12.r),
-          border: Border.all(color: AppColors.border.withValues(alpha: 0.10)),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primary.withOpacity(0.10),
-              blurRadius: 1,
-              offset: const Offset(0, 0),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: TextStyle(fontSize: 11.sp, color: AppColors.textGrey),
-            ),
             SizedBox(height: 4.h),
+
+            // Name
             Text(
-              value,
+              displayName,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 13.sp,
-                fontWeight: FontWeight.w600,
-                color: valueColor ?? AppColors.textPrimary,
+                fontSize: 14.sp,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            SizedBox(height: 2.h),
+
+            // Active days
+            Text(
+              'Active ${item.activeDays}D',
+              style: TextStyle(
+                fontSize: 11.sp,
+                color: AppColors.textGrey,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+
+            // Horizontal Green Bar
+            Container(
+              height: 3.h,
+              margin: EdgeInsets.symmetric(vertical: 6.h),
+              decoration: BoxDecoration(
+                color: AppColors.green,
+                borderRadius: BorderRadius.circular(1.5.r),
+              ),
+            ),
+
+            // Stats 2x2 Grid using standard Columns and Rows
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'TOTAL GAIN',
+                            style: TextStyle(
+                              fontSize: 9.sp,
+                              color: AppColors.textGrey,
+                              fontWeight: FontWeight.w500,
+                              letterSpacing: 0.1,
+                            ),
+                          ),
+                          SizedBox(height: 2.h),
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              gainText,
+                              style: TextStyle(
+                                fontSize: 13.sp,
+                                fontWeight: FontWeight.bold,
+                                color: gainColor,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(width: 8.w),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'MAX DRAWDOWN',
+                            style: TextStyle(
+                              fontSize: 9.sp,
+                              color: AppColors.textGrey,
+                              fontWeight: FontWeight.w500,
+                              letterSpacing: 0.1,
+                            ),
+                          ),
+                          SizedBox(height: 2.h),
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              drawdownText,
+                              style: TextStyle(
+                                fontSize: 13.sp,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.error,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 6.h),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'TOTAL P&L',
+                            style: TextStyle(
+                              fontSize: 9.sp,
+                              color: AppColors.textGrey,
+                              fontWeight: FontWeight.w500,
+                              letterSpacing: 0.1,
+                            ),
+                          ),
+                          SizedBox(height: 2.h),
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              pnlText,
+                              style: TextStyle(
+                                fontSize: 13.sp,
+                                fontWeight: FontWeight.bold,
+                                color: pnlColor,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(width: 8.w),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'MIN INVESTMENT',
+                            style: TextStyle(
+                              fontSize: 9.sp,
+                              color: AppColors.textGrey,
+                              fontWeight: FontWeight.w500,
+                              letterSpacing: 0.1,
+                            ),
+                          ),
+                          SizedBox(height: 2.h),
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              minInvestmentText,
+                              style: TextStyle(
+                                fontSize: 13.sp,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+
+            const Spacer(),
+
+            // Bottom Row: Fee & Copiers
+            Row(
+              children: [
+                Text(
+                  'Fee: ',
+                  style: TextStyle(fontSize: 10.sp, color: AppColors.textGrey),
+                ),
+                Text(
+                  '0%',
+                  style: TextStyle(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 10.sp,
+                  ),
+                ),
+                const Spacer(),
+                Icon(
+                  Icons.people_outline,
+                  size: 13.r,
+                  color: AppColors.textGrey,
+                ),
+                SizedBox(width: 2.w),
+                Text(
+                  item.totalCopiers.toString(),
+                  style: TextStyle(
+                    fontSize: 10.sp,
+                    color: AppColors.textGrey,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 6.h),
+
+            // Copy Button
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: onTap,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: AppColors.onColoredBackground,
+                  elevation: 0,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 20.w,
+                    vertical: 8.h,
+                  ),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                ),
+                child: Text(
+                  'Copy',
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.whiteColor,
+                  ),
+                ),
               ),
             ),
           ],
@@ -408,16 +542,20 @@ class _LoadingList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListView.separated(
+    return GridView.builder(
       padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 90.h),
       itemCount: 6,
-      separatorBuilder: (_, __) => SizedBox(height: 12.h),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisSpacing: 12.h,
+        crossAxisSpacing: 12.w,
+        childAspectRatio: 0.48,
+      ),
       itemBuilder:
-          (_, __) => Container(
-            height: 92.h,
+          (_, index) => Container(
             decoration: BoxDecoration(
               color: AppColors.whiteColor,
-              borderRadius: BorderRadius.circular(14.r),
+              borderRadius: BorderRadius.circular(16.r),
               border: Border.all(
                 color: AppColors.border.withValues(alpha: 0.15),
               ),
@@ -459,7 +597,7 @@ class _NoSearchMatchesState extends StatelessWidget {
             Icon(Icons.search_off, size: 40.r, color: AppColors.textGrey),
             SizedBox(height: 10.h),
             Text(
-              'No Masters Match "${query}"',
+              'No Masters Match "$query"',
               textAlign: TextAlign.center,
               style: AppTextStyles.subheading.copyWith(
                 color: AppColors.textGrey,

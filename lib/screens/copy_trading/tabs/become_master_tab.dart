@@ -1,11 +1,14 @@
+import 'package:crm_app/screens/home/trading_main_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/auth_controller.dart';
 import 'package:crm_app/controllers/more/more_controller.dart';
 import 'package:crm_app/controllers/copy_trading/copy_trading_hub_controller.dart';
+import 'package:crm_app/routes/app_pages.dart';
 import 'package:crm_app/widgets/labeled_app_text_field.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
 
@@ -64,7 +67,16 @@ class _BecomeMasterTabState extends State<BecomeMasterTab> {
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: true,
-        leading: SizedBox.shrink(),
+        leading: IconButton(
+          icon: SvgPicture.asset(
+            'assets/svg/ib_dashboard/home.svg',
+            colorFilter: ColorFilter.mode(
+              AppColors.textPrimary,
+              BlendMode.srcIn,
+            ),
+          ),
+          onPressed: () => Get.offAll(() => const TradingMainScreen()),
+        ),
         title: Text(
           'Become a Master Trader',
           style: AppTextStyles.screenTitle.copyWith(fontSize: 16.sp),
@@ -83,6 +95,8 @@ class _BecomeMasterTabState extends State<BecomeMasterTab> {
           final isEmailVerified = stage?.emailVerified != null;
           final isMobileVerified = stage?.mobileVerified != null;
           final isPersonalInfoVerified = stage?.personalDetails == true;
+          final isKycCompleted =
+              isEmailVerified && isMobileVerified && isPersonalInfoVerified;
 
           // If pending, show the pending review message
           if (status == CopyTradingMasterApplicationStatus.pending) {
@@ -133,6 +147,18 @@ class _BecomeMasterTabState extends State<BecomeMasterTab> {
                         isEmailVerified
                             ? Icons.check_circle_rounded
                             : Icons.info_outline_rounded,
+                    onTap: () async {
+                      if (!isEmailVerified) {
+                        final stage =
+                            moreController
+                                ?.dashboardModel
+                                .value
+                                ?.data
+                                ?.stageCompletion;
+                        await Get.toNamed(AppPages.KYC_INTRO, arguments: stage);
+                        moreController?.loadMoreScreenData();
+                      }
+                    },
                   ),
                   _buildStepCard(
                     title: 'Mobile Verification',
@@ -141,6 +167,18 @@ class _BecomeMasterTabState extends State<BecomeMasterTab> {
                         isMobileVerified
                             ? Icons.check_circle_rounded
                             : Icons.info_outline_rounded,
+                    onTap: () async {
+                      if (!isMobileVerified) {
+                        final stage =
+                            moreController
+                                ?.dashboardModel
+                                .value
+                                ?.data
+                                ?.stageCompletion;
+                        await Get.toNamed(AppPages.KYC_INTRO, arguments: stage);
+                        moreController?.loadMoreScreenData();
+                      }
+                    },
                   ),
                   _buildStepCard(
                     title: 'Personal Information',
@@ -149,6 +187,18 @@ class _BecomeMasterTabState extends State<BecomeMasterTab> {
                         isPersonalInfoVerified
                             ? Icons.check_circle_rounded
                             : Icons.info_outline_rounded,
+                    onTap: () async {
+                      if (!isPersonalInfoVerified) {
+                        final stage =
+                            moreController
+                                ?.dashboardModel
+                                .value
+                                ?.data
+                                ?.stageCompletion;
+                        await Get.toNamed(AppPages.KYC_INTRO, arguments: stage);
+                        moreController?.loadMoreScreenData();
+                      }
+                    },
                   ),
                   _buildStepCard(
                     title: 'Copy Trading Application',
@@ -176,6 +226,74 @@ class _BecomeMasterTabState extends State<BecomeMasterTab> {
                 ],
               ),
               SizedBox(height: 20.h),
+              if (!isKycCompleted) ...[
+                GestureDetector(
+                  onTap: () async {
+                    final stage =
+                        moreController
+                            ?.dashboardModel
+                            .value
+                            ?.data
+                            ?.stageCompletion;
+                    await Get.toNamed(AppPages.KYC_INTRO, arguments: stage);
+                    moreController?.loadMoreScreenData();
+                  },
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 14.w,
+                      vertical: 12.h,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(12.r),
+                      border: Border.all(
+                        color: AppColors.primary.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.warning_amber_rounded,
+                          color: AppColors.primary,
+                          size: 22.r,
+                        ),
+                        SizedBox(width: 10.w),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Verification Required',
+                                style: TextStyle(
+                                  fontSize: 13.sp,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                              SizedBox(height: 2.h),
+                              Text(
+                                'Please complete your KYC to submit the application.',
+                                style: TextStyle(
+                                  fontSize: 11.sp,
+                                  color: AppColors.primary.withValues(
+                                    alpha: 0.85,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          color: AppColors.primary,
+                          size: 14.r,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                SizedBox(height: 16.h),
+              ],
 
               // ── Application Form Section ──
               Container(
@@ -184,11 +302,11 @@ class _BecomeMasterTabState extends State<BecomeMasterTab> {
                   color: AppColors.card,
                   borderRadius: BorderRadius.circular(14.r),
                   border: Border.all(
-                    color: AppColors.textGrey.withOpacity(0.12),
+                    color: AppColors.textGrey.withValues(alpha: 0.12),
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.textPrimary.withOpacity(0.02),
+                      color: AppColors.textPrimary.withValues(alpha: 0.02),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -211,12 +329,12 @@ class _BecomeMasterTabState extends State<BecomeMasterTab> {
                         vertical: 12.h,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.tradeBackgroundCenterColor.withOpacity(
-                          0.5,
+                        color: AppColors.tradeBackgroundCenterColor.withValues(
+                          alpha: 0.5,
                         ),
                         borderRadius: BorderRadius.circular(10.r),
                         border: Border.all(
-                          color: AppColors.textGrey.withOpacity(0.15),
+                          color: AppColors.textGrey.withValues(alpha: 0.15),
                         ),
                       ),
                       child: Text(
@@ -340,49 +458,80 @@ class _BecomeMasterTabState extends State<BecomeMasterTab> {
                       height: 44.h,
                       child: ElevatedButton(
                         onPressed:
-                            canSubmit && !applying
-                                ? () async {
-                                  final nick =
-                                      hub.masterApplyNicknameDraft.value.trim();
-                                  final strategy =
-                                      hub.masterApplyStrategyDraft.value.trim();
-                                  final riskInfo =
-                                      hub.masterApplyRiskInfoDraft.value.trim();
-                                  final res = await hub.applyForMaster(
-                                    nickname: nick,
-                                    termsAccepted:
-                                        hub.masterApplyTermsAccepted.value,
-                                    strategy: strategy,
-                                    riskInfo: riskInfo,
-                                  );
-                                  if (res.success) {
-                                    CustomToastService.showSuccess(
-                                      title: 'Submitted',
-                                      message:
-                                          res.message ??
-                                          'Application submitted',
-                                      duration: const Duration(
-                                        milliseconds: 2500,
-                                      ),
-                                    );
-                                  } else {
-                                    CustomToastService.showError(
-                                      title: 'Failed',
-                                      message:
-                                          res.message ?? hub.errorMessage.value,
-                                      duration: const Duration(
-                                        milliseconds: 2500,
-                                      ),
-                                    );
-                                  }
-                                }
-                                : null,
+                            applying
+                                ? null
+                                : (!isKycCompleted
+                                    ? () async {
+                                      final stage =
+                                          moreController
+                                              ?.dashboardModel
+                                              .value
+                                              ?.data
+                                              ?.stageCompletion;
+                                      await Get.toNamed(
+                                        AppPages.KYC_INTRO,
+                                        arguments: stage,
+                                      );
+                                      moreController?.loadMoreScreenData();
+                                    }
+                                    : (canSubmit
+                                        ? () async {
+                                          final nick =
+                                              hub.masterApplyNicknameDraft.value
+                                                  .trim();
+                                          final strategy =
+                                              hub.masterApplyStrategyDraft.value
+                                                  .trim();
+                                          final riskInfo =
+                                              hub.masterApplyRiskInfoDraft.value
+                                                  .trim();
+                                          final res = await hub.applyForMaster(
+                                            nickname: nick,
+                                            termsAccepted:
+                                                hub
+                                                    .masterApplyTermsAccepted
+                                                    .value,
+                                            strategy: strategy,
+                                            riskInfo: riskInfo,
+                                          );
+                                          if (res.success) {
+                                            CustomToastService.showSuccess(
+                                              title: 'Submitted',
+                                              message:
+                                                  res.message ??
+                                                  'Application submitted',
+                                              duration: const Duration(
+                                                milliseconds: 2500,
+                                              ),
+                                            );
+                                          } else {
+                                            CustomToastService.showError(
+                                              title: 'Failed',
+                                              message:
+                                                  res.message ??
+                                                  hub.errorMessage.value,
+                                              duration: const Duration(
+                                                milliseconds: 2500,
+                                              ),
+                                            );
+                                          }
+                                        }
+                                        : null)),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: applyBtnFg,
+                          backgroundColor:
+                              !isKycCompleted
+                                  ? AppColors.primary
+                                  : AppColors.primary,
+                          foregroundColor:
+                              !isKycCompleted
+                                  ? AppColors.whiteColor
+                                  : applyBtnFg,
                           disabledBackgroundColor: AppColors.textGrey
-                              .withOpacity(0.2),
-                          disabledForegroundColor: applyBtnFg.withOpacity(0.4),
+                              .withValues(alpha: 0.2),
+                          disabledForegroundColor: (!isKycCompleted
+                                  ? AppColors.whiteColor
+                                  : applyBtnFg)
+                              .withValues(alpha: 0.4),
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10.r),
@@ -399,9 +548,14 @@ class _BecomeMasterTabState extends State<BecomeMasterTab> {
                                   ),
                                 )
                                 : Text(
-                                  'Submit Application',
+                                  !isKycCompleted
+                                      ? 'Complete KYC to Apply'
+                                      : 'Submit Application',
                                   style: AppTextStyles.button.copyWith(
-                                    color: applyBtnFg,
+                                    color:
+                                        !isKycCompleted
+                                            ? AppColors.whiteColor
+                                            : applyBtnFg,
                                     fontSize: 14.sp,
                                   ),
                                 ),
@@ -422,55 +576,72 @@ class _BecomeMasterTabState extends State<BecomeMasterTab> {
     required bool completed,
     required IconData icon,
     String? labelOverride,
+    VoidCallback? onTap,
   }) {
-    final statusColor = AppColors.primary;
+    final isprimary =
+        !completed &&
+        (title == 'Email Verification' ||
+            title == 'Mobile Verification' ||
+            title == 'Personal Information');
+    final statusColor =
+        completed
+            ? AppColors.primary
+            : (isprimary ? AppColors.primary : AppColors.textGrey);
     final statusText = labelOverride ?? (completed ? 'Completed' : 'Pending');
 
-    return Container(
-      padding: EdgeInsets.all(12.r),
-      decoration: BoxDecoration(
-        color: AppColors.card,
-        borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: AppColors.textGrey.withOpacity(0.12)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.all(12.r),
+        decoration: BoxDecoration(
+          color: AppColors.card,
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(
+            color:
+                onTap != null && !completed
+                    ? AppColors.primary.withValues(alpha: 0.3)
+                    : AppColors.textGrey.withValues(alpha: 0.12),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+                ),
+                Icon(icon, size: 18.r, color: statusColor),
+              ],
+            ),
+            const Spacer(),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+              decoration: BoxDecoration(
+                color: statusColor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(6.r),
+              ),
+              child: Text(
+                statusText,
+                style: TextStyle(
+                  fontSize: 10.sp,
+                  fontWeight: FontWeight.w600,
+                  color: statusColor,
                 ),
               ),
-              Icon(icon, size: 18.r, color: statusColor),
-            ],
-          ),
-          const Spacer(),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
-            decoration: BoxDecoration(
-              color: statusColor.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(6.r),
             ),
-            child: Text(
-              statusText,
-              style: TextStyle(
-                fontSize: 10.sp,
-                fontWeight: FontWeight.w600,
-                color: statusColor,
-              ),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -482,7 +653,7 @@ class _BecomeMasterTabState extends State<BecomeMasterTab> {
       decoration: BoxDecoration(
         color: AppColors.card,
         borderRadius: BorderRadius.circular(14.r),
-        border: Border.all(color: AppColors.textGrey.withOpacity(0.12)),
+        border: Border.all(color: AppColors.textGrey.withValues(alpha: 0.12)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
