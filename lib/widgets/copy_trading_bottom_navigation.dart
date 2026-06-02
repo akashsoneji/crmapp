@@ -31,50 +31,50 @@ class CopyTradingBottomNavigation extends StatelessWidget {
   static const List<CopyTradingBottomNavItem> _copierItems = [
     CopyTradingBottomNavItem(
       label: 'Become Master',
-      icon: "assets/svg/bottom_navigation/setting.svg",
-      iconActive: "assets/svg/bottom_navigation/setting_bold.svg",
+      icon: "assets/svg/copy_trading/bottom_navigation/become_master.svg",
+      iconActive: "assets/svg/copy_trading/bottom_navigation/become_master_bold.svg",
     ),
     CopyTradingBottomNavItem(
       label: 'Explore',
-      icon: "assets/svg/bottom_navigation/candle.svg",
-      iconActive: "assets/svg/bottom_navigation/candle_bold.svg",
+      icon: "assets/svg/copy_trading/bottom_navigation/explore.svg",
+      iconActive: "assets/svg/copy_trading/bottom_navigation/explore_bold.svg",
     ),
     CopyTradingBottomNavItem(
       label: 'Investments',
-      icon: 'assets/svg/copy_trading/bottom_navigation/Investment.svg',
+      icon: 'assets/svg/copy_trading/bottom_navigation/investments.svg',
       iconActive:
-          'assets/svg/copy_trading/bottom_navigation/Investment_bold.svg',
+          'assets/svg/copy_trading/bottom_navigation/investments_bold.svg',
     ),
   ];
 
   static const List<CopyTradingBottomNavItem> _masterItems = [
     CopyTradingBottomNavItem(
       label: 'Dashboard',
-      icon: 'assets/svg/copy_trading/bottom_navigation/Investment.svg',
+      icon: 'assets/svg/copy_trading/bottom_navigation/dashboard.svg',
       iconActive:
-          'assets/svg/copy_trading/bottom_navigation/Investment_bold.svg',
+          'assets/svg/copy_trading/bottom_navigation/dashboard_bold.svg',
     ),
     CopyTradingBottomNavItem(
       label: 'My Plans',
-      icon: "assets/svg/bottom_navigation/candle.svg",
-      iconActive: "assets/svg/bottom_navigation/candle_bold.svg",
+      icon: "assets/svg/copy_trading/bottom_navigation/my_plans.svg",
+      iconActive: "assets/svg/copy_trading/bottom_navigation/my_plans_bold.svg",
     ),
     CopyTradingBottomNavItem(
       label: 'My Copiers',
-      icon: "assets/svg/copy_trading/bottom_navigation/profile-circle.svg",
+      icon: "assets/svg/copy_trading/bottom_navigation/my_copiers.svg",
       iconActive:
-          "assets/svg/copy_trading/bottom_navigation/profile-circle_bold.svg",
+          "assets/svg/copy_trading/bottom_navigation/my_copiers_bold.svg",
     ),
     CopyTradingBottomNavItem(
       label: 'Explore',
-      icon: "assets/svg/bottom_navigation/candle.svg",
-      iconActive: "assets/svg/bottom_navigation/candle_bold.svg",
+      icon: "assets/svg/copy_trading/bottom_navigation/explore.svg",
+      iconActive: "assets/svg/copy_trading/bottom_navigation/explore_bold.svg",
     ),
     CopyTradingBottomNavItem(
       label: 'Investments',
-      icon: 'assets/svg/copy_trading/bottom_navigation/Investment.svg',
+      icon: 'assets/svg/copy_trading/bottom_navigation/investments.svg',
       iconActive:
-          'assets/svg/copy_trading/bottom_navigation/Investment_bold.svg',
+          'assets/svg/copy_trading/bottom_navigation/investments_bold.svg',
     ),
   ];
 
