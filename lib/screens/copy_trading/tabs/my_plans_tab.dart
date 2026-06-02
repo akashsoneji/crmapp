@@ -1,5 +1,4 @@
 import 'package:crm_app/screens/home/trading_main_screen.dart';
-import 'package:crm_app/widgets/app_svg_back_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
@@ -115,9 +114,38 @@ class _MyPlansTabState extends State<MyPlansTab> {
           style: AppTextStyles.screenTitle.copyWith(fontSize: 16.sp),
         ),
         actions: [
-          IconButton(
-            onPressed: () => controller.refreshAll(showLoading: true),
-            icon: Icon(Icons.refresh, size: 20.r, color: AppColors.textPrimary),
+          Padding(
+            padding: EdgeInsets.only(right: 16.w),
+            child: Center(
+              child: GestureDetector(
+                onTap: () => _openCreatePlanScreen(controller),
+                child: Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 10.w,
+                    vertical: 6.h,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    borderRadius: BorderRadius.circular(6.r),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.add, size: 14.sp, color: AppColors.whiteColor),
+                      SizedBox(width: 4.w),
+                      Text(
+                        'Create Plan',
+                        style: TextStyle(
+                          color: AppColors.whiteColor,
+                          fontSize: 11.sp,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -273,17 +301,6 @@ class _MyPlansTabState extends State<MyPlansTab> {
           ],
         ),
       ),
-      floatingActionButtonLocation: const _CustomFloatingActionButtonLocation(),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _openCreatePlanScreen(controller),
-        backgroundColor: AppColors.primary,
-        foregroundColor:
-            AppColors.primary.computeLuminance() > 0.5
-                ? AppColors.textPrimaryLight
-                : AppColors.onColoredBackground,
-        icon: const Icon(Icons.add),
-        label: const Text('Create Plan'),
-      ),
     );
   }
 
@@ -324,6 +341,7 @@ class _MyPlansTabState extends State<MyPlansTab> {
               icon: const Icon(Icons.add),
               label: const Text('Create First Plan'),
               style: ElevatedButton.styleFrom(
+                // padding: EdgeInsets.zero,
                 backgroundColor: AppColors.primary,
                 foregroundColor:
                     AppColors.primary.computeLuminance() > 0.5
@@ -899,16 +917,5 @@ class _PlanCardItem extends StatelessWidget {
             ],
           ),
     );
-  }
-}
-
-class _CustomFloatingActionButtonLocation extends FloatingActionButtonLocation {
-  const _CustomFloatingActionButtonLocation();
-
-  @override
-  Offset getOffset(ScaffoldPrelayoutGeometry geometry) {
-    final Offset standardOffset = FloatingActionButtonLocation.endFloat
-        .getOffset(geometry);
-    return Offset(standardOffset.dx, standardOffset.dy - 95.h);
   }
 }
