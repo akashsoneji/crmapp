@@ -1,9 +1,11 @@
 import 'package:crm_app/constants/color.dart';
+import 'package:crm_app/screens/home/trading_main_screen.dart';
 import 'package:crm_app/widgets/app_select_field.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/copy_trading/copy_trading_masters_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 
 import 'master_details_screen.dart';
@@ -29,12 +31,16 @@ class ExploreMastersScreen extends StatelessWidget {
             fontWeight: FontWeight.w600,
           ),
         ),
-        leading: SizedBox.shrink(),
-        // leading: AppSvgBackButton(
-        //   onPressed: () => AppSvgBackButton.popRoute(context),
-        //   iconWidth: 30.w,
-        //   iconHeight: 30.h,
-        // ),
+        leading: IconButton(
+          icon: SvgPicture.asset(
+            'assets/svg/ib_dashboard/home.svg',
+            colorFilter: ColorFilter.mode(
+              AppColors.textPrimary,
+              BlendMode.srcIn,
+            ),
+          ),
+          onPressed: () => Get.offAll(() => const TradingMainScreen()),
+        ),
         actions: [
           IconButton(
             onPressed: () => controller.loadMasters(showLoading: true),

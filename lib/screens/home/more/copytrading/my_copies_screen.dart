@@ -1,5 +1,7 @@
+import 'package:crm_app/screens/home/trading_main_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:crm_app/constants/color.dart';
@@ -36,8 +38,11 @@ class _MyCopiesScreenState extends State<MyCopiesScreen> {
     });
 
     _scrollController.addListener(() {
-      if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
-        if (controller.hasMore && !controller.isLoadingMore.value && !controller.isLoading.value) {
+      if (_scrollController.position.pixels >=
+          _scrollController.position.maxScrollExtent - 200) {
+        if (controller.hasMore &&
+            !controller.isLoadingMore.value &&
+            !controller.isLoading.value) {
           controller.loadMore();
         }
       }
@@ -62,8 +67,15 @@ class _MyCopiesScreenState extends State<MyCopiesScreen> {
         elevation: 0,
         centerTitle: true,
         title: Text('My Copiers', style: AppTextStyles.screenTitle),
-        leading: AppSvgBackButton(
-          onPressed: () => AppSvgBackButton.popRoute(context),
+        leading: IconButton(
+          icon: SvgPicture.asset(
+            'assets/svg/ib_dashboard/home.svg',
+            colorFilter: ColorFilter.mode(
+              AppColors.textPrimary,
+              BlendMode.srcIn,
+            ),
+          ),
+          onPressed: () => Get.offAll(() => const TradingMainScreen()),
         ),
         actions: [
           IconButton(
@@ -100,17 +112,31 @@ class _MyCopiesScreenState extends State<MyCopiesScreen> {
                           decoration: BoxDecoration(
                             color: AppColors.whiteColor,
                             borderRadius: BorderRadius.circular(8.r),
-                            border: Border.all(color: AppColors.border.withValues(alpha: 0.12)),
+                            border: Border.all(
+                              color: AppColors.border.withValues(alpha: 0.12),
+                            ),
                           ),
                           child: TextField(
                             controller: _searchController,
-                            style: TextStyle(fontSize: 12.sp, color: AppColors.textPrimary),
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              color: AppColors.textPrimary,
+                            ),
                             decoration: InputDecoration(
                               hintText: 'Search copier...',
-                              hintStyle: TextStyle(fontSize: 12.sp, color: AppColors.textGrey),
-                              prefixIcon: Icon(Icons.search, size: 16.r, color: AppColors.textGrey),
+                              hintStyle: TextStyle(
+                                fontSize: 12.sp,
+                                color: AppColors.textGrey,
+                              ),
+                              prefixIcon: Icon(
+                                Icons.search,
+                                size: 16.r,
+                                color: AppColors.textGrey,
+                              ),
                               border: InputBorder.none,
-                              contentPadding: EdgeInsets.symmetric(vertical: 10.h),
+                              contentPadding: EdgeInsets.symmetric(
+                                vertical: 10.h,
+                              ),
                             ),
                           ),
                         ),
@@ -124,14 +150,30 @@ class _MyCopiesScreenState extends State<MyCopiesScreen> {
                           decoration: BoxDecoration(
                             color: AppColors.whiteColor,
                             borderRadius: BorderRadius.circular(8.r),
-                            border: Border.all(color: AppColors.border.withValues(alpha: 0.12)),
+                            border: Border.all(
+                              color: AppColors.border.withValues(alpha: 0.12),
+                            ),
                           ),
                           child: DropdownButtonHideUnderline(
                             child: DropdownButton<int?>(
                               value: controller.planFilter.value,
-                              hint: Text('All plans', style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey)),
-                              icon: Icon(Icons.keyboard_arrow_down, size: 16.r, color: AppColors.textGrey),
-                              style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                              hint: Text(
+                                'All plans',
+                                style: TextStyle(
+                                  fontSize: 12.sp,
+                                  color: AppColors.textGrey,
+                                ),
+                              ),
+                              icon: Icon(
+                                Icons.keyboard_arrow_down,
+                                size: 16.r,
+                                color: AppColors.textGrey,
+                              ),
+                              style: TextStyle(
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textPrimary,
+                              ),
                               onChanged: (newValue) {
                                 controller.planFilter.value = newValue;
                                 controller.currentPage.value = 1;
@@ -140,12 +182,20 @@ class _MyCopiesScreenState extends State<MyCopiesScreen> {
                               items: [
                                 DropdownMenuItem<int?>(
                                   value: null,
-                                  child: Text('All plans', style: TextStyle(fontSize: 12.sp)),
+                                  child: Text(
+                                    'All plans',
+                                    style: TextStyle(fontSize: 12.sp),
+                                  ),
                                 ),
-                                ...plans.map((p) => DropdownMenuItem<int?>(
-                                      value: p.id,
-                                      child: Text(p.planName, style: TextStyle(fontSize: 12.sp)),
-                                    )),
+                                ...plans.map(
+                                  (p) => DropdownMenuItem<int?>(
+                                    value: p.id,
+                                    child: Text(
+                                      p.planName,
+                                      style: TextStyle(fontSize: 12.sp),
+                                    ),
+                                  ),
+                                ),
                               ],
                             ),
                           ),
@@ -175,22 +225,38 @@ class _MyCopiesScreenState extends State<MyCopiesScreen> {
                       physics: const AlwaysScrollableScrollPhysics(),
                       children: [
                         Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 100.h),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 20.w,
+                            vertical: 100.h,
+                          ),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.error_outline, size: 40.r, color: AppColors.error),
+                              Icon(
+                                Icons.error_outline,
+                                size: 40.r,
+                                color: AppColors.error,
+                              ),
                               SizedBox(height: 10.h),
                               Text(
                                 err,
                                 textAlign: TextAlign.center,
-                                style: TextStyle(fontSize: 14.sp, color: AppColors.textPrimary),
+                                style: TextStyle(
+                                  fontSize: 14.sp,
+                                  color: AppColors.textPrimary,
+                                ),
                               ),
                               SizedBox(height: 16.h),
                               ElevatedButton(
-                                onPressed: () => controller.load(showLoading: true),
-                                style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-                                child: Text('Retry', style: TextStyle(color: AppColors.whiteColor)),
+                                onPressed:
+                                    () => controller.load(showLoading: true),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primary,
+                                ),
+                                child: Text(
+                                  'Retry',
+                                  style: TextStyle(color: AppColors.whiteColor),
+                                ),
                               ),
                             ],
                           ),
@@ -208,7 +274,10 @@ class _MyCopiesScreenState extends State<MyCopiesScreen> {
                           alignment: Alignment.center,
                           child: Text(
                             'No copiers found matching filters.',
-                            style: TextStyle(fontSize: 13.sp, color: AppColors.textGrey),
+                            style: TextStyle(
+                              fontSize: 13.sp,
+                              color: AppColors.textGrey,
+                            ),
                           ),
                         ),
                       ],
@@ -219,7 +288,9 @@ class _MyCopiesScreenState extends State<MyCopiesScreen> {
                     controller: _scrollController,
                     physics: const AlwaysScrollableScrollPhysics(),
                     padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 80.h),
-                    itemCount: allCopiers.length + (controller.isLoadingMore.value ? 1 : 0),
+                    itemCount:
+                        allCopiers.length +
+                        (controller.isLoadingMore.value ? 1 : 0),
                     separatorBuilder: (_, index) => SizedBox(height: 12.h),
                     itemBuilder: (context, index) {
                       if (index == allCopiers.length) {
@@ -229,13 +300,19 @@ class _MyCopiesScreenState extends State<MyCopiesScreen> {
                             child: SizedBox(
                               width: 20.r,
                               height: 20.r,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppColors.primary,
+                              ),
                             ),
                           ),
                         );
                       }
                       final item = allCopiers[index];
-                      return _CopierCardItem(item: item, controller: controller);
+                      return _CopierCardItem(
+                        item: item,
+                        controller: controller,
+                      );
                     },
                   );
                 }),
@@ -255,16 +332,45 @@ class _MyCopiesScreenState extends State<MyCopiesScreen> {
       spacing: 10.w,
       runSpacing: 10.h,
       children: [
-        _summaryBox(boxWidth, 'TOTAL COPIERS', controller.summaryTotal.value.toString(), 'All statuses combined'),
-        _summaryBox(boxWidth, 'CAPITAL ALLOCATED', '\$${controller.summaryTotalCapital.value.toStringAsFixed(2)}', 'Across all copiers (portfolio)'),
-        _summaryBox(boxWidth, 'COMBINED P&L', '\$${controller.summaryTotalPnl.value.toStringAsFixed(2)}', 'Lifetime copier P&L', 
-            valueColor: controller.summaryTotalPnl.value >= 0 ? AppColors.green : AppColors.error),
-        _summaryBox(boxWidth, 'COMMISSION PAID TO YOU', '\$${controller.summaryTotalCommissionPaid.value.toStringAsFixed(2)}', 'Lifetime from copiers'),
+        _summaryBox(
+          boxWidth,
+          'TOTAL COPIERS',
+          controller.summaryTotal.value.toString(),
+          'All statuses combined',
+        ),
+        _summaryBox(
+          boxWidth,
+          'CAPITAL ALLOCATED',
+          '\$${controller.summaryTotalCapital.value.toStringAsFixed(2)}',
+          'Across all copiers (portfolio)',
+        ),
+        _summaryBox(
+          boxWidth,
+          'COMBINED P&L',
+          '\$${controller.summaryTotalPnl.value.toStringAsFixed(2)}',
+          'Lifetime copier P&L',
+          valueColor:
+              controller.summaryTotalPnl.value >= 0
+                  ? AppColors.green
+                  : AppColors.error,
+        ),
+        _summaryBox(
+          boxWidth,
+          'COMMISSION PAID TO YOU',
+          '\$${controller.summaryTotalCommissionPaid.value.toStringAsFixed(2)}',
+          'Lifetime from copiers',
+        ),
       ],
     );
   }
 
-  Widget _summaryBox(double width, String title, String value, String desc, {Color? valueColor}) {
+  Widget _summaryBox(
+    double width,
+    String title,
+    String value,
+    String desc, {
+    Color? valueColor,
+  }) {
     return Container(
       width: width,
       padding: EdgeInsets.all(12.r),
@@ -285,12 +391,21 @@ class _MyCopiesScreenState extends State<MyCopiesScreen> {
         children: [
           Text(
             title,
-            style: TextStyle(fontSize: 9.sp, fontWeight: FontWeight.w800, color: AppColors.textGrey, letterSpacing: 0.3),
+            style: TextStyle(
+              fontSize: 9.sp,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textGrey,
+              letterSpacing: 0.3,
+            ),
           ),
           SizedBox(height: 4.h),
           Text(
             value,
-            style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold, color: valueColor ?? AppColors.textPrimary),
+            style: TextStyle(
+              fontSize: 14.sp,
+              fontWeight: FontWeight.bold,
+              color: valueColor ?? AppColors.textPrimary,
+            ),
           ),
           SizedBox(height: 2.h),
           Text(
@@ -308,21 +423,51 @@ class _MyCopiesScreenState extends State<MyCopiesScreen> {
       scrollDirection: Axis.horizontal,
       child: Row(
         children: [
-          _statusTabItem('All', 'all', controller.summaryTotal.value, activeStatus),
+          _statusTabItem(
+            'All',
+            'all',
+            controller.summaryTotal.value,
+            activeStatus,
+          ),
           SizedBox(width: 6.w),
-          _statusTabItem('Active', 'active', controller.summaryActive.value, activeStatus),
+          _statusTabItem(
+            'Active',
+            'active',
+            controller.summaryActive.value,
+            activeStatus,
+          ),
           SizedBox(width: 6.w),
-          _statusTabItem('Pending', 'pending', controller.summaryPending.value, activeStatus),
+          _statusTabItem(
+            'Pending',
+            'pending',
+            controller.summaryPending.value,
+            activeStatus,
+          ),
           SizedBox(width: 6.w),
-          _statusTabItem('Paused', 'paused', controller.summaryPaused.value, activeStatus),
+          _statusTabItem(
+            'Paused',
+            'paused',
+            controller.summaryPaused.value,
+            activeStatus,
+          ),
           SizedBox(width: 6.w),
-          _statusTabItem('Stopped / Removed', 'stopped', controller.summaryStoppedOrRemoved.value, activeStatus),
+          _statusTabItem(
+            'Stopped / Removed',
+            'stopped',
+            controller.summaryStoppedOrRemoved.value,
+            activeStatus,
+          ),
         ],
       ),
     );
   }
 
-  Widget _statusTabItem(String label, String value, int count, String activeValue) {
+  Widget _statusTabItem(
+    String label,
+    String value,
+    int count,
+    String activeValue,
+  ) {
     final isSelected = activeValue == value;
     return GestureDetector(
       onTap: () {
@@ -335,10 +480,16 @@ class _MyCopiesScreenState extends State<MyCopiesScreen> {
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary.withValues(alpha: 0.12) : AppColors.whiteColor,
+          color:
+              isSelected
+                  ? AppColors.primary.withValues(alpha: 0.12)
+                  : AppColors.whiteColor,
           borderRadius: BorderRadius.circular(20.r),
           border: Border.all(
-            color: isSelected ? AppColors.primary : AppColors.border.withValues(alpha: 0.15),
+            color:
+                isSelected
+                    ? AppColors.primary
+                    : AppColors.border.withValues(alpha: 0.15),
             width: isSelected ? 1.5 : 1.0,
           ),
         ),
@@ -357,7 +508,10 @@ class _MyCopiesScreenState extends State<MyCopiesScreen> {
             Container(
               padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 1.h),
               decoration: BoxDecoration(
-                color: isSelected ? AppColors.primary : AppColors.tradeBackgroundCenterColor,
+                color:
+                    isSelected
+                        ? AppColors.primary
+                        : AppColors.tradeBackgroundCenterColor,
                 borderRadius: BorderRadius.circular(10.r),
               ),
               child: Text(
@@ -373,7 +527,10 @@ class _MyCopiesScreenState extends State<MyCopiesScreen> {
             Icon(
               Icons.check,
               size: 10.r,
-              color: isSelected ? AppColors.primary : AppColors.textGrey.withValues(alpha: 0.3),
+              color:
+                  isSelected
+                      ? AppColors.primary
+                      : AppColors.textGrey.withValues(alpha: 0.3),
             ),
           ],
         ),
@@ -485,7 +642,11 @@ class _CopierCardItem extends StatelessWidget {
             padding: EdgeInsets.fromLTRB(14.w, 10.h, 14.w, 2.h),
             child: Text(
               '${item.planName}  •  ${item.commissionDisplay}',
-              style: TextStyle(fontSize: 11.sp, color: AppColors.textGrey, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                fontSize: 11.sp,
+                color: AppColors.textGrey,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
 
@@ -496,13 +657,38 @@ class _CopierCardItem extends StatelessWidget {
               spacing: 8.w,
               runSpacing: 8.h,
               children: [
-                _metricBox(cellWidth, 'CAPITAL ALLOCATED', '\$${item.capitalAmount.toStringAsFixed(2)}'),
-                _metricBox(cellWidth, 'COMBINED P&L', '\$${item.totalPnl.toStringAsFixed(2)}', 
-                    valueColor: item.totalPnl >= 0 ? AppColors.green : AppColors.error),
-                _metricBox(cellWidth, 'COMMISSION PAID', '\$${item.totalCommissionPaid.toStringAsFixed(2)}'),
-                _metricBox(cellWidth, 'OPEN TRADES', item.openTradesCount.toString()),
-                _metricBox(cellWidth, 'METHOD', item.sizingMethod.replaceAll('_', ' ').toUpperCase()),
-                _metricBox(cellWidth, 'LAST UPDATE', _formatDate(item.updatedAt)),
+                _metricBox(
+                  cellWidth,
+                  'CAPITAL ALLOCATED',
+                  '\$${item.capitalAmount.toStringAsFixed(2)}',
+                ),
+                _metricBox(
+                  cellWidth,
+                  'COMBINED P&L',
+                  '\$${item.totalPnl.toStringAsFixed(2)}',
+                  valueColor:
+                      item.totalPnl >= 0 ? AppColors.green : AppColors.error,
+                ),
+                _metricBox(
+                  cellWidth,
+                  'COMMISSION PAID',
+                  '\$${item.totalCommissionPaid.toStringAsFixed(2)}',
+                ),
+                _metricBox(
+                  cellWidth,
+                  'OPEN TRADES',
+                  item.openTradesCount.toString(),
+                ),
+                _metricBox(
+                  cellWidth,
+                  'METHOD',
+                  item.sizingMethod.replaceAll('_', ' ').toUpperCase(),
+                ),
+                _metricBox(
+                  cellWidth,
+                  'LAST UPDATE',
+                  _formatDate(item.updatedAt),
+                ),
                 _metricBox(cellWidth, 'ACCOUNT', item.accountNumber),
               ],
             ),
@@ -544,11 +730,18 @@ class _CopierCardItem extends StatelessWidget {
                     );
                   },
                   style: TextButton.styleFrom(
-                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 12.w,
+                      vertical: 8.h,
+                    ),
                   ),
                   child: Text(
                     'Edit Settings',
-                    style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w700, color: AppColors.primary),
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.primary,
+                    ),
                   ),
                 ),
                 if (canPauseResume) ...[
@@ -556,11 +749,18 @@ class _CopierCardItem extends StatelessWidget {
                   TextButton(
                     onPressed: () => _togglePauseResume(context),
                     style: TextButton.styleFrom(
-                      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 12.w,
+                        vertical: 8.h,
+                      ),
                     ),
                     child: Text(
                       isPaused ? 'Resume' : 'Pause',
-                      style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w700, color: isPaused ? AppColors.green : AppColors.warning),
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w700,
+                        color: isPaused ? AppColors.green : AppColors.warning,
+                      ),
                     ),
                   ),
                 ],
@@ -572,12 +772,20 @@ class _CopierCardItem extends StatelessWidget {
                       backgroundColor: AppColors.error,
                       foregroundColor: AppColors.whiteColor,
                       elevation: 0,
-                      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6.r)),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 14.w,
+                        vertical: 8.h,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(6.r),
+                      ),
                     ),
                     child: Text(
                       'Stop Copy',
-                      style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w700),
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                 ],
@@ -589,7 +797,12 @@ class _CopierCardItem extends StatelessWidget {
     );
   }
 
-  Widget _metricBox(double width, String label, String value, {Color? valueColor}) {
+  Widget _metricBox(
+    double width,
+    String label,
+    String value, {
+    Color? valueColor,
+  }) {
     return Container(
       width: width,
       padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
@@ -603,12 +816,21 @@ class _CopierCardItem extends StatelessWidget {
         children: [
           Text(
             label,
-            style: TextStyle(fontSize: 8.sp, fontWeight: FontWeight.w800, color: AppColors.textGrey, letterSpacing: 0.3),
+            style: TextStyle(
+              fontSize: 8.sp,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textGrey,
+              letterSpacing: 0.3,
+            ),
           ),
           SizedBox(height: 3.h),
           Text(
             value,
-            style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w700, color: valueColor ?? AppColors.textPrimary),
+            style: TextStyle(
+              fontSize: 12.sp,
+              fontWeight: FontWeight.w700,
+              color: valueColor ?? AppColors.textPrimary,
+            ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -618,83 +840,96 @@ class _CopierCardItem extends StatelessWidget {
   }
 
   void _togglePauseResume(BuildContext context) {
-    final actionText = item.status.toLowerCase() == 'paused' ? 'Resume copying' : 'Pause copying';
-    final confirmationMessage = item.status.toLowerCase() == 'paused'
-        ? 'Are you sure you want to resume copying for this investor?'
-        : 'Are you sure you want to pause copying for this investor? Copying will be suspended.';
+    final actionText =
+        item.status.toLowerCase() == 'paused'
+            ? 'Resume copying'
+            : 'Pause copying';
+    final confirmationMessage =
+        item.status.toLowerCase() == 'paused'
+            ? 'Are you sure you want to resume copying for this investor?'
+            : 'Are you sure you want to pause copying for this investor? Copying will be suspended.';
 
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(actionText),
-        content: Text(confirmationMessage),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancel'),
+      builder:
+          (ctx) => AlertDialog(
+            title: Text(actionText),
+            content: Text(confirmationMessage),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () async {
+                  Navigator.of(ctx).pop();
+                  final res =
+                      item.status.toLowerCase() == 'paused'
+                          ? await controller.resume(item.id)
+                          : await controller.pause(item.id);
+                  if (res.success) {
+                    CustomToastService.showSuccess(
+                      title: 'Success',
+                      message: res.message ?? 'State updated successfully',
+                    );
+                  } else {
+                    CustomToastService.showError(
+                      title: 'Failed',
+                      message:
+                          res.message ??
+                          'Failed to update copier copying state',
+                    );
+                  }
+                },
+                child: Text(
+                  item.status.toLowerCase() == 'paused' ? 'Resume' : 'Pause',
+                  style: TextStyle(
+                    color:
+                        item.status.toLowerCase() == 'paused'
+                            ? AppColors.green
+                            : AppColors.warning,
+                  ),
+                ),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () async {
-              Navigator.of(ctx).pop();
-              final res = item.status.toLowerCase() == 'paused'
-                  ? await controller.resume(item.id)
-                  : await controller.pause(item.id);
-              if (res.success) {
-                CustomToastService.showSuccess(
-                  title: 'Success',
-                  message: res.message ?? 'State updated successfully',
-                );
-              } else {
-                CustomToastService.showError(
-                  title: 'Failed',
-                  message: res.message ?? 'Failed to update copier copying state',
-                );
-              }
-            },
-            child: Text(
-              item.status.toLowerCase() == 'paused' ? 'Resume' : 'Pause',
-              style: TextStyle(color: item.status.toLowerCase() == 'paused' ? AppColors.green : AppColors.warning),
-            ),
-          ),
-        ],
-      ),
     );
   }
 
   void _stopCopier(BuildContext context) {
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Stop Copy'),
-        content: const Text('Are you sure you want to permanently stop copying for this investor? This action cannot be undone.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () async {
-              Navigator.of(ctx).pop();
-              final res = await controller.stop(item.id);
-              if (res.success) {
-                CustomToastService.showSuccess(
-                  title: 'Success',
-                  message: res.message ?? 'Copier stopped successfully',
-                );
-              } else {
-                CustomToastService.showError(
-                  title: 'Failed',
-                  message: res.message ?? 'Failed to stop copier',
-                );
-              }
-            },
-            child: Text(
-              'Stop',
-              style: TextStyle(color: AppColors.error),
+      builder:
+          (ctx) => AlertDialog(
+            title: const Text('Stop Copy'),
+            content: const Text(
+              'Are you sure you want to permanently stop copying for this investor? This action cannot be undone.',
             ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () async {
+                  Navigator.of(ctx).pop();
+                  final res = await controller.stop(item.id);
+                  if (res.success) {
+                    CustomToastService.showSuccess(
+                      title: 'Success',
+                      message: res.message ?? 'Copier stopped successfully',
+                    );
+                  } else {
+                    CustomToastService.showError(
+                      title: 'Failed',
+                      message: res.message ?? 'Failed to stop copier',
+                    );
+                  }
+                },
+                child: Text('Stop', style: TextStyle(color: AppColors.error)),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 }

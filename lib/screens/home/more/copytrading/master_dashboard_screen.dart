@@ -1,10 +1,12 @@
 import 'package:crm_app/constants/color.dart';
+import 'package:crm_app/screens/home/trading_main_screen.dart';
 import 'package:crm_app/widgets/app_svg_back_button.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/copy_trading/copy_trading_master_dashboard_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
 import 'copy_trading_create_plan_screen.dart';
@@ -16,7 +18,9 @@ class MasterDashboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(CopyTradingMasterDashboardController(masterCode: masterCode));
+    final controller = Get.put(
+      CopyTradingMasterDashboardController(masterCode: masterCode),
+    );
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -32,10 +36,15 @@ class MasterDashboardScreen extends StatelessWidget {
             fontWeight: FontWeight.w600,
           ),
         ),
-        leading: AppSvgBackButton(
-          onPressed: () => AppSvgBackButton.popRoute(context),
-          iconWidth: 30.w,
-          iconHeight: 30.h,
+        leading: IconButton(
+          icon: SvgPicture.asset(
+            'assets/svg/ib_dashboard/home.svg',
+            colorFilter: ColorFilter.mode(
+              AppColors.textPrimary,
+              BlendMode.srcIn,
+            ),
+          ),
+          onPressed: () => Get.offAll(() => const TradingMainScreen()),
         ),
         actions: [
           IconButton(
@@ -77,9 +86,16 @@ class MasterDashboardScreen extends StatelessWidget {
                 ),
               ),
               SizedBox(height: 10.h),
-              _MasterProfileCard(profile: controller.profile.value, masterCode: masterCode),
+              _MasterProfileCard(
+                profile: controller.profile.value,
+                masterCode: masterCode,
+              ),
               SizedBox(height: 10.h),
-              _StatsGrid(stats: controller.stats.value, profile: controller.profile.value, plans: controller.plans),
+              _StatsGrid(
+                stats: controller.stats.value,
+                profile: controller.profile.value,
+                plans: controller.plans,
+              ),
               SizedBox(height: 10.h),
               _PerformanceStatsCard(profile: controller.profile.value),
               SizedBox(height: 10.h),
@@ -87,7 +103,11 @@ class MasterDashboardScreen extends StatelessWidget {
               SizedBox(height: 14.h),
               Row(
                 children: [
-                  Icon(Icons.assignment_outlined, size: 16.r, color: AppColors.primary),
+                  Icon(
+                    Icons.assignment_outlined,
+                    size: 16.r,
+                    color: AppColors.primary,
+                  ),
                   SizedBox(width: 6.w),
                   Text(
                     'My Copy Plans',
@@ -101,12 +121,16 @@ class MasterDashboardScreen extends StatelessWidget {
               ),
               SizedBox(height: 8.h),
               if (controller.plans.isEmpty)
-                _EmptyPlans(onCreate: () => _openCreatePlanScreen(context, controller))
+                _EmptyPlans(
+                  onCreate: () => _openCreatePlanScreen(context, controller),
+                )
               else
-                ...controller.plans.map((p) => Padding(
-                      padding: EdgeInsets.only(bottom: 8.h),
-                      child: _PlanTile(plan: p, controller: controller),
-                    )),
+                ...controller.plans.map(
+                  (p) => Padding(
+                    padding: EdgeInsets.only(bottom: 8.h),
+                    child: _PlanTile(plan: p, controller: controller),
+                  ),
+                ),
               SizedBox(height: 16.h),
             ],
           ),
@@ -115,10 +139,11 @@ class MasterDashboardScreen extends StatelessWidget {
     );
   }
 
-  void _openCreatePlanScreen(BuildContext context, CopyTradingMasterDashboardController controller) {
-    Get.to(
-      () => CopyTradingCreatePlanScreen(controller: controller),
-    );
+  void _openCreatePlanScreen(
+    BuildContext context,
+    CopyTradingMasterDashboardController controller,
+  ) {
+    Get.to(() => CopyTradingCreatePlanScreen(controller: controller));
   }
 }
 
@@ -140,7 +165,8 @@ class _MasterProfileCard extends StatelessWidget {
       if (parts.length > 1) {
         initials = (parts[0][0] + parts[1][0]).toUpperCase();
       } else {
-        initials = nickname.substring(0, nickname.length >= 2 ? 2 : 1).toUpperCase();
+        initials =
+            nickname.substring(0, nickname.length >= 2 ? 2 : 1).toUpperCase();
       }
     }
 
@@ -167,8 +193,10 @@ class _MasterProfileCard extends StatelessWidget {
               Container(
                 width: 40.r,
                 height: 40.r,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF6F1E51), // Purple theme matching RO initials in screenshot
+                decoration: BoxDecoration(
+                  color:
+                      AppColors
+                          .primary, // Purple theme matching RO initials in screenshot
                   shape: BoxShape.circle,
                 ),
                 alignment: Alignment.center,
@@ -202,9 +230,14 @@ class _MasterProfileCard extends StatelessWidget {
                         ),
                         SizedBox(width: 6.w),
                         Container(
-                          padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 6.w,
+                            vertical: 2.h,
+                          ),
                           decoration: BoxDecoration(
-                            color: AppColors.successText.withValues(alpha: 0.12),
+                            color: AppColors.successText.withValues(
+                              alpha: 0.12,
+                            ),
                             borderRadius: BorderRadius.circular(4.r),
                           ),
                           child: Text(
@@ -221,7 +254,10 @@ class _MasterProfileCard extends StatelessWidget {
                     if (memberSince.isNotEmpty && memberSince != '—') ...[
                       SizedBox(height: 2.h),
                       Container(
-                        padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 6.w,
+                          vertical: 2.h,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.textGrey.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(4.r),
@@ -256,16 +292,20 @@ class _MasterProfileCard extends StatelessWidget {
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF8854D0).withValues(alpha: 0.08),
+                  color: AppColors.primary.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(6.r),
-                  border: Border.all(color: const Color(0xFF8854D0).withValues(alpha: 0.15)),
+                  border: Border.all(
+                    color: AppColors.primary.withValues(alpha: 0.15),
+                  ),
                 ),
                 child: Text(
                   masterCode,
                   style: TextStyle(
                     fontSize: 11.sp,
                     fontWeight: FontWeight.bold,
-                    color: const Color(0xFF8854D0), // Purple text color matching screenshot
+                    color:
+                        AppColors
+                            .primary, // Purple text color matching screenshot
                   ),
                 ),
               ),
@@ -275,16 +315,28 @@ class _MasterProfileCard extends StatelessWidget {
                 child: OutlinedButton(
                   onPressed: () async {
                     await Clipboard.setData(ClipboardData(text: masterCode));
-                    Get.snackbar('Copied', 'Master code copied to clipboard', snackPosition: SnackPosition.BOTTOM);
+                    Get.snackbar(
+                      'Copied',
+                      'Master code copied to clipboard',
+                      snackPosition: SnackPosition.BOTTOM,
+                    );
                   },
                   style: OutlinedButton.styleFrom(
-                    side: BorderSide(color: AppColors.border.withValues(alpha: 0.3)),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6.r)),
+                    side: BorderSide(
+                      color: AppColors.border.withValues(alpha: 0.3),
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(6.r),
+                    ),
                     padding: EdgeInsets.symmetric(horizontal: 10.w),
                   ),
                   child: Text(
                     'Copy',
-                    style: TextStyle(fontSize: 11.sp, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                    style: TextStyle(
+                      fontSize: 11.sp,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                 ),
               ),
@@ -295,17 +347,39 @@ class _MasterProfileCard extends StatelessWidget {
             width: double.infinity,
             height: 38.h,
             child: ElevatedButton.icon(
-              onPressed: () => Get.to(() => CopyTradingCreatePlanScreen(controller: profile != null ? Get.find<CopyTradingMasterDashboardController>() : Get.put(CopyTradingMasterDashboardController(masterCode: masterCode)))),
+              onPressed:
+                  () => Get.to(
+                    () => CopyTradingCreatePlanScreen(
+                      controller:
+                          profile != null
+                              ? Get.find<CopyTradingMasterDashboardController>()
+                              : Get.put(
+                                CopyTradingMasterDashboardController(
+                                  masterCode: masterCode,
+                                ),
+                              ),
+                    ),
+                  ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: AppColors.whiteColor,
                 elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
               ),
-              icon: Icon(Icons.add_circle_outline, size: 16.r, color: AppColors.whiteColor),
+              icon: Icon(
+                Icons.add_circle_outline,
+                size: 16.r,
+                color: AppColors.whiteColor,
+              ),
               label: Text(
                 'Create Plan',
-                style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w700, color: AppColors.whiteColor),
+                style: TextStyle(
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.whiteColor,
+                ),
               ),
             ),
           ),
@@ -320,7 +394,11 @@ class _StatsGrid extends StatelessWidget {
   final CopyTradingMasterProfile? profile;
   final List<CopyTradingMasterPlanItem> plans;
 
-  const _StatsGrid({required this.stats, required this.profile, required this.plans});
+  const _StatsGrid({
+    required this.stats,
+    required this.profile,
+    required this.plans,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -330,13 +408,16 @@ class _StatsGrid extends StatelessWidget {
     // Fallbacks to profile API data if dashboard stats API returns empty
     final totalPlansValue = s?.plansCount ?? p?.totalPlans ?? plans.length;
     final activeCopiersValue = s?.activeCopiersCount ?? p?.totalCopiers ?? 0;
-    
+
     num totalAumValue = 0.0;
     if (s != null) {
       totalAumValue = s.totalAum;
     } else if (p != null) {
       if (p.plans.isNotEmpty) {
-        totalAumValue = p.plans.fold<num>(0.0, (sum, plan) => sum + plan.totalCapital);
+        totalAumValue = p.plans.fold<num>(
+          0.0,
+          (sum, plan) => sum + plan.totalCapital,
+        );
       } else {
         totalAumValue = p.masterEquity;
       }
@@ -344,9 +425,10 @@ class _StatsGrid extends StatelessWidget {
 
     final commissionEarnedValue = s?.commissionEarned ?? 0.0;
 
-    final approvedCount = plans.isNotEmpty 
-        ? plans.where((pl) => pl.status.toLowerCase() == 'approved').length 
-        : (p != null ? p.plans.length : 0);
+    final approvedCount =
+        plans.isNotEmpty
+            ? plans.where((pl) => pl.status.toLowerCase() == 'approved').length
+            : (p != null ? p.plans.length : 0);
 
     return Column(
       children: [
@@ -357,9 +439,10 @@ class _StatsGrid extends StatelessWidget {
                 title: 'TOTAL PLANS',
                 value: totalPlansValue.toString(),
                 subtitle: '$approvedCount approved',
-                description: 'Copy plans you create. Each plan has its own rules.',
+                description:
+                    'Copy plans you create. Each plan has its own rules.',
                 icon: Icons.layers_outlined,
-                topColor: const Color(0xFF8854D0),
+                topColor: AppColors.primary,
               ),
             ),
             SizedBox(width: 8.w),
@@ -370,7 +453,7 @@ class _StatsGrid extends StatelessWidget {
                 subtitle: 'Copying your trades',
                 description: 'Investors mirroring your positions dynamically.',
                 icon: Icons.people_outline,
-                topColor: const Color(0xFF8854D0),
+                topColor: AppColors.primary,
               ),
             ),
           ],
@@ -383,9 +466,10 @@ class _StatsGrid extends StatelessWidget {
                 title: 'TOTAL EQUITY (AUM)',
                 value: '\$${totalAumValue.toStringAsFixed(2)}',
                 subtitle: 'Combined copier equity',
-                description: 'Assets across all copiers following your approved plans.',
+                description:
+                    'Assets across all copiers following your approved plans.',
                 icon: Icons.account_balance_wallet_outlined,
-                topColor: const Color(0xFF8854D0),
+                topColor: AppColors.primary,
               ),
             ),
             SizedBox(width: 8.w),
@@ -516,18 +600,22 @@ class _PerformanceStatsCard extends StatelessWidget {
     final maxDrawdown = profile!.maxDrawdown;
 
     final winRateText = '${winRate.toStringAsFixed(1)}%';
-    final returnText = '${totalGainPercent >= 0 ? '+' : ''}${totalGainPercent.toStringAsFixed(2)}%';
-    final returnColor = totalGainPercent >= 0 ? AppColors.successText : AppColors.error;
+    final returnText =
+        '${totalGainPercent >= 0 ? '+' : ''}${totalGainPercent.toStringAsFixed(2)}%';
+    final returnColor =
+        totalGainPercent >= 0 ? AppColors.successText : AppColors.error;
 
     final pw = profile!.performanceWindow;
     final totalTrades = pw?.closedTradesCount.toString() ?? '—';
-    final avgDuration = pw != null ? _formatDuration(pw.avgTradeDurationSeconds) : '—';
+    final avgDuration =
+        pw != null ? _formatDuration(pw.avgTradeDurationSeconds) : '—';
     final profitFactor = pw?.profitFactor.toStringAsFixed(2) ?? '—';
-    
+
     final bestProfit = pw?.bestTradeProfit ?? 0.0;
     final worstProfit = pw?.worstTradeProfit ?? 0.0;
 
-    final bestTradeText = '${bestProfit >= 0 ? '+' : ''}\$${bestProfit.toStringAsFixed(2)}';
+    final bestTradeText =
+        '${bestProfit >= 0 ? '+' : ''}\$${bestProfit.toStringAsFixed(2)}';
     final worstTradeText = '\$${worstProfit.toStringAsFixed(2)}';
 
     return Container(
@@ -680,7 +768,8 @@ class _PerformanceStatsCard extends StatelessWidget {
             ],
           ),
         ),
-        if (!isLast) Divider(height: 1, color: AppColors.border.withValues(alpha: 0.12)),
+        if (!isLast)
+          Divider(height: 1, color: AppColors.border.withValues(alpha: 0.12)),
       ],
     );
   }
@@ -748,10 +837,15 @@ class _OpenPositionsCard extends StatelessWidget {
               ),
             )
           else
-            ...positions.map((pos) => Padding(
-                  padding: EdgeInsets.only(bottom: 6.h),
-                  child: Text(pos.toString(), style: TextStyle(color: AppColors.textPrimary)),
-                )),
+            ...positions.map(
+              (pos) => Padding(
+                padding: EdgeInsets.only(bottom: 6.h),
+                child: Text(
+                  pos.toString(),
+                  style: TextStyle(color: AppColors.textPrimary),
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -781,13 +875,21 @@ class _EmptyPlans extends StatelessWidget {
           SizedBox(height: 8.h),
           Text(
             'No plans yet',
-            style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+            style: TextStyle(
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
           ),
           SizedBox(height: 4.h),
           Text(
             'Create your first plan to start accepting copiers.',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 11.sp, color: AppColors.textGrey, fontWeight: FontWeight.w500),
+            style: TextStyle(
+              fontSize: 11.sp,
+              color: AppColors.textGrey,
+              fontWeight: FontWeight.w500,
+            ),
           ),
           SizedBox(height: 12.h),
           ElevatedButton(
@@ -795,7 +897,9 @@ class _EmptyPlans extends StatelessWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               foregroundColor: AppColors.whiteColor,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.r),
+              ),
               elevation: 0,
             ),
             child: const Text('Create Plan'),
@@ -817,16 +921,21 @@ class _PlanTile extends StatelessWidget {
     final status = plan.status;
     final statusLower = status.toLowerCase();
 
-    final statusColor = statusLower == 'approved'
-        ? AppColors.green
-        : statusLower.contains('pending')
+    final statusColor =
+        statusLower == 'approved'
+            ? AppColors.green
+            : statusLower.contains('pending')
             ? AppColors.warning
             : statusLower.contains('inactive')
-                ? AppColors.textGrey
-                : AppColors.error;
+            ? AppColors.textGrey
+            : AppColors.error;
 
-    final canInactivate = statusLower == 'approved' && plan.activeCopiersCount == 0;
-    final planSubtitle = (plan.commissionLabel.isNotEmpty ? plan.commissionLabel : plan.commissionType);
+    final canInactivate =
+        statusLower == 'approved' && plan.activeCopiersCount == 0;
+    final planSubtitle =
+        (plan.commissionLabel.isNotEmpty
+            ? plan.commissionLabel
+            : plan.commissionType);
 
     return Container(
       width: double.infinity,
@@ -856,7 +965,11 @@ class _PlanTile extends StatelessWidget {
                   children: [
                     Text(
                       plan.planName,
-                      style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -864,7 +977,11 @@ class _PlanTile extends StatelessWidget {
                       SizedBox(height: 2.h),
                       Text(
                         planSubtitle,
-                        style: TextStyle(fontSize: 11.sp, fontWeight: FontWeight.w500, color: AppColors.textGrey),
+                        style: TextStyle(
+                          fontSize: 11.sp,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.textGrey,
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -880,12 +997,20 @@ class _PlanTile extends StatelessWidget {
                 ),
                 child: Text(
                   status,
-                  style: TextStyle(fontSize: 10.sp, fontWeight: FontWeight.w700, color: statusColor),
+                  style: TextStyle(
+                    fontSize: 10.sp,
+                    fontWeight: FontWeight.w700,
+                    color: statusColor,
+                  ),
                 ),
               ),
             ],
           ),
-          trailing: Icon(Icons.expand_more, color: AppColors.textGrey, size: 18.r),
+          trailing: Icon(
+            Icons.expand_more,
+            color: AppColors.textGrey,
+            size: 18.r,
+          ),
           children: [
             SizedBox(height: 8.h),
             Row(
@@ -895,11 +1020,20 @@ class _PlanTile extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _metric(label: 'Copiers', value: plan.activeCopiersCount.toString()),
+                      _metric(
+                        label: 'Copiers',
+                        value: plan.activeCopiersCount.toString(),
+                      ),
                       SizedBox(height: 6.h),
-                      _metric(label: 'AUM', value: '\$${plan.totalCapital.toStringAsFixed(2)}'),
+                      _metric(
+                        label: 'AUM',
+                        value: '\$${plan.totalCapital.toStringAsFixed(2)}',
+                      ),
                       SizedBox(height: 6.h),
-                      _metric(label: 'Min. capital', value: '\$${plan.minimumCapital.toStringAsFixed(2)}'),
+                      _metric(
+                        label: 'Min. capital',
+                        value: '\$${plan.minimumCapital.toStringAsFixed(2)}',
+                      ),
                     ],
                   ),
                 ),
@@ -912,17 +1046,27 @@ class _PlanTile extends StatelessWidget {
                         height: 30.h,
                         child: OutlinedButton(
                           onPressed: () {
-                            Get.to(() => MasterPlanDetailScreen(planId: plan.id));
+                            Get.to(
+                              () => MasterPlanDetailScreen(planId: plan.id),
+                            );
                           },
                           style: OutlinedButton.styleFrom(
                             padding: EdgeInsets.zero,
                             minimumSize: Size(0, 30.h),
-                            side: BorderSide(color: AppColors.primary.withValues(alpha: 0.6)),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
+                            side: BorderSide(
+                              color: AppColors.primary.withValues(alpha: 0.6),
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8.r),
+                            ),
                           ),
                           child: Text(
                             'Details',
-                            style: TextStyle(color: AppColors.primary, fontSize: 12.sp, fontWeight: FontWeight.w600),
+                            style: TextStyle(
+                              color: AppColors.primary,
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                       ),
@@ -931,41 +1075,74 @@ class _PlanTile extends StatelessWidget {
                         width: double.infinity,
                         height: 30.h,
                         child: ElevatedButton(
-                          onPressed: canInactivate
-                              ? () async {
-                                  final ok = await Get.dialog<bool>(
-                                    AlertDialog(
-                                      title: const Text('Inactivate Plan'),
-                                      content: const Text(
-                                          'This will inactivate the plan. You can only inactivate when status is approved and active copiers = 0.'),
-                                      actions: [
-                                        TextButton(onPressed: () => Get.back(result: false), child: const Text('Cancel')),
-                                        TextButton(onPressed: () => Get.back(result: true), child: const Text('Inactivate')),
-                                      ],
-                                    ),
-                                  );
-                                  if (ok != true) return;
+                          onPressed:
+                              canInactivate
+                                  ? () async {
+                                    final ok = await Get.dialog<bool>(
+                                      AlertDialog(
+                                        title: const Text('Inactivate Plan'),
+                                        content: const Text(
+                                          'This will inactivate the plan. You can only inactivate when status is approved and active copiers = 0.',
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed:
+                                                () => Get.back(result: false),
+                                            child: const Text('Cancel'),
+                                          ),
+                                          TextButton(
+                                            onPressed:
+                                                () => Get.back(result: true),
+                                            child: const Text('Inactivate'),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                    if (ok != true) return;
 
-                                  final res = await controller.inactivatePlan(planId: plan.id);
-                                  if (res.success) {
-                                    CustomToastService.showSuccess(message: res.message ?? 'Plan inactivated', title: 'Success');
-                                  } else {
-                                    CustomToastService.showError(
-                                        message: res.message ?? controller.errorMessage.value, title: 'Error');
+                                    final res = await controller.inactivatePlan(
+                                      planId: plan.id,
+                                    );
+                                    if (res.success) {
+                                      CustomToastService.showSuccess(
+                                        message:
+                                            res.message ?? 'Plan inactivated',
+                                        title: 'Success',
+                                      );
+                                    } else {
+                                      CustomToastService.showError(
+                                        message:
+                                            res.message ??
+                                            controller.errorMessage.value,
+                                        title: 'Error',
+                                      );
+                                    }
                                   }
-                                }
-                              : null,
+                                  : null,
                           style: ElevatedButton.styleFrom(
                             padding: EdgeInsets.zero,
                             minimumSize: Size(0, 30.h),
-                            backgroundColor: canInactivate ? AppColors.error : AppColors.textGrey.withValues(alpha: 0.15),
-                            foregroundColor: canInactivate ? AppColors.whiteColor : AppColors.textGrey,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
+                            backgroundColor:
+                                canInactivate
+                                    ? AppColors.error
+                                    : AppColors.textGrey.withValues(
+                                      alpha: 0.15,
+                                    ),
+                            foregroundColor:
+                                canInactivate
+                                    ? AppColors.whiteColor
+                                    : AppColors.textGrey,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8.r),
+                            ),
                             elevation: 0,
                           ),
                           child: Text(
                             'Inactivate',
-                            style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w700),
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
                       ),
@@ -986,9 +1163,23 @@ Widget _metric({required String label, required String value}) {
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text(label, style: TextStyle(fontSize: 11.sp, color: AppColors.textGrey, fontWeight: FontWeight.w600)),
+      Text(
+        label,
+        style: TextStyle(
+          fontSize: 11.sp,
+          color: AppColors.textGrey,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
       SizedBox(height: 2.h),
-      Text(value, style: TextStyle(fontSize: 13.sp, color: AppColors.textPrimary, fontWeight: FontWeight.w700)),
+      Text(
+        value,
+        style: TextStyle(
+          fontSize: 13.sp,
+          color: AppColors.textPrimary,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
     ],
   );
 }

@@ -1,5 +1,8 @@
+import 'package:crm_app/screens/home/trading_main_screen.dart';
+import 'package:crm_app/widgets/app_svg_back_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:crm_app/constants/color.dart';
@@ -46,25 +49,34 @@ class _MyPlansTabState extends State<MyPlansTab> {
     );
   }
 
-  List<CopyTradingMasterPlanItem> _getFilteredAndSortedPlans(List<CopyTradingMasterPlanItem> plans) {
+  List<CopyTradingMasterPlanItem> _getFilteredAndSortedPlans(
+    List<CopyTradingMasterPlanItem> plans,
+  ) {
     // Create a copy to prevent mutating the reactive list during build
     List<CopyTradingMasterPlanItem> result = List.from(plans);
 
     // 1. Filter
     if (_searchQuery.isNotEmpty) {
-      result = result.where((plan) {
-        final nameMatch = plan.planName.toLowerCase().contains(_searchQuery);
-        final idMatch = plan.id.toString().contains(_searchQuery);
-        final accountMatch = plan.tradingAccountNumber.contains(_searchQuery);
-        return nameMatch || idMatch || accountMatch;
-      }).toList();
+      result =
+          result.where((plan) {
+            final nameMatch = plan.planName.toLowerCase().contains(
+              _searchQuery,
+            );
+            final idMatch = plan.id.toString().contains(_searchQuery);
+            final accountMatch = plan.tradingAccountNumber.contains(
+              _searchQuery,
+            );
+            return nameMatch || idMatch || accountMatch;
+          }).toList();
     }
 
     // 2. Sort
     if (_sortBy == 'Newest first') {
       result.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     } else if (_sortBy == 'Name A-Z') {
-      result.sort((a, b) => a.planName.toLowerCase().compareTo(b.planName.toLowerCase()));
+      result.sort(
+        (a, b) => a.planName.toLowerCase().compareTo(b.planName.toLowerCase()),
+      );
     } else if (_sortBy == 'Highest AUM') {
       result.sort((a, b) => b.totalCapital.compareTo(a.totalCapital));
     }
@@ -75,11 +87,25 @@ class _MyPlansTabState extends State<MyPlansTab> {
   @override
   Widget build(BuildContext context) {
     final hubController = Get.find<CopyTradingHubController>();
-    final controller = Get.put(CopyTradingMasterDashboardController(masterCode: hubController.masterCode.value));
+    final controller = Get.put(
+      CopyTradingMasterDashboardController(
+        masterCode: hubController.masterCode.value,
+      ),
+    );
 
     return Scaffold(
       backgroundColor: AppColors.tradeBackgroundCenterColor,
       appBar: AppBar(
+        leading: IconButton(
+          icon: SvgPicture.asset(
+            'assets/svg/ib_dashboard/home.svg',
+            colorFilter: ColorFilter.mode(
+              AppColors.textPrimary,
+              BlendMode.srcIn,
+            ),
+          ),
+          onPressed: () => Get.offAll(() => const TradingMainScreen()),
+        ),
         backgroundColor: AppColors.tradeBackgroundCenterColor,
         elevation: 0,
         scrolledUnderElevation: 0,
@@ -110,15 +136,27 @@ class _MyPlansTabState extends State<MyPlansTab> {
                       decoration: BoxDecoration(
                         color: AppColors.whiteColor,
                         borderRadius: BorderRadius.circular(8.r),
-                        border: Border.all(color: AppColors.border.withValues(alpha: 0.12)),
+                        border: Border.all(
+                          color: AppColors.border.withValues(alpha: 0.12),
+                        ),
                       ),
                       child: TextField(
                         controller: _searchController,
-                        style: TextStyle(fontSize: 13.sp, color: AppColors.textPrimary),
+                        style: TextStyle(
+                          fontSize: 13.sp,
+                          color: AppColors.textPrimary,
+                        ),
                         decoration: InputDecoration(
                           hintText: 'Search plan name, ID...',
-                          hintStyle: TextStyle(fontSize: 13.sp, color: AppColors.textGrey),
-                          prefixIcon: Icon(Icons.search, size: 18.r, color: AppColors.textGrey),
+                          hintStyle: TextStyle(
+                            fontSize: 13.sp,
+                            color: AppColors.textGrey,
+                          ),
+                          prefixIcon: Icon(
+                            Icons.search,
+                            size: 18.r,
+                            color: AppColors.textGrey,
+                          ),
                           border: InputBorder.none,
                           contentPadding: EdgeInsets.symmetric(vertical: 10.h),
                         ),
@@ -132,13 +170,23 @@ class _MyPlansTabState extends State<MyPlansTab> {
                     decoration: BoxDecoration(
                       color: AppColors.whiteColor,
                       borderRadius: BorderRadius.circular(8.r),
-                      border: Border.all(color: AppColors.border.withValues(alpha: 0.12)),
+                      border: Border.all(
+                        color: AppColors.border.withValues(alpha: 0.12),
+                      ),
                     ),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<String>(
                         value: _sortBy,
-                        icon: Icon(Icons.keyboard_arrow_down, size: 18.r, color: AppColors.textGrey),
-                        style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                        icon: Icon(
+                          Icons.keyboard_arrow_down,
+                          size: 18.r,
+                          color: AppColors.textGrey,
+                        ),
+                        style: TextStyle(
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                        ),
                         onChanged: (newValue) {
                           if (newValue != null) {
                             setState(() {
@@ -146,13 +194,17 @@ class _MyPlansTabState extends State<MyPlansTab> {
                             });
                           }
                         },
-                        items: <String>['Newest first', 'Name A-Z', 'Highest AUM']
-                            .map<DropdownMenuItem<String>>((String value) {
-                          return DropdownMenuItem<String>(
-                            value: value,
-                            child: Text(value),
-                          );
-                        }).toList(),
+                        items:
+                            <String>[
+                              'Newest first',
+                              'Name A-Z',
+                              'Highest AUM',
+                            ].map<DropdownMenuItem<String>>((String value) {
+                              return DropdownMenuItem<String>(
+                                value: value,
+                                child: Text(value),
+                              );
+                            }).toList(),
                       ),
                     ),
                   ),
@@ -182,7 +234,9 @@ class _MyPlansTabState extends State<MyPlansTab> {
                     );
                   }
 
-                  final filteredSortedPlans = _getFilteredAndSortedPlans(allPlans);
+                  final filteredSortedPlans = _getFilteredAndSortedPlans(
+                    allPlans,
+                  );
 
                   if (filteredSortedPlans.isEmpty) {
                     return ListView(
@@ -193,7 +247,10 @@ class _MyPlansTabState extends State<MyPlansTab> {
                           alignment: Alignment.center,
                           child: Text(
                             'No plans found matching filters',
-                            style: TextStyle(fontSize: 14.sp, color: AppColors.textGrey),
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              color: AppColors.textGrey,
+                            ),
                           ),
                         ),
                       ],
@@ -220,9 +277,10 @@ class _MyPlansTabState extends State<MyPlansTab> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openCreatePlanScreen(controller),
         backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.primary.computeLuminance() > 0.5
-            ? AppColors.textPrimaryLight
-            : AppColors.onColoredBackground,
+        foregroundColor:
+            AppColors.primary.computeLuminance() > 0.5
+                ? AppColors.textPrimaryLight
+                : AppColors.onColoredBackground,
         icon: const Icon(Icons.add),
         label: const Text('Create Plan'),
       ),
@@ -267,9 +325,10 @@ class _MyPlansTabState extends State<MyPlansTab> {
               label: const Text('Create First Plan'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
-                foregroundColor: AppColors.primary.computeLuminance() > 0.5
-                    ? AppColors.textPrimaryLight
-                    : AppColors.onColoredBackground,
+                foregroundColor:
+                    AppColors.primary.computeLuminance() > 0.5
+                        ? AppColors.textPrimaryLight
+                        : AppColors.onColoredBackground,
               ),
             ),
           ],
@@ -399,7 +458,8 @@ class _PlanCardItem extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 11.sp,
                     fontWeight: FontWeight.w700,
-                    color: plan.copyingPaused ? AppColors.error : AppColors.green,
+                    color:
+                        plan.copyingPaused ? AppColors.error : AppColors.green,
                   ),
                 ),
               ],
@@ -413,15 +473,43 @@ class _PlanCardItem extends StatelessWidget {
               spacing: 8.w,
               runSpacing: 8.h,
               children: [
-                _metricBox(cellWidth, 'PLAN EQUITY (AUM)', '\$${plan.totalCapital.toStringAsFixed(2)}'),
-                _metricBox(cellWidth, 'COPIERS', '${plan.activeCopiersCount}${plan.maxCopiers != null ? ' / ${plan.maxCopiers}' : ''}'),
+                _metricBox(
+                  cellWidth,
+                  'PLAN EQUITY (AUM)',
+                  '\$${plan.totalCapital.toStringAsFixed(2)}',
+                ),
+                _metricBox(
+                  cellWidth,
+                  'COPIERS',
+                  '${plan.activeCopiersCount}${plan.maxCopiers != null ? ' / ${plan.maxCopiers}' : ''}',
+                ),
                 _metricBox(cellWidth, 'PLAN FULL', plan.isFull ? 'Yes' : 'No'),
-                _metricBox(cellWidth, 'COMMISSION', plan.commissionLabel.isNotEmpty ? plan.commissionLabel : '—'),
-                _metricBox(cellWidth, 'COMMISSION TYPE', plan.commissionType.toUpperCase()),
-                _metricBox(cellWidth, 'SUBSCRIPTION FEE', '\$${plan.subscriptionFee.toStringAsFixed(2)}'),
-                _metricBox(cellWidth, 'MIN. CAPITAL', '\$${plan.minimumCapital.toStringAsFixed(2)}'),
+                _metricBox(
+                  cellWidth,
+                  'COMMISSION',
+                  plan.commissionLabel.isNotEmpty ? plan.commissionLabel : '—',
+                ),
+                _metricBox(
+                  cellWidth,
+                  'COMMISSION TYPE',
+                  plan.commissionType.toUpperCase(),
+                ),
+                _metricBox(
+                  cellWidth,
+                  'SUBSCRIPTION FEE',
+                  '\$${plan.subscriptionFee.toStringAsFixed(2)}',
+                ),
+                _metricBox(
+                  cellWidth,
+                  'MIN. CAPITAL',
+                  '\$${plan.minimumCapital.toStringAsFixed(2)}',
+                ),
                 _metricBox(cellWidth, 'COPY RATIO', plan.copyRatio.toString()),
-                _metricBox(cellWidth, 'TRADING ACCOUNT', plan.tradingAccountNumber),
+                _metricBox(
+                  cellWidth,
+                  'TRADING ACCOUNT',
+                  plan.tradingAccountNumber,
+                ),
                 _metricBox(cellWidth, 'SERVER / PROVIDER', plan.tradingServer),
                 _metricBox(cellWidth, 'CREATED', _formatDate(plan.createdAt)),
               ],
@@ -474,7 +562,10 @@ class _PlanCardItem extends StatelessWidget {
                     Get.to(() => MasterPlanDetailScreen(planId: plan.id));
                   },
                   style: TextButton.styleFrom(
-                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 12.w,
+                      vertical: 8.h,
+                    ),
                   ),
                   child: Text(
                     'View details',
@@ -489,7 +580,10 @@ class _PlanCardItem extends StatelessWidget {
                 TextButton(
                   onPressed: () => _openEditPlanDialog(context),
                   style: TextButton.styleFrom(
-                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 12.w,
+                      vertical: 8.h,
+                    ),
                   ),
                   child: Text(
                     'Edit plan',
@@ -505,10 +599,16 @@ class _PlanCardItem extends StatelessWidget {
                   ElevatedButton(
                     onPressed: () => _togglePauseCopying(context),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: plan.copyingPaused ? AppColors.green : AppColors.warning,
+                      backgroundColor:
+                          plan.copyingPaused
+                              ? AppColors.green
+                              : AppColors.warning,
                       foregroundColor: AppColors.whiteColor,
                       elevation: 0,
-                      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 14.w,
+                        vertical: 8.h,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(6.r),
                       ),
@@ -569,45 +669,54 @@ class _PlanCardItem extends StatelessWidget {
 
   void _togglePauseCopying(BuildContext context) async {
     final actionText = plan.copyingPaused ? 'Resume copying' : 'Pause copying';
-    final confirmationMessage = plan.copyingPaused
-        ? 'Are you sure you want to resume copying for "${plan.planName}"?'
-        : 'Are you sure you want to pause copying for "${plan.planName}"? Copying will be suspended until you resume.';
+    final confirmationMessage =
+        plan.copyingPaused
+            ? 'Are you sure you want to resume copying for "${plan.planName}"?'
+            : 'Are you sure you want to pause copying for "${plan.planName}"? Copying will be suspended until you resume.';
 
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(actionText),
-        content: Text(confirmationMessage),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancel'),
+      builder:
+          (ctx) => AlertDialog(
+            title: Text(actionText),
+            content: Text(confirmationMessage),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () async {
+                  Navigator.of(ctx).pop();
+                  final res =
+                      plan.copyingPaused
+                          ? await controller.resumePlan(planId: plan.id)
+                          : await controller.pausePlan(planId: plan.id);
+                  if (res.success) {
+                    CustomToastService.showSuccess(
+                      title: 'Success',
+                      message: res.message ?? 'State updated successfully',
+                    );
+                  } else {
+                    CustomToastService.showError(
+                      title: 'Failed',
+                      message:
+                          res.message ?? 'Failed to update plan copying state',
+                    );
+                  }
+                },
+                child: Text(
+                  plan.copyingPaused ? 'Resume' : 'Pause',
+                  style: TextStyle(
+                    color:
+                        plan.copyingPaused
+                            ? AppColors.green
+                            : AppColors.warning,
+                  ),
+                ),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () async {
-              Navigator.of(ctx).pop();
-              final res = plan.copyingPaused 
-                  ? await controller.resumePlan(planId: plan.id)
-                  : await controller.pausePlan(planId: plan.id);
-              if (res.success) {
-                CustomToastService.showSuccess(
-                  title: 'Success',
-                  message: res.message ?? 'State updated successfully',
-                );
-              } else {
-                CustomToastService.showError(
-                  title: 'Failed',
-                  message: res.message ?? 'Failed to update plan copying state',
-                );
-              }
-            },
-            child: Text(
-              plan.copyingPaused ? 'Resume' : 'Pause',
-              style: TextStyle(color: plan.copyingPaused ? AppColors.green : AppColors.warning),
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -619,122 +728,176 @@ class _PlanCardItem extends StatelessWidget {
 
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r)),
-        title: Text(
-          'Edit plan',
-          style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
-        ),
-        content: SizedBox(
-          width: 320.w,
-          child: SingleChildScrollView(
-            child: Form(
-              key: formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Container(
-                    padding: EdgeInsets.all(10.r),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.05),
-                      borderRadius: BorderRadius.circular(8.r),
-                      border: Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
-                    ),
-                    child: Text(
-                      'This plan has active copiers. You can update the plan name and descriptions only. To change fees or limits, copiers must leave first.',
-                      style: TextStyle(fontSize: 11.sp, color: AppColors.primary, height: 1.3, fontWeight: FontWeight.w500),
-                    ),
-                  ),
-                  SizedBox(height: 16.h),
-                  Text(
-                    'Plan name *',
-                    style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 6.h),
-                  TextFormField(
-                    controller: nameCtrl,
-                    style: TextStyle(fontSize: 13.sp, color: AppColors.textPrimary),
-                    decoration: InputDecoration(
-                      hintText: 'Enter plan name',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r)),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
-                    ),
-                    validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
-                  ),
-                  SizedBox(height: 14.h),
-                  Text(
-                    'Strategy description',
-                    style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 6.h),
-                  TextFormField(
-                    controller: strategyCtrl,
-                    maxLines: 3,
-                    style: TextStyle(fontSize: 13.sp, color: AppColors.textPrimary),
-                    decoration: InputDecoration(
-                      hintText: 'Enter strategy description',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r)),
-                      contentPadding: EdgeInsets.all(12.r),
-                    ),
-                  ),
-                  SizedBox(height: 14.h),
-                  Text(
-                    'Risk information',
-                    style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 6.h),
-                  TextFormField(
-                    controller: riskCtrl,
-                    maxLines: 3,
-                    style: TextStyle(fontSize: 13.sp, color: AppColors.textPrimary),
-                    decoration: InputDecoration(
-                      hintText: 'Enter risk information',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.r)),
-                      contentPadding: EdgeInsets.all(12.r),
-                    ),
-                  ),
-                ],
+      builder:
+          (ctx) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14.r),
+            ),
+            title: Text(
+              'Edit plan',
+              style: TextStyle(
+                fontSize: 16.sp,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
               ),
             ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: Text('Cancel', style: TextStyle(color: AppColors.textGrey)),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              if (formKey.currentState?.validate() ?? false) {
-                Navigator.of(ctx).pop();
-                final body = {
-                  'plan_name': nameCtrl.text.trim(),
-                  'strategy_description': strategyCtrl.text.trim(),
-                  'risk_information': riskCtrl.text.trim(),
-                };
-                final res = await controller.updatePlan(planId: plan.id, body: body);
-                if (res.success) {
-                  CustomToastService.showSuccess(
-                    title: 'Success',
-                    message: res.message ?? 'Plan updated successfully',
-                  );
-                } else {
-                  CustomToastService.showError(
-                    title: 'Failed',
-                    message: res.message ?? 'Failed to update plan',
-                  );
-                }
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: AppColors.whiteColor,
+            content: SizedBox(
+              width: 320.w,
+              child: SingleChildScrollView(
+                child: Form(
+                  key: formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Container(
+                        padding: EdgeInsets.all(10.r),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(8.r),
+                          border: Border.all(
+                            color: AppColors.primary.withValues(alpha: 0.1),
+                          ),
+                        ),
+                        child: Text(
+                          'This plan has active copiers. You can update the plan name and descriptions only. To change fees or limits, copiers must leave first.',
+                          style: TextStyle(
+                            fontSize: 11.sp,
+                            color: AppColors.primary,
+                            height: 1.3,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 16.h),
+                      Text(
+                        'Plan name *',
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          color: AppColors.textGrey,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 6.h),
+                      TextFormField(
+                        controller: nameCtrl,
+                        style: TextStyle(
+                          fontSize: 13.sp,
+                          color: AppColors.textPrimary,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: 'Enter plan name',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8.r),
+                          ),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 12.w,
+                            vertical: 10.h,
+                          ),
+                        ),
+                        validator:
+                            (v) =>
+                                (v == null || v.trim().isEmpty)
+                                    ? 'Required'
+                                    : null,
+                      ),
+                      SizedBox(height: 14.h),
+                      Text(
+                        'Strategy description',
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          color: AppColors.textGrey,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 6.h),
+                      TextFormField(
+                        controller: strategyCtrl,
+                        maxLines: 3,
+                        style: TextStyle(
+                          fontSize: 13.sp,
+                          color: AppColors.textPrimary,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: 'Enter strategy description',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8.r),
+                          ),
+                          contentPadding: EdgeInsets.all(12.r),
+                        ),
+                      ),
+                      SizedBox(height: 14.h),
+                      Text(
+                        'Risk information',
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          color: AppColors.textGrey,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 6.h),
+                      TextFormField(
+                        controller: riskCtrl,
+                        maxLines: 3,
+                        style: TextStyle(
+                          fontSize: 13.sp,
+                          color: AppColors.textPrimary,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: 'Enter risk information',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8.r),
+                          ),
+                          contentPadding: EdgeInsets.all(12.r),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
-            child: const Text('Save'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: Text(
+                  'Cancel',
+                  style: TextStyle(color: AppColors.textGrey),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  if (formKey.currentState?.validate() ?? false) {
+                    Navigator.of(ctx).pop();
+                    final body = {
+                      'plan_name': nameCtrl.text.trim(),
+                      'strategy_description': strategyCtrl.text.trim(),
+                      'risk_information': riskCtrl.text.trim(),
+                    };
+                    final res = await controller.updatePlan(
+                      planId: plan.id,
+                      body: body,
+                    );
+                    if (res.success) {
+                      CustomToastService.showSuccess(
+                        title: 'Success',
+                        message: res.message ?? 'Plan updated successfully',
+                      );
+                    } else {
+                      CustomToastService.showError(
+                        title: 'Failed',
+                        message: res.message ?? 'Failed to update plan',
+                      );
+                    }
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: AppColors.whiteColor,
+                ),
+                child: const Text('Save'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 }
@@ -744,7 +907,8 @@ class _CustomFloatingActionButtonLocation extends FloatingActionButtonLocation {
 
   @override
   Offset getOffset(ScaffoldPrelayoutGeometry geometry) {
-    final Offset standardOffset = FloatingActionButtonLocation.endFloat.getOffset(geometry);
+    final Offset standardOffset = FloatingActionButtonLocation.endFloat
+        .getOffset(geometry);
     return Offset(standardOffset.dx, standardOffset.dy - 95.h);
   }
 }
