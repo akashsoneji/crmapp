@@ -5,6 +5,7 @@ import 'package:crm_app/controllers/copy_trading/copy_trading_master_plan_detail
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 
 class MasterPlanDetailScreen extends StatelessWidget {
   final int planId;
@@ -69,7 +70,7 @@ class MasterPlanDetailScreen extends StatelessWidget {
           }
 
           final status = d.status.toLowerCase();
-          final statusColor = status == 'approved'
+          final statusColor = (status == 'approved' || status == 'active')
               ? AppColors.green
               : status.contains('inactive')
                   ? AppColors.textGrey
@@ -85,69 +86,153 @@ class MasterPlanDetailScreen extends StatelessWidget {
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 12.h),
-                      child: Container(
-                        padding: EdgeInsets.all(14.r),
-                        decoration: BoxDecoration(
-                          color: AppColors.whiteColor,
-                          borderRadius: BorderRadius.circular(14.r),
-                          border: Border.all(color: AppColors.border.withValues(alpha: 0.15)),
-                          boxShadow: [BoxShadow(color: AppColors.border.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 4))],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    d.planName.isNotEmpty ? d.planName : 'Plan ${d.id}',
-                                    style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  d.planName.isNotEmpty ? d.planName : 'Plan ${d.id}',
+                                  style: TextStyle(
+                                    fontSize: 18.sp,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.textPrimary,
                                   ),
                                 ),
-                                Container(
-                                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
-                                  decoration: BoxDecoration(
-                                    color: statusColor.withOpacity(0.12),
-                                    borderRadius: BorderRadius.circular(10.r),
-                                  ),
-                                  child: Text(
-                                    d.status,
-                                    style: TextStyle(fontSize: 11.sp, fontWeight: FontWeight.w600, color: statusColor),
+                              ),
+                              Container(
+                                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                                decoration: BoxDecoration(
+                                  color: statusColor.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(10.r),
+                                ),
+                                child: Text(
+                                  d.status.toLowerCase() == 'pending_admin' ? 'Pending Review' : d.status,
+                                  style: TextStyle(
+                                    fontSize: 11.sp,
+                                    fontWeight: FontWeight.w600,
+                                    color: statusColor,
                                   ),
                                 ),
-                              ],
-                            ),
-                            SizedBox(height: 10.h),
-                            _DetailRow(
-                              label: 'Commission',
-                              value: d.commissionLabel.isNotEmpty
-                                  ? d.commissionLabel
-                                  : (d.commissionType.isNotEmpty ? '${d.commissionType} (${d.commissionPercentage}%)' : '—'),
-                            ),
-                            _DetailRow(label: 'Subscription Fee', value: '\$${d.subscriptionFee.toStringAsFixed(2)}'),
-                            _DetailRow(label: 'Period (days)', value: d.subscriptionPeriodDays.toString()),
-                            _DetailRow(label: 'No-fee days', value: d.noFeeDays.toString()),
-                            _DetailRow(label: 'Min capital', value: '\$${d.minimumCapital.toStringAsFixed(2)}'),
-                            _DetailRow(label: 'Copy ratio', value: d.copyRatio.toString()),
-                            _DetailRow(label: 'Active copiers', value: d.activeCopiers.toString()),
-                            _DetailRow(label: 'Open positions', value: d.openPositions.toString()),
-                            _DetailRow(label: 'Total capital', value: '\$${d.totalCapital.toStringAsFixed(2)}'),
-                            _DetailRow(label: 'Commission earned', value: '\$${d.totalCommissionEarned.toStringAsFixed(2)}'),
-                            SizedBox(height: 6.h),
-                            Text(
-                              'TP/SL (pips)',
-                              style: AppTextStyles.cardSubtitle.copyWith(fontWeight: FontWeight.w700, color: AppColors.textPrimary),
-                            ),
-                            SizedBox(height: 6.h),
-                            Row(
-                              children: [
-                                Expanded(child: _DetailRow(label: 'Take Profit', value: d.takeProfitPips.toString())),
-                                SizedBox(width: 12.w),
-                                Expanded(child: _DetailRow(label: 'Stop Loss', value: d.stopLossPips.toString())),
-                              ],
-                            ),
-                          ],
-                        ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 14.h),
+
+                          // Top metrics grid
+                          _buildTopMetricsGrid(d),
+                          SizedBox(height: 14.h),
+
+                          // Commission & fees card
+                          _DetailSectionCard(
+                            title: 'Commission & fees',
+                            children: [
+                              _DetailRowWithDesc(
+                                label: 'Commission',
+                                value: d.commissionLabel.isNotEmpty
+                                    ? d.commissionLabel
+                                    : (d.commissionPercentage > 0 ? '${d.commissionPercentage}% commission on profit' : 'No fee'),
+                                desc: 'What copiers pay according to this plan.',
+                              ),
+                              _DetailRowWithDesc(
+                                label: 'Commission type',
+                                value: d.commissionType == 'per_trade'
+                                    ? 'Per trade'
+                                    : d.commissionType.capitalizeFirst ?? d.commissionType,
+                                desc: 'Per profitable trade vs subscription.',
+                              ),
+                              _DetailRowWithDesc(
+                                label: 'Grace period (no fee)',
+                                value: '${d.noFeeDays} days',
+                                desc: 'Days after join with no commission on trades.',
+                              ),
+                            ],
+                          ),
+
+                          // Copier rules card
+                          _DetailSectionCard(
+                            title: 'Copier rules',
+                            children: [
+                              _DetailRowWithDesc(
+                                label: 'Min. capital',
+                                value: '\$${d.minimumCapital.toStringAsFixed(2)}',
+                                desc: 'Minimum balance to subscribe.',
+                              ),
+                              _DetailRowWithDesc(
+                                label: 'Copy ratio',
+                                value: d.copyRatio.toString(),
+                                desc: 'Volume scaling for copiers.',
+                              ),
+                              _DetailRowWithDesc(
+                                label: 'Max copiers',
+                                value: d.maxCopiers > 0 ? d.maxCopiers.toString() : 'Unlimited',
+                                desc: 'Cap on concurrent copiers (empty = unlimited).',
+                              ),
+                              _DetailRowWithDesc(
+                                label: 'Active / cap',
+                                value: '${d.activeCopiers} / ${d.maxCopiers > 0 ? d.maxCopiers.toString() : ''}',
+                                desc: 'Current copiers vs limit.',
+                              ),
+                              _DetailRowWithDesc(
+                                label: 'Plan full',
+                                value: d.isFull ? 'Yes' : 'No',
+                                desc: 'No new copiers until someone leaves.',
+                              ),
+                            ],
+                          ),
+
+                          // Strategy & risk disclosure card
+                          _DetailSectionCard(
+                            title: 'Strategy & risk disclosure',
+                            children: [
+                              _DisclosureRow(
+                                title: 'Strategy description',
+                                content: d.strategyDescription.trim().isNotEmpty
+                                    ? d.strategyDescription
+                                    : '— Not provided. Edit the plan to add a public description for copiers.',
+                              ),
+                              _DisclosureRow(
+                                title: 'Risk information',
+                                content: d.riskInformation.trim().isNotEmpty
+                                    ? d.riskInformation
+                                    : '— Not provided. Edit the plan to disclose drawdown and risk.',
+                              ),
+                            ],
+                          ),
+
+                          // Account & system card
+                          _DetailSectionCard(
+                            title: 'Account & system',
+                            children: [
+                              _DetailRowWithDesc(
+                               label: 'Status',
+                                value: d.status.toLowerCase() == 'pending_admin' ? 'Pending Review' : d.status,
+                                desc: 'Broker / admin approval state.',
+                              ),
+                              _DetailRowWithDesc(
+                                label: 'Server / LP',
+                                value: d.lpProviderName.isNotEmpty ? d.lpProviderName : d.tradingServer,
+                                desc: 'Execution routing label.',
+                              ),
+                              _DetailRowWithDesc(
+                                label: 'Trading account',
+                                value: d.tradingAccountNumber,
+                                desc: 'Account number used for this plan.',
+                              ),
+                              _DetailRowWithDesc(
+                                label: 'Initial equity snapshot',
+                                value: '\$${d.initialEquitySnapshot.isNotEmpty ? double.tryParse(d.initialEquitySnapshot)?.toStringAsFixed(2) ?? d.initialEquitySnapshot : '0.00'}',
+                                desc: 'Captured when the plan was approved (if recorded).',
+                              ),
+                              _DetailRowWithDesc(
+                                label: 'Created',
+                                value: _formatDate(d.createdAt),
+                                desc: 'Plan creation timestamp.',
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -835,31 +920,226 @@ class _KVRow extends StatelessWidget {
   }
 }
 
-class _DetailRow extends StatelessWidget {
+
+class _DetailSectionCard extends StatelessWidget {
+  final String title;
+  final List<Widget> children;
+
+  const _DetailSectionCard({required this.title, required this.children});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 12.h),
+      padding: EdgeInsets.all(14.r),
+      decoration: BoxDecoration(
+        color: AppColors.whiteColor,
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.15)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 13.sp,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          SizedBox(height: 10.h),
+          ...children,
+        ],
+      ),
+    );
+  }
+}
+
+class _DetailRowWithDesc extends StatelessWidget {
   final String label;
   final String value;
-  const _DetailRow({required this.label, required this.value});
+  final String? desc;
+
+  const _DetailRowWithDesc({
+    required this.label,
+    required this.value,
+    this.desc,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.only(bottom: 8.h),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(label, style: AppTextStyles.caption.copyWith(color: AppColors.textGrey)),
-          Flexible(
-            child: Text(
-              value,
-              textAlign: TextAlign.right,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: AppTextStyles.black14500,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              Flexible(
+                child: Text(
+                  value,
+                  textAlign: TextAlign.right,
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (desc != null && desc!.isNotEmpty) ...[
+            SizedBox(height: 2.h),
+            Text(
+              desc!,
+              style: TextStyle(
+                fontSize: 10.sp,
+                color: AppColors.textGrey,
+              ),
+            ),
+          ],
+          SizedBox(height: 4.h),
+          Divider(height: 1, color: AppColors.border.withValues(alpha: 0.08)),
+        ],
+      ),
+    );
+  }
+}
+
+class _DisclosureRow extends StatelessWidget {
+  final String title;
+  final String content;
+
+  const _DisclosureRow({required this.title, required this.content});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 12.h),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title.toUpperCase(),
+            style: TextStyle(
+              fontSize: 10.sp,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textGrey,
+              letterSpacing: 0.3,
+            ),
+          ),
+          SizedBox(height: 4.h),
+          Text(
+            content,
+            style: TextStyle(
+              fontSize: 12.sp,
+              color: content.startsWith('—') ? AppColors.textGrey : AppColors.textPrimary,
+              height: 1.3,
+            ),
+          ),
+          SizedBox(height: 6.h),
+          Divider(height: 1, color: AppColors.border.withValues(alpha: 0.08)),
+        ],
+      ),
+    );
+  }
+}
+
+Widget _buildTopMetricsGrid(dynamic d) {
+  return Column(
+    children: [
+      Row(
+        children: [
+          Expanded(
+            child: _buildMetricCard(
+              'ACTIVE COPIERS',
+              d.activeCopiers.toString(),
+            ),
+          ),
+          SizedBox(width: 10.w),
+          Expanded(
+            child: _buildMetricCard(
+              'PLAN EQUITY (AUM)',
+              '\$${d.totalCapital.toStringAsFixed(2)}',
             ),
           ),
         ],
       ),
-    );
+      SizedBox(height: 10.h),
+      Row(
+        children: [
+          Expanded(
+            child: _buildMetricCard(
+              'COMMISSION EARNED',
+              '\$${d.totalCommissionEarned.toStringAsFixed(2)}',
+              valueColor: AppColors.green,
+            ),
+          ),
+          SizedBox(width: 10.w),
+          Expanded(
+            child: _buildMetricCard(
+              'OPEN POSITIONS',
+              d.openPositions.toString(),
+            ),
+          ),
+        ],
+      ),
+    ],
+  );
+}
+
+Widget _buildMetricCard(String label, String value, {Color? valueColor}) {
+  return Container(
+    padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 10.w),
+    decoration: BoxDecoration(
+      color: AppColors.whiteColor,
+      borderRadius: BorderRadius.circular(10.r),
+      border: Border.all(color: AppColors.border.withValues(alpha: 0.15)),
+    ),
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          label,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 9.sp,
+            fontWeight: FontWeight.w800,
+            color: AppColors.textGrey,
+            letterSpacing: 0.3,
+          ),
+        ),
+        SizedBox(height: 6.h),
+        Text(
+          value,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 15.sp,
+            fontWeight: FontWeight.bold,
+            color: valueColor ?? AppColors.textPrimary,
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+String _formatDate(String isoString) {
+  try {
+    final dt = DateTime.parse(isoString);
+    return DateFormat('d MMM yyyy').format(dt);
+  } catch (_) {
+    return isoString;
   }
 }
 

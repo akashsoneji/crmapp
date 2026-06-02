@@ -17,12 +17,15 @@ class CopyTradingMasterDashboardStats {
   });
 
   factory CopyTradingMasterDashboardStats.fromJson(Map<String, dynamic> json) {
+    num toNum(dynamic v) =>
+        v is num ? v : num.tryParse(v?.toString() ?? '') ?? 0;
+    int toInt(dynamic v) =>
+        v is num ? v.toInt() : int.tryParse(v?.toString() ?? '') ?? 0;
     return CopyTradingMasterDashboardStats(
-      plansCount: (json['plans_count'] ?? 0) is num ? (json['plans_count'] as num).toInt() : 0,
-      activeCopiersCount:
-          (json['active_copiers_count'] ?? 0) is num ? (json['active_copiers_count'] as num).toInt() : 0,
-      totalAum: (json['total_aum'] ?? 0) as num? ?? 0,
-      commissionEarned: (json['commission_earned'] ?? 0) as num? ?? 0,
+      plansCount: toInt(json['plans_count']),
+      activeCopiersCount: toInt(json['active_copiers_count']),
+      totalAum: toNum(json['total_aum']),
+      commissionEarned: toNum(json['commission_earned']),
     );
   }
 }
@@ -43,11 +46,14 @@ class CopyTradingPerformanceWindow {
   });
 
   factory CopyTradingPerformanceWindow.fromJson(Map<String, dynamic> json) {
-    num toNum(dynamic v) => v is num ? v : num.tryParse(v?.toString() ?? '') ?? 0;
+    num toNum(dynamic v) =>
+        v is num ? v : num.tryParse(v?.toString() ?? '') ?? 0;
     return CopyTradingPerformanceWindow(
-      closedTradesCount: (json['closed_trades_count'] ?? 0) is num
-          ? (json['closed_trades_count'] as num).toInt()
-          : int.tryParse(json['closed_trades_count']?.toString() ?? '') ?? 0,
+      closedTradesCount:
+          (json['closed_trades_count'] ?? 0) is num
+              ? (json['closed_trades_count'] as num).toInt()
+              : int.tryParse(json['closed_trades_count']?.toString() ?? '') ??
+                  0,
       profitFactor: toNum(json['profit_factor']),
       avgTradeDurationSeconds: toNum(json['avg_trade_duration_seconds']),
       bestTradeProfit: toNum(json['best_trade_profit']),
@@ -110,7 +116,8 @@ class CopyTradingMasterProfile {
   });
 
   factory CopyTradingMasterProfile.fromJson(Map<String, dynamic> json) {
-    num toNum(dynamic v) => v is num ? v : num.tryParse(v?.toString() ?? '') ?? 0;
+    num toNum(dynamic v) =>
+        v is num ? v : num.tryParse(v?.toString() ?? '') ?? 0;
     var plansList = json['plans'] as List? ?? [];
     return CopyTradingMasterProfile(
       masterCode: (json['master_code'] ?? '').toString(),
@@ -120,37 +127,51 @@ class CopyTradingMasterProfile {
       lpProviderName: (json['lp_provider_name'] ?? '').toString(),
       strategyDescription: (json['strategy_description'] ?? '').toString(),
       riskInformation: (json['risk_information'] ?? '').toString(),
-      riskScore: (json['risk_score'] ?? 0) is num
-          ? (json['risk_score'] as num).toInt()
-          : int.tryParse(json['risk_score']?.toString() ?? '') ?? 0,
+      riskScore:
+          (json['risk_score'] ?? 0) is num
+              ? (json['risk_score'] as num).toInt()
+              : int.tryParse(json['risk_score']?.toString() ?? '') ?? 0,
       memberSince: (json['member_since'] ?? '').toString(),
-      withUsDays: (json['with_us_days'] ?? 0) is num
-          ? (json['with_us_days'] as num).toInt()
-          : int.tryParse(json['with_us_days']?.toString() ?? '') ?? 0,
-      totalPlans: (json['total_plans'] ?? 0) is num
-          ? (json['total_plans'] as num).toInt()
-          : int.tryParse(json['total_plans']?.toString() ?? '') ?? 0,
-      totalCopiers: (json['total_copiers'] ?? 0) is num
-          ? (json['total_copiers'] as num).toInt()
-          : int.tryParse(json['total_copiers']?.toString() ?? '') ?? 0,
+      withUsDays:
+          (json['with_us_days'] ?? 0) is num
+              ? (json['with_us_days'] as num).toInt()
+              : int.tryParse(json['with_us_days']?.toString() ?? '') ?? 0,
+      totalPlans:
+          (json['total_plans'] ?? 0) is num
+              ? (json['total_plans'] as num).toInt()
+              : int.tryParse(json['total_plans']?.toString() ?? '') ?? 0,
+      totalCopiers:
+          (json['total_copiers'] ?? 0) is num
+              ? (json['total_copiers'] as num).toInt()
+              : int.tryParse(json['total_copiers']?.toString() ?? '') ?? 0,
       totalPnl: toNum(json['total_pnl']),
       totalGain: toNum(json['total_gain']),
       totalGainPercent: toNum(json['total_gain_percent']),
       winRate: toNum(json['win_rate']),
       maxDrawdown: toNum(json['max_drawdown']),
       masterEquity: toNum(json['master_equity']),
-      plans: plansList.whereType<Map>().map((p) => CopyTradingMasterPlanItem.fromJson(p.cast<String, dynamic>())).toList(),
+      plans:
+          plansList
+              .whereType<Map>()
+              .map(
+                (p) => CopyTradingMasterPlanItem.fromJson(
+                  p.cast<String, dynamic>(),
+                ),
+              )
+              .toList(),
       openPositions: json['open_positions'] as List? ?? [],
-      performanceWindow: json['performance_window'] != null
-          ? CopyTradingPerformanceWindow.fromJson(json['performance_window'].cast<String, dynamic>())
-          : null,
+      performanceWindow:
+          json['performance_window'] != null
+              ? CopyTradingPerformanceWindow.fromJson(
+                json['performance_window'].cast<String, dynamic>(),
+              )
+              : null,
       timeframe: (json['timeframe'] ?? '').toString(),
       profileScope: (json['profile_scope'] ?? '').toString(),
       selectedPlanId: (json['selected_plan_id'] ?? '').toString(),
     );
   }
 }
-
 
 class CopyTradingEligibleAccount {
   final int id;
@@ -176,9 +197,13 @@ class CopyTradingEligibleAccount {
   });
 
   factory CopyTradingEligibleAccount.fromJson(Map<String, dynamic> json) {
-    num toNum(dynamic v) => v is num ? v : num.tryParse(v?.toString() ?? '') ?? 0;
+    num toNum(dynamic v) =>
+        v is num ? v : num.tryParse(v?.toString() ?? '') ?? 0;
     return CopyTradingEligibleAccount(
-      id: (json['id'] ?? 0) is num ? (json['id'] as num).toInt() : int.tryParse(json['id']?.toString() ?? '') ?? 0,
+      id:
+          (json['id'] ?? 0) is num
+              ? (json['id'] as num).toInt()
+              : int.tryParse(json['id']?.toString() ?? '') ?? 0,
       metaAccountNumber: (json['meta_account_number'] ?? '').toString(),
       accountType: (json['account_type'] ?? '').toString(),
       balance: toNum(json['balance']),
@@ -216,6 +241,7 @@ class CopyTradingMasterPlanItem {
   final String strategyDescription;
   final String riskInformation;
   final String createdAt;
+  final int noFeeDays;
 
   const CopyTradingMasterPlanItem({
     required this.id,
@@ -240,11 +266,17 @@ class CopyTradingMasterPlanItem {
     required this.strategyDescription,
     required this.riskInformation,
     required this.createdAt,
+    required this.noFeeDays,
   });
 
   factory CopyTradingMasterPlanItem.fromJson(Map<String, dynamic> json) {
+    num toNum(dynamic v) =>
+        v is num ? v : num.tryParse(v?.toString() ?? '') ?? 0;
+    int toInt(dynamic v) =>
+        v is num ? v.toInt() : int.tryParse(v?.toString() ?? '') ?? 0;
+
     return CopyTradingMasterPlanItem(
-      id: (json['id'] ?? 0) is num ? (json['id'] as num).toInt() : 0,
+      id: toInt(json['id']),
       planName: (json['plan_name'] ?? json['name'] ?? '').toString(),
       tradingAccountNumber: (json['trading_account_number'] ?? '').toString(),
       tradingServer: (json['trading_server'] ?? '').toString(),
@@ -252,14 +284,18 @@ class CopyTradingMasterPlanItem {
       serverType: (json['server_type'] ?? '').toString(),
       commissionType: (json['commission_type'] ?? '').toString(),
       commissionLabel: (json['commission_label'] ?? '').toString(),
-      commissionPercentage: (json['commission_percentage'] ?? 0) as num? ?? 0,
-      subscriptionFee: (json['subscription_fee'] ?? 0) as num? ?? 0,
-      minimumCapital: (json['minimum_capital'] ?? 0) as num? ?? 0,
-      copyRatio: (json['copy_ratio'] ?? 1) as num? ?? 1,
-      maxCopiers: (json['max_copiers'] is num) ? (json['max_copiers'] as num).toInt() : int.tryParse((json['max_copiers'] ?? '').toString()),
-      activeCopiersCount:
-          (json['active_copiers_count'] ?? 0) is num ? (json['active_copiers_count'] as num).toInt() : 0,
-      totalCapital: (json['total_capital'] ?? json['total_aum'] ?? 0) as num? ?? 0,
+      commissionPercentage: toNum(json['commission_percentage']),
+      subscriptionFee: toNum(json['subscription_fee']),
+      minimumCapital: toNum(json['minimum_capital']),
+      copyRatio: toNum(json['copy_ratio']),
+      maxCopiers:
+          json['max_copiers'] == null || json['max_copiers'].toString().isEmpty
+              ? null
+              : int.tryParse(json['max_copiers'].toString()),
+      activeCopiersCount: toInt(
+        json['active_copiers_count'] ?? json['active_copiers'],
+      ),
+      totalCapital: toNum(json['total_capital'] ?? json['total_aum']),
       isFull: json['is_full'] == true,
       status: (json['status'] ?? '').toString(),
       copyingPaused: json['copying_paused'] == true,
@@ -267,6 +303,7 @@ class CopyTradingMasterPlanItem {
       strategyDescription: (json['strategy_description'] ?? '').toString(),
       riskInformation: (json['risk_information'] ?? '').toString(),
       createdAt: (json['created_at'] ?? '').toString(),
+      noFeeDays: toInt(json['no_fee_days']),
     );
   }
 }
@@ -278,9 +315,11 @@ class CopyTradingMasterDashboardController extends GetxController {
   final RxBool isLoading = false.obs;
   final RxString errorMessage = ''.obs;
 
-  final Rxn<CopyTradingMasterDashboardStats> stats = Rxn<CopyTradingMasterDashboardStats>();
+  final Rxn<CopyTradingMasterDashboardStats> stats =
+      Rxn<CopyTradingMasterDashboardStats>();
   final Rxn<CopyTradingMasterProfile> profile = Rxn<CopyTradingMasterProfile>();
-  final RxList<CopyTradingMasterPlanItem> plans = <CopyTradingMasterPlanItem>[].obs;
+  final RxList<CopyTradingMasterPlanItem> plans =
+      <CopyTradingMasterPlanItem>[].obs;
 
   final RxList<MT5Account> mt5Accounts = <MT5Account>[].obs;
 
@@ -300,7 +339,12 @@ class CopyTradingMasterDashboardController extends GetxController {
     if (showLoading) isLoading.value = true;
     errorMessage.value = '';
     try {
-      await Future.wait([_loadStats(), _loadProfile(), _loadPlans(), _loadMt5Accounts()]);
+      await Future.wait([
+        _loadStats(),
+        _loadProfile(),
+        _loadPlans(),
+        _loadMt5Accounts(),
+      ]);
     } catch (e) {
       errorMessage.value = 'Failed to load dashboard: $e';
     } finally {
@@ -309,20 +353,27 @@ class CopyTradingMasterDashboardController extends GetxController {
   }
 
   Future<void> _loadStats() async {
-    final res = await ApiService.get(endpoint: ApiConstants.copyTradingMasterDashboardStats);
+    final res = await ApiService.get(
+      endpoint: ApiConstants.copyTradingMasterDashboardStats,
+    );
     if (!res.success || res.data == null) {
       stats.value = null;
       return;
     }
     final data = res.data?['data'];
     if (data is Map) {
-      stats.value = CopyTradingMasterDashboardStats.fromJson(data.cast<String, dynamic>());
+      stats.value = CopyTradingMasterDashboardStats.fromJson(
+        data.cast<String, dynamic>(),
+      );
     }
   }
 
   Future<void> _loadProfile() async {
     final res = await ApiService.get(
-      endpoint: ApiConstants.copyTradingMasterProfile(masterCode, timeframe: '1m'),
+      endpoint: ApiConstants.copyTradingMasterProfile(
+        masterCode,
+        timeframe: '1m',
+      ),
       queryParameters: {'_t': DateTime.now().millisecondsSinceEpoch.toString()},
     );
     if (!res.success || res.data == null) {
@@ -331,7 +382,9 @@ class CopyTradingMasterDashboardController extends GetxController {
     }
     final data = res.data?['data'];
     if (data is Map) {
-      profile.value = CopyTradingMasterProfile.fromJson(data.cast<String, dynamic>());
+      profile.value = CopyTradingMasterProfile.fromJson(
+        data.cast<String, dynamic>(),
+      );
     } else {
       profile.value = null;
     }
@@ -349,7 +402,9 @@ class CopyTradingMasterDashboardController extends GetxController {
     final data = res.data?['data'];
     if (data is List) {
       plans.assignAll(
-        data.whereType<Map>().map((e) => CopyTradingMasterPlanItem.fromJson(e.cast<String, dynamic>())),
+        data.whereType<Map>().map(
+          (e) => CopyTradingMasterPlanItem.fromJson(e.cast<String, dynamic>()),
+        ),
       );
     } else {
       plans.clear();
@@ -364,7 +419,12 @@ class CopyTradingMasterDashboardController extends GetxController {
     }
     final data = res.data?['data'];
     if (data is List) {
-      mt5Accounts.assignAll(data.whereType<Map>().map((e) => MT5Account.fromJson(e.cast<String, dynamic>())).toList());
+      mt5Accounts.assignAll(
+        data
+            .whereType<Map>()
+            .map((e) => MT5Account.fromJson(e.cast<String, dynamic>()))
+            .toList(),
+      );
     } else {
       mt5Accounts.clear();
     }
@@ -376,17 +436,23 @@ class CopyTradingMasterDashboardController extends GetxController {
     try {
       final res = await ApiService.get(
         endpoint: ApiConstants.copyTradingCopierEligibleAccounts,
-        queryParameters: {'_t': DateTime.now().millisecondsSinceEpoch.toString()},
+        queryParameters: {
+          '_t': DateTime.now().millisecondsSinceEpoch.toString(),
+        },
       );
       if (!res.success || res.data == null) {
         eligibleAccounts.clear();
-        eligibleAccountsError.value = res.message ?? 'Failed to load eligible accounts';
+        eligibleAccountsError.value =
+            res.message ?? 'Failed to load eligible accounts';
         return;
       }
       final data = res.data?['data'];
       if (data is List) {
         eligibleAccounts.assignAll(
-          data.whereType<Map>().map((e) => CopyTradingEligibleAccount.fromJson(e.cast<String, dynamic>())),
+          data.whereType<Map>().map(
+            (e) =>
+                CopyTradingEligibleAccount.fromJson(e.cast<String, dynamic>()),
+          ),
         );
       } else {
         eligibleAccounts.clear();
@@ -403,7 +469,10 @@ class CopyTradingMasterDashboardController extends GetxController {
     isLoading.value = true;
     errorMessage.value = '';
     try {
-      final res = await ApiService.post(endpoint: ApiConstants.copyTradingMasterPlans, data: body);
+      final res = await ApiService.post(
+        endpoint: ApiConstants.copyTradingMasterPlans,
+        data: body,
+      );
       if (res.success) {
         await _loadPlans();
         await _loadStats();
@@ -424,8 +493,12 @@ class CopyTradingMasterDashboardController extends GetxController {
     isLoading.value = true;
     errorMessage.value = '';
     try {
-      final endpoint = '${ApiConstants.copyTradingMasterPlans}/$planId/inactivate';
-      final res = await ApiService.post(endpoint: endpoint, data: <String, dynamic>{});
+      final endpoint =
+          '${ApiConstants.copyTradingMasterPlans}/$planId/inactivate';
+      final res = await ApiService.post(
+        endpoint: endpoint,
+        data: <String, dynamic>{},
+      );
       if (res.success) {
         await _loadPlans();
         await _loadStats();
@@ -447,7 +520,10 @@ class CopyTradingMasterDashboardController extends GetxController {
     errorMessage.value = '';
     try {
       final endpoint = '${ApiConstants.copyTradingMasterPlans}/$planId/pause';
-      final res = await ApiService.post(endpoint: endpoint, data: <String, dynamic>{});
+      final res = await ApiService.post(
+        endpoint: endpoint,
+        data: <String, dynamic>{},
+      );
       if (res.success) {
         await _loadPlans();
         await _loadStats();
@@ -469,7 +545,10 @@ class CopyTradingMasterDashboardController extends GetxController {
     errorMessage.value = '';
     try {
       final endpoint = '${ApiConstants.copyTradingMasterPlans}/$planId/resume';
-      final res = await ApiService.post(endpoint: endpoint, data: <String, dynamic>{});
+      final res = await ApiService.post(
+        endpoint: endpoint,
+        data: <String, dynamic>{},
+      );
       if (res.success) {
         await _loadPlans();
         await _loadStats();
@@ -486,7 +565,10 @@ class CopyTradingMasterDashboardController extends GetxController {
   }
 
   /// Update a master plan (name, strategy, risk)
-  Future<ApiResponse> updatePlan({required int planId, required Map<String, dynamic> body}) async {
+  Future<ApiResponse> updatePlan({
+    required int planId,
+    required Map<String, dynamic> body,
+  }) async {
     isLoading.value = true;
     errorMessage.value = '';
     try {
@@ -507,4 +589,3 @@ class CopyTradingMasterDashboardController extends GetxController {
     }
   }
 }
-

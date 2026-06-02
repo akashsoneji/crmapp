@@ -1,9 +1,8 @@
 import 'package:crm_app/screens/home/trading_main_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_svg/svg.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/copy_trading/copy_trading_master_dashboard_controller.dart';
@@ -11,6 +10,7 @@ import 'package:crm_app/controllers/copy_trading/copy_trading_hub_controller.dar
 import 'package:crm_app/widgets/custom_toast.dart';
 import 'package:crm_app/screens/home/more/copytrading/copy_trading_create_plan_screen.dart';
 import 'package:crm_app/screens/home/more/copytrading/master_plan_detail_screen.dart';
+import 'package:crm_app/screens/home/more/copytrading/copy_trading_edit_plan_screen.dart';
 
 class MyPlansTab extends StatefulWidget {
   const MyPlansTab({super.key});
@@ -51,36 +51,41 @@ class _MyPlansTabState extends State<MyPlansTab> {
   List<CopyTradingMasterPlanItem> _getFilteredAndSortedPlans(
     List<CopyTradingMasterPlanItem> plans,
   ) {
-    // Create a copy to prevent mutating the reactive list during build
-    List<CopyTradingMasterPlanItem> result = List.from(plans);
+    try {
+      // Create a copy to prevent mutating the reactive list during build
+      List<CopyTradingMasterPlanItem> result = List.from(plans);
 
-    // 1. Filter
-    if (_searchQuery.isNotEmpty) {
-      result =
-          result.where((plan) {
-            final nameMatch = plan.planName.toLowerCase().contains(
-              _searchQuery,
-            );
-            final idMatch = plan.id.toString().contains(_searchQuery);
-            final accountMatch = plan.tradingAccountNumber.contains(
-              _searchQuery,
-            );
-            return nameMatch || idMatch || accountMatch;
-          }).toList();
+      // 1. Filter
+      if (_searchQuery.isNotEmpty) {
+        result =
+            result.where((plan) {
+              final nameMatch = plan.planName.toLowerCase().contains(
+                _searchQuery,
+              );
+              final idMatch = plan.id.toString().contains(_searchQuery);
+              final accountMatch = plan.tradingAccountNumber.contains(
+                _searchQuery,
+              );
+              return nameMatch || idMatch || accountMatch;
+            }).toList();
+      }
+
+      // 2. Sort
+      if (_sortBy == 'Newest first') {
+        result.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      } else if (_sortBy == 'Name A-Z') {
+        result.sort(
+          (a, b) => a.planName.toLowerCase().compareTo(b.planName.toLowerCase()),
+        );
+      } else if (_sortBy == 'Highest AUM') {
+        result.sort((a, b) => b.totalCapital.compareTo(a.totalCapital));
+      }
+
+      return result;
+    } catch (e, stack) {
+      debugPrint('MyPlansTab: Error in _getFilteredAndSortedPlans: $e\n$stack');
+      return plans;
     }
-
-    // 2. Sort
-    if (_sortBy == 'Newest first') {
-      result.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-    } else if (_sortBy == 'Name A-Z') {
-      result.sort(
-        (a, b) => a.planName.toLowerCase().compareTo(b.planName.toLowerCase()),
-      );
-    } else if (_sortBy == 'Highest AUM') {
-      result.sort((a, b) => b.totalCapital.compareTo(a.totalCapital));
-    }
-
-    return result;
   }
 
   @override
@@ -240,20 +245,63 @@ class _MyPlansTabState extends State<MyPlansTab> {
               ),
             ),
 
-            // Scrollable list is inside RefreshIndicator directly
             Expanded(
-              child: RefreshIndicator(
-                onRefresh: () => controller.refreshAll(showLoading: false),
-                child: Obx(() {
-                  final loading = controller.isLoading.value;
-                  final allPlans = controller.plans;
+              child: Obx(() {
+                final loading = controller.isLoading.value;
+                final allPlans = controller.plans;
 
-                  if (loading && allPlans.isEmpty) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
+                if (loading && allPlans.isEmpty) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-                  if (allPlans.isEmpty) {
-                    return ListView(
+                Widget listChild;
+                if (allPlans.isEmpty) {
+                  final err = controller.errorMessage.value;
+                  if (err.isNotEmpty) {
+                    listChild = ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      children: [
+                        SizedBox(height: 80.h),
+                        Center(
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 24.w),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.error_outline,
+                                  size: 40.r,
+                                  color: AppColors.error,
+                                ),
+                                SizedBox(height: 12.h),
+                                Text(
+                                  err,
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 14.sp,
+                                    color: AppColors.error,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                SizedBox(height: 16.h),
+                                ElevatedButton(
+                                  onPressed:
+                                      () => controller.refreshAll(
+                                        showLoading: true,
+                                      ),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.primary,
+                                  ),
+                                  child: const Text('Retry'),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  } else {
+                    listChild = ListView(
                       physics: const AlwaysScrollableScrollPhysics(),
                       children: [
                         SizedBox(height: 50.h),
@@ -261,13 +309,13 @@ class _MyPlansTabState extends State<MyPlansTab> {
                       ],
                     );
                   }
-
+                } else {
                   final filteredSortedPlans = _getFilteredAndSortedPlans(
                     allPlans,
                   );
 
                   if (filteredSortedPlans.isEmpty) {
-                    return ListView(
+                    listChild = ListView(
                       physics: const AlwaysScrollableScrollPhysics(),
                       children: [
                         Container(
@@ -283,20 +331,28 @@ class _MyPlansTabState extends State<MyPlansTab> {
                         ),
                       ],
                     );
+                  } else {
+                    listChild = ListView.separated(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 100.h),
+                      itemCount: filteredSortedPlans.length,
+                      separatorBuilder: (_, index) => SizedBox(height: 16.h),
+                      itemBuilder: (context, index) {
+                        final plan = filteredSortedPlans[index];
+                        return _PlanCardItem(
+                          plan: plan,
+                          controller: controller,
+                        );
+                      },
+                    );
                   }
+                }
 
-                  return ListView.separated(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 100.h),
-                    itemCount: filteredSortedPlans.length,
-                    separatorBuilder: (_, index) => SizedBox(height: 16.h),
-                    itemBuilder: (context, index) {
-                      final plan = filteredSortedPlans[index];
-                      return _PlanCardItem(plan: plan, controller: controller);
-                    },
-                  );
-                }),
-              ),
+                return RefreshIndicator(
+                  onRefresh: () => controller.refreshAll(showLoading: false),
+                  child: listChild,
+                );
+              }),
             ),
           ],
         ),
@@ -368,6 +424,7 @@ class _PlanCardItem extends StatelessWidget {
       case 'approved':
         return AppColors.green;
       case 'pending':
+      case 'pending_admin':
         return AppColors.warning;
       case 'inactive':
       case 'rejected':
@@ -377,32 +434,21 @@ class _PlanCardItem extends StatelessWidget {
     }
   }
 
-  String _formatDate(String isoString) {
-    try {
-      final dt = DateTime.parse(isoString);
-      return DateFormat('dd MMM yyyy').format(dt);
-    } catch (_) {
-      return isoString;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final status = plan.status;
-    final isApproved = status.toLowerCase() == 'approved';
+    final isApproved =
+        status.toLowerCase() == 'approved' || status.toLowerCase() == 'active';
     final pauseLabel = plan.copyingPaused ? 'Resume copying' : 'Pause copying';
-
-    final screenWidth = MediaQuery.of(context).size.width;
-    final cellWidth = (screenWidth - 32.w - 24.r - 8.w) / 2;
 
     return Container(
       decoration: BoxDecoration(
         color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: AppColors.border.withValues(alpha: 0.15)),
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.4)),
         boxShadow: [
           BoxShadow(
-            color: AppColors.border.withValues(alpha: 0.04),
+            color: AppColors.border.withValues(alpha: 0.2),
             blurRadius: 8,
             offset: const Offset(0, 3),
           ),
@@ -462,7 +508,9 @@ class _PlanCardItem extends StatelessWidget {
                     borderRadius: BorderRadius.circular(4.r),
                   ),
                   child: Text(
-                    status.toUpperCase(),
+                    status.toLowerCase() == 'pending_admin'
+                        ? 'PENDING REVIEW'
+                        : status.toUpperCase(),
                     style: TextStyle(
                       fontSize: 10.sp,
                       fontWeight: FontWeight.w800,
@@ -470,16 +518,20 @@ class _PlanCardItem extends StatelessWidget {
                     ),
                   ),
                 ),
-                SizedBox(width: 8.w),
-                Text(
-                  plan.copyingPaused ? 'Copying paused' : 'Copying on',
-                  style: TextStyle(
-                    fontSize: 11.sp,
-                    fontWeight: FontWeight.w700,
-                    color:
-                        plan.copyingPaused ? AppColors.error : AppColors.green,
+                if (isApproved) ...[
+                  SizedBox(width: 8.w),
+                  Text(
+                    plan.copyingPaused ? 'Copying paused' : 'Copying on',
+                    style: TextStyle(
+                      fontSize: 11.sp,
+                      fontWeight: FontWeight.w700,
+                      color:
+                          plan.copyingPaused
+                              ? AppColors.error
+                              : AppColors.green,
+                    ),
                   ),
-                ),
+                ],
               ],
             ),
           ),
@@ -487,91 +539,67 @@ class _PlanCardItem extends StatelessWidget {
           // Metrics 2-column Compact Grid
           Padding(
             padding: EdgeInsets.all(12.r),
-            child: Wrap(
-              spacing: 8.w,
-              runSpacing: 8.h,
+            child: Column(
               children: [
-                _metricBox(
-                  cellWidth,
-                  'PLAN EQUITY (AUM)',
-                  '\$${plan.totalCapital.toStringAsFixed(2)}',
+                Row(
+                  children: [
+                    Expanded(
+                      child: _metricBox(
+                        'PLAN EQUITY (AUM)',
+                        '\$${plan.totalCapital.toStringAsFixed(2)}',
+                      ),
+                    ),
+                    SizedBox(width: 8.w),
+                    Expanded(
+                      child: _metricBox(
+                        'COPIERS',
+                        '${plan.activeCopiersCount}${plan.maxCopiers != null ? ' / ${plan.maxCopiers}' : ''}',
+                      ),
+                    ),
+                  ],
                 ),
-                _metricBox(
-                  cellWidth,
-                  'COPIERS',
-                  '${plan.activeCopiersCount}${plan.maxCopiers != null ? ' / ${plan.maxCopiers}' : ''}',
+                SizedBox(height: 8.h),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _metricBox(
+                        'COMMISSION',
+                        plan.commissionLabel.isNotEmpty
+                            ? plan.commissionLabel
+                            : '—',
+                      ),
+                    ),
+                    SizedBox(width: 8.w),
+                    Expanded(
+                      child: _metricBox(
+                        'MIN. CAPITAL',
+                        '\$${plan.minimumCapital.toStringAsFixed(2)}',
+                      ),
+                    ),
+                  ],
                 ),
-                _metricBox(cellWidth, 'PLAN FULL', plan.isFull ? 'Yes' : 'No'),
-                _metricBox(
-                  cellWidth,
-                  'COMMISSION',
-                  plan.commissionLabel.isNotEmpty ? plan.commissionLabel : '—',
+                SizedBox(height: 8.h),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _metricBox(
+                        'COPY RATIO',
+                        plan.copyRatio.toString(),
+                      ),
+                    ),
+                    SizedBox(width: 8.w),
+                    const Expanded(child: SizedBox.shrink()),
+                  ],
                 ),
-                _metricBox(
-                  cellWidth,
-                  'COMMISSION TYPE',
-                  plan.commissionType.toUpperCase(),
-                ),
-                _metricBox(
-                  cellWidth,
-                  'SUBSCRIPTION FEE',
-                  '\$${plan.subscriptionFee.toStringAsFixed(2)}',
-                ),
-                _metricBox(
-                  cellWidth,
-                  'MIN. CAPITAL',
-                  '\$${plan.minimumCapital.toStringAsFixed(2)}',
-                ),
-                _metricBox(cellWidth, 'COPY RATIO', plan.copyRatio.toString()),
-                _metricBox(
-                  cellWidth,
-                  'TRADING ACCOUNT',
-                  plan.tradingAccountNumber,
-                ),
-                _metricBox(cellWidth, 'SERVER / PROVIDER', plan.tradingServer),
-                _metricBox(cellWidth, 'CREATED', _formatDate(plan.createdAt)),
               ],
             ),
           ),
-
-          // Strategy Description section
-          if (plan.strategyDescription.trim().isNotEmpty) ...[
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 14.w),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'STRATEGY',
-                    style: TextStyle(
-                      fontSize: 9.sp,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.textGrey,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                  SizedBox(height: 3.h),
-                  Text(
-                    plan.strategyDescription,
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      color: AppColors.textPrimary,
-                      height: 1.3,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(height: 12.h),
-          ],
 
           Divider(height: 1, color: AppColors.border.withValues(alpha: 0.1)),
 
           // Actions Row
           Padding(
-            padding: EdgeInsets.all(8.r),
+            padding: EdgeInsets.all(0.r),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -596,7 +624,16 @@ class _PlanCardItem extends StatelessWidget {
                 ),
                 SizedBox(width: 4.w),
                 TextButton(
-                  onPressed: () => _openEditPlanDialog(context),
+                  onPressed: () {
+                    Get.to(
+                      () => CopyTradingEditPlanScreen(
+                        plan: plan,
+                        controller: controller,
+                      ),
+                      transition: Transition.rightToLeft,
+                      duration: const Duration(milliseconds: 250),
+                    );
+                  },
                   style: TextButton.styleFrom(
                     padding: EdgeInsets.symmetric(
                       horizontal: 12.w,
@@ -648,9 +685,8 @@ class _PlanCardItem extends StatelessWidget {
     );
   }
 
-  Widget _metricBox(double width, String label, String value) {
+  Widget _metricBox(String label, String value) {
     return Container(
-      width: width,
       padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
       decoration: BoxDecoration(
         color: AppColors.tradeBackgroundCenterColor.withValues(alpha: 0.3),
@@ -732,187 +768,6 @@ class _PlanCardItem extends StatelessWidget {
                             : AppColors.warning,
                   ),
                 ),
-              ),
-            ],
-          ),
-    );
-  }
-
-  void _openEditPlanDialog(BuildContext context) {
-    final formKey = GlobalKey<FormState>();
-    final nameCtrl = TextEditingController(text: plan.planName);
-    final strategyCtrl = TextEditingController(text: plan.strategyDescription);
-    final riskCtrl = TextEditingController(text: plan.riskInformation);
-
-    showDialog(
-      context: context,
-      builder:
-          (ctx) => AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14.r),
-            ),
-            title: Text(
-              'Edit plan',
-              style: TextStyle(
-                fontSize: 16.sp,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            content: SizedBox(
-              width: 320.w,
-              child: SingleChildScrollView(
-                child: Form(
-                  key: formKey,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Container(
-                        padding: EdgeInsets.all(10.r),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.05),
-                          borderRadius: BorderRadius.circular(8.r),
-                          border: Border.all(
-                            color: AppColors.primary.withValues(alpha: 0.1),
-                          ),
-                        ),
-                        child: Text(
-                          'This plan has active copiers. You can update the plan name and descriptions only. To change fees or limits, copiers must leave first.',
-                          style: TextStyle(
-                            fontSize: 11.sp,
-                            color: AppColors.primary,
-                            height: 1.3,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: 16.h),
-                      Text(
-                        'Plan name *',
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          color: AppColors.textGrey,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      SizedBox(height: 6.h),
-                      TextFormField(
-                        controller: nameCtrl,
-                        style: TextStyle(
-                          fontSize: 13.sp,
-                          color: AppColors.textPrimary,
-                        ),
-                        decoration: InputDecoration(
-                          hintText: 'Enter plan name',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8.r),
-                          ),
-                          contentPadding: EdgeInsets.symmetric(
-                            horizontal: 12.w,
-                            vertical: 10.h,
-                          ),
-                        ),
-                        validator:
-                            (v) =>
-                                (v == null || v.trim().isEmpty)
-                                    ? 'Required'
-                                    : null,
-                      ),
-                      SizedBox(height: 14.h),
-                      Text(
-                        'Strategy description',
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          color: AppColors.textGrey,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      SizedBox(height: 6.h),
-                      TextFormField(
-                        controller: strategyCtrl,
-                        maxLines: 3,
-                        style: TextStyle(
-                          fontSize: 13.sp,
-                          color: AppColors.textPrimary,
-                        ),
-                        decoration: InputDecoration(
-                          hintText: 'Enter strategy description',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8.r),
-                          ),
-                          contentPadding: EdgeInsets.all(12.r),
-                        ),
-                      ),
-                      SizedBox(height: 14.h),
-                      Text(
-                        'Risk information',
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          color: AppColors.textGrey,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      SizedBox(height: 6.h),
-                      TextFormField(
-                        controller: riskCtrl,
-                        maxLines: 3,
-                        style: TextStyle(
-                          fontSize: 13.sp,
-                          color: AppColors.textPrimary,
-                        ),
-                        decoration: InputDecoration(
-                          hintText: 'Enter risk information',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8.r),
-                          ),
-                          contentPadding: EdgeInsets.all(12.r),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(),
-                child: Text(
-                  'Cancel',
-                  style: TextStyle(color: AppColors.textGrey),
-                ),
-              ),
-              ElevatedButton(
-                onPressed: () async {
-                  if (formKey.currentState?.validate() ?? false) {
-                    Navigator.of(ctx).pop();
-                    final body = {
-                      'plan_name': nameCtrl.text.trim(),
-                      'strategy_description': strategyCtrl.text.trim(),
-                      'risk_information': riskCtrl.text.trim(),
-                    };
-                    final res = await controller.updatePlan(
-                      planId: plan.id,
-                      body: body,
-                    );
-                    if (res.success) {
-                      CustomToastService.showSuccess(
-                        title: 'Success',
-                        message: res.message ?? 'Plan updated successfully',
-                      );
-                    } else {
-                      CustomToastService.showError(
-                        title: 'Failed',
-                        message: res.message ?? 'Failed to update plan',
-                      );
-                    }
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: AppColors.whiteColor,
-                ),
-                child: const Text('Save'),
               ),
             ],
           ),

@@ -207,84 +207,79 @@ class _MyCopiesScreenState extends State<MyCopiesScreen> {
               ),
             ),
 
-            // Scrollable list is inside RefreshIndicator directly
             Expanded(
-              child: RefreshIndicator(
-                onRefresh: () => controller.load(showLoading: false),
-                child: Obx(() {
-                  final loading = controller.isLoading.value;
-                  final err = controller.errorMessage.value;
-                  final allCopiers = controller.copiers;
+              child: Obx(() {
+                final loading = controller.isLoading.value;
+                final err = controller.errorMessage.value;
+                final allCopiers = controller.copiers;
 
-                  if (loading && allCopiers.isEmpty) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
+                if (loading && allCopiers.isEmpty) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-                  if (err.isNotEmpty && allCopiers.isEmpty) {
-                    return ListView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      children: [
-                        Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 20.w,
-                            vertical: 100.h,
-                          ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.error_outline,
-                                size: 40.r,
-                                color: AppColors.error,
-                              ),
-                              SizedBox(height: 10.h),
-                              Text(
-                                err,
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 14.sp,
-                                  color: AppColors.textPrimary,
-                                ),
-                              ),
-                              SizedBox(height: 16.h),
-                              ElevatedButton(
-                                onPressed:
-                                    () => controller.load(showLoading: true),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.primary,
-                                ),
-                                child: Text(
-                                  'Retry',
-                                  style: TextStyle(color: AppColors.whiteColor),
-                                ),
-                              ),
-                            ],
-                          ),
+                Widget listChild;
+                if (err.isNotEmpty && allCopiers.isEmpty) {
+                  listChild = ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    children: [
+                      Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 20.w,
+                          vertical: 100.h,
                         ),
-                      ],
-                    );
-                  }
-
-                  if (allCopiers.isEmpty) {
-                    return ListView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      children: [
-                        Container(
-                          padding: EdgeInsets.symmetric(vertical: 100.h),
-                          alignment: Alignment.center,
-                          child: Text(
-                            'No copiers found matching filters.',
-                            style: TextStyle(
-                              fontSize: 13.sp,
-                              color: AppColors.textGrey,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.error_outline,
+                              size: 40.r,
+                              color: AppColors.error,
                             ),
+                            SizedBox(height: 10.h),
+                            Text(
+                              err,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 14.sp,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            SizedBox(height: 16.h),
+                            ElevatedButton(
+                              onPressed:
+                                  () => controller.load(showLoading: true),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                              ),
+                              child: Text(
+                                'Retry',
+                                style: TextStyle(color: AppColors.whiteColor),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  );
+                } else if (allCopiers.isEmpty) {
+                  listChild = ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    children: [
+                      Container(
+                        padding: EdgeInsets.symmetric(vertical: 100.h),
+                        alignment: Alignment.center,
+                        child: Text(
+                          'No copiers found matching filters.',
+                          style: TextStyle(
+                            fontSize: 13.sp,
+                            color: AppColors.textGrey,
                           ),
                         ),
-                      ],
-                    );
-                  }
-
-                  return ListView.separated(
+                      ),
+                    ],
+                  );
+                } else {
+                  listChild = ListView.separated(
                     controller: _scrollController,
                     physics: const AlwaysScrollableScrollPhysics(),
                     padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 80.h),
@@ -315,8 +310,13 @@ class _MyCopiesScreenState extends State<MyCopiesScreen> {
                       );
                     },
                   );
-                }),
-              ),
+                }
+
+                return RefreshIndicator(
+                  onRefresh: () => controller.load(showLoading: false),
+                  child: listChild,
+                );
+              }),
             ),
           ],
         ),

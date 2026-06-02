@@ -18,6 +18,7 @@ class CopyTradingMasterPlanDetail {
   final num minimumCapital;
   final num copyRatio;
   final int maxCopiers;
+  final bool isFull;
 
   final int activeCopiers;
   final int openPositions;
@@ -33,6 +34,10 @@ class CopyTradingMasterPlanDetail {
 
   final bool copyingPaused;
   final String copyingPausedAt;
+
+  final String initialEquitySnapshot;
+  final String createdAt;
+  final String tradingServer;
 
   final List<CopyTradingMasterTradeHistoryItem> tradeHistory;
   final List<CopyTradingMasterCommissionHistoryItem> commissionHistory;
@@ -64,6 +69,10 @@ class CopyTradingMasterPlanDetail {
     required this.copyingPausedAt,
     required this.tradeHistory,
     required this.commissionHistory,
+    required this.initialEquitySnapshot,
+    required this.createdAt,
+    required this.isFull,
+    required this.tradingServer,
   });
 
   factory CopyTradingMasterPlanDetail.fromJson(Map<String, dynamic> json) {
@@ -104,6 +113,10 @@ class CopyTradingMasterPlanDetail {
       copyingPausedAt: (json['copying_paused_at'] ?? '').toString(),
       tradeHistory: toMapList(json['trade_history']).map(CopyTradingMasterTradeHistoryItem.fromJson).toList(),
       commissionHistory: toMapList(json['commission_history']).map(CopyTradingMasterCommissionHistoryItem.fromJson).toList(),
+      initialEquitySnapshot: (json['initial_equity_snapshot'] ?? '').toString(),
+      createdAt: (json['created_at'] ?? '').toString(),
+      isFull: json['is_full'] == true,
+      tradingServer: (json['trading_server'] ?? '').toString(),
     );
   }
 }

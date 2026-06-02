@@ -46,7 +46,7 @@ class _BecomeMasterTabState extends State<BecomeMasterTab> {
   Widget build(BuildContext context) {
     final hub = Get.find<CopyTradingHubController>();
     final auth = Get.find<AuthController>();
-    final user = auth.profileData?.data.user;
+    final user = auth.userData;
 
     MoreController? moreController;
     if (Get.isRegistered<MoreController>()) {
@@ -354,7 +354,7 @@ class _BecomeMasterTabState extends State<BecomeMasterTab> {
                         color: AppColors.textGrey,
                       ),
                     ),
-
+                    SizedBox(height: 4.h),
                     // Public nickname
                     LabeledAppTextField(
                       label: 'Public nickname *',

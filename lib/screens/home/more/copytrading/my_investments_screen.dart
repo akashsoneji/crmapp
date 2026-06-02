@@ -135,36 +135,36 @@ class _MyInvestmentsScreenState extends State<MyInvestmentsScreen>
           ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          await Future.wait([
-            controller.load(showLoading: false),
-            controller.loadTrades(),
-          ]);
-        },
-        child: NotificationListener<ScrollNotification>(
-          onNotification: (notification) {
-            if (notification is ScrollUpdateNotification) {
-              final metrics = notification.metrics;
-              if (metrics.pixels >= metrics.maxScrollExtent - 200 &&
-                  controller.hasMore &&
-                  !controller.isLoadingMore.value &&
-                  !controller.isLoading.value) {
-                controller.loadMore();
-              }
-            }
-            return false;
+      body: Obx(() {
+        final loading = controller.isLoading.value;
+        final err = controller.errorMessage.value;
+        final list = controller.subscriptions.toList();
+
+        if (loading && list.isEmpty) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        return RefreshIndicator(
+          onRefresh: () async {
+            await Future.wait([
+              controller.load(showLoading: false),
+              controller.loadTrades(),
+            ]);
           },
-          child: Obx(() {
-            final loading = controller.isLoading.value;
-            final err = controller.errorMessage.value;
-            final list = controller.subscriptions.toList();
-
-            if (loading && list.isEmpty) {
-              return const Center(child: CircularProgressIndicator());
-            }
-
-            return Column(
+          child: NotificationListener<ScrollNotification>(
+            onNotification: (notification) {
+              if (notification is ScrollUpdateNotification) {
+                final metrics = notification.metrics;
+                if (metrics.pixels >= metrics.maxScrollExtent - 200 &&
+                    controller.hasMore &&
+                    !controller.isLoadingMore.value &&
+                    !controller.isLoading.value) {
+                  controller.loadMore();
+                }
+              }
+              return false;
+            },
+            child: Column(
               children: [
                 if (err.isNotEmpty)
                   Padding(
@@ -267,10 +267,10 @@ class _MyInvestmentsScreenState extends State<MyInvestmentsScreen>
                   );
                 }),
               ],
-            );
-          }),
-        ),
-      ),
+            ),
+          ),
+        );
+      }),
     );
   }
 
