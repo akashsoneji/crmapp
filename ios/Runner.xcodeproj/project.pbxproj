@@ -46,23 +46,19 @@
 		12F6EED18C56531A095E6746 /* Pods-Runner.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.release.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.release.xcconfig"; sourceTree = "<group>"; };
 		1498D2321E8E86230040F4C2 /* GeneratedPluginRegistrant.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GeneratedPluginRegistrant.h; sourceTree = "<group>"; };
 		1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GeneratedPluginRegistrant.m; sourceTree = "<group>"; };
+		2B54C67C16021302B4786347 /* Pods-Runner.release-celestial.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.release-celestial.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.release-celestial.xcconfig"; sourceTree = "<group>"; };
 		331C807B294A618700263BE5 /* RunnerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunnerTests.swift; sourceTree = "<group>"; };
 		331C8081294A63A400263BE5 /* RunnerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RunnerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		38FFDDB72EAF72E700CCE8E0 /* Onsa_LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = Onsa_LaunchScreen.storyboard; sourceTree = "<group>"; };
 		38FFDDD12EAF782900CCE8E0 /* Onsa-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Onsa-Info.plist"; sourceTree = "<group>"; };
 		3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = AppFrameworkInfo.plist; path = Flutter/AppFrameworkInfo.plist; sourceTree = "<group>"; };
+		544E4E539E08A0C658CDD2F2 /* Pods-Runner.debug-kantara.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.debug-kantara.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.debug-kantara.xcconfig"; sourceTree = "<group>"; };
+		5CA04625EF04ADD99B11D4D7 /* Pods-Runner.profile-celestial.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.profile-celestial.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.profile-celestial.xcconfig"; sourceTree = "<group>"; };
+		727F04CE790DCC10F9CDB843 /* Pods-Runner.debug-celestial.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.debug-celestial.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.debug-celestial.xcconfig"; sourceTree = "<group>"; };
 		74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Runner-Bridging-Header.h"; sourceTree = "<group>"; };
 		74858FAE1ED2DC5600515810 /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		7AFA3C8E1D35360C0083082E /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Release.xcconfig; path = Flutter/Release.xcconfig; sourceTree = "<group>"; };
-		A1B2C3D4E5F60718293A4B5C /* Debug-kantara.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = "Debug-kantara.xcconfig"; path = "Flutter/Debug-kantara.xcconfig"; sourceTree = "<group>"; };
-		A1B2C3D4E5F60718293A4B5D /* Release-kantara.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = "Release-kantara.xcconfig"; path = "Flutter/Release-kantara.xcconfig"; sourceTree = "<group>"; };
-		A1B2C3D4E5F60718293A4B5E /* Profile-kantara.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = "Profile-kantara.xcconfig"; path = "Flutter/Profile-kantara.xcconfig"; sourceTree = "<group>"; };
-		C3E5F7A9B1D3F5A7C9E1B3D5 /* Debug-Tenax3.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = "Debug-Tenax3.xcconfig"; path = "Flutter/Debug-Tenax3.xcconfig"; sourceTree = "<group>"; };
-		C3E5F7A9B1D3F5A7C9E1B3D6 /* Release-Tenax3.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = "Release-Tenax3.xcconfig"; path = "Flutter/Release-Tenax3.xcconfig"; sourceTree = "<group>"; };
-		C3E5F7A9B1D3F5A7C9E1B3D7 /* Profile-Tenax3.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = "Profile-Tenax3.xcconfig"; path = "Flutter/Profile-Tenax3.xcconfig"; sourceTree = "<group>"; };
-		E1C2D3E4F5061728394A5B6C /* Debug-Celestial.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = "Debug-Celestial.xcconfig"; path = "Flutter/Debug-Celestial.xcconfig"; sourceTree = "<group>"; };
-		E1C2D3E4F5061728394A5B6D /* Release-Celestial.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = "Release-Celestial.xcconfig"; path = "Flutter/Release-Celestial.xcconfig"; sourceTree = "<group>"; };
-		E1C2D3E4F5061728394A5B6E /* Profile-Celestial.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = "Profile-Celestial.xcconfig"; path = "Flutter/Profile-Celestial.xcconfig"; sourceTree = "<group>"; };
+		7EB91E83E43EA40CBBAC3EFB /* Pods-Runner.release-tenax3.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.release-tenax3.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.release-tenax3.xcconfig"; sourceTree = "<group>"; };
 		8E0B69E6C2422C1D50E5E843 /* Pods-Runner.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.debug.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.debug.xcconfig"; sourceTree = "<group>"; };
 		9740EEB21CF90195004384FC /* Debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = Debug.xcconfig; path = Flutter/Debug.xcconfig; sourceTree = "<group>"; };
 		9740EEB31CF90195004384FC /* Generated.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = Generated.xcconfig; path = Flutter/Generated.xcconfig; sourceTree = "<group>"; };
@@ -71,7 +67,20 @@
 		97C146FD1CF9000F007C117D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		97C147001CF9000F007C117D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		97C147021CF9000F007C117D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718293A4B5C /* Debug-kantara.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = "Debug-kantara.xcconfig"; path = "Flutter/Debug-kantara.xcconfig"; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718293A4B5D /* Release-kantara.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = "Release-kantara.xcconfig"; path = "Flutter/Release-kantara.xcconfig"; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718293A4B5E /* Profile-kantara.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = "Profile-kantara.xcconfig"; path = "Flutter/Profile-kantara.xcconfig"; sourceTree = "<group>"; };
+		B6B2E1C21DA6C6D022D89772 /* Pods-Runner.release-kantara.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.release-kantara.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.release-kantara.xcconfig"; sourceTree = "<group>"; };
+		BE384D3D22567FD49DB10220 /* Pods-Runner.debug-tenax3.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.debug-tenax3.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.debug-tenax3.xcconfig"; sourceTree = "<group>"; };
+		C3E5F7A9B1D3F5A7C9E1B3D5 /* Debug-Tenax3.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = "Debug-Tenax3.xcconfig"; path = "Flutter/Debug-Tenax3.xcconfig"; sourceTree = "<group>"; };
+		C3E5F7A9B1D3F5A7C9E1B3D6 /* Release-Tenax3.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = "Release-Tenax3.xcconfig"; path = "Flutter/Release-Tenax3.xcconfig"; sourceTree = "<group>"; };
+		C3E5F7A9B1D3F5A7C9E1B3D7 /* Profile-Tenax3.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = "Profile-Tenax3.xcconfig"; path = "Flutter/Profile-Tenax3.xcconfig"; sourceTree = "<group>"; };
+		C4B7367F7D44E00771ADFEBA /* Pods-Runner.profile-kantara.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.profile-kantara.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.profile-kantara.xcconfig"; sourceTree = "<group>"; };
 		CD971B6AB15A7B33AE06A092 /* Pods-Runner.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.profile.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.profile.xcconfig"; sourceTree = "<group>"; };
+		DE71AD5AD12A324E79D1B105 /* Pods-Runner.profile-tenax3.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.profile-tenax3.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.profile-tenax3.xcconfig"; sourceTree = "<group>"; };
+		E1C2D3E4F5061728394A5B6C /* Debug-Celestial.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = "Debug-Celestial.xcconfig"; path = "Flutter/Debug-Celestial.xcconfig"; sourceTree = "<group>"; };
+		E1C2D3E4F5061728394A5B6D /* Release-Celestial.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = "Release-Celestial.xcconfig"; path = "Flutter/Release-Celestial.xcconfig"; sourceTree = "<group>"; };
+		E1C2D3E4F5061728394A5B6E /* Profile-Celestial.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = "Profile-Celestial.xcconfig"; path = "Flutter/Profile-Celestial.xcconfig"; sourceTree = "<group>"; };
 		F51BF61D1C398687601753DA /* Pods_Runner.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Runner.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -93,6 +102,15 @@
 				8E0B69E6C2422C1D50E5E843 /* Pods-Runner.debug.xcconfig */,
 				12F6EED18C56531A095E6746 /* Pods-Runner.release.xcconfig */,
 				CD971B6AB15A7B33AE06A092 /* Pods-Runner.profile.xcconfig */,
+				544E4E539E08A0C658CDD2F2 /* Pods-Runner.debug-kantara.xcconfig */,
+				BE384D3D22567FD49DB10220 /* Pods-Runner.debug-tenax3.xcconfig */,
+				727F04CE790DCC10F9CDB843 /* Pods-Runner.debug-celestial.xcconfig */,
+				B6B2E1C21DA6C6D022D89772 /* Pods-Runner.release-kantara.xcconfig */,
+				7EB91E83E43EA40CBBAC3EFB /* Pods-Runner.release-tenax3.xcconfig */,
+				2B54C67C16021302B4786347 /* Pods-Runner.release-celestial.xcconfig */,
+				C4B7367F7D44E00771ADFEBA /* Pods-Runner.profile-kantara.xcconfig */,
+				DE71AD5AD12A324E79D1B105 /* Pods-Runner.profile-tenax3.xcconfig */,
+				5CA04625EF04ADD99B11D4D7 /* Pods-Runner.profile-celestial.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -457,7 +475,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = iphoneos;
@@ -480,7 +498,7 @@
 				FLUTTER_BUILD_NAME = 1.0;
 				FLUTTER_BUILD_NUMBER = 6;
 				INFOPLIST_FILE = Runner/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -507,7 +525,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.example.pipze.RunnerTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -525,7 +543,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.example.pipze.RunnerTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -541,7 +559,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.example.pipze.RunnerTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -599,7 +617,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
@@ -650,7 +668,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = iphoneos;
@@ -675,7 +693,7 @@
 				FLUTTER_BUILD_NAME = 1.0;
 				FLUTTER_BUILD_NUMBER = 6;
 				INFOPLIST_FILE = Runner/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -710,7 +728,7 @@
 				FLUTTER_BUILD_NAME = 1.0;
 				FLUTTER_BUILD_NUMBER = 6;
 				INFOPLIST_FILE = Runner/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -744,7 +762,7 @@
 				FLUTTER_BUILD_NAME = 1.0;
 				FLUTTER_BUILD_NUMBER = 6;
 				INFOPLIST_FILE = Runner/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -778,7 +796,7 @@
 				FLUTTER_BUILD_NAME = 1.0;
 				FLUTTER_BUILD_NUMBER = 6;
 				INFOPLIST_FILE = Runner/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -811,7 +829,7 @@
 				FLUTTER_BUILD_NAME = 1.0;
 				FLUTTER_BUILD_NUMBER = 6;
 				INFOPLIST_FILE = Runner/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -844,7 +862,7 @@
 				FLUTTER_BUILD_NAME = 1.0;
 				FLUTTER_BUILD_NUMBER = 6;
 				INFOPLIST_FILE = Runner/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -878,7 +896,7 @@
 				FLUTTER_BUILD_NAME = 1.0;
 				FLUTTER_BUILD_NUMBER = 6;
 				INFOPLIST_FILE = Runner/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -911,7 +929,7 @@
 				FLUTTER_BUILD_NAME = 1.0;
 				FLUTTER_BUILD_NUMBER = 6;
 				INFOPLIST_FILE = Runner/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -944,7 +962,7 @@
 				FLUTTER_BUILD_NAME = 1.0;
 				FLUTTER_BUILD_NUMBER = 6;
 				INFOPLIST_FILE = Runner/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -978,7 +996,7 @@
 				FLUTTER_BUILD_NAME = 1.0;
 				FLUTTER_BUILD_NUMBER = 6;
 				INFOPLIST_FILE = Runner/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1011,7 +1029,7 @@
 				FLUTTER_BUILD_NAME = 1.0;
 				FLUTTER_BUILD_NUMBER = 6;
 				INFOPLIST_FILE = Runner/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
