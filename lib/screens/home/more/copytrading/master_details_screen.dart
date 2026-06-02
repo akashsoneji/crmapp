@@ -933,11 +933,16 @@ class _OrdersCard extends StatelessWidget {
                   items: controller.tradeHistory.toList(),
                   statusLabel: 'Closed',
                   isLoading: controller.isTradeHistoryLoading.value,
+                  hasMore: controller.hasMoreTradeHistory.value,
+                  isLoadingMore: controller.isLoadingMoreTradeHistory.value,
+                  onLoadMore: () => controller.loadTradeHistory(isLoadMore: true),
                 )),
                 Obx(() => _OrdersTable(
                   items: controller.profile.value?.openPositions ?? [],
                   statusLabel: 'Open',
                   isLoading: false,
+                  hasMore: false,
+                  isLoadingMore: false,
                 )),
               ],
             ),
@@ -948,24 +953,58 @@ class _OrdersCard extends StatelessWidget {
   }
 }
 
-class _OrdersTable extends StatelessWidget {
+class _OrdersTable extends StatefulWidget {
   final List<CopyTradingTradeItem> items;
   final String statusLabel;
   final bool isLoading;
+  final bool hasMore;
+  final bool isLoadingMore;
+  final VoidCallback? onLoadMore;
+
   const _OrdersTable({
     required this.items,
     required this.statusLabel,
     this.isLoading = false,
+    this.hasMore = false,
+    this.isLoadingMore = false,
+    this.onLoadMore,
   });
 
   @override
+  State<_OrdersTable> createState() => _OrdersTableState();
+}
+
+class _OrdersTableState extends State<_OrdersTable> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 50) {
+      if (widget.hasMore && !widget.isLoadingMore && widget.onLoadMore != null) {
+        widget.onLoadMore!();
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    if (isLoading) {
+    if (widget.isLoading) {
       return Center(
         child: CircularProgressIndicator(color: AppColors.primary),
       );
     }
-    if (items.isEmpty) {
+    if (widget.items.isEmpty) {
       return Center(
         child: Text(
           'No orders',
@@ -975,11 +1014,24 @@ class _OrdersTable extends StatelessWidget {
     }
 
     return ListView.separated(
+      controller: _scrollController,
       padding: EdgeInsets.fromLTRB(12.w, 12.h, 12.w, 12.h),
-      itemCount: items.length,
+      itemCount: widget.items.length + (widget.hasMore ? 1 : 0),
       separatorBuilder: (_, __) => SizedBox(height: 10.h),
       itemBuilder: (context, index) {
-        return _OrderCard(item: items[index], statusLabel: statusLabel);
+        if (index == widget.items.length) {
+          return Center(
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 8.h),
+              child: SizedBox(
+                width: 24.r,
+                height: 24.r,
+                child: CircularProgressIndicator(color: AppColors.primary, strokeWidth: 2),
+              ),
+            ),
+          );
+        }
+        return _OrderCard(item: widget.items[index], statusLabel: widget.statusLabel);
       },
     );
   }
