@@ -1,6 +1,5 @@
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/screens/home/trading_main_screen.dart';
-import 'package:crm_app/widgets/app_svg_back_button.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/copy_trading/copy_trading_master_dashboard_controller.dart';
 import 'package:flutter/material.dart';
@@ -99,7 +98,7 @@ class MasterDashboardScreen extends StatelessWidget {
               SizedBox(height: 10.h),
               _PerformanceStatsCard(profile: controller.profile.value),
               SizedBox(height: 10.h),
-              _OpenPositionsCard(profile: controller.profile.value),
+              _OpenPositionsCard(controller: controller),
               SizedBox(height: 14.h),
               Row(
                 children: [
@@ -776,16 +775,231 @@ class _PerformanceStatsCard extends StatelessWidget {
 }
 
 class _OpenPositionsCard extends StatelessWidget {
-  final CopyTradingMasterProfile? profile;
+  final CopyTradingMasterDashboardController controller;
 
-  const _OpenPositionsCard({required this.profile});
+  const _OpenPositionsCard({required this.controller});
+
+  String _formatDateTimeString2(String iso) {
+    final dt = DateTime.tryParse(iso);
+    if (dt == null) return iso;
+    final local = dt.toLocal();
+    String two(int n) => n.toString().padLeft(2, '0');
+    return '${two(local.day)}/${two(local.month)}/${local.year} ${two(local.hour)}:${two(local.minute)}';
+  }
+
+  String _formatPrice(num price) {
+    final parts = price.toStringAsFixed(2).split('.');
+    final reg = RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))');
+    final formattedInt = parts[0].replaceAllMapped(reg, (Match m) => '${m[1]},');
+    return '$formattedInt.${parts[1]}';
+  }
 
   @override
   Widget build(BuildContext context) {
-    final positions = profile?.openPositions ?? [];
+    return Obx(() {
+      final positions = controller.openPositions;
+      final isLoading = controller.isOpenPositionsLoading.value;
+
+      if (isLoading && positions.isEmpty) {
+        return Container(
+          padding: EdgeInsets.all(16.r),
+          decoration: BoxDecoration(
+            color: AppColors.card,
+            borderRadius: BorderRadius.circular(12.r),
+            border: Border.all(color: AppColors.border.withValues(alpha: 0.12)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Open positions',
+                style: TextStyle(
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              SizedBox(height: 12.h),
+              Center(
+                child: SizedBox(
+                  width: 24.r,
+                  height: 24.r,
+                  child: CircularProgressIndicator(strokeWidth: 2.r),
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+
+      if (positions.isEmpty) {
+        return Container(
+          padding: EdgeInsets.all(16.r),
+          decoration: BoxDecoration(
+            color: AppColors.card,
+            borderRadius: BorderRadius.circular(12.r),
+            border: Border.all(color: AppColors.border.withValues(alpha: 0.12)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Open positions',
+                style: TextStyle(
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              SizedBox(height: 2.h),
+              Text(
+                'Live master positions currently mapped for copy trading.',
+                style: TextStyle(
+                  fontSize: 10.sp,
+                  color: AppColors.textGrey,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              SizedBox(height: 12.h),
+              Container(
+                padding: EdgeInsets.symmetric(vertical: 16.h),
+                alignment: Alignment.center,
+                child: Text(
+                  'No open positions right now.',
+                  style: TextStyle(
+                    fontSize: 11.sp,
+                    color: AppColors.textGrey,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+
+      final totalPnl = positions.fold<double>(
+        0.0,
+        (sum, pos) => sum + pos.profit.toDouble(),
+      );
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.trending_up,
+                size: 16.r,
+                color: AppColors.primary,
+              ),
+              SizedBox(width: 6.w),
+              Text(
+                'Open positions',
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 2.h),
+          Text(
+            'Live master positions currently mapped for copy trading.',
+            style: TextStyle(
+              fontSize: 11.sp,
+              color: AppColors.textGrey,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          SizedBox(height: 10.h),
+          
+          // Cards list
+          ...positions.map((pos) {
+            return _OpenPositionItemTile(
+              pos: pos,
+              formatPrice: _formatPrice,
+              formatDateTime2: _formatDateTimeString2,
+            );
+          }),
+          
+          SizedBox(height: 4.h),
+          _OpenPositionsSummaryCard(
+            totalPnl: totalPnl,
+            formatPrice: _formatPrice,
+          ),
+        ],
+      );
+    });
+  }
+}
+
+class _OpenPositionItemTile extends StatefulWidget {
+  final CopyTradingOpenPositionItem pos;
+  final String Function(num) formatPrice;
+  final String Function(String) formatDateTime2;
+
+  const _OpenPositionItemTile({
+    required this.pos,
+    required this.formatPrice,
+    required this.formatDateTime2,
+  });
+
+  @override
+  State<_OpenPositionItemTile> createState() => _OpenPositionItemTileState();
+}
+
+class _OpenPositionItemTileState extends State<_OpenPositionItemTile> {
+  bool _expanded = false;
+
+  Widget _buildDetailItem(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 11.sp,
+            color: AppColors.textGrey,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        SizedBox(height: 4.h),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 13.sp,
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final pos = widget.pos;
+    final isBuy = pos.tradeType.toLowerCase() == 'buy';
+    final badgeBg = isBuy
+        ? const Color(0xFFE8F5E9) // Light green
+        : const Color(0xFFFFEBEE); // Light red
+    final badgeTextColor = isBuy
+        ? const Color(0xFF2E7D32) // Dark green
+        : const Color(0xFFC62828); // Dark red
+
+    final profit = pos.profit.toDouble();
+    final profitColor = profit >= 0 ? AppColors.green : AppColors.error;
+    String profitStr;
+    if (profit == 0.0) {
+      profitStr = '\$0.00';
+    } else {
+      profitStr = '${profit > 0 ? '+' : '-'}\$${widget.formatPrice(profit.abs())}';
+    }
 
     return Container(
-      padding: EdgeInsets.all(12.r),
+      margin: EdgeInsets.only(bottom: 8.h),
       decoration: BoxDecoration(
         color: AppColors.card,
         borderRadius: BorderRadius.circular(12.r),
@@ -799,53 +1013,177 @@ class _OpenPositionsCard extends StatelessWidget {
         ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Open positions',
-            style: TextStyle(
-              fontSize: 13.sp,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          SizedBox(height: 2.h),
-          Text(
-            'Live master positions currently mapped for copy trading.',
-            style: TextStyle(
-              fontSize: 10.sp,
-              color: AppColors.textGrey,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          SizedBox(height: 12.h),
-          if (positions.isEmpty)
-            Container(
-              padding: EdgeInsets.symmetric(vertical: 16.h),
-              alignment: Alignment.center,
-              child: Column(
+          // Header Row (Clickable)
+          InkWell(
+            onTap: () => setState(() => _expanded = !_expanded),
+            borderRadius: BorderRadius.circular(12.r),
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'No open positions right now.',
-                    style: TextStyle(
-                      fontSize: 11.sp,
-                      color: AppColors.textGrey,
-                      fontWeight: FontWeight.w500,
-                    ),
+                  // Left Side: Symbol – Volume [Badge]
+                  Row(
+                    children: [
+                      Text(
+                        '${pos.symbol} – ${pos.masterVolume.toStringAsFixed(2)}',
+                        style: TextStyle(
+                          fontSize: 15.sp,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      SizedBox(width: 8.w),
+                      Container(
+                        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
+                        decoration: BoxDecoration(
+                          color: badgeBg,
+                          borderRadius: BorderRadius.circular(4.r),
+                        ),
+                        child: Text(
+                          pos.tradeType.toUpperCase(),
+                          style: TextStyle(
+                            fontSize: 10.sp,
+                            fontWeight: FontWeight.bold,
+                            color: badgeTextColor,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  // Right Side: Profit/Loss + Chevron
+                  Row(
+                    children: [
+                      Text(
+                        profitStr,
+                        style: TextStyle(
+                          fontSize: 15.sp,
+                          fontWeight: FontWeight.bold,
+                          color: profitColor,
+                        ),
+                      ),
+                      SizedBox(width: 8.w),
+                      Icon(
+                        _expanded
+                            ? Icons.keyboard_arrow_up
+                            : Icons.keyboard_arrow_down,
+                        color: AppColors.textGrey,
+                        size: 20.r,
+                      ),
+                    ],
                   ),
                 ],
               ),
-            )
-          else
-            ...positions.map(
-              (pos) => Padding(
-                padding: EdgeInsets.only(bottom: 6.h),
-                child: Text(
-                  pos.toString(),
-                  style: TextStyle(color: AppColors.textPrimary),
-                ),
+            ),
+          ),
+          
+          // Details section with animation
+          AnimatedCrossFade(
+            firstChild: const SizedBox(width: double.infinity),
+            secondChild: Padding(
+              padding: EdgeInsets.fromLTRB(14.w, 0, 14.w, 14.h),
+              child: Column(
+                children: [
+                  Divider(height: 1, color: AppColors.border.withValues(alpha: 0.08)),
+                  SizedBox(height: 12.h),
+                  Row(
+                    children: [
+                      Expanded(child: _buildDetailItem('Order ID', '#${pos.id}')),
+                      Expanded(child: _buildDetailItem('Volume', pos.masterVolume.toStringAsFixed(2))),
+                    ],
+                  ),
+                  SizedBox(height: 12.h),
+                  Row(
+                    children: [
+                      Expanded(child: _buildDetailItem('Open Price', widget.formatPrice(pos.openPrice))),
+                      Expanded(child: _buildDetailItem('Opened', widget.formatDateTime2(pos.openTime))),
+                    ],
+                  ),
+                  SizedBox(height: 12.h),
+                  Row(
+                    children: [
+                      Expanded(child: _buildDetailItem('Plan', pos.planName)),
+                      Expanded(child: _buildDetailItem('Copier', '${pos.copierName} (${pos.copierAccount})')),
+                    ],
+                  ),
+                ],
               ),
             ),
+            crossFadeState: _expanded
+                ? CrossFadeState.showSecond
+                : CrossFadeState.showFirst,
+            duration: const Duration(milliseconds: 220),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _OpenPositionsSummaryCard extends StatelessWidget {
+  final double totalPnl;
+  final String Function(num) formatPrice;
+
+  const _OpenPositionsSummaryCard({required this.totalPnl, required this.formatPrice});
+
+  @override
+  Widget build(BuildContext context) {
+    final profitColor = totalPnl >= 0 ? AppColors.green : AppColors.error;
+    String profitStr;
+    if (totalPnl == 0.0) {
+      profitStr = '\$0.00';
+    } else {
+      profitStr = '${totalPnl > 0 ? '+' : '-'}\$${formatPrice(totalPnl.abs())}';
+    }
+
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.12)),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.shadowAlpha(0.02),
+            offset: const Offset(0, 2),
+            blurRadius: 6,
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Net floating P/L (open)',
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              SizedBox(height: 2.h),
+              Text(
+                'Sum of master P/L on open mapped positions',
+                style: TextStyle(
+                  fontSize: 10.sp,
+                  color: AppColors.textGrey,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+            ],
+          ),
+          Text(
+            profitStr,
+            style: TextStyle(
+              fontSize: 15.sp,
+              fontWeight: FontWeight.bold,
+              color: profitColor,
+            ),
+          ),
         ],
       ),
     );

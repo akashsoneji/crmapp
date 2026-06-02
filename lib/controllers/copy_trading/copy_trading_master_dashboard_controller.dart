@@ -1,6 +1,7 @@
 import 'package:crm_app/constants/api_const.dart';
 import 'package:crm_app/models/mt5_account.dart';
 import 'package:crm_app/services/api_service.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
 class CopyTradingMasterDashboardStats {
@@ -271,6 +272,61 @@ class CopyTradingMasterPlanItem {
   }
 }
 
+class CopyTradingOpenPositionItem {
+  final int id;
+  final String symbol;
+  final String tradeType;
+  final num masterVolume;
+  final num copierVolume;
+  final num openPrice;
+  final String openTime;
+  final String copierName;
+  final String copierAccount;
+  final String status;
+  final int planId;
+  final String planName;
+  final num profit;
+
+  const CopyTradingOpenPositionItem({
+    required this.id,
+    required this.symbol,
+    required this.tradeType,
+    required this.masterVolume,
+    required this.copierVolume,
+    required this.openPrice,
+    required this.openTime,
+    required this.copierName,
+    required this.copierAccount,
+    required this.status,
+    required this.planId,
+    required this.planName,
+    required this.profit,
+  });
+
+  factory CopyTradingOpenPositionItem.fromJson(
+    Map<String, dynamic> json, {
+    required int planId,
+    required String planName,
+  }) {
+    num toNum(dynamic v) => v is num ? v : num.tryParse(v?.toString() ?? '') ?? 0.0;
+    return CopyTradingOpenPositionItem(
+      id: (json['id'] ?? 0) is num ? (json['id'] as num).toInt() : int.tryParse(json['id']?.toString() ?? '') ?? 0,
+      symbol: (json['symbol'] ?? '').toString(),
+      tradeType: (json['trade_type'] ?? '').toString(),
+      masterVolume: toNum(json['master_volume'] ?? json['volume'] ?? 0.0),
+      copierVolume: toNum(json['copier_volume'] ?? 0.0),
+      openPrice: toNum(json['open_price'] ?? 0.0),
+      openTime: (json['open_time'] ?? '').toString(),
+      copierName: (json['copier_name'] ?? '').toString(),
+      copierAccount: (json['copier_account'] ?? '').toString(),
+      status: (json['status'] ?? '').toString(),
+      planId: planId,
+      planName: planName,
+      profit: toNum(json['profit'] ?? json['pnl'] ?? json['floating_pnl'] ?? json['pl'] ?? 0.0),
+    );
+  }
+}
+
 class CopyTradingMasterDashboardController extends GetxController {
   final String masterCode;
   CopyTradingMasterDashboardController({required this.masterCode});
@@ -283,6 +339,9 @@ class CopyTradingMasterDashboardController extends GetxController {
   final RxList<CopyTradingMasterPlanItem> plans = <CopyTradingMasterPlanItem>[].obs;
 
   final RxList<MT5Account> mt5Accounts = <MT5Account>[].obs;
+
+  final RxList<CopyTradingOpenPositionItem> openPositions = <CopyTradingOpenPositionItem>[].obs;
+  final RxBool isOpenPositionsLoading = false.obs;
 
   // Create-plan account picker should use eligible accounts API (reference: COPYTRADING_API.md)
   final RxBool eligibleAccountsLoading = false.obs;
@@ -301,10 +360,61 @@ class CopyTradingMasterDashboardController extends GetxController {
     errorMessage.value = '';
     try {
       await Future.wait([_loadStats(), _loadProfile(), _loadPlans(), _loadMt5Accounts()]);
+      await _loadOpenPositions();
     } catch (e) {
       errorMessage.value = 'Failed to load dashboard: $e';
     } finally {
       if (showLoading) isLoading.value = false;
+    }
+  }
+
+  Future<void> _loadOpenPositions() async {
+    isOpenPositionsLoading.value = true;
+    try {
+      if (plans.isEmpty) {
+        openPositions.clear();
+        return;
+      }
+
+      final List<CopyTradingOpenPositionItem> allPositions = [];
+      final List<Future<void>> futures = [];
+
+      for (final plan in plans) {
+        final status = plan.status.toLowerCase();
+        if (status != 'approved' && status != 'active') continue;
+
+        futures.add(() async {
+          try {
+            final res = await ApiService.get(
+              endpoint: ApiConstants.copyTradingMasterOpenPositions(plan.id),
+              queryParameters: {'_t': DateTime.now().millisecondsSinceEpoch.toString()},
+            );
+            if (res.success && res.data != null) {
+              final data = res.data?['data'];
+              if (data is List) {
+                final items = data.whereType<Map>().map((e) {
+                  return CopyTradingOpenPositionItem.fromJson(
+                    e.cast<String, dynamic>(),
+                    planId: plan.id,
+                    planName: plan.planName,
+                  );
+                }).toList();
+                allPositions.addAll(items);
+              }
+            }
+          } catch (e) {
+            debugPrint('Error loading open positions for plan ${plan.id}: $e');
+          }
+        }());
+      }
+
+      await Future.wait(futures);
+      allPositions.sort((a, b) => b.openTime.compareTo(a.openTime));
+      openPositions.assignAll(allPositions);
+    } catch (e) {
+      debugPrint('Error loading open positions: $e');
+    } finally {
+      isOpenPositionsLoading.value = false;
     }
   }
 

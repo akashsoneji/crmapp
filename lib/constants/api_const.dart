@@ -129,6 +129,8 @@ class ApiConstants {
   static const String copyTradingMasterDashboardStats =
       '${ajax}copytrading/master/dashboard-stats';
   static const String copyTradingMasterPlans = '${ajax}copytrading/master/plans';
+  static String copyTradingMasterOpenPositions(int planId) =>
+      '$copyTradingMasterPlans/$planId/open-positions';
   static const String copyTradingCopierEligibleAccounts =
       '${ajax}copytrading/copier/eligible-accounts';
   static const String copyTradingCopierSubscribe =
