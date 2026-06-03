@@ -216,6 +216,7 @@ class CopyTradingMasterPlanItem {
   final String copyingPausedAt;
   final String strategyDescription;
   final String riskInformation;
+  final int noFeeDays;
   final String createdAt;
 
   const CopyTradingMasterPlanItem({
@@ -240,6 +241,7 @@ class CopyTradingMasterPlanItem {
     required this.copyingPausedAt,
     required this.strategyDescription,
     required this.riskInformation,
+    required this.noFeeDays,
     required this.createdAt,
   });
 
@@ -267,6 +269,9 @@ class CopyTradingMasterPlanItem {
       copyingPausedAt: (json['copying_paused_at'] ?? '').toString(),
       strategyDescription: (json['strategy_description'] ?? '').toString(),
       riskInformation: (json['risk_information'] ?? '').toString(),
+      noFeeDays: (json['no_fee_days'] ?? 0) is num
+          ? (json['no_fee_days'] as num).toInt()
+          : (int.tryParse((json['no_fee_days'] ?? '').toString()) ?? 0),
       createdAt: (json['created_at'] ?? '').toString(),
     );
   }
