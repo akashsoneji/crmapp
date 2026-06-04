@@ -31,6 +31,9 @@ void main(List<String> args) async {
     // Step 4: Generate launcher icons
     await generateLauncherIcons(flavor);
 
+    // Step 5: Configure iOS flavor settings (app name)
+    await configureIosFlavor(flavor);
+
     print('\n✅ Successfully prepared $flavor flavor!');
     print(
       '📦 You can now build with: flutter build apk --flavor $flavor -t lib/main.dart',
@@ -515,3 +518,40 @@ Future<void> copyIconsToFlavorFolder(String flavor) async {
 
   print('  ✓ Icons copied to $flavor flavor folder');
 }
+
+/// Configure iOS flavor display name and app name
+Future<void> configureIosFlavor(String flavor) async {
+  print('\n🍏 Configuring iOS flavor settings...');
+
+  final configFile = File(path.join('lib', 'clients', flavor, 'config.dart'));
+  if (!await configFile.exists()) {
+    print('  ⚠️  Warning: Client config not found, skipping iOS flavor configuration');
+    return;
+  }
+
+  final configContent = await configFile.readAsString();
+
+  // Extract brandName from config.dart
+  final brandNameMatch = RegExp(
+    r'brandName:\s*[\x27\x22]([^\x27\x22]+)[\x27\x22]',
+  ).firstMatch(configContent);
+
+  if (brandNameMatch == null) {
+    print('  ⚠️  Warning: Could not extract brandName from config.dart');
+    return;
+  }
+
+  final brandName = brandNameMatch.group(1)!;
+  print('  ✓ Extracted brandName: $brandName');
+
+  // Write ios/Flutter/Flavor.xcconfig
+  final flavorXcconfig = File(path.join('ios', 'Flutter', 'Flavor.xcconfig'));
+  final content = '''// Generated file. Do not edit.
+BUNDLE_DISPLAY_NAME = $brandName
+BUNDLE_NAME = $brandName
+''';
+
+  await flavorXcconfig.writeAsString(content);
+  print('  ✓ Generated ios/Flutter/Flavor.xcconfig');
+}
+
