@@ -148,6 +148,9 @@ void main() async {
 }
 
 Future<void> initServices() async {
+  // Clear secure storage on first run after install (resolves iOS Keychain persistent state issue)
+  await SecureStorageService.clearSecureStorageOnFirstRun();
+
   // Register services
   final languageService = Get.put<LanguageService>(
     LanguageService(),

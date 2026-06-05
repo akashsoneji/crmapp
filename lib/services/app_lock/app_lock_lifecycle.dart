@@ -28,9 +28,12 @@ class _AppLockLifecycleState extends State<AppLockLifecycle>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
-    if (state == AppLifecycleState.resumed) {
-      // Lock-on-resume behavior (only locks if enabled + session exists).
-      final lockService = Get.find<AppLockService>();
+    if (!Get.isRegistered<AppLockService>()) return;
+    final lockService = Get.find<AppLockService>();
+
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+      lockService.markPaused();
+    } else if (state == AppLifecycleState.resumed) {
       if (lockService.isUnlocking.value) return;
       lockService.lockIfNeeded(reason: 'Authenticate to continue.');
     }
