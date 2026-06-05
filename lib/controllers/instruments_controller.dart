@@ -20,6 +20,7 @@ import 'package:crm_app/utils/message_pack_decoder.dart';
 import 'package:crm_app/services/websocket_endpoint_helper.dart';
 import 'package:crm_app/services/unified_websocket_service.dart';
 import 'package:crm_app/services/market_watch_v2_service.dart';
+import 'package:crm_app/services/app_lock_service.dart';
 
 class InstrumentsController extends GetxController with WidgetsBindingObserver {
   final RxList<ListElement> allInstruments = <ListElement>[].obs;
@@ -1192,30 +1193,8 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
-
-    switch (state) {
-      case AppLifecycleState.resumed:
-        print('App resumed - checking WebSocket connection');
-        if (!isConnected.value) {
-          Future.microtask(() async {
-            await startMarketWatchV2Only();
-          });
-        }
-        break;
-      case AppLifecycleState.paused:
-        print('App paused - WebSocket may disconnect');
-        break;
-      case AppLifecycleState.detached:
-        print('App detached - closing WebSocket');
-        _disconnectWebSocket();
-        break;
-      case AppLifecycleState.inactive:
-        print('App inactive');
-        break;
-      case AppLifecycleState.hidden:
-        print('App hidden');
-        break;
-    }
+    // Connection state is centrally coordinated by AccountController to prevent race conditions.
+    return;
   }
 
   void _scheduleReconnect() {

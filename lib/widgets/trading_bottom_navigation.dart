@@ -25,62 +25,68 @@ class TradingBottomNavigation extends StatelessWidget {
       return SafeArea(
         child: Padding(
           padding: EdgeInsets.only(left: 16.w, right: 16.w, bottom: 12.h),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(32.r),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-                decoration: BoxDecoration(
-                  // Glass effect
-                  color: AppColors.whiteColor,
-                  borderRadius: BorderRadius.circular(32.r),
-                  border: Border.all(
-                    color: AppColors.whiteColor.withOpacity(0.35),
-                    width: 1,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.textPrimary.withValues(alpha: 0.15),
-                      blurRadius: 16,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(32.r),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.textPrimary.withValues(alpha: AppColors.isDarkMode ? 0.22 : 0.15),
+                  blurRadius: 22,
+                  spreadRadius: 2,
+                  offset: const Offset(0, 8),
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    _buildNavItem(
-                      0,
-                      "assets/svg/bottom_navigation/trend-up.svg",
-                      "assets/svg/bottom_navigation/trend-up_bold.svg",
-                      languageService.tr('quote_title'),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(32.r),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                  decoration: BoxDecoration(
+                    // Glass effect
+                    color: AppColors.whiteColor,
+                    borderRadius: BorderRadius.circular(32.r),
+                    border: Border.all(
+                      color: AppColors.whiteColor.withOpacity(0.35),
+                      width: 1,
                     ),
-                    _buildNavItem(
-                      1,
-                      "assets/svg/bottom_navigation/chart.svg",
-                      "assets/svg/bottom_navigation/chart_bold.svg",
-                      languageService.tr('chart_title'),
-                    ),
-                    _buildNavItem(
-                      2,
-                      "assets/svg/bottom_navigation/candle.svg",
-                      "assets/svg/bottom_navigation/candle_bold.svg",
-                      languageService.tr('trade_title'),
-                    ),
-                    _buildNavItem(
-                      3,
-                      "assets/svg/bottom_navigation/wallet.svg",
-                      "assets/svg/bottom_navigation/wallet_bold.svg",
-                      languageService.tr('dashboard_title'),
-                    ),
-                    _buildNavItem(
-                      4,
-                      "assets/svg/bottom_navigation/setting.svg",
-                      "assets/svg/bottom_navigation/setting_bold.svg",
-                      languageService.tr('more_title'),
-                    ),
-                  ],
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _buildNavItem(
+                        0,
+                        "assets/svg/bottom_navigation/trend-up.svg",
+                        "assets/svg/bottom_navigation/trend-up_bold.svg",
+                        languageService.tr('quote_title'),
+                      ),
+                      _buildNavItem(
+                        1,
+                        "assets/svg/bottom_navigation/chart.svg",
+                        "assets/svg/bottom_navigation/chart_bold.svg",
+                        languageService.tr('chart_title'),
+                      ),
+                      _buildNavItem(
+                        2,
+                        "assets/svg/bottom_navigation/candle.svg",
+                        "assets/svg/bottom_navigation/candle_bold.svg",
+                        languageService.tr('trade_title'),
+                      ),
+                      _buildNavItem(
+                        3,
+                        "assets/svg/bottom_navigation/wallet.svg",
+                        "assets/svg/bottom_navigation/wallet_bold.svg",
+                        languageService.tr('dashboard_title'),
+                      ),
+                      _buildNavItem(
+                        4,
+                        "assets/svg/bottom_navigation/setting.svg",
+                        "assets/svg/bottom_navigation/setting_bold.svg",
+                        languageService.tr('more_title'),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

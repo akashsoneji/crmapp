@@ -1,5 +1,6 @@
 import 'dart:async';
 
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -32,6 +33,8 @@ class TradingMainScreen extends StatefulWidget {
 class _TradingMainScreenState extends State<TradingMainScreen> {
   int _currentIndex = 0;
   late List<Widget> _screens;
+  late PageController _pageController;
+
 
   // Get the instruments controller
   final InstrumentsController instrumentsController =
@@ -87,26 +90,28 @@ class _TradingMainScreenState extends State<TradingMainScreen> {
       }
     }
 
+    _pageController = PageController(initialPage: _currentIndex);
+
     _screens = [
       // Pass the callback to InstrumentsScreen
-      InstrumentsScreen(onNavigateToChart: _switchToChartTab),
-      ChartScreen(
-        onNavigateToTrade: _switchToTradeTab,
-        onNavigateToTab: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
+      KeepAliveWrapper(child: InstrumentsScreen(onNavigateToChart: _switchToChartTab)),
+      KeepAliveWrapper(
+        child: ChartScreen(
+          onNavigateToTrade: _switchToTradeTab,
+          onNavigateToTab: (index) {
+            _onTabChanged(index);
+          },
+        ),
       ),
-      TradeScreen(onNavigateToChart: _switchToChartTab),
-      DashboardScreen(
-        onNavigateToTab: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
+      KeepAliveWrapper(child: TradeScreen(onNavigateToChart: _switchToChartTab)),
+      KeepAliveWrapper(
+        child: DashboardScreen(
+          onNavigateToTab: (index) {
+            _onTabChanged(index);
+          },
+        ),
       ),
-      const MoreScreen(),
+      const KeepAliveWrapper(child: MoreScreen()),
     ];
 
     // ✅ WebSocket connections now auto-start and stay active across all screens
@@ -143,6 +148,12 @@ class _TradingMainScreenState extends State<TradingMainScreen> {
     // }
   }
 
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
   // Ensure one-click trading is enabled (safety net)
   Future<void> _ensureOneClickTradingEnabled() async {
     try {
@@ -161,11 +172,17 @@ class _TradingMainScreenState extends State<TradingMainScreen> {
 
   // Handle tab changes and manage WebSocket connections
   void _onTabChanged(int index) {
+    if (_currentIndex == index) return;
+
     final int previousIndex = _currentIndex;
 
     setState(() {
       _currentIndex = index;
     });
+
+    if (_pageController.hasClients && _pageController.page?.round() != index) {
+      _pageController.jumpToPage(index);
+    }
 
     // Reset to Market tab when switching to Trade screen (index 2) via bottom navigation
     // Only reset if user manually switched from a different screen (not already on Trade screen)
@@ -185,16 +202,13 @@ class _TradingMainScreenState extends State<TradingMainScreen> {
     if (index == 3) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         try {
-          if (Get.isRegistered<DashboardController>()) {
-            final dashboardController = Get.find<DashboardController>();
-            // IMPORTANT:
-            // Do NOT force-refresh accounts or resubscribe sockets on simple tab switches.
-            // This was causing unnecessary API calls / WS churn and visible refresh when
-            // returning back to Instruments. Refresh should happen only on:
-            // - explicit user actions (pull-to-refresh)
-            // - explicit account switch
-            // - app resume / reconnect handling inside controllers
-          }
+          // IMPORTANT:
+          // Do NOT force-refresh accounts or resubscribe sockets on simple tab switches.
+          // This was causing unnecessary API calls / WS churn and visible refresh when
+          // returning back to Instruments. Refresh should happen only on:
+          // - explicit user actions (pull-to-refresh)
+          // - explicit account switch
+          // - app resume / reconnect handling inside controllers
 
           // Also re-check app update on dashboard open, so returning users
           // still get the popup when a new version is available.
@@ -238,7 +252,12 @@ class _TradingMainScreenState extends State<TradingMainScreen> {
           backgroundColor: AppColors.tradeBackgroundCenterColor,
           // drawer: const GlobalDrawer(),
           body: SafeArea(
-            child: IndexedStack(index: _currentIndex, children: _screens),
+            child: PageView(
+              controller: _pageController,
+              onPageChanged: _onTabChanged,
+              physics: const NeverScrollableScrollPhysics(),
+              children: _screens,
+            ),
           ),
 
           floatingActionButtonLocation:
@@ -296,3 +315,24 @@ class PlaceholderScreen extends StatelessWidget {
     );
   }
 }
+
+class KeepAliveWrapper extends StatefulWidget {
+  final Widget child;
+  const KeepAliveWrapper({super.key, required this.child});
+
+  @override
+  State<KeepAliveWrapper> createState() => _KeepAliveWrapperState();
+}
+
+class _KeepAliveWrapperState extends State<KeepAliveWrapper>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return widget.child;
+  }
+
+  @override
+  bool get wantKeepAlive => true;
+}
+

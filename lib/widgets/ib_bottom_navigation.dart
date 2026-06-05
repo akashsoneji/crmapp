@@ -20,27 +20,32 @@ class IbBottomNavigation extends StatelessWidget {
     return SafeArea(
       child: Padding(
         padding: EdgeInsets.only(left: 16.w, right: 16.w, bottom: 12.h),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(32.r),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
-              decoration: BoxDecoration(
-                color: AppColors.whiteColor,
-                borderRadius: BorderRadius.circular(32.r),
-                border: Border.all(
-                  color: AppColors.whiteColor.withOpacity(0.35),
-                  width: 1,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.textPrimary.withValues(alpha: 0.15),
-                    blurRadius: 16,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(32.r),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.textPrimary.withValues(alpha: AppColors.isDarkMode ? 0.22 : 0.15),
+                blurRadius: 22,
+                spreadRadius: 2,
+                offset: const Offset(0, 8),
               ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(32.r),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
+                decoration: BoxDecoration(
+                  color: AppColors.whiteColor,
+                  borderRadius: BorderRadius.circular(32.r),
+                  border: Border.all(
+                    color: AppColors.whiteColor.withOpacity(0.35),
+                    width: 1,
+                  ),
+                ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -80,8 +85,9 @@ class IbBottomNavigation extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildNavItem(int index, String icon, String iconbold, String label) {
     final isSelected = currentIndex == index;
