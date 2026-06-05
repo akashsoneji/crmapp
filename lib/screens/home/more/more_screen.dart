@@ -923,7 +923,7 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                     _MenuItem(
                       icon: 'copy-trading',
                       label: languageService.tr('more_copy_trading'),
-                      onTap: () => Get.toNamed(AppPages.COPY_TRADING_HUB),
+                      onTap: () => Get.toNamed(AppPages.COPY_TRADING_MAIN),
                     ),
                   );
                 }
@@ -1691,19 +1691,38 @@ class _BiometricLoginMenuItemState extends State<_BiometricLoginMenuItem> {
       context: context,
       builder: (ctx) {
         return AlertDialog(
-          title: Text(_languageService.tr('biometric_not_enabled_title')),
-          content: Text(_languageService.tr('biometric_not_enabled_message')),
+          backgroundColor: AppColors.cardBackground,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+          title: Text(
+            _languageService.tr('biometric_not_enabled_title'),
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: Text(
+            _languageService.tr('biometric_not_enabled_message'),
+            style: TextStyle(
+              color: AppColors.textSecondary,
+            ),
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(),
-              child: Text(_languageService.tr('common_close')),
+              child: Text(
+                _languageService.tr('common_close'),
+                style: TextStyle(color: AppColors.primary),
+              ),
             ),
             TextButton(
               onPressed: () async {
                 Navigator.of(ctx).pop();
                 await BiometricService.instance.openDeviceSecuritySettings();
               },
-              child: Text(_languageService.tr('biometric_open_settings')),
+              child: Text(
+                _languageService.tr('biometric_open_settings'),
+                style: TextStyle(color: AppColors.primary),
+              ),
             ),
           ],
         );

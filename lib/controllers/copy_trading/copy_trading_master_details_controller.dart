@@ -249,6 +249,10 @@ class CopyTradingMasterDetailsController extends GetxController {
   final RxString selectedTimeframe = '3m'.obs;
   final RxString selectedPlanId = ''.obs;
 
+  int tradeHistoryPage = 1;
+  final RxBool hasMoreTradeHistory = true.obs;
+  final RxBool isLoadingMoreTradeHistory = false.obs;
+
   Timer? _refreshTimer;
 
   @override
@@ -268,7 +272,9 @@ class CopyTradingMasterDetailsController extends GetxController {
     _refreshTimer?.cancel();
     _refreshTimer = Timer.periodic(const Duration(seconds: 30), (_) {
       if (!isLoading.value && !isTimeframeLoading.value && !isPlanLoading.value) {
-        loadTradeHistory();
+        if (tradeHistoryPage == 1) {
+          loadTradeHistory();
+        }
       }
     });
   }
@@ -325,14 +331,26 @@ class CopyTradingMasterDetailsController extends GetxController {
     }
   }
 
-  Future<void> loadTradeHistory() async {
-    isTradeHistoryLoading.value = true;
+  Future<void> loadTradeHistory({bool isLoadMore = false}) async {
+    if (isLoadMore) {
+      if (!hasMoreTradeHistory.value || isLoadingMoreTradeHistory.value) return;
+      isLoadingMoreTradeHistory.value = true;
+      tradeHistoryPage++;
+    } else {
+      isTradeHistoryLoading.value = true;
+      tradeHistoryPage = 1;
+      hasMoreTradeHistory.value = true;
+    }
+
     try {
       final timeframe = selectedTimeframe.value == 'all' ? null : selectedTimeframe.value;
+      final planId = selectedPlanId.value.isEmpty ? null : selectedPlanId.value;
       final res = await ApiService.get(
         endpoint: ApiConstants.copyTradingMasterTradeHistory(
           masterCode,
           timeframe: timeframe,
+          selectedPlanId: planId,
+          page: tradeHistoryPage,
         ),
       );
       if (res.success && res.data != null) {
@@ -340,17 +358,37 @@ class CopyTradingMasterDetailsController extends GetxController {
         if (data is Map) {
           final historyList = data['data'];
           if (historyList is List) {
-            tradeHistory.value = historyList
+            final newItems = historyList
                 .whereType<Map>()
                 .map((e) => CopyTradingTradeItem.fromJson(e.cast<String, dynamic>()))
                 .toList();
+            if (isLoadMore) {
+              tradeHistory.addAll(newItems);
+            } else {
+              tradeHistory.assignAll(newItems);
+            }
+          }
+          final pagination = data['pagination'];
+          if (pagination is Map) {
+            final currentPage = pagination['current_page'] as int? ?? 1;
+            final lastPage = pagination['last_page'] as int? ?? 1;
+            hasMoreTradeHistory.value = currentPage < lastPage;
+          } else {
+            hasMoreTradeHistory.value = false;
           }
         }
       }
     } catch (_) {
       // silently fail, trade history is secondary data
+      if (isLoadMore && tradeHistoryPage > 1) {
+        tradeHistoryPage--;
+      }
     } finally {
-      isTradeHistoryLoading.value = false;
+      if (isLoadMore) {
+        isLoadingMoreTradeHistory.value = false;
+      } else {
+        isTradeHistoryLoading.value = false;
+      }
     }
   }
 }

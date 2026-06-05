@@ -516,12 +516,6 @@ class _SubscribeToPlanScreenState extends State<SubscribeToPlanScreen> {
     if (_isEditMode) {
       final item = widget.editSubscription;
       if (item == null) return;
-      final acc = sub.selectedAccount.value;
-      if (acc == null) {
-        sub.errorMessage.value = 'Could not resolve trading account for this copy.';
-        _showTopError(sub.errorMessage.value);
-        return;
-      }
     } else {
       final acc = sub.selectedAccount.value;
       if (acc == null) {
@@ -640,6 +634,9 @@ class _SubscribeToPlanScreenState extends State<SubscribeToPlanScreen> {
         }
         if (Get.isRegistered<CopyTradingCopierSubscriptionsController>(tag: 'copytrading:my_copies')) {
           await Get.find<CopyTradingCopierSubscriptionsController>(tag: 'copytrading:my_copies').load(showLoading: false);
+        }
+        if (Get.isRegistered<CopyTradingCopierSubscriptionsController>(tag: 'copytrading:my_investments')) {
+          await Get.find<CopyTradingCopierSubscriptionsController>(tag: 'copytrading:my_investments').load(showLoading: false);
         }
         if (mounted) {
           Get.back();

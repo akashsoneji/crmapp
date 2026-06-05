@@ -31,6 +31,7 @@ import 'services/account_service.dart';
 import 'services/api_service.dart';
 import 'services/websocket_endpoint_helper.dart';
 import 'services/market_watch_v2_service.dart';
+import 'services/symbol_selection_service.dart';
 import 'routes/app_pages.dart';
 import 'widgets/exit_confirmation_wrapper.dart';
 import 'widgets/app_notification_stack.dart';
@@ -180,6 +181,7 @@ Future<void> initServices() async {
   Get.put<DashboardController>(DashboardController(), permanent: true);
   Get.put<AccountController>(AccountController(), permanent: true);
   Get.put<MarketWatchV2Service>(MarketWatchV2Service(), permanent: true);
+  Get.put<SymbolSelectionService>(SymbolSelectionService(), permanent: true);
   Get.put<InstrumentsController>(InstrumentsController(), permanent: true);
   Get.put<ChartSocketController>(ChartSocketController(), permanent: true);
   Get.put<TradingController>(TradingController(), permanent: true);
@@ -313,8 +315,8 @@ ThemeData _buildDarkTheme() {
       secondary: FlavorConfig.instance.secondaryColor,
       surface: AppColors.surfaceDarkTheme,
       onPrimary: darkOnPrimary,
-      onSecondary: AppColors.whiteColor,
-      onSurface: AppColors.whiteColor,
+      onSecondary: AppColors.textPrimaryDark,
+      onSurface: AppColors.textPrimaryDark,
     ),
     useMaterial3: true,
     scaffoldBackgroundColor: AppColors.backgroundDarkTheme,
@@ -539,7 +541,9 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
 
           if (Get.isRegistered<EnabledModulesService>()) {
             unawaited(
-              Get.find<EnabledModulesService>().fetchEnabledModules(force: true),
+              Get.find<EnabledModulesService>().fetchEnabledModules(
+                force: true,
+              ),
             );
           }
 

@@ -3,7 +3,6 @@ import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/widgets/app_svg_back_button.dart';
 import 'package:crm_app/widgets/labeled_app_text_field.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
-import 'package:crm_app/widgets/app_select_field.dart';
 import 'package:crm_app/controllers/copy_trading/copy_trading_hub_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -337,6 +336,8 @@ class _BecomeMasterScreen extends StatefulWidget {
 
 class _BecomeMasterScreenState extends State<_BecomeMasterScreen> {
   final _nicknameCtrl = TextEditingController();
+  final _strategyCtrl = TextEditingController();
+  final _riskInfoCtrl = TextEditingController();
 
   @override
   void initState() {
@@ -344,12 +345,15 @@ class _BecomeMasterScreenState extends State<_BecomeMasterScreen> {
     final hub = Get.find<CopyTradingHubController>();
     hub.resetMasterApplyForm();
     _nicknameCtrl.clear();
-    WidgetsBinding.instance.addPostFrameCallback((_) => hub.loadEligibleAccountsForMasterApply());
+    _strategyCtrl.clear();
+    _riskInfoCtrl.clear();
   }
 
   @override
   void dispose() {
     _nicknameCtrl.dispose();
+    _strategyCtrl.dispose();
+    _riskInfoCtrl.dispose();
     super.dispose();
   }
 
@@ -370,17 +374,12 @@ class _BecomeMasterScreenState extends State<_BecomeMasterScreen> {
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16.r),
         child: Obx(() {
-          hub.masterApplyEligibleLoading.value;
-          hub.masterApplyEligibleAccounts.length;
-          hub.masterApplyEligibleError.value;
-          hub.masterApplySelectedAccountId.value;
           hub.masterApplyNicknameDraft.value;
+          hub.masterApplyStrategyDraft.value;
+          hub.masterApplyRiskInfoDraft.value;
           hub.masterApplyTermsAccepted.value;
           hub.isLoading.value;
 
-          final eligibleLoading = hub.masterApplyEligibleLoading.value;
-          final accounts = hub.masterApplyEligibleAccounts;
-          final err = hub.masterApplyEligibleError.value;
           final canSubmit = hub.canSubmitMasterApply;
           final applying = hub.isLoading.value;
           final applyBtnFg =
@@ -402,61 +401,29 @@ class _BecomeMasterScreenState extends State<_BecomeMasterScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text(
-                  'Trading account *',
-                  style: AppTextStyles.label.copyWith(fontWeight: FontWeight.w600),
-                ),
-                SizedBox(height: 8.h),
-                if (eligibleLoading)
-                  Padding(
-                    padding: EdgeInsets.symmetric(vertical: 24.h),
-                    child: Center(
-                      child: SizedBox(
-                        width: 22.r,
-                        height: 22.r,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
-                      ),
-                    ),
-                  )
-                else if (accounts.isEmpty)
-                  Padding(
-                    padding: EdgeInsets.only(bottom: 8.h),
-                    child: Text(
-                      err.isNotEmpty ? err : 'No eligible accounts found.',
-                      style: AppTextStyles.cardSubtitle.copyWith(color: AppColors.textGrey),
-                    ),
-                  )
-                else
-                  AppSelectField<int>(
-                    value: hub.masterApplySelectedAccountId.value,
-                    hint: '-- Select account --',
-                    sheetTitle: 'Trading account',
-                    borderRadius: 12,
-                    fontSize: 14.sp,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
-                    options:
-                        accounts
-                            .map(
-                              (a) => AppSelectOption<int>(
-                                value: a.id,
-                                title: '${a.metaAccountNumber} · ${a.accountType}',
-                                subtitle: '\$${a.equity.toStringAsFixed(2)}',
-                              ),
-                            )
-                            .toList(),
-                    onChanged: (v) => hub.masterApplySelectedAccountId.value = v,
-                  ),
-                if (err.isNotEmpty && accounts.isNotEmpty) ...[
-                  SizedBox(height: 8.h),
-                  Text(err, style: AppTextStyles.caption.copyWith(color: AppColors.textGrey)),
-                ],
-                SizedBox(height: 16.h),
+
                 LabeledAppTextField(
                   label: 'Nickname *',
                   controller: _nicknameCtrl,
                   keyboardType: TextInputType.text,
-                  // hintText: 'e.g. ',
+                  hintText: 'e.g. Alpha Trader',
                   onChanged: (s) => hub.masterApplyNicknameDraft.value = s,
+                ),
+                SizedBox(height: 16.h),
+                LabeledAppTextField(
+                  label: 'Strategy Description *',
+                  controller: _strategyCtrl,
+                  keyboardType: TextInputType.text,
+                  hintText: 'e.g. Conservative gold scalping strategy',
+                  onChanged: (s) => hub.masterApplyStrategyDraft.value = s,
+                ),
+                SizedBox(height: 16.h),
+                LabeledAppTextField(
+                  label: 'Risk Info *',
+                  controller: _riskInfoCtrl,
+                  keyboardType: TextInputType.text,
+                  hintText: 'e.g. Drawdown can reach up to 15%.',
+                  onChanged: (s) => hub.masterApplyRiskInfoDraft.value = s,
                 ),
                 SizedBox(height: 12.h),
                 Row(
@@ -497,12 +464,14 @@ class _BecomeMasterScreenState extends State<_BecomeMasterScreen> {
                   child: ElevatedButton(
                     onPressed: canSubmit && !applying
                         ? () async {
-                            final id = hub.masterApplySelectedAccountId.value!;
                             final nick = hub.masterApplyNicknameDraft.value.trim();
+                            final strategy = hub.masterApplyStrategyDraft.value.trim();
+                            final riskInfo = hub.masterApplyRiskInfoDraft.value.trim();
                             final res = await hub.applyForMaster(
-                              mt5AccountId: id,
                               nickname: nick,
                               termsAccepted: hub.masterApplyTermsAccepted.value,
+                              strategy: strategy,
+                              riskInfo: riskInfo,
                             );
                             if (res.success) {
                               Get.back();

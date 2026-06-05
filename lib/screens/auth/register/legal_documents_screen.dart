@@ -454,19 +454,38 @@ class _LegalDocumentsScreenState extends State<LegalDocumentsScreen> {
       context: context,
       builder: (ctx) {
         return AlertDialog(
-          title: Text(languageService.tr('biometric_not_enabled_title')),
-          content: Text(languageService.tr('biometric_not_enabled_message')),
+          backgroundColor: AppColors.cardBackground,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+          title: Text(
+            languageService.tr('biometric_not_enabled_title'),
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: Text(
+            languageService.tr('biometric_not_enabled_message'),
+            style: TextStyle(
+              color: AppColors.textSecondary,
+            ),
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(),
-              child: Text(languageService.tr('common_close')),
+              child: Text(
+                languageService.tr('common_close'),
+                style: TextStyle(color: AppColors.primary),
+              ),
             ),
             TextButton(
               onPressed: () async {
                 Navigator.of(ctx).pop();
                 await BiometricService.instance.openDeviceSecuritySettings();
               },
-              child: Text(languageService.tr('biometric_open_settings')),
+              child: Text(
+                languageService.tr('biometric_open_settings'),
+                style: TextStyle(color: AppColors.primary),
+              ),
             ),
           ],
         );
