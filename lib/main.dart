@@ -9,6 +9,7 @@ import 'dart:ui';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:crm_app/controllers/chart_socket_controller.dart';
 import 'package:crm_app/services/price_alert_service.dart';
 import 'package:crm_app/services/loading_service.dart';
@@ -68,6 +69,19 @@ void main() async {
   FlavorConfig.reset();
 
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Configure audio players to respect system silent/mute settings
+  try {
+    await AudioPlayer.global.setAudioContext(
+      AudioContextConfig(
+        respectSilence: true,
+      ).build(),
+    );
+    print('=== AUDIO SERVICE: Global audio context initialized (respectSilence: true) ===');
+  } catch (e) {
+    print('=== AUDIO SERVICE: Error setting global audio context: $e ===');
+  }
+
   // Auto-detect and initialize the correct flavor
   await _initializeFlavor();
 
@@ -405,7 +419,10 @@ class MyGetXApp extends StatelessWidget {
                     return Stack(
                       children: [
                         MediaQuery(
-                          data: mediaQuery.copyWith(textScaleFactor: 1.0),
+                          data: mediaQuery.copyWith(
+                            textScaleFactor: 1.0,
+                            boldText: false,
+                          ),
                           child: child!,
                         ),
                         // Global notification overlay
