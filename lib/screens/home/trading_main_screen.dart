@@ -47,7 +47,10 @@ class _TradingMainScreenState extends State<TradingMainScreen> {
       setState(() {
         _currentIndex = 1; // Chart screen is at index 1
       });
-      print('🚀 TradingMainScreen: Chart tab index set to 1');
+      if (_pageController.hasClients && _pageController.page?.round() != 1) {
+        _pageController.jumpToPage(1);
+      }
+      print('🚀 TradingMainScreen: Chart tab index set to 1 and PageView navigated');
       ChartScreen.setSelectedSymbol(symbol);
       print('🚀 TradingMainScreen: Symbol passed to ChartScreen');
     } catch (e) {
@@ -61,6 +64,9 @@ class _TradingMainScreenState extends State<TradingMainScreen> {
     setState(() {
       _currentIndex = 2; // Trade screen is at index 2
     });
+    if (_pageController.hasClients && _pageController.page?.round() != 2) {
+      _pageController.jumpToPage(2);
+    }
     // Set the initial tab: use provided initialTab, or default to Market tab (0)
     // Use a slightly longer delay to ensure it runs after TradeScreen.initState()
     WidgetsBinding.instance.addPostFrameCallback((_) {

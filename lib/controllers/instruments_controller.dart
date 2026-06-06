@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -502,6 +503,12 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
   // Check if we need to update defaults (for existing users)
   Future<void> _checkAndUpdateDefaults() async {
     try {
+      final prefs = await SharedPreferences.getInstance();
+      final migrated = prefs.getBool('migrated_favorites_defaults_v2') ?? false;
+      if (migrated) {
+        return;
+      }
+
       final currentFavorites =
           await FavoritesStorageService.instance.getFavoriteInstruments();
       // If user has old defaults (USOIL, NAS100, BTCUSD), update to new ones
@@ -511,6 +518,9 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
         print('🔄 Detected old default favorites, updating to new ones');
         await forceReinitializeDefaults();
       }
+
+      // Set migration flag so we don't wipe custom user favorites on next starts
+      await prefs.setBool('migrated_favorites_defaults_v2', true);
     } catch (e) {
       print('Error checking and updating defaults: $e');
     }
