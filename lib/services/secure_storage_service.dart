@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io' show Platform;
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -7,19 +8,64 @@ import 'package:crm_app/models/user_model.dart';
 class SecureStorageService {
   static const FlutterSecureStorage _storage = FlutterSecureStorage();
 
-  // Clear secure storage on first run to handle iOS Keychain persistent data on reinstall
-  static Future<void> clearSecureStorageOnFirstRun() async {
+  // SharedPreferences marker used to detect an app install on iOS.
+  // iOS Keychain can survive uninstall, but SharedPreferences is removed.
+  static const String _installMarkerKey = 'secure_storage_install_marker_v1';
+
+  // Clear stale iOS Keychain session only after a fresh install/reinstall.
+  // This prevents auto-login after app delete + reinstall without logging users
+  // out on ordinary app restarts or TestFlight updates.
+  static Future<void> clearStaleSessionOnFreshInstall() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final isFirstRun = prefs.getBool('is_first_run') ?? true;
-      if (isFirstRun) {
-        print('SecureStorage: First run detected. Wiping Keychain to prevent stale login.');
-        await _storage.deleteAll();
-        await prefs.setBool('is_first_run', false);
+      final hasInstallMarker = prefs.getBool(_installMarkerKey) == true;
+      final tokenBeforeCleanup = await _storage.read(key: _authTokenKey);
+
+      print(
+        'SecureStorage: Fresh-install check → platform=${Platform.isIOS ? 'ios' : 'non-ios'}, marker=${hasInstallMarker ? 'exists' : 'missing'}, token=${tokenBeforeCleanup?.isNotEmpty == true ? 'exists' : 'missing'}',
+      );
+
+      if (!Platform.isIOS) {
+        await prefs.setBool(_installMarkerKey, true);
+        print(
+          'SecureStorage: Fresh-install cleanup skipped on non-iOS platform',
+        );
+        return;
       }
+
+      if (!hasInstallMarker) {
+        print(
+          'SecureStorage: Fresh iOS install/reinstall detected. Clearing stale auth session keys only.',
+        );
+        await _clearSessionKeysForFreshInstall();
+        print('SecureStorage: Fresh-install auth keys cleared');
+      } else {
+        print(
+          'SecureStorage: Existing iOS install detected. Preserving secure session.',
+        );
+      }
+
+      await prefs.setBool(_installMarkerKey, true);
     } catch (e) {
-      print('SecureStorage: Error checking first run: $e');
+      print('SecureStorage: Error checking fresh install state: $e');
     }
+  }
+
+  // Backward-compatible wrapper for older call sites.
+  static Future<void> clearSecureStorageOnFirstRun() async {
+    await clearStaleSessionOnFreshInstall();
+  }
+
+  static Future<void> _clearSessionKeysForFreshInstall() async {
+    await Future.wait([
+      _storage.delete(key: _authTokenKey),
+      _storage.delete(key: _websocketTokenKey),
+      _storage.delete(key: _userDataKey),
+      _storage.delete(key: _isLoggedInKey),
+      _storage.delete(key: _selectedSymbolKey),
+      _storage.delete(key: _biometricEnabledKey),
+      _storage.delete(key: _biometricUserKey),
+    ]);
   }
 
   // Storage keys
@@ -42,11 +88,10 @@ class SecureStorageService {
   static const String _tenaxCurrentProfileKey = 'tenax_current_profile_key';
   static const String _biometricEnabledKey = 'biometric_enabled';
   static const String _biometricUserKey = 'biometric_user';
-  static const bool _defaultTenaxBrokerSelectionFlag =
-      bool.fromEnvironment(
-        'TENAX_BROKER_SELECTION_ENABLED',
-        defaultValue: true,
-      );
+  static const bool _defaultTenaxBrokerSelectionFlag = bool.fromEnvironment(
+    'TENAX_BROKER_SELECTION_ENABLED',
+    defaultValue: true,
+  );
 
   // Save authentication token
   static Future<void> saveAuthToken(String token) async {
@@ -239,7 +284,10 @@ class SecureStorageService {
     String? userIdentifier,
   }) async {
     try {
-      await _storage.write(key: _biometricEnabledKey, value: enabled.toString());
+      await _storage.write(
+        key: _biometricEnabledKey,
+        value: enabled.toString(),
+      );
       if (userIdentifier != null) {
         await _storage.write(key: _biometricUserKey, value: userIdentifier);
       }
@@ -282,22 +330,16 @@ class SecureStorageService {
   // Check if user is logged in
   static Future<bool> isUserLoggedIn() async {
     try {
-      String? token = await getAuthToken();
-      bool isLoggedIn = await getLoginStatus();
+      final token = await getAuthToken();
+      final isLoggedIn = await getLoginStatus();
+      final hasToken = token != null && token.isNotEmpty;
+      final hasValidSession = hasToken && isLoggedIn;
 
-      // If there is no token yet, bootstrap using the default bypass token.
-      // This effectively skips the login screen and treats the user as logged in.
-      if ((token == null || token.isEmpty) && !isLoggedIn) {
-        // await saveAuthToken(_defaultBypassAuthToken);
-        // await saveLoginStatus(true);
-        // token = _defaultBypassAuthToken;
-        isLoggedIn = true;
-        print(
-          'SecureStorage: Applied default bypass auth token and login status',
-        );
-      }
+      print(
+        'SecureStorage: User logged-in check → token=${hasToken ? 'exists' : 'missing'}, loginStatus=$isLoggedIn, result=$hasValidSession',
+      );
 
-      return token != null && token.isNotEmpty && isLoggedIn;
+      return hasValidSession;
     } catch (e) {
       print('SecureStorage: Error checking login status: $e');
       return false;
@@ -455,7 +497,9 @@ class SecureStorageService {
     final key = (normalizedProfile['profile_key'] ?? '').toString();
     if (key.isEmpty) return;
     final profiles = await getTenaxUserBrokerProfiles();
-    profiles.removeWhere((item) => (item['profile_key'] ?? '').toString() == key);
+    profiles.removeWhere(
+      (item) => (item['profile_key'] ?? '').toString() == key,
+    );
     profiles.insert(0, normalizedProfile);
     await saveTenaxUserBrokerProfiles(profiles);
     await setTenaxCurrentProfileKey(key);
@@ -517,7 +561,9 @@ class SecureStorageService {
             : <String, dynamic>{};
     final loginUser =
         loginData['user'] is Map<String, dynamic>
-            ? Map<String, dynamic>.from(loginData['user'] as Map<String, dynamic>)
+            ? Map<String, dynamic>.from(
+              loginData['user'] as Map<String, dynamic>,
+            )
             : <String, dynamic>{};
 
     final userEmail =

@@ -74,11 +74,11 @@ void main() async {
   // Configure audio players to respect system silent/mute settings
   try {
     await AudioPlayer.global.setAudioContext(
-      AudioContextConfig(
-        respectSilence: true,
-      ).build(),
+      AudioContextConfig(respectSilence: true).build(),
     );
-    print('=== AUDIO SERVICE: Global audio context initialized (respectSilence: true) ===');
+    print(
+      '=== AUDIO SERVICE: Global audio context initialized (respectSilence: true) ===',
+    );
   } catch (e) {
     print('=== AUDIO SERVICE: Error setting global audio context: $e ===');
   }
@@ -149,8 +149,9 @@ void main() async {
 }
 
 Future<void> initServices() async {
-  // Clear secure storage on first run after install (resolves iOS Keychain persistent state issue)
-  await SecureStorageService.clearSecureStorageOnFirstRun();
+  // Clear stale iOS Keychain session after fresh install/reinstall only.
+  // Keeps sessions across normal restarts and TestFlight updates.
+  await SecureStorageService.clearStaleSessionOnFreshInstall();
 
   // Register services
   final languageService = Get.put<LanguageService>(
