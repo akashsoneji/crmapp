@@ -246,7 +246,11 @@ class _SearchInstrumentsScreenState extends State<SearchInstrumentsScreen> {
               return GestureDetector(
                 onTap: () async {
                   final ic = instrumentsController;
-                  await ic.toggleFavorite(symbol.displaySymbol);
+                  await ic.toggleFavorite(
+                    symbol.displaySymbol,
+                    searchSymbol: symbol,
+                    hydrateAfterChange: false,
+                  );
                   await ic.syncMarketWatchV2AfterFavoriteChange(
                     symbol.displaySymbol,
                     isFavoriteNow: ic.isFavorite(symbol.displaySymbol),
