@@ -1,6 +1,6 @@
 import 'dart:async';
 
-
+import 'package:adaptive_platform_ui/adaptive_platform_ui.dart' as adaptive;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -18,7 +18,7 @@ import 'trade_screen.dart';
 import 'dashboard_screen.dart';
 import '../../controllers/instruments_controller.dart';
 import '../../controllers/trading_controller.dart';
-import '../../controllers/dashboard_controller.dart';
+
 import '../../controllers/more/more_controller.dart';
 import '../../services/one_click_trading_service.dart';
 import '../../services/app_status/app_status_service.dart';
@@ -251,31 +251,86 @@ class _TradingMainScreenState extends State<TradingMainScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isIOS = Theme.of(context).platform == TargetPlatform.iOS;
+
     return ExitConfirmationWrapper(
       forceExitDialog: true,
       child: RTLWrapper(
-        child: Scaffold(
-          backgroundColor: AppColors.tradeBackgroundCenterColor,
-          // drawer: const GlobalDrawer(),
-          body: SafeArea(
-            child: PageView(
-              controller: _pageController,
-              onPageChanged: _onTabChanged,
-              physics: const NeverScrollableScrollPhysics(),
-              children: _screens,
-            ),
-          ),
+        child: isIOS ? _buildIOSAdaptiveScaffold() : _buildAndroidScaffold(),
+      ),
+    );
+  }
 
-          floatingActionButtonLocation:
-              FloatingActionButtonLocation.centerDocked,
-          floatingActionButtonAnimator: FloatingActionButtonAnimator.scaling,
-          floatingActionButton: TradingBottomNavigation(
-            currentIndex: _currentIndex,
-            onTap: (index) {
-              _onTabChanged(index);
-            },
+  Widget _buildAndroidScaffold() {
+    return Scaffold(
+      backgroundColor: AppColors.tradeBackgroundCenterColor,
+      // drawer: const GlobalDrawer(),
+      body: _buildPageView(),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButtonAnimator: FloatingActionButtonAnimator.scaling,
+      floatingActionButton: TradingBottomNavigation(
+        currentIndex: _currentIndex,
+        onTap: (index) {
+          _onTabChanged(index);
+        },
+      ),
+    );
+  }
+
+  Widget _buildIOSAdaptiveScaffold() {
+    return adaptive.AdaptiveScaffold(
+      body: _buildPageView(),
+      resizeToAvoidBottomInset: false,
+      enableBlur: true,
+      minimizeBehavior: adaptive.TabBarMinimizeBehavior.never,
+      bottomNavigationBar: adaptive.AdaptiveBottomNavigationBar(
+        selectedIndex: _currentIndex,
+        onTap: _onTabChanged,
+        useNativeBottomBar: true,
+        selectedItemColor: AppColors.primary,
+        unselectedItemColor: AppColors.textGreyLight,
+        items: [
+          adaptive.AdaptiveNavigationDestination(
+            icon: _currentIndex == 0
+                ? 'arrow.up.forward.app.fill'
+                : 'arrow.up.forward.app',
+            selectedIcon: 'arrow.up.forward.app.fill',
+            label: TranslationUtils.tr('quote_title'),
           ),
-        ),
+          adaptive.AdaptiveNavigationDestination(
+            icon: _currentIndex == 1 ? 'chart.bar.fill' : 'chart.bar',
+            selectedIcon: 'chart.bar.fill',
+            label: TranslationUtils.tr('chart_title'),
+          ),
+          adaptive.AdaptiveNavigationDestination(
+            icon: _currentIndex == 2
+                ? 'arrow.up.arrow.down.square.fill'
+                : 'arrow.up.arrow.down.square',
+            selectedIcon: 'arrow.up.arrow.down.square.fill',
+            label: TranslationUtils.tr('trade_title'),
+          ),
+          adaptive.AdaptiveNavigationDestination(
+            icon: _currentIndex == 3 ? 'wallet.bifold.fill' : 'wallet.bifold',
+            selectedIcon: 'wallet.bifold.fill',
+            label: TranslationUtils.tr('dashboard_title'),
+          ),
+          adaptive.AdaptiveNavigationDestination(
+            icon: _currentIndex == 4 ? 'gearshape.fill' : 'gearshape',
+            selectedIcon: 'gearshape.fill',
+            label: TranslationUtils.tr('more_title'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPageView() {
+    return SafeArea(
+      child: PageView(
+        controller: _pageController,
+        onPageChanged: _onTabChanged,
+        physics: const NeverScrollableScrollPhysics(),
+        children: _screens,
       ),
     );
   }

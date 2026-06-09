@@ -7,6 +7,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/utils/trl_helper.dart';
+import 'package:crm_app/widgets/adaptive/adaptive_app_button.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
 import '../../../controllers/auth_controller.dart';
 import '../../../routes/app_pages.dart';
@@ -339,24 +340,16 @@ class _LoginScreenState extends State<LoginScreen> {
                                   SizedBox(height: 12.h),
                                   Obx(() {
                                     final isLoading = authController.isLoading;
-                                    return ElevatedButton(
-                                      onPressed:
-                                          isLoading ? null : _handleLogin,
-                                      style: ElevatedButton.styleFrom(
-                                        minimumSize:
-                                            Size(double.infinity, 40.h),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(10),
-                                        ),
-                                      ),
-                                      child: Text(
-                                        languageService.tr("login_button"),
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w600,
-                                          color: AppColors.whiteColor,
-                                        ),
+                                    return AdaptiveAppButton(
+                                      label: languageService.tr("login_button"),
+                                      onPressed: _handleLogin,
+                                      isLoading: isLoading,
+                                      height: 40.h,
+                                      borderRadius: BorderRadius.circular(10.r),
+                                      textStyle: TextStyle(
+                                        fontSize: 16.sp,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.whiteColor,
                                       ),
                                     );
                                   }),
