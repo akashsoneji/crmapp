@@ -236,6 +236,7 @@ class _MasterCardState extends State<_MasterCard> {
       onTap: () {
         Get.to(
           () => InvestmentDetailScreen(
+            subscriptionId: 0,
             traderName: widget.master.name,
             traderBadge: widget.master.badge,
             equity: widget.master.equity,

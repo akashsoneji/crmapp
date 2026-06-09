@@ -31,6 +31,8 @@ class _CopyTradingCreatePlanScreenState
   final _minCapitalCtrl = TextEditingController();
   final _strategyCtrl = TextEditingController();
   final _riskCtrl = TextEditingController();
+  final _copyRatioCtrl = TextEditingController(text: '1');
+  final _maxCopiersCtrl = TextEditingController();
   final _tpPipsCtrl = TextEditingController();
   final _slPipsCtrl = TextEditingController();
 
@@ -50,6 +52,8 @@ class _CopyTradingCreatePlanScreenState
     _minCapitalCtrl.dispose();
     _strategyCtrl.dispose();
     _riskCtrl.dispose();
+    _copyRatioCtrl.dispose();
+    _maxCopiersCtrl.dispose();
     _tpPipsCtrl.dispose();
     _slPipsCtrl.dispose();
     super.dispose();
@@ -140,6 +144,15 @@ class _CopyTradingCreatePlanScreenState
                               ),
                         );
                       }),
+                      SizedBox(height: 4.h),
+                      Text(
+                        'This is the master trading account for this plan only (copiers mirror trades from this account). You can use a different account on another plan.',
+                        style: TextStyle(
+                          fontSize: 10.sp,
+                          color: _mutedText,
+                          height: 1.3,
+                        ),
+                      ),
                       SizedBox(height: 14.h),
                       Text(
                         'Plan Name *',
@@ -213,8 +226,7 @@ class _CopyTradingCreatePlanScreenState
                         controller: _strategyCtrl,
                         maxLines: 3,
                         decoration: InputDecoration(
-                          hintText:
-                              'Describe your trading strategy, risk management approach, and what makes your trading unique.',
+                          hintText: 'Describe your trading strategy and risk approach.',
                           hintStyle: TextStyle(
                             fontSize: 12.sp,
                             color: _mutedText,
@@ -235,8 +247,7 @@ class _CopyTradingCreatePlanScreenState
                         controller: _riskCtrl,
                         maxLines: 3,
                         decoration: InputDecoration(
-                          hintText:
-                              'Describe the risk level and potential drawdowns of your strategy.',
+                          hintText: 'Describe potential drawdowns and risk level.',
                           hintStyle: TextStyle(
                             fontSize: 12.sp,
                             color: _mutedText,
@@ -244,7 +255,7 @@ class _CopyTradingCreatePlanScreenState
                         ),
                       ),
                       SizedBox(height: 14.h),
-                      _buildTpSlSection(),
+                      _buildRatioAndCopiersRow(),
                     ],
                   ),
                 ),
@@ -368,6 +379,15 @@ class _CopyTradingCreatePlanScreenState
               keyboardType: TextInputType.number,
               decoration: const InputDecoration(),
             ),
+            SizedBox(height: 4.h),
+            Text(
+              'Copiers won\'t pay commission on trades within this grace period.',
+              style: TextStyle(
+                fontSize: 10.sp,
+                color: _mutedText,
+                height: 1.3,
+              ),
+            ),
           ],
         );
 
@@ -375,7 +395,7 @@ class _CopyTradingCreatePlanScreenState
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Minimum Capital (USD) *',
+              'Min. Capital (USD) *',
               style: TextStyle(
                 fontSize: 12.sp,
                 color: _mutedText,
@@ -412,88 +432,78 @@ class _CopyTradingCreatePlanScreenState
     );
   }
 
-  Widget _buildTpSlSection() {
-    return Container(
-      padding: EdgeInsets.all(12.r),
-      decoration: BoxDecoration(
-        color: AppColors.surface.withValues(alpha: 0.35),
-        borderRadius: BorderRadius.circular(14.r),
-        border: Border.all(color: AppColors.border.withValues(alpha: 0.12)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'PER-TRADE TP / SL (PIPS)',
-            style: TextStyle(
-              fontSize: 12.sp,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          SizedBox(height: 6.h),
-          Text(
-            'Set fixed take profit and stop loss for every copied trade. Leave empty or 0 to disable.',
-            style: TextStyle(
-              fontSize: 11.sp,
-              color: _mutedText,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          SizedBox(height: 12.h),
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Take Profit (Pips)',
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        color: _mutedText,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    SizedBox(height: 6.h),
-                    TextFormField(
-                      controller: _tpPipsCtrl,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      decoration: const InputDecoration(hintText: 'e.g. 50'),
-                    ),
-                  ],
-                ),
+  Widget _buildRatioAndCopiersRow() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final stack = constraints.maxWidth < 360;
+
+        final left = Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Copy ratio',
+              style: TextStyle(
+                fontSize: 12.sp,
+                color: _mutedText,
+                fontWeight: FontWeight.w600,
               ),
-              SizedBox(width: 12.w),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Stop Loss (Pips)',
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        color: _mutedText,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    SizedBox(height: 6.h),
-                    TextFormField(
-                      controller: _slPipsCtrl,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      decoration: const InputDecoration(hintText: 'e.g. 30'),
-                    ),
-                  ],
-                ),
+            ),
+            SizedBox(height: 6.h),
+            TextFormField(
+              controller: _copyRatioCtrl,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
               ),
-            ],
-          ),
-        ],
-      ),
+              decoration: const InputDecoration(
+                hintText: '1',
+              ),
+            ),
+            SizedBox(height: 4.h),
+            Text(
+              'Default 1 — copier volume scales from this ratio.',
+              style: TextStyle(
+                fontSize: 10.sp,
+                color: _mutedText,
+              ),
+            ),
+          ],
+        );
+
+        final right = Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Max copiers',
+              style: TextStyle(
+                fontSize: 12.sp,
+                color: _mutedText,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            SizedBox(height: 6.h),
+            TextFormField(
+              controller: _maxCopiersCtrl,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                hintText: 'Unlimited if empty',
+                hintStyle: TextStyle(fontSize: 12.sp, color: _mutedText),
+              ),
+            ),
+          ],
+        );
+
+        if (stack) {
+          return Column(children: [left, SizedBox(height: 12.h), right]);
+        }
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: left),
+            SizedBox(width: 12.w),
+            Expanded(child: right),
+          ],
+        );
+      },
     );
   }
 
@@ -598,22 +608,25 @@ class _CopyTradingCreatePlanScreenState
 
     final body = <String, dynamic>{
       'trading_account_id': acc.id,
-      'name': _nameCtrl.text.trim(),
+      'plan_name': _nameCtrl.text.trim(),
       'commission_type': _commissionType,
-      'commission_value': commissionValue,
+      'subscription_period': _commissionType == 'subscription' ? (_subscriptionPeriod ?? 'monthly') : null,
       'min_capital': minCap,
       'no_fee_days': int.tryParse(_noFeeDaysCtrl.text.trim()) ?? 0,
+      'commission_value': commissionValue,
+      'copy_ratio': num.tryParse(_copyRatioCtrl.text.trim()) ?? 1,
       'strategy_description': _strategyCtrl.text.trim(),
-      'risk_info': _riskCtrl.text.trim(),
+      'risk_information': _riskCtrl.text.trim(),
     };
+    final maxCopiersText = _maxCopiersCtrl.text.trim();
+    if (maxCopiersText.isNotEmpty) {
+      body['max_copiers'] = int.tryParse(maxCopiersText);
+    } else {
+      body['max_copiers'] = null;
+    }
     if (_commissionType == 'subscription') {
       body['subscription_fee'] = commissionValue;
-      body['subscription_period'] = (_subscriptionPeriod ?? 'monthly');
     }
-    final tp = num.tryParse(_tpPipsCtrl.text.trim());
-    final sl = num.tryParse(_slPipsCtrl.text.trim());
-    if (tp != null && tp > 0) body['take_profit_pips'] = tp;
-    if (sl != null && sl > 0) body['stop_loss_pips'] = sl;
 
     AppLogger.debug('Create plan payload: $body');
     final res = await _controller.createPlan(body);

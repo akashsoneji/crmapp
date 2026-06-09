@@ -1333,6 +1333,11 @@ class DashboardController extends GetxController {
     }
   }
 
+  // Disconnect WebSocket (Public API)
+  void disconnectWebSocket() {
+    _disconnectWebSocket();
+  }
+
   // Disconnect WebSocket
   void _disconnectWebSocket() {
     try {

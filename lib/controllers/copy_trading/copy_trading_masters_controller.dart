@@ -14,6 +14,13 @@ class CopyTradingMasterListItem {
   final int activeDays;
   final num winRate;
   final bool isEnrolled;
+  final String serverType;
+  final String strategyDescription;
+  final num totalPnl;
+  final double totalGainPercent;
+  final num maxDrawdown;
+  final num minInvestment;
+  final num minimumCapital;
 
   const CopyTradingMasterListItem({
     required this.masterCode,
@@ -27,7 +34,24 @@ class CopyTradingMasterListItem {
     required this.activeDays,
     required this.winRate,
     required this.isEnrolled,
+    required this.serverType,
+    required this.strategyDescription,
+    required this.totalPnl,
+    required this.totalGainPercent,
+    required this.maxDrawdown,
+    required this.minInvestment,
+    required this.minimumCapital,
   });
+
+  static double _parseGainPercent(dynamic value) {
+    if (value == null) return 0.0;
+    if (value is num) return value.toDouble();
+    if (value is String) {
+      if (value.trim().isEmpty) return 0.0;
+      return double.tryParse(value) ?? 0.0;
+    }
+    return 0.0;
+  }
 
   factory CopyTradingMasterListItem.fromJson(Map<String, dynamic> json) {
     return CopyTradingMasterListItem(
@@ -44,6 +68,13 @@ class CopyTradingMasterListItem {
           (json['active_days'] ?? 0) is num ? (json['active_days'] as num).toInt() : 0,
       winRate: (json['win_rate'] ?? 0) as num? ?? 0,
       isEnrolled: json['is_enrolled'] == true,
+      serverType: (json['server_type'] ?? '').toString(),
+      strategyDescription: (json['strategy_description'] ?? '').toString(),
+      totalPnl: (json['total_pnl'] ?? 0) as num? ?? 0,
+      totalGainPercent: _parseGainPercent(json['total_gain_percent']),
+      maxDrawdown: (json['max_drawdown'] ?? 0) as num? ?? 0,
+      minInvestment: (json['min_investment'] ?? 0) as num? ?? 0,
+      minimumCapital: (json['minimum_capital'] ?? 0) as num? ?? 0,
     );
   }
 }

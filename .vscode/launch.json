@@ -57,8 +57,6 @@
             "type": "dart",
             "program": "lib/main.dart",
             "args": [
-                "--flavor",
-                "amirifx",
                 "--dart-define=FLAVOR=amirifx",
                 "--no-enable-impeller"
             ],
@@ -71,8 +69,6 @@
             "type": "dart",
             "program": "lib/main.dart",
             "args": [
-                "--flavor",
-                "amirifx",
                 "--dart-define=FLAVOR=amirifx"
             ],
             "flutterMode": "profile",
@@ -84,8 +80,6 @@
             "type": "dart",
             "program": "lib/main.dart",
             "args": [
-                "--flavor",
-                "amirifx",
                 "--dart-define=FLAVOR=amirifx"
             ],
             "flutterMode": "release",

@@ -9,6 +9,7 @@ import 'dart:ui';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:crm_app/controllers/chart_socket_controller.dart';
 import 'package:crm_app/services/price_alert_service.dart';
 import 'package:crm_app/services/loading_service.dart';
@@ -30,6 +31,7 @@ import 'services/account_service.dart';
 import 'services/api_service.dart';
 import 'services/websocket_endpoint_helper.dart';
 import 'services/market_watch_v2_service.dart';
+import 'services/symbol_selection_service.dart';
 import 'routes/app_pages.dart';
 import 'widgets/exit_confirmation_wrapper.dart';
 import 'widgets/app_notification_stack.dart';
@@ -68,6 +70,19 @@ void main() async {
   FlavorConfig.reset();
 
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Configure audio players to respect system silent/mute settings
+  try {
+    await AudioPlayer.global.setAudioContext(
+      AudioContextConfig(respectSilence: true).build(),
+    );
+    print(
+      '=== AUDIO SERVICE: Global audio context initialized (respectSilence: true) ===',
+    );
+  } catch (e) {
+    print('=== AUDIO SERVICE: Error setting global audio context: $e ===');
+  }
+
   // Auto-detect and initialize the correct flavor
   await _initializeFlavor();
 
@@ -134,6 +149,10 @@ void main() async {
 }
 
 Future<void> initServices() async {
+  // Clear stale iOS Keychain session after fresh install/reinstall only.
+  // Keeps sessions across normal restarts and TestFlight updates.
+  await SecureStorageService.clearStaleSessionOnFreshInstall();
+
   // Register services
   final languageService = Get.put<LanguageService>(
     LanguageService(),
@@ -163,6 +182,7 @@ Future<void> initServices() async {
   Get.put<DashboardController>(DashboardController(), permanent: true);
   Get.put<AccountController>(AccountController(), permanent: true);
   Get.put<MarketWatchV2Service>(MarketWatchV2Service(), permanent: true);
+  Get.put<SymbolSelectionService>(SymbolSelectionService(), permanent: true);
   Get.put<InstrumentsController>(InstrumentsController(), permanent: true);
   Get.put<ChartSocketController>(ChartSocketController(), permanent: true);
   Get.put<TradingController>(TradingController(), permanent: true);
@@ -296,8 +316,8 @@ ThemeData _buildDarkTheme() {
       secondary: FlavorConfig.instance.secondaryColor,
       surface: AppColors.surfaceDarkTheme,
       onPrimary: darkOnPrimary,
-      onSecondary: AppColors.whiteColor,
-      onSurface: AppColors.whiteColor,
+      onSecondary: AppColors.textPrimaryDark,
+      onSurface: AppColors.textPrimaryDark,
     ),
     useMaterial3: true,
     scaffoldBackgroundColor: AppColors.backgroundDarkTheme,
@@ -405,7 +425,10 @@ class MyGetXApp extends StatelessWidget {
                     return Stack(
                       children: [
                         MediaQuery(
-                          data: mediaQuery.copyWith(textScaleFactor: 1.0),
+                          data: mediaQuery.copyWith(
+                            textScaleFactor: 1.0,
+                            boldText: false,
+                          ),
                           child: child!,
                         ),
                         // Global notification overlay
@@ -519,7 +542,9 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
 
           if (Get.isRegistered<EnabledModulesService>()) {
             unawaited(
-              Get.find<EnabledModulesService>().fetchEnabledModules(force: true),
+              Get.find<EnabledModulesService>().fetchEnabledModules(
+                force: true,
+              ),
             );
           }
 

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
@@ -352,6 +353,8 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
   }
 
   Widget _buildInstrumentsList(List<ListElement> instruments) {
+    final currentTime = DateFormat('HH:mm:ss').format(DateTime.now());
+
     return NotificationListener<ScrollNotification>(
       onNotification: (n) {
         _controller.notifyUserScrollActivity();
@@ -399,13 +402,17 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
         itemCount: instruments.length,
         itemBuilder: (context, index) {
           final instrument = instruments[index];
-          return _buildInstrumentItem(instrument, index);
+          return _buildInstrumentItem(instrument, currentTime, index);
         },
       ),
     );
   }
 
-  Widget _buildInstrumentItem(ListElement instrument, int index) {
+  Widget _buildInstrumentItem(
+    ListElement instrument,
+    String currentTime,
+    int index,
+  ) {
     final itemContent = RepaintBoundary(
       child: GestureDetector(
         onTap: () {
@@ -462,19 +469,15 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
                               height: 1.2,
                             ),
                           ),
-                          if ((instrument.category ?? '')
-                              .trim()
-                              .isNotEmpty) ...[
-                            SizedBox(height: 2.h),
-                            Text(
-                              instrument.category!.trim(),
-                              style: AppTextStyles.subheading.copyWith(
-                                fontSize: 10.sp,
-                                color: AppColors.textGrey,
-                                height: 1.1,
-                              ),
+                          SizedBox(height: 2.h),
+                          Text(
+                            currentTime,
+                            style: AppTextStyles.subheading.copyWith(
+                              fontSize: 10.sp,
+                              color: AppColors.textGrey,
+                              height: 1.1,
                             ),
-                          ],
+                          ),
                           SizedBox(height: 2.h),
                           Row(
                             mainAxisSize: MainAxisSize.min,

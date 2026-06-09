@@ -1,0 +1,39 @@
+{
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/node_modules/*/**": true,
+    "**/.hg/store/**": true,
+    "**/build/**": true,
+    "**/.dart_tool/**": true,
+    "**/android/.gradle/**": true,
+    "**/android/app/build/**": true,
+    "**/ios/Pods/**": true,
+    "**/ios/.symlinks/**": true,
+    "**/ios/Flutter/ephemeral/**": true
+  },
+  "files.exclude": {
+    "**/build/": true,
+    "**/.dart_tool/": true,
+    "**/android/.gradle/": true,
+    "**/android/app/build/": true,
+    "**/ios/Pods/": true,
+    "**/ios/.symlinks/": true,
+    "**/ios/Flutter/ephemeral/": true
+  },
+  "search.exclude": {
+    "**/build/": true,
+    "**/.dart_tool/": true,
+    "**/android/.gradle/": true,
+    "**/android/app/build/": true,
+    "**/ios/Pods/": true,
+    "**/ios/.symlinks/": true,
+    "**/ios/Flutter/ephemeral/": true
+  },
+  "dart.analysisExcludedFolders": [
+    "build",
+    ".dart_tool",
+    "android",
+    "ios"
+  ]
+}

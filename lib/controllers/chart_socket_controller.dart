@@ -14,6 +14,7 @@ import 'package:crm_app/services/websocket_endpoint_helper.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:crm_app/utils/message_pack_decoder.dart';
 import 'package:crm_app/services/unified_websocket_service.dart';
+import 'package:crm_app/services/app_lock_service.dart';
 
 class ChartSocketController extends GetxController with WidgetsBindingObserver {
   // Connection state
@@ -198,9 +199,9 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      handleAppRestart();
-    }
+    super.didChangeAppLifecycleState(state);
+    // Connection state is centrally coordinated by AccountController to prevent race conditions.
+    return;
   }
 
   // ---------- Public API ----------

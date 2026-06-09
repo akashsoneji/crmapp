@@ -522,12 +522,12 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
           validator: (value) => _validateEmail(value),
         ),
         _buildPasswordField(),
-        _buildTextField(
-          controller: _referrerController,
-          label: 'Referrer Code',
-          keyboardType: TextInputType.text,
-          maxLength: 30,
-        ),
+        // _buildTextField(
+        //   controller: _referrerController,
+        //   label: 'Referrer Code',
+        //   keyboardType: TextInputType.text,
+        //   maxLength: 30,
+        // ),
         _buildBiometricCheckbox(),
         // _buildTradingExperienceField(),
         SizedBox(height: 12.h),
