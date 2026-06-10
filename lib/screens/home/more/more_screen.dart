@@ -749,14 +749,17 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                         children: [
                           Row(
                             children: [
-                              Text(
-                                '${authController.userFullName}',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 18.sp,
-                                  color: AppColors.textPrimary,
-                                ),
-                              ),
+                              Obx(() {
+                                final name = authController.userFullName ?? '';
+                                return Text(
+                                  name,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 18.sp,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                );
+                              }),
                               SizedBox(width: 6.w),
                               GetBuilder<MoreController>(
                                 builder: (controller) {
@@ -780,14 +783,17 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                             ],
                           ),
                           SizedBox(height: 2.h),
-                          Text(
-                            '${authController.userEmail}',
-                            style: TextStyle(
-                              color: AppColors.textGrey,
-                              fontSize: 13.sp,
-                              fontWeight: FontWeight.w400,
-                            ),
-                          ),
+                          Obx(() {
+                            final email = authController.userEmail ?? '';
+                            return Text(
+                              email,
+                              style: TextStyle(
+                                color: AppColors.textGrey,
+                                fontSize: 13.sp,
+                                fontWeight: FontWeight.w400,
+                              ),
+                            );
+                          }),
                         ],
                       ),
                     ),
@@ -1019,7 +1025,27 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
     );
   }
 
+  String _logoutBrokerLogoSource() {
+    final brokerData = FlavorConfig.brokerData;
+    final candidates = <String>[
+      (brokerData?['selected_logo_local_path'] ?? '').toString(),
+      (brokerData?['selected_logo_url'] ?? '').toString(),
+      (brokerData?['app_icon_url'] ?? '').toString(),
+      (brokerData?['app_logo_url'] ?? '').toString(),
+      (brokerData?['logo_url'] ?? '').toString(),
+      (brokerData?['logoUrl'] ?? '').toString(),
+      FlavorConfig.effectiveLogo,
+    ];
+
+    for (final candidate in candidates) {
+      final value = candidate.trim();
+      if (value.isNotEmpty) return value;
+    }
+    return FlavorConfig.svgLogoAsset;
+  }
+
   void _showLogoutDialog(AuthController authController) {
+    final logoSource = _logoutBrokerLogoSource();
     Get.dialog(
       Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -1035,7 +1061,7 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
             children: [
               // App logo - replace asset path with your app logo svg or image
               BrandLogo(
-                source: FlavorConfig.effectiveLogo,
+                source: logoSource,
                 height: 60.h,
                 width: 60.w,
                 color:

@@ -269,7 +269,7 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
   ///
   /// Do NOT call REST hydrate and do NOT assign/clear instrument lists here.
   /// That prevents full-screen refresh when returning from background/another app.
-  Future<void> resumePriceStreamOnly() async {
+  Future<void> resumePriceStreamOnly({bool forceReconnect = false}) async {
     final isLoggedIn = await SecureStorageService.isUserLoggedIn();
     if (!isLoggedIn) return;
 
@@ -294,6 +294,10 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
             .where((s) => s.isNotEmpty)
             .toSet()
             .toList();
+
+    if (forceReconnect) {
+      await v2.disconnect();
+    }
 
     if (syms.isNotEmpty) {
       await v2.resumeSubscribeSymbols(syms);

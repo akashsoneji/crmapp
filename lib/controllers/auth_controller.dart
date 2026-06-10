@@ -109,6 +109,30 @@ class AuthController extends GetxController {
     await getUserData();
   }
 
+  Future<void> updateUserFromProfile(SettingsProfileData profileData) async {
+    final current = _userData.value;
+    final profileUser = profileData.data.user;
+    if (current == null) return;
+
+    final updatedUser = current.copyWith(
+      firstName: profileUser.firstName,
+      lastName: profileUser.lastName,
+      email: profileUser.email,
+      mobile: profileUser.mobile,
+    );
+    _userData.value = updatedUser;
+
+    try {
+      final loginData = await SecureStorageService.getCompleteLoginData();
+      if (loginData != null) {
+        loginData['user'] = updatedUser.toJson();
+        await SecureStorageService.saveUserData(jsonEncode(loginData));
+      }
+    } catch (e) {
+      print('AuthController: Failed to persist profile user data: $e');
+    }
+  }
+
   // ==================== LOGIN METHODS ====================
   Future<void> login({
     required String email,
@@ -1429,6 +1453,7 @@ class AuthController extends GetxController {
       if (response.success && response.data != null) {
         final profileData = SettingsProfileData.fromJson(response.data);
         _profileData.value = profileData;
+        await updateUserFromProfile(profileData);
         return profileData;
       } else {
         CustomToastService.showError(

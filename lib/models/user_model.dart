@@ -76,17 +76,23 @@ class UserModel {
     };
   }
 
-  UserModel copyWith({bool? googleOtpEnabled}) {
+  UserModel copyWith({
+    String? firstName,
+    String? lastName,
+    String? email,
+    String? mobile,
+    bool? googleOtpEnabled,
+  }) {
     return UserModel(
       id: id,
-      email: email,
+      email: email ?? this.email,
       emailVerifiedAt: emailVerifiedAt,
       createdAt: createdAt,
       updatedAt: updatedAt,
       userSlug: userSlug,
-      firstName: firstName,
-      lastName: lastName,
-      mobile: mobile,
+      firstName: firstName ?? this.firstName,
+      lastName: lastName ?? this.lastName,
+      mobile: mobile ?? this.mobile,
       mobileVerifiedAt: mobileVerifiedAt,
       status: status,
       regComplete: regComplete,

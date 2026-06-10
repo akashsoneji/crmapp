@@ -23,6 +23,8 @@ import '../services/unified_websocket_service.dart';
 import '../services/market_watch_v2_service.dart';
 
 class AccountController extends GetxController with WidgetsBindingObserver {
+  DateTime? _lastBackgroundAt;
+  static const Duration _forcePriceReconnectAfterBackground = Duration(seconds: 30);
   final AccountService _accountService = Get.find<AccountService>();
   late final DashboardController _dashboardController;
 
@@ -108,6 +110,7 @@ class AccountController extends GetxController with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
 
     if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+      _lastBackgroundAt = DateTime.now();
       print('=== WS CENTRAL: App minimized ($state), disconnecting sockets without clearing data ===');
       _disconnectAllSocketsCentral(clearVisibleData: false);
     } else if (state == AppLifecycleState.resumed) {
@@ -117,8 +120,15 @@ class AccountController extends GetxController with WidgetsBindingObserver {
       Future.delayed(const Duration(milliseconds: 100), () {
         final isLocked = Get.find<AppLockService>().isLocked.value;
         if (!isLocked) {
-          print('=== WS CENTRAL: App resumed and not locked, restoring sockets only ===');
-          resumeSocketsForCurrentAccount();
+          final wasBackgroundedFor = _lastBackgroundAt == null
+              ? Duration.zero
+              : DateTime.now().difference(_lastBackgroundAt!);
+          final forcePriceReconnect =
+              wasBackgroundedFor >= _forcePriceReconnectAfterBackground;
+          print(
+            '=== WS CENTRAL: App resumed and not locked, restoring sockets only (forcePriceReconnect=$forcePriceReconnect, background=${wasBackgroundedFor.inSeconds}s) ===',
+          );
+          resumeSocketsForCurrentAccount(forcePriceReconnect: forcePriceReconnect);
         } else {
           print('=== WS CENTRAL: App resumed but locked, keeping sockets disconnected ===');
         }
@@ -823,7 +833,7 @@ class AccountController extends GetxController with WidgetsBindingObserver {
   /// This intentionally does NOT clear instruments/trading lists and does NOT
   /// call [refreshAccounts]. It only reconnects sockets and requests current
   /// account streams so visible screen data stays stable while fresh prices arrive.
-  Future<void> resumeSocketsForCurrentAccount() async {
+  Future<void> resumeSocketsForCurrentAccount({bool forcePriceReconnect = false}) async {
     final active = _activeMT5Account.value;
     if (active == null) return;
 
@@ -852,7 +862,9 @@ class AccountController extends GetxController with WidgetsBindingObserver {
       try {
         if (Get.isRegistered<InstrumentsController>()) {
           final instrumentsController = Get.find<InstrumentsController>();
-          await instrumentsController.resumePriceStreamOnly();
+          await instrumentsController.resumePriceStreamOnly(
+            forceReconnect: forcePriceReconnect,
+          );
         } else if (Get.isRegistered<MarketWatchV2Service>()) {
           await Get.find<MarketWatchV2Service>().reconnectAndResyncFavorites();
         }
