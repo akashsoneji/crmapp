@@ -1,304 +1,284 @@
-import 'dart:io';
-
-import 'package:file_picker/file_picker.dart';
+import 'package:crm_app/constants/color.dart';
+import 'package:crm_app/constants/text_styles.dart';
+import 'package:crm_app/models/ticket_model.dart';
+import 'package:crm_app/controllers/ticket_controller.dart';
+import 'package:crm_app/services/language_service.dart';
+import 'package:crm_app/widgets/app_svg_back_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:crm_app/constants/color.dart';
-import 'package:crm_app/controllers/ticket_controller.dart';
-import 'package:crm_app/models/ticket_model.dart';
-import 'package:crm_app/services/language_service.dart';
 
 class TicketDetailScreen extends StatefulWidget {
-  final String ticketId;
-
-  const TicketDetailScreen({super.key, required this.ticketId});
+  const TicketDetailScreen({super.key});
 
   @override
   State<TicketDetailScreen> createState() => _TicketDetailScreenState();
 }
 
-class _TicketDetailScreenState extends State<TicketDetailScreen> with SingleTickerProviderStateMixin {
+class _TicketDetailScreenState extends State<TicketDetailScreen>
+    with SingleTickerProviderStateMixin {
   final TicketController controller = Get.find<TicketController>();
-  final LanguageService languageService = Get.find<LanguageService>();
-  final TextEditingController replyController = TextEditingController();
-  File? replyAttachment;
-  String? replyAttachmentName;
-
-  String tr(String key) => languageService.tr(key);
+  final LanguageService lang = Get.find<LanguageService>();
+  final _replyController = TextEditingController();
+  late final TabController _tabController;
+  late final String _ticketId;
 
   @override
   void initState() {
     super.initState();
-    controller.fetchTicketDetail(widget.ticketId);
+    _ticketId = (Get.arguments ?? '').toString();
+    _tabController = TabController(length: 2, vsync: this);
+    controller.fetchTicketDetail(_ticketId);
   }
 
   @override
   void dispose() {
-    replyController.dispose();
+    _tabController.dispose();
+    _replyController.dispose();
     super.dispose();
   }
 
-  Future<void> pickReplyAttachment() async {
-    final result = await FilePicker.platform.pickFiles(
-      allowMultiple: false,
-      type: FileType.custom,
-      allowedExtensions: ['jpg', 'jpeg', 'png', 'pdf', 'doc', 'docx'],
-    );
-    if (result?.files.single.path == null) return;
-    setState(() {
-      replyAttachment = File(result!.files.single.path!);
-      replyAttachmentName = result.files.single.name;
-    });
-  }
-
-  Future<void> sendReply() async {
-    final message = replyController.text.trim();
-    if (message.isEmpty && replyAttachment == null) return;
-    final success = await controller.replyToTicket(widget.ticketId, message, attachment: replyAttachment);
-    if (success) {
-      replyController.clear();
-      setState(() {
-        replyAttachment = null;
-        replyAttachmentName = null;
-      });
+  Future<void> _sendReply() async {
+    final msg = _replyController.text.trim();
+    if (msg.isEmpty) return;
+    final ok = await controller.replyToTicket(_ticketId, msg);
+    if (ok) {
+      _replyController.clear();
     }
   }
 
-  Future<void> closeTicket() async {
-    final confirmed = await Get.dialog<bool>(
+  void _confirmClose() {
+    Get.dialog(
       AlertDialog(
         backgroundColor: AppColors.card,
-        title: Text(tr('ticket_close'), style: TextStyle(color: AppColors.textPrimary)),
-        content: Text(tr('ticket_close_confirm'), style: TextStyle(color: AppColors.textGrey)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14.r),
+        ),
+        title: Text(
+          lang.tr('ticket_close'),
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontSize: 16.sp,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        content: Text(
+          lang.tr('ticket_close_confirm'),
+          style: TextStyle(
+            color: AppColors.textSecondary,
+            fontSize: 14.sp,
+          ),
+        ),
         actions: [
-          TextButton(onPressed: () => Get.back(result: false), child: Text(tr('ticket_cancel'))),
-          ElevatedButton(onPressed: () => Get.back(result: true), child: Text(tr('confirm'))),
+          TextButton(
+            onPressed: () => Get.back(),
+            child: Text(
+              lang.tr('ticket_cancel'),
+              style: TextStyle(color: AppColors.primary),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.red,
+              foregroundColor: AppColors.whiteColor,
+            ),
+            onPressed: () {
+              Get.back();
+              controller.closeTicket(_ticketId);
+            },
+            child: Text(
+              lang.tr('ticket_close'),
+              style: TextStyle(
+                color: AppColors.whiteColor,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
         ],
       ),
     );
-    if (confirmed == true) controller.closeTicket(widget.ticketId);
   }
 
   @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 2,
-      child: Obx(() {
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        scrolledUnderElevation: 0.0,
+        backgroundColor: AppColors.background,
+        elevation: 0,
+        centerTitle: true,
+        leading: AppSvgBackButton(onPressed: () => AppSvgBackButton.popRoute(context)),
+        title: Text('${lang.tr('ticket_detail')} #$_ticketId',
+            style: AppTextStyles.screenTitle),
+      ),
+      body: Obx(() {
+        if (controller.isDetailLoading.value &&
+            controller.ticketDetail.value == null) {
+          return const Center(child: CircularProgressIndicator());
+        }
         final detail = controller.ticketDetail.value;
-        final attachmentCount = detail?.attachment == null ? 0 : 1;
-        return Scaffold(
-          backgroundColor: AppColors.backgroundLight,
-          appBar: AppBar(
-            backgroundColor: AppColors.backgroundLight,
-            elevation: 0,
-            scrolledUnderElevation: 0,
-            centerTitle: true,
-            leading: IconButton(icon: Icon(Icons.arrow_back_ios_new, color: AppColors.textPrimary, size: 20.h), onPressed: Get.back),
-            title: Text(detail == null ? tr('ticket_detail') : '#${detail.id}', style: TextStyle(color: AppColors.textPrimary, fontSize: 18.sp, fontWeight: FontWeight.w600)),
-          ),
-          body: controller.isDetailLoading.value
-              ? Center(child: CircularProgressIndicator(color: AppColors.primary))
-              : detail == null
-                  ? Center(child: Text(tr('ticket_no_tickets'), style: TextStyle(color: AppColors.textGrey)))
-                  : Column(
-                      children: [
-                        Expanded(
-                          child: NestedScrollView(
-                            headerSliverBuilder: (_, __) => [
-                              SliverToBoxAdapter(
-                                child: Padding(
-                                  padding: EdgeInsets.all(16.w),
-                                  child: Column(
-                                    children: [
-                                      _InfoCard(detail: detail, tr: tr, onClose: closeTicket),
-                                      SizedBox(height: 12.h),
-                                      TabBar(
-                                        indicatorColor: AppColors.primary,
-                                        labelColor: AppColors.primary,
-                                        unselectedLabelColor: AppColors.textGrey,
-                                        tabs: [
-                                          Tab(text: tr('ticket_tab_all')),
-                                          Tab(text: '${tr('ticket_tab_attachments')} ($attachmentCount)'),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ],
-                            body: TabBarView(
-                              children: [
-                                _ConversationList(detail: detail),
-                                _AttachmentsList(detail: detail, controller: controller, tr: tr),
-                              ],
-                            ),
-                          ),
-                        ),
-                        if (detail.status.toLowerCase() == 'open') _ReplyBar(),
-                      ],
-                    ),
+        if (detail == null) {
+          return Center(
+            child: Text(
+              controller.errorMessage.value.isEmpty
+                  ? lang.tr('ticket_no_tickets')
+                  : controller.errorMessage.value,
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
+          );
+        }
+        return Column(
+          children: [
+            _buildInfoCard(detail.ticket),
+            TabBar(
+              controller: _tabController,
+              labelColor: AppColors.primary,
+              unselectedLabelColor: AppColors.textSecondary,
+              indicatorColor: AppColors.primary,
+              tabs: [
+                Tab(text: lang.tr('ticket_tab_all')),
+                Tab(
+                    text:
+                        '${lang.tr('ticket_tab_attachments')} (${detail.attachments.length})'),
+              ],
+            ),
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  _buildConversation(detail),
+                  _buildAttachments(detail),
+                ],
+              ),
+            ),
+            if (detail.ticket.isOpen) _buildReplyBar(),
+          ],
         );
       }),
     );
   }
 
-  Widget _ReplyBar() {
-    return SafeArea(
-      top: false,
-      child: Container(
-        padding: EdgeInsets.fromLTRB(12.w, 8.h, 12.w, 10.h),
-        decoration: BoxDecoration(color: AppColors.card, border: Border(top: BorderSide(color: AppColors.border.withValues(alpha: 0.4)))),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+  Widget _buildInfoCard(Ticket ticket) {
+    return Container(
+      margin: EdgeInsets.all(12.w),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          tilePadding: EdgeInsets.symmetric(horizontal: 14.w),
+          title: Text(ticket.title, style: AppTextStyles.black14600),
+          subtitle: Padding(
+            padding: EdgeInsets.only(top: 4.h),
+            child: _badge(
+              ticket.isOpen
+                  ? lang.tr('ticket_status_open')
+                  : lang.tr('ticket_status_closed'),
+              ticket.isOpen ? AppColors.green : AppColors.textGrey,
+            ),
+          ),
+          childrenPadding: EdgeInsets.fromLTRB(14.w, 0, 14.w, 12.h),
           children: [
-            if (replyAttachmentName != null)
-              Container(
-                margin: EdgeInsets.only(bottom: 8.h),
-                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 7.h),
-                decoration: BoxDecoration(color: AppColors.chipSurface, borderRadius: BorderRadius.circular(10.r)),
-                child: Row(
-                  children: [
-                    Icon(Icons.attach_file, size: 16.h, color: AppColors.primary),
-                    SizedBox(width: 6.w),
-                    Expanded(child: Text(replyAttachmentName!, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppColors.textPrimary, fontSize: 12.sp))),
-                    GestureDetector(onTap: () => setState(() { replyAttachment = null; replyAttachmentName = null; }), child: Icon(Icons.close, size: 16.h, color: AppColors.error)),
-                  ],
-                ),
-              ),
-            Row(
-              children: [
-                IconButton(onPressed: pickReplyAttachment, icon: Icon(Icons.attach_file, color: AppColors.primary)),
-                Expanded(
-                  child: TextField(
-                    controller: replyController,
-                    minLines: 1,
-                    maxLines: 4,
-                    style: TextStyle(color: AppColors.textPrimary, fontSize: 14.sp),
-                    decoration: InputDecoration(
-                      hintText: tr('ticket_reply_placeholder'),
-                      filled: true,
-                      fillColor: AppColors.backgroundLight,
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14.r), borderSide: BorderSide.none),
-                    ),
+            _infoRow(lang.tr('ticket_reference'), '#${ticket.id}'),
+            _infoRow(lang.tr('ticket_department'), ticket.department),
+            _infoRow(lang.tr('ticket_priority'), ticket.priority.toUpperCase()),
+            _infoRow(lang.tr('ticket_created'), ticket.createdAt),
+            _infoRow(
+              lang.tr('ticket_assignee'),
+              ticket.assignee?.name.isNotEmpty == true
+                  ? ticket.assignee!.name
+                  : lang.tr('ticket_unassigned'),
+            ),
+            if (ticket.isOpen) ...[
+              SizedBox(height: 8.h),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: _confirmClose,
+                  icon: Icon(Icons.lock_outline,
+                      size: 18.sp, color: AppColors.red),
+                  label: Text(lang.tr('ticket_close'),
+                      style: TextStyle(color: AppColors.red)),
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: AppColors.red),
                   ),
                 ),
-                SizedBox(width: 8.w),
-                Obx(() => CircleAvatar(
-                      backgroundColor: AppColors.primary,
-                      child: controller.isSubmitting.value
-                          ? SizedBox(width: 16.w, height: 16.w, child: const CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                          : IconButton(onPressed: sendReply, icon: const Icon(Icons.send, color: Colors.white, size: 18)),
-                    )),
-              ],
-            ),
+              ),
+            ],
           ],
         ),
       ),
     );
   }
-}
 
-class _InfoCard extends StatelessWidget {
-  final TicketDetail detail;
-  final String Function(String) tr;
-  final VoidCallback onClose;
-
-  const _InfoCard({required this.detail, required this.tr, required this.onClose});
-
-  @override
-  Widget build(BuildContext context) {
-    final isOpen = detail.status.toLowerCase() == 'open';
-    return Container(
-      decoration: BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(18.r), border: Border.all(color: AppColors.border.withValues(alpha: 0.45))),
-      child: ExpansionTile(
-        initiallyExpanded: true,
-        tilePadding: EdgeInsets.symmetric(horizontal: 14.w),
-        childrenPadding: EdgeInsets.fromLTRB(14.w, 0, 14.w, 14.h),
-        iconColor: AppColors.primary,
-        collapsedIconColor: AppColors.icongrey,
-        title: Text(detail.title, style: TextStyle(color: AppColors.textPrimary, fontSize: 16.sp, fontWeight: FontWeight.w700)),
-        subtitle: Text(detail.description, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppColors.textGrey, fontSize: 12.sp)),
-        children: [
-          _InfoRow(label: tr('ticket_reference'), value: '#${detail.id}'),
-          _InfoRow(label: tr('ticket_status'), value: detail.status.toUpperCase()),
-          _InfoRow(label: tr('ticket_department'), value: detail.department),
-          _InfoRow(label: tr('ticket_priority'), value: detail.priority.toUpperCase()),
-          _InfoRow(label: tr('ticket_created'), value: _formatDate(detail.createdAt)),
-          _InfoRow(label: tr('ticket_assignee'), value: detail.assignee.name),
-          if (isOpen) ...[
-            SizedBox(height: 10.h),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: onClose,
-                icon: Icon(Icons.lock_outline, size: 16.h),
-                label: Text(tr('ticket_close')),
-                style: OutlinedButton.styleFrom(foregroundColor: AppColors.error, side: BorderSide(color: AppColors.error.withValues(alpha: 0.5))),
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _InfoRow extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _InfoRow({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(top: 8.h),
-      child: Row(
-        children: [
-          Expanded(child: Text(label, style: TextStyle(color: AppColors.textGrey, fontSize: 12.sp))),
-          Text(value, style: TextStyle(color: AppColors.textPrimary, fontSize: 12.sp, fontWeight: FontWeight.w600)),
-        ],
-      ),
-    );
-  }
-}
-
-class _ConversationList extends StatelessWidget {
-  final TicketDetail detail;
-
-  const _ConversationList({required this.detail});
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildConversation(TicketDetail detail) {
     if (detail.conversation.isEmpty) {
-      return Center(child: Text('No conversation yet', style: TextStyle(color: AppColors.textGrey)));
+      return Center(
+        child: Text(lang.tr('ticket_no_data'),
+            style: TextStyle(color: AppColors.textSecondary)),
+      );
     }
-    return ListView.separated(
-      padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 18.h),
+    return ListView.builder(
+      padding: EdgeInsets.all(12.w),
       itemCount: detail.conversation.length,
-      separatorBuilder: (_, __) => SizedBox(height: 10.h),
       itemBuilder: (context, index) {
-        final item = detail.conversation[index];
+        final c = detail.conversation[index];
+        final isUser = c.isUser;
         return Align(
-          alignment: item.isCustomer ? Alignment.centerRight : Alignment.centerLeft,
+          alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
           child: Container(
-            constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.76),
+            constraints: BoxConstraints(maxWidth: 0.78.sw),
+            margin: EdgeInsets.only(bottom: 12.h),
             padding: EdgeInsets.all(12.w),
             decoration: BoxDecoration(
-              color: item.isCustomer ? AppColors.primary.withValues(alpha: 0.12) : AppColors.card,
-              borderRadius: BorderRadius.circular(16.r),
-              border: Border.all(color: AppColors.border.withValues(alpha: 0.35)),
+              color: isUser ? AppColors.surface : AppColors.primary.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(12.r),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(item.author.name, style: TextStyle(color: AppColors.textPrimary, fontSize: 12.sp, fontWeight: FontWeight.w700)),
-                SizedBox(height: 5.h),
-                Text(item.content, style: TextStyle(color: AppColors.textPrimary, fontSize: 14.sp, height: 1.35)),
-                SizedBox(height: 5.h),
-                Text(_formatDateTime(item.timestamp), style: TextStyle(color: AppColors.textGrey, fontSize: 10.sp)),
+                if (c.author.name.isNotEmpty)
+                  Text(c.author.name,
+                      style: TextStyle(
+                          fontSize: 11.sp,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primary)),
+                SizedBox(height: 4.h),
+                Text(c.content,
+                    style: TextStyle(
+                        fontSize: 13.sp, color: AppColors.textPrimary)),
+                if (c.attachment != null) ...[
+                  SizedBox(height: 6.h),
+                  GestureDetector(
+                    onTap: () => controller.openAttachment(c.attachment!),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.attach_file,
+                            size: 14.sp, color: AppColors.primary),
+                        SizedBox(width: 4.w),
+                        Flexible(
+                          child: Text(
+                            c.attachment!.filename,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                                fontSize: 12.sp,
+                                color: AppColors.primary,
+                                decoration: TextDecoration.underline),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                SizedBox(height: 4.h),
+                Text(c.timestamp,
+                    style: TextStyle(
+                        fontSize: 10.sp, color: AppColors.textSecondary)),
               ],
             ),
           ),
@@ -306,51 +286,169 @@ class _ConversationList extends StatelessWidget {
       },
     );
   }
-}
 
-class _AttachmentsList extends StatelessWidget {
-  final TicketDetail detail;
-  final TicketController controller;
-  final String Function(String) tr;
-
-  const _AttachmentsList({required this.detail, required this.controller, required this.tr});
-
-  @override
-  Widget build(BuildContext context) {
-    final attachment = detail.attachment;
-    if (attachment == null) {
-      return Center(child: Text(tr('ticket_tab_attachments'), style: TextStyle(color: AppColors.textGrey)));
+  Widget _buildAttachments(TicketDetail detail) {
+    final attachments = detail.attachments;
+    if (attachments.isEmpty) {
+      return Center(
+        child: Text(lang.tr('ticket_no_data'),
+            style: TextStyle(color: AppColors.textSecondary)),
+      );
     }
-    return ListView(
-      padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 18.h),
-      children: [
-        Container(
-          padding: EdgeInsets.all(14.w),
-          decoration: BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(16.r), border: Border.all(color: AppColors.border.withValues(alpha: 0.4))),
+    return ListView.separated(
+      padding: EdgeInsets.all(12.w),
+      itemCount: attachments.length,
+      separatorBuilder: (_, __) => SizedBox(height: 10.h),
+      itemBuilder: (context, index) {
+        final a = attachments[index];
+        return Container(
+          padding: EdgeInsets.all(12.w),
+          decoration: BoxDecoration(
+            color: AppColors.card,
+            borderRadius: BorderRadius.circular(10.r),
+            border: Border.all(color: AppColors.border),
+          ),
           child: Row(
             children: [
-              Container(width: 42.w, height: 42.w, decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(12.r)), child: Icon(Icons.insert_drive_file_outlined, color: AppColors.primary)),
+              Icon(Icons.insert_drive_file_outlined,
+                  color: AppColors.primary, size: 24.sp),
               SizedBox(width: 10.w),
-              Expanded(child: Text(attachment.filename, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppColors.textPrimary, fontSize: 13.sp, fontWeight: FontWeight.w600))),
-              TextButton.icon(onPressed: () => controller.downloadAttachment(attachment.url.isNotEmpty ? attachment.url : attachment.path), icon: Icon(Icons.download, size: 16.h), label: Text(tr('ticket_download'))),
+              Expanded(
+                child: Text(
+                  a.filename,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style:
+                      TextStyle(fontSize: 13.sp, color: AppColors.textPrimary),
+                ),
+              ),
+              Obx(
+                () => controller.isDownloading.value
+                    ? SizedBox(
+                        width: 20.w,
+                        height: 20.w,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: AppColors.primary),
+                      )
+                    : IconButton(
+                        onPressed: () => controller.openAttachment(a),
+                        icon: Icon(Icons.download_outlined,
+                            color: AppColors.primary),
+                        tooltip: lang.tr('ticket_download'),
+                      ),
+              ),
             ],
           ),
-        ),
-      ],
+        );
+      },
     );
   }
-}
 
-String _formatDate(DateTime? date) {
-  if (date == null) return '-';
-  final local = date.toLocal();
-  return '${local.day.toString().padLeft(2, '0')}/${local.month.toString().padLeft(2, '0')}/${local.year}';
-}
+  Widget _buildReplyBar() {
+    return Container(
+      padding: EdgeInsets.fromLTRB(12.w, 8.h, 12.w, 12.h),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        border: Border(top: BorderSide(color: AppColors.border)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _replyController,
+                    minLines: 1,
+                    maxLines: 4,
+                    cursorColor: AppColors.primary,
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 14.sp,
+                    ),
+                    decoration: InputDecoration(
+                      hintText: lang.tr('ticket_reply_placeholder'),
+                      hintStyle: TextStyle(
+                        color: AppColors.hint,
+                        fontSize: 13.sp,
+                      ),
+                      isDense: true,
+                      filled: true,
+                      fillColor: AppColors.surface,
+                      contentPadding: EdgeInsets.symmetric(
+                          horizontal: 12.w, vertical: 10.h),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(20.r),
+                        borderSide: BorderSide(color: AppColors.border),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(20.r),
+                        borderSide: BorderSide(color: AppColors.border),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(20.r),
+                        borderSide:
+                            BorderSide(color: AppColors.border, width: 1),
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(width: 6.w),
+                Obx(
+                  () => CircleAvatar(
+                    backgroundColor: AppColors.primary,
+                    child: controller.isSubmitting.value
+                        ? SizedBox(
+                            height: 18.h,
+                            width: 18.h,
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppColors.whiteColor),
+                          )
+                        : IconButton(
+                            onPressed: _sendReply,
+                            icon: Icon(Icons.send,
+                                color: AppColors.whiteColor, size: 18.sp),
+                          ),
+                  ),
+                ),
+              ],
+            ),
+      ),
+    );
+  }
 
-String _formatDateTime(DateTime? date) {
-  if (date == null) return '-';
-  final local = date.toLocal();
-  final hour = local.hour.toString().padLeft(2, '0');
-  final minute = local.minute.toString().padLeft(2, '0');
-  return '${_formatDate(local)} $hour:$minute';
+  Widget _infoRow(String label, String value) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 4.h),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 110.w,
+            child: Text(label,
+                style: TextStyle(
+                    fontSize: 12.sp, color: AppColors.textSecondary)),
+          ),
+          Expanded(
+            child: Text(value,
+                style:
+                    TextStyle(fontSize: 12.sp, color: AppColors.textPrimary)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _badge(String text, Color color) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(6.r),
+      ),
+      child: Text(text,
+          style: TextStyle(
+              color: color, fontSize: 10.sp, fontWeight: FontWeight.w600)),
+    );
+  }
 }

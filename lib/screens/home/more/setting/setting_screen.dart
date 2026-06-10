@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
 
 import '../../../../constants/color.dart';
 import '../../../../constants/text_styles.dart';
+import '../../../../routes/app_pages.dart';
 import '../../../../services/language_service.dart';
 
 class SettingScreen extends StatelessWidget {
@@ -71,6 +71,12 @@ class SettingScreen extends StatelessWidget {
                 onTap: () {
                   // Get.toNamed(AppPages.TRANSACTION_HISTORY);
                 },
+                color: AppColors.textPrimary,
+              ),
+              _MenuItem(
+                icon: 'ticket',
+                label: languageService.tr('tickets'),
+                onTap: () => Get.toNamed(AppPages.TICKET_LIST),
                 color: AppColors.textPrimary,
               ),
             ],

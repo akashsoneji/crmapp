@@ -81,23 +81,19 @@
   "ok": "OK",
   "yes": "Sí",
   "no": "No",
-  
   "dashboard": "Panel",
   "trade": "Comercio",
   "chart": "Gráfico",
   "order": "Orden",
   "profile": "Perfil",
-  
   "trade_title": "Trading",
   "chart_title": "Gráficos",
   "order_title": "Órdenes",
   "profile_title": "Perfil",
-  
   "trade_description": "Comprar y vender activos",
   "chart_description": "Ver gráficos del mercado",
   "order_description": "Gestionar tus órdenes",
   "profile_description": "Configuración de tu cuenta",
-  
   "buy": "Comprar",
   "sell": "Vender",
   "amount": "Cantidad",
@@ -116,7 +112,6 @@
   "dark_mode": "Modo Oscuro",
   "light_mode": "Modo Claro",
   "auto": "Automático",
-
   "biometric_enable_on_register": "Activar inicio de sesión biométrico",
   "biometric_login": "Inicio de sesión biométrico",
   "biometric_not_enabled_title": "Biometría no habilitada",
@@ -124,5 +119,6 @@
   "biometric_open_settings": "Abrir configuración",
   "biometric_auth_reason_enable": "Confirma la biometría para habilitar el inicio de sesión.",
   "biometric_auth_reason_login": "Autentícate para iniciar sesión.",
-  "common_close": "Cerrar"
-} 
+  "common_close": "Cerrar",
+  "tickets": "Tickets"
+}

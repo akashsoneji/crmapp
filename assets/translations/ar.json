@@ -45,11 +45,9 @@
   "ticket_created": "Created",
   "ticket_assignee": "Assignee",
   "ticket_unassigned": "Unassigned",
-  
   "welcome_title": "مرحباً، أهلاً وسهلاً! 👋",
   "welcome_subtitle": "بوابتك للتداول الاحترافي.",
   "welcome_login_title": "مرحباً بعودتك",
-  
   "login_title": "تسجيل الدخول",
   "login_subtitle": "إدارة تجارتك بسهولة",
   "login_email": "المتابعة بالبريد الإلكتروني",
@@ -64,7 +62,6 @@
   "login_register": "التسجيل",
   "login_google_coming_soon": "تسجيل الدخول بجوجل قريباً!",
   "login_apple_coming_soon": "تسجيل الدخول بأبل قريباً!",
-  
   "register_title": "إنشاء حساب",
   "register_subtitle": "انضم إلينا وابدأ التداول",
   "register_first_name": "الاسم الأول",
@@ -91,7 +88,6 @@
   "register_phone": "رقم الهاتف",
   "register_trading_experience": "هل لديك خبرة في التداول؟",
   "register_personal_info": "المعلومات الشخصية",
-  
   "forgot_password_title": "نسيت كلمة المرور",
   "forgot_password_subtitle": "إعادة تعيين كلمة المرور",
   "forgot_password_email": "البريد الإلكتروني",
@@ -100,10 +96,8 @@
   "forgot_password_button": "إرسال رابط إعادة التعيين",
   "forgot_password_login": "تسجيل الدخول",
   "forgot_password_check_email": "تحقق من بريدك الإلكتروني للحصول على تعليمات إعادة التعيين",
-  "forgot_password_enter_your_email":"يرجى إدخال بريدك الإلكتروني",
-  "forgot_password_Please_enter_a_valid_email":"يرجى إدخال بريد إلكتروني صحيح",
-
-  
+  "forgot_password_enter_your_email": "يرجى إدخال بريدك الإلكتروني",
+  "forgot_password_Please_enter_a_valid_email": "يرجى إدخال بريد إلكتروني صحيح",
   "verify_code_title": "التحقق من الرمز",
   "verify_code_subtitle": "أدخل رمز التحقق",
   "verify_code_description": "يرجى إدخال الرمز الذي أرسلناه للتو إلى البريد الإلكتروني ",
@@ -112,7 +106,6 @@
   "verify_code_resend": "إعادة إرسال الرمز؟",
   "verify_code_didnt_receive": "لم تستلم الرمز؟",
   "verify_code_timer": "إعادة الإرسال خلال {seconds} ثانية",
-  
   "create_password_title": "إنشاء كلمة مرور جديدة",
   "create_password_subtitle": "تعيين كلمة المرور الجديدة",
   "create_password_description": "أدخل كلمة المرور الجديدة",
@@ -120,7 +113,6 @@
   "create_password_confirm": "تأكيد كلمة المرور",
   "create_password_button": "تحديث كلمة المرور",
   "create_password_requirements": "يجب أن تكون كلمة المرور 8 أحرف على الأقل",
-  
   "validation_required": "هذا الحقل مطلوب",
   "validation_email_required": "البريد الإلكتروني مطلوب",
   "validation_email_invalid": "يرجى إدخال بريد إلكتروني صحيح",
@@ -141,7 +133,6 @@
   "validation_code_required": "رمز التحقق مطلوب",
   "validation_code_length": "يجب أن يكون الرمز {length} أرقام",
   "validation_code_invalid": "رمز التحقق غير صحيح",
-  
   "toast_login_success": "تم تسجيل الدخول بنجاح! مرحباً بعودتك! 🎉",
   "toast_login_error": "فشل تسجيل الدخول. يرجى المحاولة مرة أخرى.",
   "toast_register_success": "تم إنشاء الحساب بنجاح! 🎉",
@@ -161,7 +152,6 @@
   "toast_coming_soon": "هذه الميزة قريباً!",
   "toast_maintenance": "الصيانة قيد التنفيذ",
   "toast_update_available": "تحديث جديد متاح",
-  
   "dashboard_title": "لوحة التحكم",
   "dashboard_balance": "الرصيد",
   "dashboard_profit": "الربح",
@@ -172,7 +162,6 @@
   "dashboard_closed_positions": "المراكز المغلقة",
   "dashboard_total_profit": "إجمالي الربح",
   "dashboard_total_loss": "إجمالي الخسارة",
-  
   "instruments_title": "الأدوات",
   "quote_title": "السعر",
   "instruments_search": "البحث في الأدوات...",
@@ -186,7 +175,6 @@
   "instruments_popular": "شائع",
   "instruments_recent": "حديث",
   "instruments_favorites": "المفضلة",
-  
   "chart_title": "الرسم البياني",
   "chart_timeframe": "الإطار الزمني",
   "chart_indicators": "المؤشرات",
@@ -194,7 +182,6 @@
   "chart_settings": "إعدادات الرسم البياني",
   "chart_fullscreen": "ملء الشاشة",
   "chart_share": "مشاركة الرسم البياني",
-  
   "trade_title": "التداول",
   "trade_buy": "شراء",
   "trade_sell": "بيع",
@@ -206,22 +193,19 @@
   "trade_close": "إغلاق صفقة",
   "trade_modify": "تعديل الصفقة",
   "trade_history": "تاريخ الصفقات",
-  
   "portfolio_title": "المحفظة",
   "portfolio_overview": "نظرة عامة",
   "portfolio_positions": "المراكز",
   "portfolio_history": "التاريخ",
   "portfolio_analytics": "التحليلات",
   "portfolio_performance": "الأداء",
-  
-   "more_profile": "الملف الشخصي",
+  "more_profile": "الملف الشخصي",
   "more_settings": "الإعدادات",
   "more_help": "المساعدة والدعم",
   "more_about": "حول",
   "more_language": "اللغة",
   "more_notifications": "الإشعارات",
   "more_security": "الأمان",
-  
   "onboarding_welcome": "مرحباً بك!",
   "onboarding_get_started": "ابدأ",
   "onboarding_skip": "تخطي",
@@ -230,7 +214,6 @@
   "onboarding_account_created": "تم إنشاء الحساب بنجاح! 🎉",
   "onboarding_account_created_description": "تم إنشاء حسابك. يمكنك الآن البدء في التداول!",
   "onboarding_continue": "متابعة",
-  
   "onboarding_slide1_description": "جميع متداوليك.\nمكان آمن واحد",
   "onboarding_slide2_title": "تداول ذكي",
   "onboarding_slide2_description": "رسوم بيانية متقدمة وبيانات في الوقت الفعلي",
@@ -238,7 +221,6 @@
   "onboarding_slide3_description": "أموالك محمية بأمان على مستوى البنوك",
   "onboarding_slide3_subtitle": "لديك الآن حساب تداول بإعدادات مسبقة.",
   "onboarding_slide3_subtitle2": "يمكنك إنشاء وتخصيص حسابات إضافية في أي وقت",
-  
   "settings_title": "الإعدادات",
   "settings_account": "الحساب",
   "settings_security": "الأمان",
@@ -250,7 +232,7 @@
   "settings_logout": "تسجيل الخروج",
   "settings_language_title": "اللغة",
   "settings_language_description": "اختر لغتك المفضلة",
-  "settings_language_system": "افتراضي النظام",
+  "settings_language_system": "إعداد اللغة",
   "settings_language_english": "الإنجليزية",
   "settings_language_spanish": "الإسبانية",
   "settings_language_french": "الفرنسية",
@@ -268,7 +250,6 @@
   "settings_notifications_price_alerts": "تنبيهات الأسعار",
   "settings_notifications_news": "الأخبار والتحديثات",
   "settings_notifications_marketing": "التسويق",
-  
   "error_network": "خطأ في الشبكة. يرجى التحقق من الاتصال.",
   "error_server": "خطأ في الخادم. يرجى المحاولة مرة أخرى لاحقاً.",
   "error_timeout": "انتهت مهلة الطلب. يرجى المحاولة مرة أخرى.",
@@ -281,7 +262,6 @@
   "error_insufficient_funds": "أموال غير كافية لهذه الصفقة.",
   "error_market_closed": "السوق مغلق حالياً.",
   "error_invalid_amount": "مبلغ الصفقة غير صحيح.",
-  
   "time_now": "الآن",
   "time_today": "اليوم",
   "time_yesterday": "أمس",
@@ -297,7 +277,6 @@
   "time_weeks": "أسابيع",
   "time_months": "شهور",
   "time_years": "سنوات",
-  
   "currency_usd": "دولار أمريكي",
   "currency_eur": "يورو",
   "currency_gbp": "جنيه إسترليني",
@@ -308,7 +287,6 @@
   "currency_cny": "يوان صيني",
   "currency_btc": "بيتكوين",
   "currency_eth": "إيثيريوم",
-  
   "common_loading": "جاري التحميل...",
   "common_no_data": "لم يتم العثور على أدوات.",
   "common_no_data_description": "يرجى تجربة كلمة مفتاحية مختلفة",
@@ -345,7 +323,6 @@
   "common_platform": "المنصة",
   "common_currency": "العملة",
   "common_leverage": "الرافعة المالية",
-  
   "common_currency_usd": "دولار أمريكي",
   "common_currency_eur": "يورو",
   "common_currency_gbp": "جنيه إسترليني",
@@ -374,7 +351,6 @@
   "common_grand_total": "المجموع الكلي",
   "common_deposit": "الإيداع",
   "common_skip_for_now": "تخطي الآن",
-  
   "navigation_back": "رجوع",
   "navigation_next": "التالي",
   "navigation_skip": "تخطي",
@@ -391,19 +367,16 @@
   "navigation_no": "لا",
   "navigation_confirm": "تأكيد",
   "navigation_retry": "إعادة المحاولة",
-  
   "drawer_subtitle": "منصة التداول الاحترافية",
   "common_coming_soon": "قريباً",
   "common_to_start_trading": "للبدء في التداول، قم بالإيداع",
   "more_title": "المزيد",
-  
   "more_trading_tools": "أدوات التداول",
   "more_price_alerts": "تنبيهات الأسعار",
   "more_economic_calendar": "التقويم الاقتصادي",
   "more_market_news": "أخبار السوق",
   "more_trading_signals": "إشارات التداول",
   "more_logout": "تسجيل الخروج",
-  
   "legal_documents_title": "المستندات القانونية",
   "privacy_policy_title": "سياسة الخصوصية",
   "legal_documents_subtitle": "أؤكد أنني قرأت ووافقت على الشروط المذكورة في المستندات أدناه.",
@@ -421,8 +394,6 @@
   "privacy_policy_data_protection": "حماية البيانات",
   "privacy_policy_data_protection_text": "نطبق إجراءات أمان معيارية في الصناعة لحماية معلوماتك الشخصية.",
   "privacy_policy_contact": "اتصل بنا",
-  
-
   "trading_order_market_order": "أمر السوق",
   "trading_order_pending_order": "أمر معلق",
   "trading_order_volume_lots": "الحجم، العقود",
@@ -450,7 +421,6 @@
   "trading_order_enter_volume": "أدخل الحجم",
   "trading_order_enter_price": "أدخل السعر",
   "trading_order_enter_distance": "أدخل المسافة",
-  
   "register_terms_condition": "الشروط والأحكام",
   "dashboard_new_account_title": "حساب جديد",
   "dashboard_new_account_description": "افتح حساب تداول للحصول على ظروف تداول ممتازة لأي استراتيجية.",
@@ -470,13 +440,11 @@
   "dashboard_live": "حقيقي",
   "dashboard_demo": "تجريبي",
   "dashboard_bonus_coming_soon_message": "ستكون ميزة المكافأة متاحة قريباً!",
-  
   "chart_pending_order_header": "أمر معلق • وقف الخسارة • جني الأرباح",
   "chart_pending_order_label": "أمر معلق",
   "chart_label_lots": "عقود",
   "chart_required_margin": "الهامش المطلوب",
   "chart_free_margin": "الهامش الحر",
-  
   "trade_close_all": "إغلاق الكل",
   "trade_direction": "الاتجاه",
   "trade_metric_profit": "الربح",
@@ -494,7 +462,6 @@
   "trade_label_tp": "جني الأرباح",
   "trade_label_open": "فتح",
   "trade_label_id": "المعرف",
-  
   "more_dashboard": "لوحة تحكم الوسيط",
   "more_copy_trading": "نسخ التداول",
   "more_bonus": "مكافأة",
@@ -507,42 +474,34 @@
   "leaderboard": "لوحة المتصدرين",
   "copy_trading_wallet": "محفظة نسخ التداول",
   "risk_management": "إدارة المخاطر",
-  
   "deposit_bonus": "مكافأة الإيداع",
   "trade_win": "تداول واربح",
   "tour_offer": "عرض الجولة",
   "daily_scratch_card": "بطاقة الخدش اليومية",
   "promo_code": "رمز ترويجي",
-  
   "contest_rule": "قواعد المسابقة",
   "join_contest": "انضم إلى المسابقة",
   "my_contest_history": "تاريخ مسابقاتي",
-  
   "economic_calendar": "التقويم الاقتصادي",
   "webinars": "الندوات عبر الإنترنت",
   "calculators": "الآلات الحاسبة",
-  
   "live_chat": "الدردشة المباشرة",
   "help_center": "مركز المساعدة / الأسئلة الشائعة",
   "contact_us": "اتصل بنا",
-  
   "profile_kyc": "الملف الشخصي والتحقق",
   "security": "الأمان",
   "notifications": "الإشعارات",
   "app_preferences": "تفضيلات التطبيق",
   "completed": "مكتمل",
-  
   "verify_your_account": "تحقق من حسابك",
   "complete_verification_to_unlock": "أكمل التحقق لفتح جميع ميزات التطبيق",
   "onboarding_welcome_onsa": "مرحباً بك في أونسا!",
   "onboarding_welcome_tenax": "مرحباً بك في تيناكس!",
-  
   "no_favorites_added": "لم تتم إضافة مفضلات بعد.",
   "tap_circle_icon_to_add_instruments": "اضغط على أيقونة الدائرة لإضافة أدوات إلى المفضلة.",
   "common_no_accounts": "لا توجد حسابات متاحة",
   "common_no_accounts_found": "لم يتم العثور على حسابات",
   "common_no_plans": "لا توجد خطط متاحة",
-  
   "setting_title": "الإعدادات",
   "fund_management": "إدارة الأموال",
   "bank_management": "إدارة البنك",
@@ -561,7 +520,6 @@
   "lot_calculator": "حاسبة اللوت",
   "app_setting": "إعدادات التطبيق",
   "common_to_start_trading1": "للبدء في التداول، قم بالإيداع",
-  
   "edit_profile": "تعديل الملف الشخصي",
   "edit_profile_first_name": "الاسم الأول",
   "edit_profile_last_name": "اسم العائلة",
@@ -590,7 +548,6 @@
   "edit_profile_profile_updated_successfully": "تم تحديث الملف الشخصي بنجاح",
   "edit_profile_postcode": "الرمز البريدي",
   "edit_profile_retry": "إعادة المحاولة",
-  
   "withdrawal_withdrawalMethod": "طريقة السحب",
   "withdrawal_bank": "بنك",
   "withdrawal_withdrawFrom": "السحب من",
@@ -602,7 +559,6 @@
   "withdrawal_otp_sent": "تم إرسال رمز التحقق إلى بريدك الإلكتروني.",
   "withdrawal_loading_details": "جاري تحميل تفاصيل السحب...",
   "withdrawal_no_accounts_found": "لم يتم العثور على حسابات",
-  
   "kyc_verification_first_lets_know_you": "أولاً، دعنا\nنتعرف عليك",
   "kyc_verification_prepare_documents": "يرجى إعداد أحد المستندات التالية",
   "kyc_verification_document_types": "جواز السفر | بطاقة الهوية | بطاقة الإقامة",
@@ -667,7 +623,6 @@
   "kyc_details_title": "اللقب",
   "kyc_details_postcode": "الرمز البريدي",
   "kyc_details_residence_address": "عنوان الإقامة",
-  
   "create_account_select_account": "اختر الحساب",
   "create_account_account_type": "نوع الحساب",
   "create_account_mt5_demo": "MT5 تجريبي",
@@ -707,10 +662,8 @@
   "create_account_validation_date": "يرجى اختيار تاريخ ميلادك",
   "create_account_validation_gender": "يرجى اختيار جنسك",
   "create_account_success_title": "نجح",
-  
   "choose_account_no_plans": "لا توجد خطط متاحة",
   "choose_account_title": "اختر حسابك",
-  
   "deposit_payment_mode": "طريقة الدفع",
   "deposit_transfer_to": "تحويل إلى",
   "deposit_amount": "المبلغ",
@@ -734,7 +687,6 @@
   "deposit_validation_total": "المبلغ الإجمالي بما في ذلك الرسوم",
   "deposit_validation_min_amount": "الحد الأدنى لمبلغ الإيداع هو {amount}",
   "deposit_validation_max_amount": "الحد الأقصى لمبلغ الإيداع هو {amount}",
-  
   "wallet_open_wallet": "فتح المحفظة",
   "wallet_title": "المحفظة",
   "wallet_processing": "جاري المعالجة...",
@@ -765,7 +717,6 @@
   "wallet_validation_insufficient_balance": "رصيد غير كافٍ",
   "wallet_validation_min_withdrawal": "الحد الأدنى لمبلغ السحب هو {amount}",
   "wallet_validation_max_withdrawal": "الحد الأقصى لمبلغ السحب هو {amount}",
-  
   "transaction_history_date": "التاريخ",
   "transaction_history_type": "النوع",
   "transaction_history_amount": "المبلغ",
@@ -787,7 +738,6 @@
   "transaction_history_export": "تصدير",
   "transaction_history_print": "طباعة",
   "transaction_history_share": "مشاركة",
-  
   "account_management_title": "إدارة الحساب",
   "account_management_no_accounts": "لم يتم العثور على حسابات",
   "account_management_add_account": "إضافة حساب جديد",
@@ -810,7 +760,6 @@
   "account_management_validation_kyc": "يرجى إكمال التحقق من الهوية أولاً",
   "account_management_validation_deposit": "يرجى إجراء الإيداع الأولي",
   "account_management_validation_document": "يرجى رفع المستندات المطلوبة",
-  
   "language_selector_title": "اللغة",
   "language_selector_description": "اختر لغتك المفضلة",
   "language_selector_english": "الإنجليزية",
@@ -827,7 +776,6 @@
   "language_selector_validation_time_format": "يرجى اختيار تنسيق الوقت",
   "language_selector_validation_number_format": "يرجى اختيار تنسيق الرقم",
   "language_selector_validation_decimal_places": "يرجى اختيار المنازل العشرية",
-  
   "price_alert_title": "تعيين تنبيه السعر",
   "price_alert_price": "السعر",
   "price_alert_enter_price": "أدخل السعر",
@@ -844,21 +792,17 @@
   "price_alert_validation_permission": "يرجى منح إذن الإشعارات",
   "price_alert_validation_time": "يرجى اختيار وقت التنبيه",
   "price_alert_validation_repeat": "يرجى اختيار نمط التكرار",
-  
   "congratulations_title": "تهانينا! 🎉",
   "congratulations_subtitle": "تم إنشاء حسابك بنجاح",
   "congratulations_get_started": "ابدأ",
   "congratulations_skip_tour": "تخطي الجولة",
-  
   "webview_retry": "إعادة المحاولة",
   "webview_loading": "جاري التحميل...",
   "webview_error": "خطأ في تحميل المحتوى",
-  
   "logout_confirm_title": "تسجيل الخروج",
   "logout_confirm_message": "هل أنت متأكد أنك تريد تسجيل الخروج؟",
   "logout_confirm_cancel": "إلغاء",
   "logout_confirm_logout": "تسجيل الخروج",
-  
   "example_screen_title": "شاشة المثال",
   "example_welcome_message": "مرحباً بك في شاشة المثال!",
   "example_form_section_title": "قسم النموذج",
@@ -866,40 +810,22 @@
   "example_primary_action_button": "إجراء أساسي",
   "example_secondary_action_button": "إجراء ثانوي",
   "example_info_with_args": "مرحباً {name}، لديك {count} عنصر.",
-  
   "terms_accept": "أقبل الشروط والأحكام",
   "terms_conditions": "الشروط والأحكام",
   "terms_privacy_policy": "سياسة الخصوصية",
   "terms_customer_agreement": "اتفاقية العميل",
-  
   "account_created_title": "تم إنشاء الحساب بنجاح! 🎉",
-  
   "account_created_description": "تم إنشاء حسابك وهو جاهز للاستخدام. يمكنك الآن البدء في التداول واستكشاف منصتنا.",
   "account_created_get_started": "ابدأ",
   "account_created_skip_tour": "تخطي الجولة",
   "account_created_continue": "متابعة",
-  
   "legal_docs_confirm_read": "أؤكد أنني قرأت ووافقت على الشروط المذكورة في المستندات أدناه.",
   "legal_docs_customer_agreement": "اتفاقية العميل",
   "legal_docs_privacy_policy": "سياسة الخصوصية",
   "legal_docs_continue": "متابعة",
   "legal_docs_back": "رجوع",
   "legal_docs_success_title": "نجح",
-  
   "privacy_policy_intro": "مقدمة",
-  "privacy_policy_intro_text": "تصف سياسة الخصوصية هذه كيفية جمع واستخدام وحماية معلوماتك الشخصية عند استخدام منصة التداول الخاصة بنا.",
-  "privacy_policy_data_collection": "جمع البيانات",
-  "privacy_policy_data_collection_text": "نجمع الأنواع التالية من المعلومات:",
-  "privacy_policy_bullet_1": "معلومات الهوية الشخصية (الاسم، عنوان البريد الإلكتروني، رقم الهاتف)",
-  "privacy_policy_bullet_2": "المعلومات المالية (تفاصيل الحساب المصرفي، تاريخ التداول)",
-  "privacy_policy_bullet_3": "المعلومات التقنية (عنوان IP، معلومات الجهاز)",
-  "privacy_policy_data_usage": "استخدام البيانات",
-  "privacy_policy_data_usage_text": "نستخدم معلوماتك لتقديم خدمات التداول ومعالجة المعاملات وتحسين منصتنا.",
-  "privacy_policy_data_protection": "حماية البيانات",
-  "privacy_policy_data_protection_text": "نطبق إجراءات أمان معيارية في الصناعة لحماية معلوماتك الشخصية.",
-  "privacy_policy_contact": "اتصل بنا",
-  
-  
   "trading_tools_title": "أدوات التداول",
   "trading_platform": "منصة التداول",
   "trading_tools_lot_calculator": "حاسبة اللوت",
@@ -907,12 +833,10 @@
   "trading_tools_economic_calendar": "التقويم الاقتصادي",
   "trading_tools_market_news": "أخبار السوق",
   "trading_tools_trading_signals": "إشارات التداول",
-  
   "bottom_navigation_trading": "التداول",
   "bottom_navigation_chart": "الرسم البياني",
   "bottom_navigation_wallet": "المحفظة",
   "bottom_navigation_settings": "الإعدادات",
-  
   "social_button_google": "المتابعة مع جوجل",
   "social_button_apple": "المتابعة مع أبل",
   "social_button_email": "المتابعة بالبريد الإلكتروني",
@@ -943,28 +867,21 @@
   "delete_account_confirm_message": "هل أنت متأكد أنك تريد حذف حسابك؟",
   "delete_account_password_hint": "أدخل كلمة المرور",
   "delete_account_reason_no_longer_needed": "لم أعد بحاجة إلى الخدمة",
-  
   "app_text_field_hint": "أدخل النص هنا",
   "app_text_field_error": "هذا الحقل مطلوب",
-  
   "global_drawer_profile": "الملف الشخصي",
   "global_drawer_settings": "الإعدادات",
   "global_drawer_help": "المساعدة والدعم",
   "global_drawer_about": "حول",
   "global_drawer_logout": "تسجيل الخروج",
-  
   "responsive_layout_mobile": "تخطيط الجوال",
   "responsive_layout_tablet": "تخطيط الجهاز اللوحي",
   "responsive_layout_desktop": "تخطيط سطح المكتب",
-  
   "rtl_wrapper_rtl": "تخطيط من اليمين لليسار",
   "rtl_wrapper_ltr": "تخطيط من اليسار لليمين",
-  
   "trl_helper_text": "نص المساعدة",
   "trl_helper_title": "عنوان المساعدة",
   "trl_helper_subtitle": "عنوان فرعي للمساعدة",
-  
-  "settings_language_system": "إعداد اللغة",
   "internal_transfer": "التحويل الداخلي",
   "referral_link": "رابط الإحالة ورمز QR",
   "my_clients": "عملائي",
@@ -986,7 +903,6 @@
   "cancel": "إلغاء",
   "confirm": "تأكيد",
   "success": "نجح",
-  
   "chart_no_active_account": "لم يتم العثور على حساب نشط",
   "chart_price_debug_info": "معلومات تصحيح السعر",
   "chart_bid_price_sell": "سعر العرض (بيع)",
@@ -1001,29 +917,22 @@
   "chart_profit_in_usd": "الربح بالدولار",
   "chart_order_placed_success": "تم وضع الأمر بنجاح",
   "chart_order_place_failed": "فشل وضع الأمر",
-  
   "order_history_close_order": "إغلاق الأمر",
   "order_history_history": "السجل",
   "order_history_order_closed": "تم إغلاق الأمر",
   "order_history_order_opened": "تم فتح الأمر",
   "order_history_manual_operation": "عملية يدوية",
-  
   "edit_order_chart_controller_error": "وحدة تحكم الرسم البياني غير متاحة. يرجى المحاولة مرة أخرى.",
   "edit_order_current": "الحالي",
   "edit_order_no_account": "لم يتم العثور على حساب نشط",
   "edit_order_modify_failed": "فشل تعديل الأمر",
-  
   "pending_order_price": "السعر",
   "pending_order_order_placed": "تم وضع الأمر",
   "pending_order_error": "خطأ",
   "pending_order_success": "نجح",
-  
   "bank_list_close": "إغلاق",
-  
   "create_password_reset_password": "إعادة تعيين كلمة المرور",
-  
   "verify_code_otp_resent": "تم إعادة إرسال رمز التحقق بنجاح!",
-  
   "internal_transfer_select_from": "يرجى اختيار حساب التحويل من",
   "internal_transfer_select_to": "يرجى اختيار حساب التحويل إلى",
   "internal_transfer_enter_amount": "يرجى إدخال المبلغ",
@@ -1032,9 +941,7 @@
   "internal_transfer_enter_otp": "يرجى إدخال رمز تحقق مكون من 4 أرقام",
   "internal_transfer_select_both": "يرجى اختيار كلا الحسابين من وإلى",
   "internal_transfer_invalid_selection": "اختيار حساب غير صحيح",
-  
   "payment_methods_kyc_required": "أكمل التحقق من الهوية أولاً",
-  
   "trade_loading_more": "جاري تحميل المزيد...",
   "trade_select_filter": "يرجى اختيار خيار التصفية",
   "trade_select_dates": "يرجى اختيار تاريخي البداية والنهاية",
@@ -1051,25 +958,18 @@
   "trade_close_modify_subtitle": "إغلاق / تعديل هذا المركز فوراً",
   "trade_error": "خطأ",
   "trade_success": "نجح",
-  
   "close_position_error": "خطأ",
-  
   "id_upload_front_side": "الجانب الأمامي",
   "id_upload_back_side": "الجانب الخلفي",
-  
   "more_loading_profile": "جاري تحميل بيانات الملف الشخصي...",
-  
   "instruments_loading": "جاري تحميل الأدوات...",
-  
   "onsa_trader": "متداول أونسا",
-  
   "rtl_demo_title": "عرض مكونات RTL",
   "rtl_card_title": "عنوان البطاقة",
   "rtl_custom_card": "بطاقة مخصصة",
   "rtl_container_default": "حاوية بتنسيق افتراضي",
   "rtl_profile_settings": "إعدادات الملف الشخصي",
   "rtl_manage_account": "إدارة إعدادات حسابك",
-
   "biometric_enable_on_register": "تفعيل تسجيل الدخول بالبصمة",
   "biometric_login": "تسجيل الدخول بالبصمة",
   "biometric_not_enabled_title": "البصمة غير مفعّلة",
@@ -1078,7 +978,6 @@
   "biometric_auth_reason_enable": "أكد البصمة لتفعيل تسجيل الدخول.",
   "biometric_auth_reason_login": "يرجى المصادقة لتسجيل الدخول.",
   "common_close": "إغلاق",
-
   "tw_no_promotions": "لا توجد عروض ترويجية متاحة",
   "tw_title": "تداول واربح",
   "tw_available_points": "النقاط المتاحة",
@@ -1184,5 +1083,6 @@
   "tw_nav_profile": "الملف",
   "tw_lifetime_lots": "لوتات مدى الحياة",
   "tw_spent_lots": "اللوتات المستخدمة",
-  "tw_no_data": "لا توجد بيانات"
-} 
+  "tw_no_data": "لا توجد بيانات",
+  "tickets": "Tickets"
+}
