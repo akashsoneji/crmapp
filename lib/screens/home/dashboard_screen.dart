@@ -38,7 +38,8 @@ class DashboardScreen extends StatelessWidget {
     // This works for Get.back, Get.offAll, and bottom navigation
     WidgetsBinding.instance.addPostFrameCallback((_) {
       controller.ensureWebSocketInitialized();
-      // Always call get account API when dashboard appears (bypass throttling)
+      // Call getMT5Accounts in background. Controller keeps existing visible
+      // data while the response is pending, so no empty-container flicker.
       controller.refreshMT5Accounts(force: true);
       // Dashboard controller will handle account data request via _requestAccountData()
     });

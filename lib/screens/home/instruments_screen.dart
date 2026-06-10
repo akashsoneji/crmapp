@@ -47,6 +47,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
   @override
   void initState() {
     super.initState();
+    _controller.markInitialScreenOpening();
     _swipeDeleteIconFuture = SvgColorHelper.loadSvgWithColor(
       assetPath: 'assets/svg/delete.svg',
       targetColor: AppColors.onColoredBackground,
@@ -61,28 +62,21 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
     // NOTE: Unified legacy market-watch WS lifecycle is still managed by AccountController.
   }
 
-  /// Opens `ws/marketwatchv2` from this tab: subscribe after a short favorites wait.
-  /// Full REST hydrate runs in [InstrumentsController.startMarketWatchV2Only] (account flow).
+  /// Opens `ws/marketwatchv2` from this tab.
+  ///
+  /// First tab entry must hydrate the favorite instrument rows before subscribing
+  /// prices. If we only subscribe ticks here, the list stays empty until the first
+  /// tick and the UI can briefly show the empty/no-data container. Hydrating via
+  /// the controller keeps the loader visible and then shows data directly.
   Future<void> _ensureMarketWatchV2ForTab() async {
-    if (!Get.isRegistered<MarketWatchV2Service>()) return;
     final ic = _controller;
     final deadline = DateTime.now().add(const Duration(milliseconds: 400));
     while (ic.isLoadingFavorites.value && DateTime.now().isBefore(deadline)) {
       await Future<void>.delayed(const Duration(milliseconds: 16));
     }
-    final svc = Get.find<MarketWatchV2Service>();
-    final syms =
-        ic.favoriteInstruments
-            .map(MarketWatchV2Service.normalizeSymbol)
-            .where((s) => s.isNotEmpty)
-            .toSet()
-            .toList();
+
     try {
-      if (syms.isNotEmpty) {
-        await svc.subscribeSymbols(syms);
-      } else {
-        await svc.ensureAuthenticatedConnection();
-      }
+      await ic.startMarketWatchV2Only();
     } catch (_) {}
   }
 
@@ -105,11 +99,13 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
               child: Obx(() {
                 final controller = _controller;
                 final showInitialLoader =
-                    controller.isHydratingInstrumentCatalog.value ||
                     controller.isLoadingFavorites.value ||
-                    (controller.allInstruments.isEmpty &&
-                        !controller.isConnected.value);
-                if (showInitialLoader) {
+                    controller.isHydratingInstrumentCatalog.value ||
+                    (!controller.hasAttemptedInitialLoad.value &&
+                        controller.allInstruments.isEmpty);
+      // On lifecycle resume/reconnect, keep the existing list visible. Only
+      // show the full loader for first load / genuinely empty state.
+      if (showInitialLoader) {
                   return Center(
                     child: CommonLoadingWidget(
                       message: 'Loading instruments...',

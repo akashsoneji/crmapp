@@ -60,6 +60,7 @@ class DashboardController extends GetxController {
   bool _isFetching = false;
   int _refreshToken = 0;
   DateTime? _lastFetchAt;
+  DateTime? _lastLifecycleResumeAt;
 
   // WebSocket for account data
   WebSocketChannel? _channel;
@@ -214,6 +215,8 @@ class DashboardController extends GetxController {
         token: token,
       );
 
+      _lastFetchAt = DateTime.now();
+
       print('DashboardController: API response success: ${response.success}');
       print('DashboardController: API response data: ${response.data}');
 
@@ -231,8 +234,6 @@ class DashboardController extends GetxController {
           print(
             'DashboardController: Found ${accountsData.length} accounts in response',
           );
-          hasMT5Accounts.value = false;
-          mt5Accounts.clear();
 
           if (accountsData.isNotEmpty) {
             // User has MT5 accounts
@@ -305,16 +306,21 @@ class DashboardController extends GetxController {
             // Also trigger a refresh for any waiting controllers
             _triggerAccountRefresh();
           } else {
-            // User has no MT5 accounts - redirect to account opening
-            hasMT5Accounts.value = false;
-            mt5Accounts.clear();
-            print('User has no MT5 accounts - redirecting to account opening');
+            // User has no MT5 accounts. Only clear if there is no existing
+            // cached/visible data; otherwise keep old data during background refresh
+            // to avoid flicker/empty-container flashes.
+            if (mt5Accounts.isEmpty) {
+              hasMT5Accounts.value = false;
+            }
+            print('User has no MT5 accounts - keeping existing visible data if any');
             // _redirectToAccountOpening();
           }
         } else {
-          // API returned error or no data
-          hasMT5Accounts.value = false;
-          mt5Accounts.clear();
+          // API returned error or no data. Do not clear existing visible data
+          // during a background refresh.
+          if (mt5Accounts.isEmpty) {
+            hasMT5Accounts.value = false;
+          }
           final errorMsg =
               data['message']?.toString() ?? 'Failed to fetch MT5 accounts';
           errorMessage.value = errorMsg;
@@ -323,9 +329,10 @@ class DashboardController extends GetxController {
           // _redirectToAccountOpening();
         }
       } else {
-        // API call failed
-        hasMT5Accounts.value = false;
-        mt5Accounts.clear();
+        // API call failed. Do not clear existing visible data during background refresh.
+        if (mt5Accounts.isEmpty) {
+          hasMT5Accounts.value = false;
+        }
         final errorMsg = response.message ?? 'Failed to fetch MT5 accounts';
         errorMessage.value = errorMsg;
         print(
@@ -335,8 +342,9 @@ class DashboardController extends GetxController {
         // _redirectToAccountOpening();
       }
     } catch (e, t) {
-      hasMT5Accounts.value = false;
-      mt5Accounts.clear();
+      if (mt5Accounts.isEmpty) {
+        hasMT5Accounts.value = false;
+      }
       final errorMsg = e.toString();
       errorMessage.value = errorMsg;
       print('Exception in checkMT5Accounts: $e');
@@ -553,6 +561,19 @@ class DashboardController extends GetxController {
       }
     }
     await checkMT5Accounts();
+  }
+
+  /// Called by app lifecycle resume flow. During foreground return we must not
+  /// call getMT5Accounts because it refreshes dashboard/account lists and causes
+  /// visible full-screen refresh. Price sockets are restored separately.
+  void markLifecycleResumePriceOnly() {
+    _lastLifecycleResumeAt = DateTime.now();
+  }
+
+  bool get isWithinPriceOnlyLifecycleResume {
+    final at = _lastLifecycleResumeAt;
+    if (at == null) return false;
+    return DateTime.now().difference(at).inSeconds < 3;
   }
 
   // Called from UI on each appearance to ensure fresh data without flicker

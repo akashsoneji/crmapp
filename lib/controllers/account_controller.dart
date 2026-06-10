@@ -1,4 +1,4 @@
-import 'dart:io';
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
@@ -85,16 +85,14 @@ class AccountController extends GetxController with WidgetsBindingObserver {
     ever(Get.find<AppLockService>().isLocked, (bool locked) {
       if (locked) {
         print('=== WS CENTRAL: App locked, disconnecting all sockets ===');
-        _disconnectAllSocketsCentral();
+        _disconnectAllSocketsCentral(clearVisibleData: true);
       } else {
-        // Reconnect only if app is currently resumed
+        // Reconnect only if app is currently resumed.
+        // IMPORTANT: This is a resume-only path, not an account switch.
+        // Do not clear lists or refresh full account data here; only restore sockets/prices.
         if (WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed) {
-          print('=== WS CENTRAL: App unlocked while resumed, reconnecting all sockets ===');
-          final active = _activeMT5Account.value;
-          if (active != null) {
-            reconnectAllSocketsForAccount(active.metaAccountNumber);
-          }
-          refreshAccounts();
+          print('=== WS CENTRAL: App unlocked while resumed, restoring sockets only ===');
+          resumeSocketsForCurrentAccount();
         }
       }
     });
@@ -110,19 +108,17 @@ class AccountController extends GetxController with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
 
     if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
-      print('=== WS CENTRAL: App minimized ($state), disconnecting all sockets ===');
-      _disconnectAllSocketsCentral();
+      print('=== WS CENTRAL: App minimized ($state), disconnecting sockets without clearing data ===');
+      _disconnectAllSocketsCentral(clearVisibleData: false);
     } else if (state == AppLifecycleState.resumed) {
-      // ✅ Delay check slightly to let AppLockLifecycle evaluate lock status first
+      // ✅ Delay check slightly to let AppLockLifecycle evaluate lock status first.
+      // Normal foreground return should restore socket subscriptions only. A full
+      // account refresh/reconnect clears screen data and causes visible reloads.
       Future.delayed(const Duration(milliseconds: 100), () {
         final isLocked = Get.find<AppLockService>().isLocked.value;
         if (!isLocked) {
-          print('=== WS CENTRAL: App resumed and not locked, reconnecting all sockets ===');
-          final active = _activeMT5Account.value;
-          if (active != null) {
-            reconnectAllSocketsForAccount(active.metaAccountNumber);
-          }
-          refreshAccounts();
+          print('=== WS CENTRAL: App resumed and not locked, restoring sockets only ===');
+          resumeSocketsForCurrentAccount();
         } else {
           print('=== WS CENTRAL: App resumed but locked, keeping sockets disconnected ===');
         }
@@ -130,12 +126,17 @@ class AccountController extends GetxController with WidgetsBindingObserver {
     }
   }
 
-  void _disconnectAllSocketsCentral() {
-    print('=== WS CENTRAL: Disconnecting all sockets centrally ===');
+  void _disconnectAllSocketsCentral({bool clearVisibleData = false}) {
+    print('=== WS CENTRAL: Disconnecting all sockets centrally (clearVisibleData=$clearVisibleData) ===');
     // Instruments
     try {
       if (Get.isRegistered<InstrumentsController>()) {
-        Get.find<InstrumentsController>().disconnectWebSocket();
+        final instruments = Get.find<InstrumentsController>();
+        if (clearVisibleData) {
+          instruments.stopWebSocket();
+        } else {
+          instruments.disconnectWebSocket();
+        }
       }
     } catch (e) {
       print('Error disconnecting Instruments WS: $e');
@@ -815,6 +816,90 @@ class AccountController extends GetxController with WidgetsBindingObserver {
         } catch (_) {}
       }),
     ]);
+  }
+
+  /// Resume-only socket restoration for app foreground/unlock flows.
+  ///
+  /// This intentionally does NOT clear instruments/trading lists and does NOT
+  /// call [refreshAccounts]. It only reconnects sockets and requests current
+  /// account streams so visible screen data stays stable while fresh prices arrive.
+  Future<void> resumeSocketsForCurrentAccount() async {
+    final active = _activeMT5Account.value;
+    if (active == null) return;
+
+    try {
+      _activeMT5Account.value = active;
+      WebSocketEndpointHelper.setPrimaryAccount(active);
+
+      try {
+        if (Get.isRegistered<DashboardController>()) {
+          Get.find<DashboardController>().markLifecycleResumePriceOnly();
+        }
+      } catch (_) {}
+
+      // Keep the unified service bound to the same active account, but do not
+      // clear controller data. This restores shared sockets after backgrounding.
+      try {
+        if (Get.isRegistered<UnifiedWebSocketService>()) {
+          await Get.find<UnifiedWebSocketService>().switchAccount(active);
+        }
+      } catch (e) {
+        print('AccountController: Resume unified socket error: $e');
+      }
+
+      // Restore marketwatchv2 subscriptions for favorites. This path preserves
+      // existing rows/prices in InstrumentsController.
+      try {
+        if (Get.isRegistered<InstrumentsController>()) {
+          final instrumentsController = Get.find<InstrumentsController>();
+          await instrumentsController.resumePriceStreamOnly();
+        } else if (Get.isRegistered<MarketWatchV2Service>()) {
+          await Get.find<MarketWatchV2Service>().reconnectAndResyncFavorites();
+        }
+      } catch (e) {
+        print('AccountController: Resume instruments socket error: $e');
+      }
+
+      // Trading reconnect without clearing cached positions/orders first.
+      try {
+        if (Get.isRegistered<TradingWebSocketService>()) {
+          final tradingWS = Get.find<TradingWebSocketService>();
+          tradingWS.reconnect();
+          Future.delayed(const Duration(milliseconds: 150), () {
+            tradingWS.refreshCurrentTradingData();
+          });
+        }
+      } catch (e) {
+        print('AccountController: Resume trading socket error: $e');
+      }
+
+      // Account header/socket refresh only; no full account list reload.
+      try {
+        if (Get.isRegistered<AccountWebSocketService>()) {
+          final accountWS = Get.find<AccountWebSocketService>();
+          accountWS.reconnect();
+          Future.delayed(const Duration(milliseconds: 150), () {
+            accountWS.refreshAccountData();
+          });
+        }
+      } catch (e) {
+        print('AccountController: Resume account socket error: $e');
+      }
+
+      // Chart socket may be visible; restore it without clearing watchlist data.
+      try {
+        if (Get.isRegistered<ChartSocketController>()) {
+          final chartSocketController = Get.find<ChartSocketController>();
+          if (chartSocketController.currentSymbol.value.isNotEmpty) {
+            chartSocketController.startWebSocket();
+          }
+        }
+      } catch (e) {
+        print('AccountController: Resume chart socket error: $e');
+      }
+    } catch (e) {
+      print('AccountController: Error in resumeSocketsForCurrentAccount: $e');
+    }
   }
 
   // Public method to trigger WebSocket reconnection after account change
