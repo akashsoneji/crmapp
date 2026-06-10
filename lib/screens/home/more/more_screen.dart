@@ -956,6 +956,11 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
               ),
               _CardGroup(
                 children: [
+                  _MenuItem(
+                    icon: 'support',
+                    label: languageService.tr('ticket_title'),
+                    onTap: () => Get.toNamed(AppPages.TICKET_LIST),
+                  ),
                   _ThemeMenuItem(),
                   const _BiometricLoginMenuItem(),
                   _MenuItem(

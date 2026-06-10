@@ -39,6 +39,9 @@ abstract class Routes {
   static const DEMO_CONTEST = _Paths.DEMO_CONTEST;
   static const SETTING = _Paths.SETTING;
   static const SUPPORT = _Paths.SUPPORT;
+  static const TICKET_LIST = _Paths.TICKET_LIST;
+  static const TICKET_CREATE = _Paths.TICKET_CREATE;
+  static const TICKET_DETAIL = _Paths.TICKET_DETAIL;
   static const TOOLS_EDUCATION = _Paths.TOOLS_EDUCATION;
   static const MORE = _Paths.MORE;
   static const PARTNERSHIP_PROGRAM = _Paths.PARTNERSHIP_PROGRAM;
@@ -119,6 +122,9 @@ abstract class _Paths {
   static const DEMO_CONTEST = '/demo-contest';
   static const SETTING = '/setting';
   static const SUPPORT = '/support';
+  static const TICKET_LIST = '/ticket-list';
+  static const TICKET_CREATE = '/ticket-create';
+  static const TICKET_DETAIL = '/ticket-detail';
   static const TOOLS_EDUCATION = '/tools-education';
   static const MORE = '/more';
   static const PARTNERSHIP_PROGRAM = '/partnership-program';

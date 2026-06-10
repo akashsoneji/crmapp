@@ -101,6 +101,14 @@ class ApiConstants {
   static const String ibManage = '${ajax}ib/manage';
   static const String ibUpdateStatus = '${ajax}ib/update-status/';
 
+  // Support Ticket APIs
+  static const String ticketDepartments = '${ajax}tickets/departments';
+  static const String tickets = '${ajax}tickets';
+  static String ticketDetail(String ticketId) => '${ajax}tickets/$ticketId';
+  static String ticketReply(String ticketId) => '${ajax}tickets/$ticketId/reply';
+  static String ticketClose(String ticketId) => '${ajax}tickets/$ticketId/close';
+  static const String ticketAttachment = '${ajax}tickets/attachment';
+
   // Scratch Card APIs
   static const String getScratchCards   = 'v1/user/scratch-cards';
   static const String revealScratchCard = 'v1/user/scratch-cards/reveal';

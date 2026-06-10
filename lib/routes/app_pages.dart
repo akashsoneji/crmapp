@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import 'package:crm_app/bindings/more_bindings.dart';
+import 'package:crm_app/bindings/ticket_binding.dart';
 import 'package:crm_app/screens/home/kyc/kyc_bank_screen.dart';
 import 'package:crm_app/screens/home/kyc/bank_list_screen.dart';
 import 'package:crm_app/screens/home/more/bonus/bonus_screen.dart';
@@ -13,6 +14,9 @@ import 'package:crm_app/screens/home/more/ib_dashboard/ib_dashboard_screen.dart'
 import 'package:crm_app/screens/home/more/ib_dashboard/ib_main_screen.dart';
 import 'package:crm_app/screens/home/more/setting/setting_screen.dart';
 import 'package:crm_app/screens/home/more/support/support_screen.dart';
+import 'package:crm_app/screens/home/more/ticket/create_ticket_screen.dart';
+import 'package:crm_app/screens/home/more/ticket/ticket_detail_screen.dart';
+import 'package:crm_app/screens/home/more/ticket/ticket_list_screen.dart';
 import 'package:crm_app/screens/home/more/tools_education/tools_education_screen.dart';
 import 'package:crm_app/screens/home/more/partnership_program_screen.dart';
 import 'package:crm_app/screens/home/more/more_screen.dart';
@@ -127,6 +131,9 @@ class AppPages {
   static const DEMO_CONTEST = _Paths.DEMO_CONTEST;
   static const SETTING = _Paths.SETTING;
   static const SUPPORT = _Paths.SUPPORT;
+  static const TICKET_LIST = _Paths.TICKET_LIST;
+  static const TICKET_CREATE = _Paths.TICKET_CREATE;
+  static const TICKET_DETAIL = _Paths.TICKET_DETAIL;
   static const TOOLS_EDUCATION = _Paths.TOOLS_EDUCATION;
   static const MORE = _Paths.MORE;
   static const PARTNERSHIP_PROGRAM = _Paths.PARTNERSHIP_PROGRAM;
@@ -323,6 +330,21 @@ class AppPages {
     GetPage(name: _Paths.DEMO_CONTEST, page: () => const DemoContestScreen()),
     GetPage(name: _Paths.SETTING, page: () => const SettingScreen()),
     GetPage(name: _Paths.SUPPORT, page: () => const SupportScreen()),
+    GetPage(
+      name: _Paths.TICKET_LIST,
+      page: () => const TicketListScreen(),
+      binding: TicketBinding(),
+    ),
+    GetPage(
+      name: _Paths.TICKET_CREATE,
+      page: () => const CreateTicketScreen(),
+      binding: TicketBinding(),
+    ),
+    GetPage(
+      name: _Paths.TICKET_DETAIL,
+      page: () => TicketDetailScreen(ticketId: Get.arguments?.toString() ?? ''),
+      binding: TicketBinding(),
+    ),
     GetPage(
       name: _Paths.TOOLS_EDUCATION,
       page: () => const ToolsEducationScreen(),
