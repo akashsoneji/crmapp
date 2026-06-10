@@ -1,36 +1,32 @@
-class TicketDepartment {
-  final int id;
-  final String name;
-  final String icon;
+// Models for the Support Ticket module.
 
-  const TicketDepartment({
-    required this.id,
-    required this.name,
-    required this.icon,
-  });
+class TicketDepartment {
+  final String id;
+  final String name;
+  final String? icon;
+
+  const TicketDepartment({required this.id, required this.name, this.icon});
 
   factory TicketDepartment.fromJson(Map<String, dynamic> json) {
     return TicketDepartment(
-      id: _parseInt(json['id']),
-      name: json['name']?.toString() ?? '',
-      icon: json['icon']?.toString() ?? '',
+      id: (json['id'] ?? '').toString(),
+      name: (json['name'] ?? '').toString(),
+      icon: json['icon']?.toString(),
     );
   }
 }
 
 class TicketAssignee {
   final String name;
-  final String avatar;
+  final String? avatar;
 
-  const TicketAssignee({
-    required this.name,
-    required this.avatar,
-  });
+  const TicketAssignee({required this.name, this.avatar});
 
   factory TicketAssignee.fromJson(Map<String, dynamic>? json) {
+    if (json == null) return const TicketAssignee(name: '');
     return TicketAssignee(
-      name: json?['name']?.toString() ?? 'Unassigned',
-      avatar: json?['avatar']?.toString() ?? '',
+      name: (json['name'] ?? '').toString(),
+      avatar: json['avatar']?.toString(),
     );
   }
 }
@@ -42,9 +38,9 @@ class Ticket {
   final String department;
   final String priority;
   final String status;
-  final DateTime? createdAt;
-  final DateTime? updatedAt;
-  final TicketAssignee assignee;
+  final String createdAt;
+  final String updatedAt;
+  final TicketAssignee? assignee;
   final int conversationCount;
 
   const Ticket({
@@ -56,79 +52,42 @@ class Ticket {
     required this.status,
     required this.createdAt,
     required this.updatedAt,
-    required this.assignee,
-    required this.conversationCount,
+    this.assignee,
+    this.conversationCount = 0,
   });
+
+  bool get isOpen => status.toLowerCase() == 'open';
 
   factory Ticket.fromJson(Map<String, dynamic> json) {
     return Ticket(
-      id: json['id']?.toString() ?? '',
-      title: json['title']?.toString() ?? '',
-      description: json['description']?.toString() ?? '',
-      department: json['department']?.toString() ?? '',
-      priority: json['priority']?.toString() ?? '',
-      status: json['status']?.toString() ?? '',
-      createdAt: _parseDate(json['created_at']),
-      updatedAt: _parseDate(json['updated_at']),
-      assignee: TicketAssignee.fromJson(_asMap(json['assignee'])),
-      conversationCount: _parseInt(json['conversation_count']),
-    );
-  }
-}
-
-class TicketDetail extends Ticket {
-  final List<TicketConversation> conversation;
-  final TicketAttachment? attachment;
-
-  const TicketDetail({
-    required super.id,
-    required super.title,
-    required super.description,
-    required super.department,
-    required super.priority,
-    required super.status,
-    required super.createdAt,
-    required super.updatedAt,
-    required super.assignee,
-    required super.conversationCount,
-    required this.conversation,
-    required this.attachment,
-  });
-
-  factory TicketDetail.fromJson(Map<String, dynamic> json) {
-    final ticket = Ticket.fromJson(json);
-    final conversationList = json['conversation'];
-
-    return TicketDetail(
-      id: ticket.id,
-      title: ticket.title,
-      description: ticket.description,
-      department: ticket.department,
-      priority: ticket.priority,
-      status: ticket.status,
-      createdAt: ticket.createdAt,
-      updatedAt: ticket.updatedAt,
-      assignee: ticket.assignee,
-      conversationCount: ticket.conversationCount,
-      conversation: conversationList is List
-          ? conversationList
-              .whereType<Map<String, dynamic>>()
-              .map(TicketConversation.fromJson)
-              .toList()
-          : <TicketConversation>[],
-      attachment: _asMap(json['attachment']) == null
-          ? null
-          : TicketAttachment.fromJson(_asMap(json['attachment'])!),
+      id: (json['id'] ?? '').toString(),
+      title: (json['title'] ?? json['subject'] ?? '').toString(),
+      description: (json['description'] ?? '').toString(),
+      department: (json['department'] is Map
+              ? (json['department']['name'] ?? '')
+              : (json['department'] ?? ''))
+          .toString(),
+      priority: (json['priority'] ?? '').toString(),
+      status: (json['status'] ?? '').toString(),
+      createdAt: (json['created_at'] ?? '').toString(),
+      updatedAt: (json['updated_at'] ?? '').toString(),
+      assignee: json['assignee'] is Map<String, dynamic>
+          ? TicketAssignee.fromJson(json['assignee'] as Map<String, dynamic>)
+          : null,
+      conversationCount: json['conversation_count'] is num
+          ? (json['conversation_count'] as num).toInt()
+          : 0,
     );
   }
 }
 
 class TicketConversation {
-  final int id;
+  final String id;
   final String type;
   final TicketAssignee author;
   final String content;
-  final DateTime? timestamp;
+  final String timestamp;
+  final TicketAttachment? attachment;
 
   const TicketConversation({
     required this.id,
@@ -136,17 +95,27 @@ class TicketConversation {
     required this.author,
     required this.content,
     required this.timestamp,
+    this.attachment,
   });
 
-  bool get isCustomer => type.toLowerCase() == 'customer';
+  /// Whether this message was sent by the current user (right-aligned bubble).
+  bool get isUser => type.toLowerCase() == 'user' || type.toLowerCase() == 'customer';
 
   factory TicketConversation.fromJson(Map<String, dynamic> json) {
     return TicketConversation(
-      id: _parseInt(json['id']),
-      type: json['type']?.toString() ?? '',
-      author: TicketAssignee.fromJson(_asMap(json['author'])),
-      content: json['content']?.toString() ?? '',
-      timestamp: _parseDate(json['timestamp']),
+      id: (json['id'] ?? '').toString(),
+      type: (json['type'] ?? json['sender_type'] ?? '').toString(),
+      author: TicketAssignee.fromJson(
+        json['author'] is Map<String, dynamic>
+            ? json['author'] as Map<String, dynamic>
+            : null,
+      ),
+      content: (json['content'] ?? json['message'] ?? '').toString(),
+      timestamp: (json['timestamp'] ?? json['created_at'] ?? '').toString(),
+      attachment: json['attachment'] is Map<String, dynamic>
+          ? TicketAttachment.fromJson(
+              json['attachment'] as Map<String, dynamic>)
+          : null,
     );
   }
 }
@@ -164,9 +133,48 @@ class TicketAttachment {
 
   factory TicketAttachment.fromJson(Map<String, dynamic> json) {
     return TicketAttachment(
-      filename: json['filename']?.toString() ?? '',
-      path: json['path']?.toString() ?? '',
-      url: json['url']?.toString() ?? '',
+      filename: (json['filename'] ?? json['name'] ?? '').toString(),
+      path: (json['path'] ?? '').toString(),
+      url: (json['url'] ?? '').toString(),
+    );
+  }
+}
+
+class TicketDetail {
+  final Ticket ticket;
+  final List<TicketConversation> conversation;
+  final TicketAttachment? attachment;
+
+  const TicketDetail({
+    required this.ticket,
+    required this.conversation,
+    this.attachment,
+  });
+
+  List<TicketAttachment> get attachments {
+    final list = <TicketAttachment>[];
+    if (attachment != null) list.add(attachment!);
+    for (final c in conversation) {
+      if (c.attachment != null) list.add(c.attachment!);
+    }
+    return list;
+  }
+
+  factory TicketDetail.fromJson(Map<String, dynamic> json) {
+    final convRaw = json['conversation'] ?? json['conversations'] ?? json['replies'];
+    return TicketDetail(
+      ticket: Ticket.fromJson(json),
+      conversation: convRaw is List
+          ? convRaw
+              .whereType<Map>()
+              .map((e) =>
+                  TicketConversation.fromJson(e.cast<String, dynamic>()))
+              .toList()
+          : <TicketConversation>[],
+      attachment: json['attachment'] is Map<String, dynamic>
+          ? TicketAttachment.fromJson(
+              json['attachment'] as Map<String, dynamic>)
+          : null,
     );
   }
 }
@@ -184,30 +192,20 @@ class TicketPagination {
     required this.total,
   });
 
+  bool get hasMore => currentPage < lastPage;
+
   factory TicketPagination.fromJson(Map<String, dynamic>? json) {
+    if (json == null) {
+      return const TicketPagination(
+          currentPage: 1, lastPage: 1, perPage: 20, total: 0);
+    }
+    int parse(dynamic v, int fallback) =>
+        v is num ? v.toInt() : (int.tryParse('$v') ?? fallback);
     return TicketPagination(
-      currentPage: _parseInt(json?['current_page'], fallback: 1),
-      lastPage: _parseInt(json?['last_page'], fallback: 1),
-      perPage: _parseInt(json?['per_page'], fallback: 6),
-      total: _parseInt(json?['total']),
+      currentPage: parse(json['current_page'], 1),
+      lastPage: parse(json['last_page'], 1),
+      perPage: parse(json['per_page'], 20),
+      total: parse(json['total'], 0),
     );
   }
-}
-
-Map<String, dynamic>? _asMap(dynamic value) {
-  if (value is Map<String, dynamic>) return value;
-  if (value is Map) return Map<String, dynamic>.from(value);
-  return null;
-}
-
-int _parseInt(dynamic value, {int fallback = 0}) {
-  if (value is int) return value;
-  if (value is num) return value.toInt();
-  return int.tryParse(value?.toString() ?? '') ?? fallback;
-}
-
-DateTime? _parseDate(dynamic value) {
-  final raw = value?.toString();
-  if (raw == null || raw.isEmpty) return null;
-  return DateTime.tryParse(raw);
 }

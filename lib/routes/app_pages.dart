@@ -342,7 +342,7 @@ class AppPages {
     ),
     GetPage(
       name: _Paths.TICKET_DETAIL,
-      page: () => TicketDetailScreen(ticketId: Get.arguments?.toString() ?? ''),
+      page: () => const TicketDetailScreen(),
       binding: TicketBinding(),
     ),
     GetPage(
