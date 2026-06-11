@@ -3,7 +3,7 @@ import 'package:crm_app/widgets/app_svg_back_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_svg/svg.dart';
+
 import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
@@ -1067,8 +1067,11 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
         height: 40.h,
         child: ElevatedButton(
           onPressed:
-              isAmountConfirmed
+              (isAmountConfirmed && !controller.isOtpLoading.value && !controller.isLoading)
                   ? () {
+                    // Dismiss keyboard
+                    FocusScope.of(context).unfocus();
+
                     // Validate form before proceeding
                     if (!_validateForm()) {
                       return;
@@ -1099,7 +1102,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
             elevation: 0,
           ),
           child:
-              controller.isOtpLoading.value
+              (controller.isOtpLoading.value || controller.isLoading)
                   ? ButtonLoadingWidget(size: 20.0, color: AppColors.whiteColor)
                   : Text(
                     controller.isOtpSent.value
