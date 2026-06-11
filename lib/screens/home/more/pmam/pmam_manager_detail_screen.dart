@@ -1,6 +1,6 @@
 import 'package:crm_app/widgets/app_svg_back_button.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
+
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
@@ -345,11 +345,14 @@ class _PmamManagerDetailScreenState extends State<PmamManagerDetailScreen> {
             .map((e) => e.isNotEmpty ? e[0].toUpperCase() : '')
             .join();
 
+    final hasActivePlan = _manager.plans.isNotEmpty && _selectedPlan != null;
     final gain = _manager.profitPercentage;
     final aum = _fmt(_manager.totalAum);
-    final commission = '${_selectedPlan?.commissionPercentage ?? 0}%';
+    final commission =
+        hasActivePlan ? '${_selectedPlan!.commissionPercentage}%' : 'N/A';
     final investors = '${_manager.totalInvestors}';
-    final minInvest = _fmt(_selectedPlan?.minimumInvestment ?? 0);
+    final minInvest =
+        hasActivePlan ? _fmt(_selectedPlan!.minimumInvestment) : 'N/A';
 
     return Scaffold(
       backgroundColor: AppColors.tradeBackgroundCenterColor,
@@ -429,48 +432,91 @@ class _PmamManagerDetailScreenState extends State<PmamManagerDetailScreen> {
                   ),
                   SizedBox(height: 14.h),
 
-                  // Invest Now button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 44.h,
-                    child: ElevatedButton(
-                      onPressed: _showInvestSheet,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12.r),
+                  if (hasActivePlan) ...[
+                    // Invest Now button
+                    SizedBox(
+                      width: double.infinity,
+                      height: 44.h,
+                      child: ElevatedButton(
+                        onPressed: _showInvestSheet,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12.r),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.add_rounded,
+                              color: AppColors.whiteColor,
+                              size: 18.sp,
+                            ),
+                            SizedBox(width: 6.w),
+                            Text(
+                              'INVEST NOW',
+                              style: TextStyle(
+                                color: AppColors.whiteColor,
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 8.h),
+                    Text(
+                      'Min. Investment: $minInvest',
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        color: AppColors.textGrey,
+                      ),
+                    ),
+                  ] else ...[
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 14.w,
+                        vertical: 12.h,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.warning.withValues(alpha: 0.10),
+                        borderRadius: BorderRadius.circular(12.r),
+                        border: Border.all(
+                          color: AppColors.warning.withValues(alpha: 0.35),
                         ),
                       ),
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Icon(
-                            Icons.add_rounded,
-                            color: AppColors.whiteColor,
-                            size: 18.sp,
+                            Icons.info_outline_rounded,
+                            color: AppColors.warning,
+                            size: 20.sp,
                           ),
-                          SizedBox(width: 6.w),
-                          Text(
-                            'INVEST NOW',
-                            style: TextStyle(
-                              color: AppColors.whiteColor,
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 0.5,
+                          SizedBox(width: 10.w),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'No Active Plan Yet',
+                                  style: TextStyle(
+                                    fontSize: 14.sp,
+                                    fontWeight: FontWeight.w500,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
                       ),
                     ),
-                  ),
-                  SizedBox(height: 8.h),
-                  Text(
-                    'Min. Investment: $minInvest',
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      color: AppColors.textGrey,
-                    ),
-                  ),
+                  ],
                 ],
               ),
             ),
