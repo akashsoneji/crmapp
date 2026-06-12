@@ -19,6 +19,7 @@ import 'constants/color.dart';
 
 import 'flavor_config.dart';
 import 'services/language_service.dart';
+import 'core/config/app_config_service.dart';
 import 'services/theme_service.dart';
 import 'controllers/auth_controller.dart';
 import 'controllers/account_controller.dart';
@@ -164,6 +165,13 @@ Future<void> initServices() async {
   // Register ThemeService
   final themeService = Get.put<ThemeService>(ThemeService(), permanent: true);
   await themeService.ensureInitialized();
+
+  // Load bundled app config (branding + feature flags) early.
+  final appConfigService = Get.put<AppConfigService>(
+    AppConfigService(),
+    permanent: true,
+  );
+  await appConfigService.ensureInitialized();
 
   Get.put<AuthService>(AuthServiceImpl(), permanent: true);
   Get.put<GoogleOtpService>(GoogleOtpService(), permanent: true);

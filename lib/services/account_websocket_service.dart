@@ -19,6 +19,7 @@ import 'package:crm_app/services/single_websocket_service.dart';
 import 'package:crm_app/utils/message_pack_decoder.dart'; // ✅ ADD: For binary decoding
 import 'package:crm_app/utils/app_logger.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:crm_app/core/config/app_config_service.dart';
 
 class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
   // Connection state
@@ -70,6 +71,25 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
     // ✅ FIX: Check authentication before setting up listeners
     // Don't initialize WebSocket until user is logged in
     _checkAuthAndSetup();
+  }
+
+  bool _shouldUseUnified() {
+    try {
+      if (Get.isRegistered<AppConfigService>()) {
+        final config = Get.find<AppConfigService>();
+        if (config.useUnifiedStreamSocket) {
+          if (Get.isRegistered<SingleWebSocketService>()) {
+            final stream = Get.find<SingleWebSocketService>();
+            if (stream.isConnected.value || stream.isAuthenticated.value) {
+              return true;
+            }
+          } else {
+            return true;
+          }
+        }
+      }
+    } catch (_) {}
+    return false;
   }
 
   /// Check authentication status before setting up WebSocket
@@ -322,6 +342,10 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
 
   // Initialize WebSocket connection
   void _initializeWebSocket() {
+    if (_shouldUseUnified()) {
+      _disconnectWebSocket();
+      return;
+    }
     if (isConnected.value || _isConnecting) return;
 
     final activeAccount = _accountController.activeMT5Account;
@@ -1108,6 +1132,7 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
 
   // Schedule reconnection
   void _scheduleReconnect() {
+    if (_shouldUseUnified()) return;
     if (_reconnectAttempts >= _maxReconnectAttempts) {
       if (kDebugMode) {
         // dev.log('Account WS: Max reconnection attempts reached');
