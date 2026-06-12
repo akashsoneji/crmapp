@@ -1020,7 +1020,7 @@ class AccountController extends GetxController with WidgetsBindingObserver {
       try {
         final singleWS = Get.find<SingleWebSocketService>();
         WebSocketEndpointHelper.logSwitchStep('SingleWS switchAccount start');
-        singleWS.switchAccount(account);
+        await singleWS.switchAccount(account);
         WebSocketEndpointHelper.logSwitchStep('SingleWS switchAccount done');
         print('✅ AccountController: Single WebSocket account switched');
       } catch (e) {

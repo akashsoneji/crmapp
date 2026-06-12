@@ -146,6 +146,16 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
             _lastSubscribedAccount != null &&
             _lastSubscribedAccount != currentAccountNumber;
 
+        if (ApiConstants.useSingleWebSocket) {
+          if (accountNumberChanged || _lastSubscribedAccount == null) {
+            _lastSubscribedAccount = currentAccountNumber;
+            _isUnsubscribing = false;
+            _initializeWebSocket();
+          }
+          _lastAccountType = currentAccountType;
+          return;
+        }
+
         // Check if account type changed (MT5 vs self-hosted)
         final accountTypeChanged =
             _lastAccountType != null && _lastAccountType != currentAccountType;

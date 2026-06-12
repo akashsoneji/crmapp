@@ -191,6 +191,29 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
               _lastSubscribedAccount != null &&
               _lastSubscribedAccount != currentAccountNumber;
 
+          if (ApiConstants.useSingleWebSocket) {
+            if (accountNumberChanged) {
+              _lastSubscribedAccount = currentAccountNumber;
+              _removedPositionIds.clear();
+              _removedPendingOrderIds.clear();
+              if (Get.isRegistered<TradingController>()) {
+                final tradingController = Get.find<TradingController>();
+                tradingController.clearAllTradingData();
+              }
+              try {
+                if (Get.isRegistered<InstrumentsController>()) {
+                  final instrumentsController = Get.find<InstrumentsController>();
+                  instrumentsController.clearInstrumentsData();
+                }
+              } catch (_) {}
+              
+              // Re-bind subscriptions to single WS streams
+              ensureOpenPositionsConnection();
+              ensurePendingOrdersConnection();
+            }
+            return;
+          }
+
           if (!isConnected.value) {
             // Not connected - initialize normally
             _initializeWebSocket();

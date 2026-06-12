@@ -168,7 +168,7 @@ class SingleWebSocketService extends GetxService {
           try {
             final decryptedJson = EncryptionHelper.decryptPayload(payload, iv);
             actualData = jsonDecode(decryptedJson);
-            AppLogger.websocket('SingleWS Decryption: Decrypted successfully');
+            // AppLogger.websocket('SingleWS Decryption: Decrypted successfully');
           } catch (e) {
             AppLogger.error('SingleWS Encryption: Decryption failed', error: e);
             return;
@@ -182,7 +182,7 @@ class SingleWebSocketService extends GetxService {
     // Now process actualData (which can be a Map or a List)
     if (actualData is Map<String, dynamic>) {
       final type = actualData['type']?.toString();
-      print('[SingleWS Control Stream] Endpoint: Control ($type), Response: $actualData');
+      // AppLogger.debug('[SingleWS Control Stream] Endpoint: Control ($type), Response: $actualData');
 
       if (type == 'authenticated') {
         isAuthenticating.value = false;
@@ -198,22 +198,22 @@ class SingleWebSocketService extends GetxService {
         }
       } else if (type == 'pending_orders_init') {
         if (!_ordersCtrl.isClosed) {
-          print('[SingleWS Orders Stream] Endpoint: pending_orders_init, Response: $actualData');
+          // AppLogger.debug('[SingleWS Orders Stream] Endpoint: pending_orders_init, Response: $actualData');
           _ordersCtrl.add(actualData);
         }
       } else if (type == 'positions_init' || type == 'positions_delta') {
         if (!_positionsCtrl.isClosed) {
-          print('[SingleWS Positions Stream] Endpoint: $type, Response: $actualData');
+          // AppLogger.debug('[SingleWS Positions Stream] Endpoint: $type, Response: $actualData');
           _positionsCtrl.add(actualData);
         }
       } else if (type == 'pending_orders_delta') {
         if (!_ordersCtrl.isClosed) {
-          print('[SingleWS Orders Stream] Endpoint: $type, Response: $actualData');
+          // AppLogger.debug('[SingleWS Orders Stream] Endpoint: $type, Response: $actualData');
           _ordersCtrl.add(actualData);
         }
       } else if (type == 'account_switched' || type == 'unsubscribed') {
         if (!_accountsCtrl.isClosed) {
-          print('[SingleWS Accounts Stream] Endpoint: $type, Response: $actualData');
+          // AppLogger.debug('[SingleWS Accounts Stream] Endpoint: $type, Response: $actualData');
           _accountsCtrl.add(actualData);
         }
       }
@@ -234,19 +234,19 @@ class SingleWebSocketService extends GetxService {
   void _routePayloadByTag(String? tag, dynamic payload) {
     switch (tag) {
       case 'p':
-        print('[SingleWS Prices Stream] Tag: p, Response: $payload');
+        // AppLogger.debug('[SingleWS Prices Stream] Tag: p, Response: $payload');
         if (!_pricesCtrl.isClosed) _pricesCtrl.add(payload);
         break;
       case 'pos':
-        print('[SingleWS Positions Stream] Tag: pos, Response: $payload');
+        // AppLogger.debug('[SingleWS Positions Stream] Tag: pos, Response: $payload');
         if (!_positionsCtrl.isClosed) _positionsCtrl.add(payload);
         break;
       case 'po':
-        print('[SingleWS Orders Stream] Tag: po, Response: $payload');
+        // AppLogger.debug('[SingleWS Orders Stream] Tag: po, Response: $payload');
         if (!_ordersCtrl.isClosed) _ordersCtrl.add(payload);
         break;
       case 'ac':
-        print('[SingleWS Accounts Stream] Tag: ac, Response: $payload');
+        // AppLogger.debug('[SingleWS Accounts Stream] Tag: ac, Response: $payload');
         if (!_accountsCtrl.isClosed) {
           // AccountWebSocketService/DashboardController legacy parsers expect
           // each account row to start with the "ac" marker. The single stream
@@ -358,20 +358,32 @@ class SingleWebSocketService extends GetxService {
     }
   }
   
-  void switchAccount(MT5Account newAccount) {
+  Future<void> switchAccount(MT5Account newAccount) async {
     AppLogger.websocket('SingleWS: Switching account to ${newAccount.metaAccountNumber}');
+    
+    // Close current connection cleanly first
+    _reconnectTimer?.cancel();
+    _reconnectTimer = null;
+    _subscription?.cancel();
+    _subscription = null;
+    try {
+      _channel?.sink.close();
+    } catch (_) {}
+    _channel = null;
+    _reconnectAttempts = 0;
+    
+    isConnected.value = false;
+    isAuthenticating.value = false;
+    isAuthenticated.value = false;
+    
+    // Update account
     _currentAccount = newAccount;
     
-    if (isConnected.value) {
-      _send({"type": "unsubscribe"});
-      SecureStorageService.getAuthToken().then((token) {
-        if (token != null && token.isNotEmpty) {
-          _authenticate(token);
-        }
-      });
-    } else {
-      connect(account: newAccount);
-    }
+    // Wait for TCP close to settle
+    await Future.delayed(const Duration(milliseconds: 100));
+    
+    // Establish fresh connection with new account
+    await connect(account: newAccount);
   }
   
   void disconnect() {
