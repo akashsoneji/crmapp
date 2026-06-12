@@ -11,10 +11,13 @@ import 'package:crm_app/controllers/dashboard_controller.dart';
 import 'package:crm_app/controllers/trading_controller.dart';
 import 'package:crm_app/models/mt5_account.dart';
 import 'package:crm_app/models/websocket_trading_response.dart';
+import 'package:crm_app/constants/api_const.dart';
 import 'package:crm_app/services/secure_storage_service.dart';
 import 'package:crm_app/services/trading_websocket_service.dart';
 import 'package:crm_app/services/websocket_endpoint_helper.dart';
+import 'package:crm_app/services/single_websocket_service.dart';
 import 'package:crm_app/utils/message_pack_decoder.dart'; // ✅ ADD: For binary decoding
+import 'package:crm_app/utils/app_logger.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
@@ -33,6 +36,7 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
   // ✅ FIX: Store stream subscription to prevent memory leaks
   StreamSubscription? _channelSubscription;
   Worker? _accountChangeWorker; // Store ever() worker to cancel it
+  Worker? _singleWsConnectionWorker; // Keep AccountWS state synced with SingleWS
 
   // Unsubscribe/resubscribe state
   Completer<void>? _unsubscribeCompleter;
@@ -180,6 +184,8 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
     // ✅ FIX: Cancel account change listener to prevent memory leaks
     _accountChangeWorker?.dispose();
     _accountChangeWorker = null;
+    _singleWsConnectionWorker?.dispose();
+    _singleWsConnectionWorker = null;
 
     _disconnectWebSocket();
     super.onClose();
@@ -308,6 +314,89 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
   void _initializeWebSocket() {
     if (isConnected.value || _isConnecting) return;
 
+    final activeAccount = _accountController.activeMT5Account;
+
+    if (ApiConstants.useSingleWebSocket) {
+      try {
+        if (activeAccount == null) {
+          isConnected.value = false;
+          if (kDebugMode) {
+            dev.log(
+              'Account WS (SingleWS): Active account not ready, waiting before connect',
+            );
+          }
+
+          Future.delayed(const Duration(milliseconds: 300), () async {
+            if (_isDisposed || isConnected.value || _isConnecting) return;
+            try {
+              if (!_accountController.isInitialized) {
+                await _accountController.waitForInitialization();
+              }
+              if (!_isDisposed && _accountController.activeMT5Account != null) {
+                _initializeWebSocket();
+              }
+            } catch (e) {
+              if (kDebugMode) {
+                dev.log('Account WS (SingleWS): Retry after account wait failed: $e');
+              }
+            }
+          });
+          return;
+        }
+
+        final singleWS = Get.find<SingleWebSocketService>();
+
+        _singleWsConnectionWorker?.dispose();
+        _singleWsConnectionWorker = ever(singleWS.isConnected, (bool connected) {
+          isConnected.value = connected;
+          if (!connected) {
+            isReconnecting.value = singleWS.isAuthenticating.value;
+          }
+        });
+
+        _channelSubscription?.cancel();
+        _channelSubscription = singleWS.accountsStream.listen(
+          (message) {
+            if (_isDisposed) return;
+            _handleSocketMessage(message);
+          },
+          onError: (error) {
+            if (kDebugMode) {
+              dev.log('Account WS (SingleWS) error: $error');
+            }
+            isConnected.value = false;
+          },
+          onDone: () {
+            if (kDebugMode) {
+              dev.log('Account WS (SingleWS) closed');
+            }
+            isConnected.value = false;
+          },
+        );
+
+        _isConnecting = false;
+        isConnected.value = singleWS.isConnected.value;
+        _reconnectAttempts = 0;
+        isReconnecting.value = false;
+        _isUnsubscribing = false;
+        _lastSubscribedAccount = activeAccount.metaAccountNumber;
+
+        singleWS.connect(account: activeAccount);
+
+        Future.delayed(const Duration(milliseconds: 150), () {
+          if (!_isDisposed) {
+            requestAccountData();
+          }
+        });
+      } catch (e) {
+        isConnected.value = false;
+        if (kDebugMode) {
+          dev.log('Account WS (SingleWS) initialization error: $e');
+        }
+      }
+      return;
+    }
+
     _isConnecting = true;
 
     try {
@@ -407,9 +496,43 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
     // Cancel any pending request timer
     _requestDebounceTimer?.cancel();
 
-    if (_isDisposed || !isConnected.value || channel == null) {
+    if (_isDisposed || !isConnected.value) {
       if (kDebugMode) {
         dev.log('Account WS: Cannot request data - disposed or not connected');
+      }
+      return;
+    }
+
+    if (ApiConstants.useSingleWebSocket) {
+      final activeAccount = _accountController.activeMT5Account;
+      final accountNumber = activeAccount?.metaAccountNumber ?? "0";
+      if (accountNumber == "0" || accountNumber.isEmpty) return;
+
+      _lastSubscribedAccount = accountNumber;
+      _isUnsubscribing = false;
+      
+      try {
+        final singleWS = Get.find<SingleWebSocketService>();
+        if (singleWS.isAuthenticated.value) {
+          singleWS.loadMoreAccounts(0);
+        } else {
+          late Worker worker;
+          worker = ever(singleWS.isAuthenticated, (bool authenticated) {
+            if (authenticated) {
+              worker.dispose();
+              requestAccountData();
+            }
+          });
+        }
+      } catch (e) {
+        AppLogger.error('Account WS: Error requesting data on single WS: $e');
+      }
+      return;
+    }
+
+    if (channel == null) {
+      if (kDebugMode) {
+        dev.log('Account WS: Cannot request data - channel is null');
       }
       return;
     }
@@ -508,41 +631,45 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
       // Only block account data messages
       // ✅ PERFORMANCE: Handle both JSON and binary (MessagePack) formats
       dynamic decodedData;
-      final isBinary = MessagePackDecoder.isBinaryMessage(message);
+      if (message is List || message is Map) {
+        decodedData = message;
+      } else {
+        final isBinary = MessagePackDecoder.isBinaryMessage(message);
 
-      if (isBinary) {
-        // Binary MessagePack format - decode it
-        decodedData = MessagePackDecoder.decodeBinary(
-          message is Uint8List
-              ? message
-              : Uint8List.fromList(message as List<int>),
-        );
-        if (decodedData == null) {
-          if (kDebugMode) {}
-          // Fallback to JSON if binary decode fails
-          try {
-            final String messageStr = message.toString();
-            decodedData = jsonDecode(messageStr);
+        if (isBinary) {
+          // Binary MessagePack format - decode it
+          decodedData = MessagePackDecoder.decodeBinary(
+            message is Uint8List
+                ? message
+                : Uint8List.fromList(message as List<int>),
+          );
+          if (decodedData == null) {
             if (kDebugMode) {}
-          } catch (e) {
+            // Fallback to JSON if binary decode fails
+            try {
+              final String messageStr = message.toString();
+              decodedData = jsonDecode(messageStr);
+              if (kDebugMode) {}
+            } catch (e) {
+              if (kDebugMode) {
+                dev.log('⚠️ Account WS: Both binary and JSON decode failed: $e');
+              }
+            }
+            if (decodedData == null) {
+              return;
+            }
+          } else {
             if (kDebugMode) {
-              dev.log('⚠️ Account WS: Both binary and JSON decode failed: $e');
+              dev.log(
+                '✅ Account WS: Binary decode succeeded, type: ${decodedData.runtimeType}, isList: ${decodedData is List}, isEmpty: ${decodedData is List ? decodedData.isEmpty : 'N/A'}',
+              );
             }
           }
-          if (decodedData == null) {
-            return;
-          }
         } else {
-          if (kDebugMode) {
-            dev.log(
-              '✅ Account WS: Binary decode succeeded, type: ${decodedData.runtimeType}, isList: ${decodedData is List}, isEmpty: ${decodedData is List ? decodedData.isEmpty : 'N/A'}',
-            );
-          }
+          // JSON format - decode as string
+          final String messageStr = message.toString();
+          decodedData = jsonDecode(messageStr);
         }
-      } else {
-        // JSON format - decode as string
-        final String messageStr = message.toString();
-        decodedData = jsonDecode(messageStr);
       }
 
       // Handle array responses (account data)
@@ -1027,6 +1154,8 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
         channel = null;
       }
       _currentUrl = null;
+      _singleWsConnectionWorker?.dispose();
+      _singleWsConnectionWorker = null;
       isConnected.value = false;
       isReconnecting.value = false;
       _isConnecting = false;
@@ -1044,7 +1173,13 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
   // Public method to manually reconnect
   void reconnect() {
     _reconnectAttempts = 0; // Reset attempts for manual reconnect
-    _reconnectWebSocket();
+    if (ApiConstants.useSingleWebSocket) {
+      // For single WS, force re-initialization to connect and re-subscribe
+      isConnected.value = false;
+      _initializeWebSocket();
+    } else {
+      _reconnectWebSocket();
+    }
   }
 
   // Public method to refresh account data

@@ -24,6 +24,7 @@ import 'chart_socket_controller.dart';
 import 'package:crm_app/services/one_click_trading_service.dart';
 import 'package:crm_app/services/account_websocket_service.dart';
 import 'package:crm_app/services/market_watch_v2_service.dart';
+import 'package:crm_app/services/single_websocket_service.dart';
 import 'dart:io' show Platform;
 import 'package:crm_app/services/biometric_service.dart';
 import 'package:crm_app/services/app_lock_service.dart';
@@ -413,6 +414,21 @@ class AuthController extends GetxController {
           print('AuthController: Error re-initializing TradingController: $e');
         }
 
+        // Re-initialize SingleWebSocketService if active
+        try {
+          if (Get.isRegistered<SingleWebSocketService>()) {
+            Get.find<SingleWebSocketService>().disconnect();
+          } else {
+            Get.put<SingleWebSocketService>(
+              SingleWebSocketService(),
+              permanent: true,
+            );
+          }
+          print('AuthController: SingleWebSocketService reset');
+        } catch (e) {
+          print('AuthController: Error resetting SingleWebSocketService: $e');
+        }
+
         // 6. Re-initialize TradingWebSocketService
         try {
           if (Get.isRegistered<TradingWebSocketService>()) {
@@ -638,21 +654,36 @@ class AuthController extends GetxController {
             );
           }
 
-          // 6. TradingWebSocketService
-          try {
-            if (Get.isRegistered<TradingWebSocketService>()) {
-              Get.delete<TradingWebSocketService>(force: true);
+            // Re-initialize SingleWebSocketService if active
+            try {
+              if (Get.isRegistered<SingleWebSocketService>()) {
+                Get.find<SingleWebSocketService>().disconnect();
+              } else {
+                Get.put<SingleWebSocketService>(
+                  SingleWebSocketService(),
+                  permanent: true,
+                );
+              }
+              print('AuthController: SingleWebSocketService reset');
+            } catch (e) {
+              print('AuthController: Error resetting SingleWebSocketService: $e');
             }
-            Get.put<TradingWebSocketService>(
-              TradingWebSocketService(),
-              permanent: true,
-            );
-            print('AuthController: TradingWebSocketService re-initialized');
-          } catch (e) {
-            print(
-              'AuthController: Error re-initializing TradingWebSocketService: $e',
-            );
-          }
+
+            // 6. TradingWebSocketService
+            try {
+              if (Get.isRegistered<TradingWebSocketService>()) {
+                Get.delete<TradingWebSocketService>(force: true);
+              }
+              Get.put<TradingWebSocketService>(
+                TradingWebSocketService(),
+                permanent: true,
+              );
+              print('AuthController: TradingWebSocketService re-initialized');
+            } catch (e) {
+              print(
+                'AuthController: Error re-initializing TradingWebSocketService: $e',
+              );
+            }
 
           // 7. AccountWebSocketService
           try {
@@ -912,6 +943,16 @@ class AuthController extends GetxController {
     print('AuthController: Cleared WebSocket endpoint helper cache');
 
     // 3. Disconnect and DELETE all WebSocket services and controllers
+
+    // Clear SingleWebSocketService
+    try {
+      if (Get.isRegistered<SingleWebSocketService>()) {
+        Get.find<SingleWebSocketService>().disconnect();
+        print('AuthController: Single WebSocket disconnected');
+      }
+    } catch (e) {
+      print('AuthController: Error clearing single WebSocket service: $e');
+    }
 
     // Clear TradingWebSocketService
     try {

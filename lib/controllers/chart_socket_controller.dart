@@ -13,8 +13,9 @@ import 'package:crm_app/services/secure_storage_service.dart';
 import 'package:crm_app/services/websocket_endpoint_helper.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:crm_app/utils/message_pack_decoder.dart';
+import 'package:crm_app/constants/api_const.dart';
 import 'package:crm_app/services/unified_websocket_service.dart';
-import 'package:crm_app/services/app_lock_service.dart';
+import 'package:crm_app/services/single_websocket_service.dart';
 
 class ChartSocketController extends GetxController with WidgetsBindingObserver {
   // Connection state
@@ -351,6 +352,49 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
       return;
     }
 
+    if (ApiConstants.useSingleWebSocket) {
+      try {
+        final singleWS = Get.find<SingleWebSocketService>();
+        await singleWS.connect(account: Get.find<AccountController>().activeMT5Account);
+        singleWS.subscribeSymbols([currentSymbol.value]);
+        
+        isConnected.value = true;
+        _reconnectAttempts = 0;
+        isReconnecting.value = false;
+        
+        _unifiedSymbolSub?.cancel();
+        _unifiedSymbolSub = singleWS.pricesStream.listen(
+          (message) {
+            if (_isDisposed) return;
+            // Handle single or batch of ticks
+            if (message is List && message.isNotEmpty) {
+              if (message[0] is List) {
+                for (final tick in message) {
+                  if (tick is List) {
+                    _handleSocketMessage(tick);
+                  }
+                }
+              } else if (message[0] is String) {
+                _handleSocketMessage(message);
+              }
+            }
+          },
+          onError: (error) {
+            dev.log('❌ Chart WS (SingleWS) subscription error: $error');
+            isConnected.value = false;
+          },
+          onDone: () {
+            dev.log('⚠️ Chart WS (SingleWS) subscription closed');
+            isConnected.value = false;
+          },
+        );
+      } catch (e) {
+        dev.log('Chart WS (SingleWS) init failed: $e');
+        isConnected.value = false;
+      }
+      return;
+    }
+
     // If user has no MT5 accounts, still connect to symbol WS for pricing.
 
     try {
@@ -463,6 +507,17 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
       return;
     }
 
+    if (ApiConstants.useSingleWebSocket) {
+      try {
+        final singleWS = Get.find<SingleWebSocketService>();
+        singleWS.subscribeSymbols([currentSymbol.value]);
+        dev.log('SingleWS: Subscribed to symbol ${currentSymbol.value}');
+      } catch (e) {
+        dev.log('SingleWS: Error subscribing to symbol ${currentSymbol.value}: $e');
+      }
+      return;
+    }
+
     // ✅ Use authID (same as instruments controller)
     final authid = await SecureStorageService.getAuthToken();
     dev.log("Chart: WebSocket token: ${authid != null ? 'exists' : 'null'}");
@@ -537,28 +592,32 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
       // ✅ PERFORMANCE: Handle both JSON and binary (MessagePack) formats
       dynamic data;
 
-      if (MessagePackDecoder.isBinaryMessage(message)) {
-        // Binary MessagePack format - decode it
-        if (kDebugMode) {
-          final sizeInfo = MessagePackDecoder.getMessageSize(message);
-          dev.log(
-            '📦 Chart: Received binary MessagePack message (${sizeInfo['sizeKB']} KB)',
-          );
-        }
-        data = MessagePackDecoder.decodeBinary(
-          message is Uint8List
-              ? message
-              : Uint8List.fromList(message as List<int>),
-        );
-
-        if (data == null) {
-          dev.log('⚠️ Chart: Binary decode failed, skipping message');
-          return;
-        }
+      if (message is List || message is Map) {
+        data = message;
       } else {
-        // JSON format - decode as string
-        final jsonStr = message is String ? message : message.toString();
-        data = jsonDecode(jsonStr);
+        if (MessagePackDecoder.isBinaryMessage(message)) {
+          // Binary MessagePack format - decode it
+          if (kDebugMode) {
+            final sizeInfo = MessagePackDecoder.getMessageSize(message);
+            dev.log(
+              '📦 Chart: Received binary MessagePack message (${sizeInfo['sizeKB']} KB)',
+            );
+          }
+          data = MessagePackDecoder.decodeBinary(
+            message is Uint8List
+                ? message
+                : Uint8List.fromList(message as List<int>),
+          );
+
+          if (data == null) {
+            dev.log('⚠️ Chart: Binary decode failed, skipping message');
+            return;
+          }
+        } else {
+          // JSON format - decode as string
+          final jsonStr = message is String ? message : message.toString();
+          data = jsonDecode(jsonStr);
+        }
       }
 
       // ✅ DEBUG: Log received message for troubleshooting
@@ -857,6 +916,13 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
     isConnected.value = false;
     isReconnecting.value = false;
     realTimePrice.clear();
+    
+    if (ApiConstants.useSingleWebSocket) {
+      _unifiedSymbolSub?.cancel();
+      _unifiedSymbolSub = null;
+      return;
+    }
+    
     try {
       channel.sink.close();
     } catch (_) {}
@@ -882,6 +948,24 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
         initializeWebSocket();
       } else {
         getSocketData();
+      }
+      return;
+    }
+
+    if (ApiConstants.useSingleWebSocket) {
+      try {
+        final singleWS = Get.find<SingleWebSocketService>();
+        if (currentSymbol.value.isNotEmpty) {
+          singleWS.unsubscribeSymbols([currentSymbol.value]);
+        }
+        
+        realTimePrice.clear();
+        currentSymbol.value = symbol;
+        
+        singleWS.subscribeSymbols([symbol]);
+        print('✅ ChartSocketController (SingleWS): Switched symbol to $symbol');
+      } catch (e) {
+        print('❌ ChartSocketController (SingleWS): Error switching symbol: $e');
       }
       return;
     }

@@ -90,8 +90,8 @@ class DashboardScreen extends StatelessWidget {
             try {
               if (Get.isRegistered<AccountWebSocketService>()) {
                 final accountWS = Get.find<AccountWebSocketService>();
-                // Request account data refresh
-                accountWS.requestAccountData();
+                // Request account data refresh and ensure connection
+                accountWS.refreshAccountData();
               }
             } catch (e) {
               // Error requesting account data

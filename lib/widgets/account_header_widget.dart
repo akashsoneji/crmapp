@@ -9,6 +9,7 @@ import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/flavor_config.dart';
 import 'package:crm_app/controllers/account_controller.dart';
 import 'package:crm_app/controllers/dashboard_controller.dart';
+import 'package:crm_app/controllers/trading_controller.dart';
 import 'package:crm_app/models/mt5_account.dart';
 import 'package:crm_app/models/websocket_trading_response.dart';
 import 'package:crm_app/utils/precision_helper.dart';
@@ -35,6 +36,7 @@ class AccountHeaderWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Get TradingController for live account data (equity, floating profit, etc.)
     final AccountController accountController = Get.find<AccountController>();
     // Get DashboardController for primary account (like dashboard screen)
     final DashboardController? dashboardController =
@@ -76,202 +78,154 @@ class AccountHeaderWidget extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Obx(() {
-                    // ✅ FIX: Observe active account from AccountController to react immediately to account switches
-                    final activeAccount = accountController.activeMT5Account;
+                  // ✅ FIX: Use GetBuilder to react to TradingController account info updates
+                  // (matches TradeScreen/ChartScreen pattern). Chart and trade screens
+                  // already read live account data from TradingController, so this
+                  // ensures the header stays in sync with the same socket feed.
+                  GetBuilder<TradingController>(
+                    id: 'account_info',
+                    builder: (controller) {
+                      final accountInfo = controller.accountInfo;
+                      final double? equity = accountInfo?.equity;
+                      final double? profit = accountInfo?.profit;
+                      final double? floating = accountInfo?.floating;
 
-                    // ✅ FIX: Use primary account from DashboardController (like dashboard screen)
-                    // But prefer activeAccount if available (more reactive to account switches)
-                    final primaryAccount =
-                        activeAccount ?? dashboardController?.primaryMT5Account;
+                      // Resolve the active account (used for chip + bottom sheet)
+                      final activeAccount =
+                          accountController.activeMT5Account ??
+                          dashboardController?.primaryMT5Account;
 
-                    // ✅ FIX: Directly observe accountInfoMap to react to WebSocket updates
-                    // Access accountInfoMap directly to ensure GetX tracks changes to the RxMap
-                    final accountInfoMap = dashboardController?.accountInfoMap;
+                      // Fallback: read from dashboard's accountInfoMap so the header
+                      // stays live even before the next TradingController update fires.
+                      double? dashboardEquity;
+                      if (dashboardController != null && activeAccount != null) {
+                        if (dashboardController.accountInfoMap.containsKey(
+                          activeAccount.metaAccountNumber,
+                        )) {
+                          final AccountInfo? info =
+                              dashboardController.accountInfoMap[
+                                  activeAccount.metaAccountNumber];
+                          if (info != null) {
+                            dashboardEquity = info.equity;
+                          }
+                        }
+                      }
 
-                    // Check if WebSocket is connected
-                    final isWebSocketConnected =
-                        dashboardController?.isWebSocketConnected ?? false;
+                      final double? realTimeEquity = equity ?? dashboardEquity;
 
-                    // Get account info from WebSocket (real-time) if available
-                    AccountInfo? accountInfo;
-                    if (primaryAccount != null && accountInfoMap != null) {
-                      // Directly access the map to ensure reactivity - GetX will track this access
-                      accountInfo =
-                          accountInfoMap[primaryAccount.metaAccountNumber];
-                    }
+                      final double? apiEquity = activeAccount != null
+                          ? double.tryParse(activeAccount.equity)
+                          : null;
+                      final double displayEquity =
+                          realTimeEquity ?? apiEquity ?? 0.0;
 
-                    // Get equity from WebSocket AccountInfo (real-time) if available, otherwise from account's equity
-                    final double? realTimeEquity = accountInfo?.equity;
-                    final double? apiEquity =
-                        primaryAccount != null
-                            ? double.tryParse(primaryAccount.equity)
-                            : null;
+                      final bool hasAccountInfo =
+                          equity != null || dashboardEquity != null;
+                      final bool showLoading =
+                          activeAccount != null &&
+                          displayEquity == 0.0 &&
+                          !hasAccountInfo;
 
-                    // Use real-time equity if available, otherwise fallback to API equity
-                    final double displayEquity =
-                        realTimeEquity ?? (apiEquity ?? 0.0);
+                      // Ensure the dashboard WebSocket is alive when needed
+                      if (activeAccount != null && dashboardController != null) {
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          dashboardController.ensureWebSocketInitialized();
+                        });
+                      }
 
-                    // Determine if we should show loading indicator
-                    // Show loading if:
-                    // 1. We have a primary account
-                    // 2. But no WebSocket data yet (realTimeEquity is null)
-                    // 3. AND WebSocket is not connected OR accountInfoMap doesn't have the account yet
-                    final bool hasAccountInfo =
-                        primaryAccount != null &&
-                        accountInfoMap != null &&
-                        accountInfoMap.containsKey(
-                          primaryAccount.metaAccountNumber,
-                        );
-                    final bool showLoading =
-                        primaryAccount != null &&
-                        realTimeEquity == null &&
-                        (!isWebSocketConnected || !hasAccountInfo) &&
-                        displayEquity ==
-                            0.0; // Only show loading if equity is 0 (not yet loaded)
+                      // PnL display: show floating profit when it has a meaningful
+                      // value, otherwise show equity (matches trade/chart behavior).
+                      final double displayFloating = profit ?? floating ?? 0.0;
+                      final bool shouldShowFloatingProfit =
+                          profit != null && displayFloating != 0.0;
+                      final double displayValue = shouldShowFloatingProfit
+                          ? displayFloating
+                          : displayEquity;
+                      final bool isPositive = displayValue >= 0;
 
-                    // Ensure WebSocket is initialized when widget builds
-                    // This is the ONLY place we call ensureWebSocketInitialized - only on first render
-                    // Not on every rebuild - this is fine because it only initializes if not connected
-                    if (primaryAccount != null && dashboardController != null) {
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        dashboardController.ensureWebSocketInitialized();
-                      });
-                    }
-
-                    // If floatingProfit is provided, use it instead of equity
-                    final bool useFloatingProfit = floatingProfit != null;
-                    final double displayValue =
-                        useFloatingProfit ? floatingProfit! : displayEquity;
-                    final bool isPositive = displayValue >= 0;
-
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            if (showLoading && !useFloatingProfit) ...[
-                              LoadingAnimationWidget.fourRotatingDots(
-                                color: AppColors.primary,
-                                size: 18.w,
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              if (showLoading) ...[
+                                LoadingAnimationWidget.fourRotatingDots(
+                                  color: AppColors.primary,
+                                  size: 18.w,
+                                ),
+                                SizedBox(width: 8.w),
+                              ],
+                              Text(
+                                shouldShowFloatingProfit
+                                    ? '\$${PrecisionHelper.formatPnL(displayValue)}'
+                                    : '\$${displayEquity.toStringAsFixed(2)}',
+                                style: AppTextStyles.heading.copyWith(
+                                  fontSize: 18.sp,
+                                  fontWeight: FontWeight.w700,
+                                  color: shouldShowFloatingProfit
+                                      ? (isPositive
+                                          ? AppColors.success
+                                          : AppColors.error)
+                                      : null,
+                                ),
                               ),
                               SizedBox(width: 8.w),
                             ],
-                            Text(
-                              useFloatingProfit
-                                  ? '\$${PrecisionHelper.formatPnL(displayValue)}'
-                                  : '\$${displayEquity.toStringAsFixed(2)}',
-                              style: AppTextStyles.heading.copyWith(
-                                fontSize: 18.sp,
-                                fontWeight: FontWeight.w700,
-                                color:
-                                    useFloatingProfit
-                                        ? (isPositive
-                                            ? AppColors.success
-                                            : AppColors.error)
-                                        : null,
-                              ),
-                            ),
-                            SizedBox(width: 8.w),
-                            // Connection status indicator
-                            //   if (instrumentsController != null)
-                            //     Obx(() {
-                            //       if (instrumentsController.isReconnecting.value) {
-                            //         return SizedBox(
-                            //           width: 12.w,
-                            //           height: 12.h,
-                            //           child: CircularProgressIndicator(
-                            //             strokeWidth: 2,
-                            //             valueColor: AlwaysStoppedAnimation<Color>(
-                            //               AppColors.accent,
-                            //             ),
-                            //           ),
-                            //         );
-                            //       } else if (instrumentsController
-                            //           .isConnected
-                            //           .value) {
-                            //         return Container(
-                            //           width: 8.w,
-                            //           height: 8.h,
-                            //           decoration: BoxDecoration(
-                            //             color: AppColors.green,
-                            //             shape: BoxShape.circle,
-                            //           ),
-                            //         );
-                            //       } else {
-                            //         return GestureDetector(
-                            //           onTap:
-                            //               () =>
-                            //                   instrumentsController
-                            //                       .manualReconnect(),
-                            //           child: Container(
-                            //             width: 8.w,
-                            //             height: 8.h,
-                            //             decoration: BoxDecoration(
-                            //               color: AppColors.error,
-                            //               shape: BoxShape.circle,
-                            //             ),
-                            //           ),
-                            //         );
-                            //       }
-                            //     }),
-                          ],
-                        ),
-                        GestureDetector(
-                          onTap: () {
-                            accountController.resetToDefaultAccounts();
-                            _showAccountSelectionBottomSheet(
-                              context,
-                              accountController,
-                            );
-                          },
-                          child: Row(
-                            children: [
-                              Container(
-                                alignment: Alignment.center,
-                                width: 45.w,
-                                height: 22.h,
-                                decoration: BoxDecoration(
-                                  color: _getAccountTypeBadgeBackground(
-                                    primaryAccount,
-                                  ),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Text(
-                                  _getAccountTypeText(
-                                    primaryAccount,
-                                  ).toUpperCase(),
-                                  style: TextStyle(
-                                    color: _getAccountTypeTextColor(
-                                      primaryAccount,
+                          ),
+                          GestureDetector(
+                            onTap: () {
+                              accountController.resetToDefaultAccounts();
+                              _showAccountSelectionBottomSheet(
+                                context,
+                                accountController,
+                              );
+                            },
+                            child: Row(
+                              children: [
+                                Container(
+                                  alignment: Alignment.center,
+                                  width: 45.w,
+                                  height: 22.h,
+                                  decoration: BoxDecoration(
+                                    color: _getAccountTypeBadgeBackground(
+                                      activeAccount,
                                     ),
-                                    fontSize: 10.sp,
-                                    fontWeight: FontWeight.w600,
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Text(
+                                    _getAccountTypeText(
+                                      activeAccount,
+                                    ).toUpperCase(),
+                                    style: TextStyle(
+                                      color: _getAccountTypeTextColor(
+                                        activeAccount,
+                                      ),
+                                      fontSize: 10.sp,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
                                 ),
-                              ),
-                              SizedBox(width: 4.w),
-                              SizedBox(width: 4.w),
-                              Text(
-                                _getAccountNumber(primaryAccount),
-                                style: AppTextStyles.subheading.copyWith(
-                                  fontSize: 12.sp,
+                                SizedBox(width: 4.w),
+                                SizedBox(width: 4.w),
+                                Text(
+                                  _getAccountNumber(activeAccount),
+                                  style: AppTextStyles.subheading.copyWith(
+                                    fontSize: 12.sp,
+                                    color: AppColors.textGrey,
+                                  ),
+                                ),
+                                Icon(
+                                  Icons.arrow_drop_down,
+                                  size: 20.h,
                                   color: AppColors.textGrey,
                                 ),
-                              ),
-                              // SizedBox(width: 3.w), // 10px space as requested
-                              Icon(
-                                Icons.arrow_drop_down,
-                                size:
-                                    20.h, // Increased size (approx 25% larger than 16.h)
-                                color: AppColors.textGrey,
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
-                    );
-                  }),
+                        ],
+                      );
+                    },
+                  ),
                 ],
               ),
             ),

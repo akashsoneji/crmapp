@@ -4,6 +4,9 @@ class ApiConstants {
   static String get baseUrl => FlavorConfig.instance.apiBaseUrl;
   static String get socketUrl => FlavorConfig.instance.websocketUrl;
 
+  // Toggle between the single multiplexed WebSocket stream and the legacy multiple socket streams.
+  static const bool useSingleWebSocket = true;
+
   static const String ajax = 'user/';
 
   static const String login = '${ajax}login';

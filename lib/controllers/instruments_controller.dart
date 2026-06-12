@@ -21,6 +21,7 @@ import 'package:crm_app/utils/message_pack_decoder.dart';
 import 'package:crm_app/services/websocket_endpoint_helper.dart';
 import 'package:crm_app/services/unified_websocket_service.dart';
 import 'package:crm_app/services/market_watch_v2_service.dart';
+import 'package:crm_app/services/single_websocket_service.dart';
 
 
 class InstrumentsController extends GetxController with WidgetsBindingObserver {
@@ -282,6 +283,29 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
           accountController.activeMT5Account?.metaAccountNumber;
     } catch (_) {}
 
+    if (ApiConstants.useSingleWebSocket) {
+      try {
+        final singleWS = Get.find<SingleWebSocketService>();
+        if (forceReconnect) {
+          singleWS.disconnect();
+        }
+        await singleWS.connect(account: Get.find<AccountController>().activeMT5Account);
+        final syms = favoriteInstruments
+            .map(MarketWatchV2Service.normalizeSymbol)
+            .where((s) => s.isNotEmpty)
+            .toSet()
+            .toList();
+        if (syms.isNotEmpty) {
+          singleWS.subscribeSymbols(syms);
+        }
+        isConnected.value = true;
+      } catch (e) {
+        print('InstrumentsController: resumePriceStreamOnly single WS error: $e');
+        isConnected.value = false;
+      }
+      return;
+    }
+
     if (!Get.isRegistered<MarketWatchV2Service>()) {
       isConnected.value = false;
       return;
@@ -319,13 +343,34 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
 
       _bindMarketWatchV2DecodedListener();
 
+      await hydrateFavoritesFromRest();
+
+      if (ApiConstants.useSingleWebSocket) {
+        try {
+          final singleWS = Get.find<SingleWebSocketService>();
+          await singleWS.connect(account: Get.find<AccountController>().activeMT5Account);
+          final syms = favoriteInstruments
+              .map(MarketWatchV2Service.normalizeSymbol)
+              .where((s) => s.isNotEmpty)
+              .toSet()
+              .toList();
+          if (syms.isNotEmpty) {
+            singleWS.subscribeSymbols(syms);
+          }
+          isConnected.value = true;
+        } catch (e) {
+          print('InstrumentsController: startMarketWatchV2Only single WS error: $e');
+          isConnected.value = false;
+        }
+        return;
+      }
+
       if (!Get.isRegistered<MarketWatchV2Service>()) {
         isConnected.value = false;
         return;
       }
 
       final v2 = Get.find<MarketWatchV2Service>();
-      await hydrateFavoritesFromRest();
 
       final syms =
           favoriteInstruments
@@ -347,6 +392,20 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
 
   void _bindMarketWatchV2DecodedListener() {
     if (_marketWatchV2ListenerBound) return;
+    
+    if (ApiConstants.useSingleWebSocket) {
+      _marketWatchV2ListenerBound = true;
+      final singleWS = Get.find<SingleWebSocketService>();
+      _marketWatchV2Sub = singleWS.pricesStream.listen((message) {
+        if (_isClearingData) return;
+        // The message is decoded payload from 'p' tag.
+        // It can be a single tick: [symbol, bid, ask, spread, digits, timestamp]
+        // Or a batch of ticks: [[symbol, bid, ask, spread, digits, timestamp], ...]
+        _onMarketWatchV2Decoded(message);
+      });
+      return;
+    }
+    
     if (!Get.isRegistered<MarketWatchV2Service>()) return;
     _marketWatchV2ListenerBound = true;
     _marketWatchV2Sub = Get.find<MarketWatchV2Service>().decodedFrames.listen(
@@ -374,9 +433,24 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
     String displaySymbol, {
     required bool isFavoriteNow,
   }) async {
-    if (!Get.isRegistered<MarketWatchV2Service>()) return;
     final sym = MarketWatchV2Service.normalizeSymbol(displaySymbol);
     if (sym.isEmpty) return;
+
+    if (ApiConstants.useSingleWebSocket) {
+      try {
+        final singleWS = Get.find<SingleWebSocketService>();
+        if (isFavoriteNow) {
+          singleWS.subscribeSymbols([sym]);
+        } else {
+          singleWS.unsubscribeSymbols([sym]);
+        }
+      } catch (e) {
+        print('InstrumentsController: syncMarketWatchV2AfterFavoriteChange single WS error: $e');
+      }
+      return;
+    }
+
+    if (!Get.isRegistered<MarketWatchV2Service>()) return;
     final v2 = Get.find<MarketWatchV2Service>();
     if (isFavoriteNow) {
       await v2.subscribeSymbols([sym]);
@@ -582,10 +656,18 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
       isConnected.value = false;
     }
     
-    // Lifecycle/navigation stop should not enter the full-reset clearing mode;
-    // otherwise marketwatchv2 frames after resume can be blocked. Full clearing
-    // is handled by clearInstrumentsData() for actual account switches.
     _isClearingData = false;
+    
+    if (ApiConstants.useSingleWebSocket) {
+      if (_marketWatchV2Sub != null) {
+        _marketWatchV2Sub?.cancel();
+        _marketWatchV2Sub = null;
+        _marketWatchV2ListenerBound = false;
+      }
+      isConnected.value = false;
+      print('✅ Single WebSocket stream listener cancelled (socket remains open)');
+      return;
+    }
     
     // Disconnect direct WebSocket if using it
     _disconnectWebSocket();

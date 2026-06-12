@@ -9,7 +9,9 @@ import 'package:crm_app/controllers/trading_controller.dart';
 import 'package:crm_app/controllers/instruments_controller.dart';
 import 'package:crm_app/models/websocket_trading_response.dart';
 import 'package:crm_app/services/secure_storage_service.dart';
+import 'package:crm_app/constants/api_const.dart';
 import 'package:crm_app/services/websocket_endpoint_helper.dart';
+import 'package:crm_app/services/single_websocket_service.dart';
 import 'package:crm_app/services/account_switch_logger.dart'; // ✅ ADD: File-based logging
 import 'package:crm_app/utils/message_pack_decoder.dart'; // ✅ ADD: For binary decoding
 import 'package:crm_app/utils/app_logger.dart'; // ✅ CENTRALIZED: Logging
@@ -174,15 +176,49 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       await AccountSwitchLogger.initialize();
       await AccountSwitchLogger.cleanupOldLogs();
 
-      // ✅ FIX: Check persistent cache first for immediate connection
+      // ✅ Always listen to active account changes, so switching accounts will trigger resubscription
+      _accountChangeSubscription?.cancel();
+      _accountChangeSubscription = _accountController.activeMT5AccountRx.listen((
+        account,
+      ) {
+        if (account != null && !_isDisposed) {
+          final currentAccountNumber = account.metaAccountNumber;
+
+          // ✅ FIX: Handle all account switch cases:
+          // 1. Account type change (self-hosted ↔ MT5)
+          // 2. Account number change within same type (self-hosted 100 → 102, MT5 1002 → 1003)
+          final accountNumberChanged =
+              _lastSubscribedAccount != null &&
+              _lastSubscribedAccount != currentAccountNumber;
+
+          if (!isConnected.value) {
+            // Not connected - initialize normally
+            _initializeWebSocket();
+            _initializeAllConnections();
+          } else if (accountNumberChanged) {
+            // ✅ FIX: Account number changed (same or different type) - clear data and resubscribe
+            // Clear data first, then resubscribe
+            if (Get.isRegistered<TradingController>()) {
+              final tradingController = Get.find<TradingController>();
+              tradingController.clearAllTradingData();
+            }
+            unsubscribeAndResubscribe();
+          }
+          // If same account number and already connected, no action needed
+        }
+      });
+
+      // ✅ Check persistent cache first for immediate connection
       final cachedAccount =
           await WebSocketEndpointHelper.getStoredPrimaryAccount();
       if (cachedAccount != null) {
         AppLogger.websocket(
           'Using cached account ${cachedAccount.metaAccountNumber} for immediate connection',
         );
-        _initializeWebSocket();
-        _initializeAllConnections();
+        if (!isConnected.value) {
+          _initializeWebSocket();
+          _initializeAllConnections();
+        }
         return;
       }
 
@@ -193,43 +229,10 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       if (_isDisposed) return;
 
       final activeAccount = _accountController.activeMT5Account;
-      if (activeAccount != null) {
-        // Account loaded - connect with correct endpoints
+      if (activeAccount != null && !isConnected.value) {
+        // Account loaded and not connected yet - connect with correct endpoints
         _initializeWebSocket();
         _initializeAllConnections();
-      } else {
-        // No account yet - listen for account changes
-        // ✅ FIX: Cancel old subscription before creating new one
-        _accountChangeSubscription?.cancel();
-        _accountChangeSubscription = _accountController.activeMT5AccountRx.listen((
-          account,
-        ) {
-          if (account != null && !_isDisposed) {
-            final currentAccountNumber = account.metaAccountNumber;
-
-            // ✅ FIX: Handle all account switch cases:
-            // 1. Account type change (self-hosted ↔ MT5)
-            // 2. Account number change within same type (self-hosted 100 → 102, MT5 1002 → 1003)
-            final accountNumberChanged =
-                _lastSubscribedAccount != null &&
-                _lastSubscribedAccount != currentAccountNumber;
-
-            if (!isConnected.value) {
-              // Not connected - initialize normally
-              _initializeWebSocket();
-              _initializeAllConnections();
-            } else if (accountNumberChanged) {
-              // ✅ FIX: Account number changed (same or different type) - clear data and resubscribe
-              // Clear data first, then resubscribe
-              if (Get.isRegistered<TradingController>()) {
-                final tradingController = Get.find<TradingController>();
-                tradingController.clearAllTradingData();
-              }
-              unsubscribeAndResubscribe();
-            }
-            // If same account number and already connected, no action needed
-          }
-        });
       }
     } catch (e) {
       AppLogger.error('Trading WS: Error waiting for account', error: e);
@@ -249,6 +252,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     // Connect main channel (handles both positions and orders) and marketwatch
     _connectToMarketWatch();
     _connectToOpenPositions();
+    if (ApiConstants.useSingleWebSocket) {
+      _connectToPendingOrders();
+    }
     // Note: Pending orders are handled by main channel (/ws/op)
     // Note: Symbols connection is lazy-loaded when chart screen opens
   }
@@ -280,6 +286,26 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
   // Initialize WebSocket connection - always use unified /ws/op endpoint
   // Main channel handles both positions and orders (batched)
   void _initializeWebSocket() {
+    if (ApiConstants.useSingleWebSocket) {
+      try {
+        final singleWS = Get.find<SingleWebSocketService>();
+        
+        // Bind to singleWS.isConnected to update our own isConnected
+        _mainChannelSubscription?.cancel();
+        _mainChannelSubscription = singleWS.isConnected.listen((connected) {
+          isConnected.value = connected;
+        });
+        
+        final activeAccount = _accountController.activeMT5Account;
+        if (activeAccount != null) {
+          singleWS.connect(account: activeAccount);
+        }
+      } catch (e) {
+        AppLogger.error('Trading WS: Error in _initializeWebSocket (single WS): $e');
+      }
+      return;
+    }
+
     // ✅ Always use unified endpoint - account type detection happens on Trade Engine side
     final endpoint = WebSocketEndpointHelper.getOpenPositionsEndpoint(null);
 
@@ -392,7 +418,37 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
   // Request trading data from WebSocket
   void _requestTradingData() async {
-    if (_isDisposed || !isConnected.value) {
+    if (_isDisposed) return;
+
+    if (ApiConstants.useSingleWebSocket) {
+      final activeAccount = _accountController.activeMT5Account;
+      final accountNumber = activeAccount?.metaAccountNumber ?? "0";
+      
+      if (accountNumber == "0" || accountNumber.isEmpty) return;
+      
+      try {
+        final singleWS = Get.find<SingleWebSocketService>();
+        if (singleWS.isAuthenticated.value) {
+          singleWS.loadMorePositions(0);
+          singleWS.loadMoreOrders(0);
+          _lastSubscribedAccount = accountNumber;
+          _lastDataReceived = DateHelper.nowUtc();
+        } else {
+          late Worker worker;
+          worker = ever(singleWS.isAuthenticated, (bool authenticated) {
+            if (authenticated) {
+              worker.dispose();
+              _requestTradingData();
+            }
+          });
+        }
+      } catch (e) {
+        AppLogger.error('Trading WS: Error requesting data on single WS: $e');
+      }
+      return;
+    }
+
+    if (!isConnected.value) {
       if (kDebugMode) {
         // dev.log('Trading WS: Cannot request data - disposed or not connected');
       }
@@ -609,7 +665,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
   // Connect to open positions endpoint with conditional MT5 prefix
   void _connectToOpenPositions() {
-    if (_isDisposed || _isConnectingOpenPositions) return;
+    if (_isDisposed) return;
 
     final activeAccount = _accountController.activeMT5Account;
 
@@ -620,6 +676,41 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       );
       return;
     }
+
+    if (ApiConstants.useSingleWebSocket) {
+      try {
+        final singleWS = Get.find<SingleWebSocketService>();
+        singleWS.connect(account: activeAccount);
+        
+        _openPositionsSubscription?.cancel();
+        _openPositionsSubscription = singleWS.positionsStream.listen(
+          (message) {
+            if (_isDisposed) return;
+            final normalized = _normalizePositionPayload(message);
+            _handleOpenPositionsMessage(normalized);
+          },
+          onError: (error) {
+            AppLogger.error('Trading WS (SingleWS): Open positions subscription error', error: error);
+            isOpenPositionsConnected.value = false;
+          },
+          onDone: () {
+            AppLogger.websocket('Trading WS (SingleWS): Open positions subscription done');
+            isOpenPositionsConnected.value = false;
+          },
+          cancelOnError: false,
+        );
+        
+        isOpenPositionsConnected.value = true;
+        _lastSubscribedAccount = activeAccount.metaAccountNumber;
+        _requestTradingData();
+      } catch (e) {
+        AppLogger.error('Trading WS: Error connecting single WS positions stream', error: e);
+        isOpenPositionsConnected.value = false;
+      }
+      return;
+    }
+
+    if (_isConnectingOpenPositions) return;
 
     // ✅ Use centralized endpoint helper
     final openPositionsUrl = WebSocketEndpointHelper.getOpenPositionsUrl(
@@ -723,7 +814,7 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
 
   // Connect to pending orders endpoint
   void _connectToPendingOrders() {
-    if (_isDisposed || _isConnectingPendingOrders) return;
+    if (_isDisposed) return;
 
     final activeAccount = _accountController.activeMT5Account;
 
@@ -733,6 +824,41 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
       );
       return;
     }
+
+    if (ApiConstants.useSingleWebSocket) {
+      try {
+        final singleWS = Get.find<SingleWebSocketService>();
+        singleWS.connect(account: activeAccount);
+        
+        _pendingOrdersSubscription?.cancel();
+        _pendingOrdersSubscription = singleWS.ordersStream.listen(
+          (message) {
+            if (_isDisposed) return;
+            final normalized = _normalizeOrderPayload(message);
+            _handlePendingOrdersMessage(normalized);
+          },
+          onError: (error) {
+            AppLogger.error('Trading WS (SingleWS): Pending orders subscription error', error: error);
+            isPendingOrdersConnected.value = false;
+          },
+          onDone: () {
+            AppLogger.websocket('Trading WS (SingleWS): Pending orders subscription done');
+            isPendingOrdersConnected.value = false;
+          },
+          cancelOnError: false,
+        );
+        
+        isPendingOrdersConnected.value = true;
+        _lastSubscribedAccount = activeAccount.metaAccountNumber;
+        _requestTradingData();
+      } catch (e) {
+        AppLogger.error('Trading WS: Error connecting single WS orders stream', error: e);
+        isPendingOrdersConnected.value = false;
+      }
+      return;
+    }
+
+    if (_isConnectingPendingOrders) return;
 
     final pendingOrdersUrl = WebSocketEndpointHelper.getPendingOrdersUrl(
       activeAccount,
@@ -1424,7 +1550,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     try {
       // ✅ PERFORMANCE: Handle both JSON and binary (MessagePack) formats
       dynamic decoded;
-      if (MessagePackDecoder.isBinaryMessage(message)) {
+      if (message is List || message is Map) {
+        decoded = message;
+      } else if (MessagePackDecoder.isBinaryMessage(message)) {
         // Binary MessagePack format - decode it
         decoded = MessagePackDecoder.decodeBinary(
           message is Uint8List
@@ -3780,8 +3908,6 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     _marketWatchSubscription = null;
     _symbolsSubscription?.cancel();
     _symbolsSubscription = null;
-    _accountChangeSubscription?.cancel();
-    _accountChangeSubscription = null;
 
     if (isConnected.value) {
       try {
@@ -3802,11 +3928,79 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     _isConnecting = false;
   }
 
+  // Normalization helper methods for single WS stream format mapping
+  dynamic _normalizePositionPayload(dynamic p) {
+    if (p is! List || p.isEmpty) return p;
+    if (p[0] is List) {
+      return p.map((item) => _normalizeSinglePosition(item)).toList();
+    } else {
+      return _normalizeSinglePosition(p);
+    }
+  }
+
+  dynamic _normalizeSinglePosition(dynamic it) {
+    if (it is! List || it.isEmpty) return it;
+    final action = it[0]?.toString();
+    if (action == 'r') {
+      if (it.length > 2) {
+        final account = it[1];
+        final ids = it.sublist(2);
+        return ['r', account, ids];
+      }
+      return it;
+    } else if (action == 'a' || action == 'u' || action == 'add') {
+      if (it.length > 1 && it[1].toString() == 'op') {
+        return it;
+      }
+      final mutable = List<dynamic>.from(it);
+      mutable.insert(1, 'op');
+      return mutable;
+    }
+    return it;
+  }
+
+  dynamic _normalizeOrderPayload(dynamic p) {
+    if (p is! List || p.isEmpty) return p;
+    if (p[0] is List) {
+      return p.map((item) => _normalizeSingleOrder(item)).toList();
+    } else {
+      return _normalizeSingleOrder(p);
+    }
+  }
+
+  dynamic _normalizeSingleOrder(dynamic it) {
+    if (it is! List || it.isEmpty) return it;
+    final action = it[0]?.toString();
+    if (action == 'r') {
+      return it;
+    } else if (action == 'po') {
+      final mutable = List<dynamic>.from(it);
+      mutable[0] = 'a';
+      mutable.insert(1, 'po');
+      return mutable;
+    } else if (action == 'a' || action == 'u' || action == 'add') {
+      if (it.length > 1 && it[1].toString() == 'po') {
+        return it;
+      }
+      final mutable = List<dynamic>.from(it);
+      mutable.insert(1, 'po');
+      return mutable;
+    }
+    return it;
+  }
+
   // Manual reconnection
   void reconnect() {
     if (_isDisposed) return;
 
     AppLogger.websocket('Trading WS: Manual reconnection requested');
+
+    if (ApiConstants.useSingleWebSocket) {
+      _connectToOpenPositions();
+      _connectToPendingOrders();
+      return;
+    }
+
     _disconnectWebSocket();
     _reconnectAttempts = 0;
     _initializeWebSocket();
@@ -3887,6 +4081,13 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
   // Use this on app resume so positions/orders stay visible while the socket resubscribes.
   void refreshCurrentTradingData() {
     AppLogger.websocket('Trading WS: Resume refresh requested');
+
+    if (ApiConstants.useSingleWebSocket) {
+      if (!_isDisposed) {
+        _requestTradingData();
+      }
+      return;
+    }
 
     if (isConnected.value && !_isDisposed) {
       _requestTradingData();
@@ -4211,7 +4412,6 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     _openPositionsSubscription?.cancel();
     _marketWatchSubscription?.cancel();
     _symbolsSubscription?.cancel();
-    _accountChangeSubscription?.cancel();
 
     // ✅ FIX: Disconnect ALL WebSocket channels, not just main channel
     // This ensures old MT5/Self-hosted endpoints are fully closed

@@ -21,6 +21,7 @@ import '../services/trading_websocket_service.dart';
 import '../services/account_websocket_service.dart';
 import '../services/unified_websocket_service.dart';
 import '../services/market_watch_v2_service.dart';
+import '../services/single_websocket_service.dart';
 
 class AccountController extends GetxController with WidgetsBindingObserver {
   DateTime? _lastBackgroundAt;
@@ -138,6 +139,18 @@ class AccountController extends GetxController with WidgetsBindingObserver {
 
   void _disconnectAllSocketsCentral({bool clearVisibleData = false}) {
     print('=== WS CENTRAL: Disconnecting all sockets centrally (clearVisibleData=$clearVisibleData) ===');
+    
+    // Single WebSocket
+    if (ApiConstants.useSingleWebSocket) {
+      try {
+        if (Get.isRegistered<SingleWebSocketService>()) {
+          Get.find<SingleWebSocketService>().disconnect();
+        }
+      } catch (e) {
+        print('Error disconnecting Single WS: $e');
+      }
+    }
+
     // Instruments
     try {
       if (Get.isRegistered<InstrumentsController>()) {
@@ -843,18 +856,30 @@ class AccountController extends GetxController with WidgetsBindingObserver {
 
       try {
         if (Get.isRegistered<DashboardController>()) {
-          Get.find<DashboardController>().markLifecycleResumePriceOnly();
+          final dashboard = Get.find<DashboardController>();
+          dashboard.markLifecycleResumePriceOnly();
+          dashboard.ensureWebSocketInitialized();
         }
       } catch (_) {}
 
-      // Keep the unified service bound to the same active account, but do not
-      // clear controller data. This restores shared sockets after backgrounding.
-      try {
-        if (Get.isRegistered<UnifiedWebSocketService>()) {
-          await Get.find<UnifiedWebSocketService>().switchAccount(active);
+      if (ApiConstants.useSingleWebSocket) {
+        try {
+          if (Get.isRegistered<SingleWebSocketService>()) {
+            await Get.find<SingleWebSocketService>().connect(account: active);
+          }
+        } catch (e) {
+          print('AccountController: Resume single socket error: $e');
         }
-      } catch (e) {
-        print('AccountController: Resume unified socket error: $e');
+      } else {
+        // Keep the unified service bound to the same active account, but do not
+        // clear controller data. This restores shared sockets after backgrounding.
+        try {
+          if (Get.isRegistered<UnifiedWebSocketService>()) {
+            await Get.find<UnifiedWebSocketService>().switchAccount(active);
+          }
+        } catch (e) {
+          print('AccountController: Resume unified socket error: $e');
+        }
       }
 
       // Restore marketwatchv2 subscriptions for favorites. This path preserves
@@ -991,16 +1016,28 @@ class AccountController extends GetxController with WidgetsBindingObserver {
       '═══════════════════════════════════════════════════════════',
     );
 
-    // ✅ STEP 1: Switch account in unified service (atomic - closes old, opens new)
-    // This is the SINGLE source of truth for account switching
-    try {
-      final unified = Get.find<UnifiedWebSocketService>();
-      WebSocketEndpointHelper.logSwitchStep('Unified switchAccount start');
-      await unified.switchAccount(account);
-      WebSocketEndpointHelper.logSwitchStep('Unified switchAccount done');
-      print('✅ AccountController: Unified WebSocket account switched');
-    } catch (e) {
-      print('⚠️ AccountController: Error in unified switchAccount: $e');
+    if (ApiConstants.useSingleWebSocket) {
+      try {
+        final singleWS = Get.find<SingleWebSocketService>();
+        WebSocketEndpointHelper.logSwitchStep('SingleWS switchAccount start');
+        singleWS.switchAccount(account);
+        WebSocketEndpointHelper.logSwitchStep('SingleWS switchAccount done');
+        print('✅ AccountController: Single WebSocket account switched');
+      } catch (e) {
+        print('⚠️ AccountController: Error in singleWS switchAccount: $e');
+      }
+    } else {
+      // ✅ STEP 1: Switch account in unified service (atomic - closes old, opens new)
+      // This is the SINGLE source of truth for account switching
+      try {
+        final unified = Get.find<UnifiedWebSocketService>();
+        WebSocketEndpointHelper.logSwitchStep('Unified switchAccount start');
+        await unified.switchAccount(account);
+        WebSocketEndpointHelper.logSwitchStep('Unified switchAccount done');
+        print('✅ AccountController: Unified WebSocket account switched');
+      } catch (e) {
+        print('⚠️ AccountController: Error in unified switchAccount: $e');
+      }
     }
 
     // ✅ STEP 2: Wait for clean disconnect

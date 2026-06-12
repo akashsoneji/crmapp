@@ -9,7 +9,6 @@ import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 
 import 'package:crm_app/controllers/instruments_controller.dart';
-import 'package:crm_app/controllers/trading_controller.dart'; // ✅ ADD: For floating P&L
 
 import 'package:crm_app/models/socket_response.dart';
 import 'package:crm_app/services/language_service.dart';
@@ -178,41 +177,33 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
   }
 
   Widget _buildHeader() {
-    // ✅ Get floating P&L from trading controller
-    final tradingController = Get.find<TradingController>();
-
-    return Obx(() {
-      final double? floatingProfit = tradingController.accountInfo?.profit;
-
-      return AccountHeaderWidget(
-        onSearchTap: () {
-          showModalBottomSheet(
-            context: context,
-            isScrollControlled: true,
-            backgroundColor: Colors.transparent,
-            builder:
-                (context) => Container(
-                  height: MediaQuery.of(context).size.height * 0.9,
-                  decoration: BoxDecoration(
-                    color: AppColors.tradeBackgroundCenterColor,
-                    borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(20.r),
-                    ),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(20.r),
-                    ),
-                    child: SearchInstrumentsScreen(
-                      onNavigateToChart: widget.onNavigateToChart,
-                    ),
+    return AccountHeaderWidget(
+      onSearchTap: () {
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder:
+              (context) => Container(
+                height: MediaQuery.of(context).size.height * 0.9,
+                decoration: BoxDecoration(
+                  color: AppColors.tradeBackgroundCenterColor,
+                  borderRadius: BorderRadius.vertical(
+                    top: Radius.circular(20.r),
                   ),
                 ),
-          );
-        },
-        floatingProfit: floatingProfit, // ✅ ADD: Show floating P&L
-      );
-    });
+                child: ClipRRect(
+                  borderRadius: BorderRadius.vertical(
+                    top: Radius.circular(20.r),
+                  ),
+                  child: SearchInstrumentsScreen(
+                    onNavigateToChart: widget.onNavigateToChart,
+                  ),
+                ),
+              ),
+        );
+      },
+    );
   }
 
   Widget _buildSearchAndFilters() {
