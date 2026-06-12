@@ -544,11 +544,34 @@ Future<void> configureIosFlavor(String flavor) async {
   final brandName = brandNameMatch.group(1)!;
   print('  ✓ Extracted brandName: $brandName');
 
+  // Map of flavor to iOS bundle ID
+  final bundleIds = {
+    'pipze': 'com.pipze.app',
+    'amirifx': 'com.amirifx.app',
+    'goldenwolffx': 'com.goldenwolffx.app',
+    'octa': 'com.example.octa',
+    'tenax': 'com.tenaxcode.app',
+    'tenax3': 'com.tenaxcode.tenax3',
+    'celestial': 'com.celestial.app',
+    'onsa': 'com.example.onsa',
+    'profx': 'app.profx.trade',
+    'afx': 'app.afx.trade',
+    'kantara': 'com.kantara.app',
+    'tradoxy': 'app.tradoxy.trade',
+    'askbid': 'com.example.askbid',
+    'sr': 'com.example.sr',
+    'vr19': 'com.example.vr19',
+  };
+
+  final bundleId = bundleIds[flavor] ?? 'com.example.$flavor';
+  print('  ✓ Resolved iOS Bundle ID: $bundleId');
+
   // Write ios/Flutter/Flavor.xcconfig
   final flavorXcconfig = File(path.join('ios', 'Flutter', 'Flavor.xcconfig'));
   final content = '''// Generated file. Do not edit.
 BUNDLE_DISPLAY_NAME = $brandName
 BUNDLE_NAME = $brandName
+APP_BUNDLE_IDENTIFIER = $bundleId
 ''';
 
   await flavorXcconfig.writeAsString(content);

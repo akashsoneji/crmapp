@@ -1,3 +1,4 @@
 // Generated file. Do not edit.
 BUNDLE_DISPLAY_NAME = Tenax
 BUNDLE_NAME = Tenax
+APP_BUNDLE_IDENTIFIER = com.tenaxcode.app
