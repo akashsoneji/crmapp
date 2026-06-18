@@ -6,6 +6,7 @@ import 'package:crm_app/constants/api_const.dart';
 import 'package:crm_app/services/secure_storage_service.dart';
 import 'package:crm_app/widgets/brand_logo.dart';
 import '../../../controllers/auth_controller.dart';
+import '../../../controllers/dashboard_controller.dart';
 import '../../../routes/app_pages.dart';
 import '../../../flavor_config.dart';
 
@@ -57,14 +58,21 @@ class _SplashScreenState extends State<SplashScreen> {
 
   Future<void> _checkAuthAndNavigate() async {
     try {
-      // ── Tenax flavor: show broker selection whenever user is NOT logged in ─
+      // ── Tenax flavor: show broker selection only when user is NOT logged in ─
       if (FlavorConfig.isMultiBrokerEnabled &&
           await SecureStorageService.getTenaxBrokerSelectionFlag()) {
         final isLoggedIn = await SecureStorageService.isUserLoggedIn();
         final hasBrokerSelection =
             await SecureStorageService.hasTenaxBrokerSelection();
-        if (!isLoggedIn &&
-            !(FlavorConfig.isTenaxBrokerDemoEnabled && hasBrokerSelection)) {
+
+        // ✅ FIX: Never show broker selection if the user is logged in.
+        // Use isLoggedIn as primary check. Even if the marker was reset after
+        // an app update, a logged-in user should go straight to their app.
+        final shouldShowBrokerSelection =
+            !isLoggedIn &&
+            !(FlavorConfig.isTenaxBrokerDemoEnabled && hasBrokerSelection);
+
+        if (shouldShowBrokerSelection) {
           print(
             'SplashScreen: Tenax – user not logged in, showing broker selection',
           );
@@ -89,6 +97,25 @@ class _SplashScreenState extends State<SplashScreen> {
 
         if (authController.isAuthenticated) {
           print('SplashScreen: User authenticated → Trading screen');
+          // ✅ Fetch MT5 accounts in background immediately at app launch.
+          // Don't await — let navigation proceed instantly while data loads.
+          Future.microtask(() async {
+            try {
+              final DashboardController dc;
+              if (Get.isRegistered<DashboardController>()) {
+                dc = Get.find<DashboardController>();
+              } else {
+                dc = Get.put<DashboardController>(
+                  DashboardController(),
+                  permanent: true,
+                );
+              }
+              await dc.forceCheckMT5Accounts();
+              print('SplashScreen: MT5 accounts prefetched at launch');
+            } catch (e) {
+              print('SplashScreen: Error prefetching MT5 accounts: $e');
+            }
+          });
           Get.offAllNamed(AppPages.TRADING);
         } else {
           print('SplashScreen: Token invalid → auth entry screen');

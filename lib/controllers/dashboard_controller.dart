@@ -92,22 +92,14 @@ class DashboardController extends GetxController {
   void onInit() {
     super.onInit();
 
-    // Check if user is authenticated before making API calls
-    try {
-      final authController = Get.find<AuthController>();
-      if (authController.isAuthenticated) {
-        checkMT5Accounts();
-      } else {
-        print(
-          'DashboardController: User not authenticated, skipping checkMT5Accounts',
-        );
-      }
-    } catch (e) {
-      final errorMsg = e.toString();
-      errorMessage.value = errorMsg;
-      print('DashboardController: Error checking auth status: $e');
-      CustomToastService.showError(message: errorMsg);
-    }
+    // ✅ FIX: Check token directly from storage instead of authController.isAuthenticated.
+    // DashboardController is created during initServices() (before token validation),
+    // so isAuthenticated is always false at this point. We defer the API call to
+    // avoid a race; forceCheckMT5Accounts() is called explicitly from AuthCheckScreen
+    // after token validation succeeds. Skip the call here to prevent 401 errors.
+    print(
+      'DashboardController.onInit: skipping checkMT5Accounts – will be triggered by AuthCheckScreen after token validation.',
+    );
 
     _bindUnifiedAccountStream();
   }

@@ -9,7 +9,11 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class ChartInAppWebView extends StatefulWidget {
+  /// Stable base URL — does NOT include ?symbol= so it never changes per symbol
+  /// switch. Symbol is updated via JavaScript to avoid full page reloads.
   final String url;
+
+  /// The symbol to display. Updated via JS (updateSymbol) — no page reload.
   final String symbol;
 
   const ChartInAppWebView({super.key, required this.url, required this.symbol});
@@ -23,13 +27,15 @@ class ChartInAppWebViewState extends State<ChartInAppWebView> {
   bool _isLoading = true;
   bool _hasError = false;
   bool _isReady = false;
-  String? _lastUrl;
   Timer? _loadingTimeout;
+
+  /// Symbol requested while the WebView wasn't ready yet.
+  /// Applied immediately after onLoadStop fires.
+  String? _pendingSymbol;
 
   @override
   void initState() {
     super.initState();
-    _lastUrl = widget.url;
     _startLoadingTimeout();
   }
 
@@ -37,19 +43,27 @@ class ChartInAppWebViewState extends State<ChartInAppWebView> {
   void didUpdateWidget(covariant ChartInAppWebView oldWidget) {
     super.didUpdateWidget(oldWidget);
 
+    // URL changed (e.g. broker switch) → full reload required
     if (oldWidget.url != widget.url) {
-      _lastUrl = widget.url;
       _isReady = false;
       _hasError = false;
       _isLoading = true;
+      _pendingSymbol = widget.symbol;
       _startLoadingTimeout();
       _controller?.loadUrl(urlRequest: URLRequest(url: WebUri(widget.url)));
       return;
     }
 
-    // If only symbol changed, try JS update first (no reload).
+    // Symbol changed — NEVER reload the page.
+    // ✅ If chart is ready → instant JS update (zero blink).
+    // ✅ If chart is still loading → queue it; applied in onLoadStop.
     if (oldWidget.symbol != widget.symbol) {
-      unawaited(updateSymbol(widget.symbol));
+      if (_isReady) {
+        unawaited(updateSymbol(widget.symbol));
+      } else {
+        // Queue — will be applied as soon as onLoadStop fires
+        _pendingSymbol = widget.symbol;
+      }
     }
   }
 
@@ -61,7 +75,7 @@ class ChartInAppWebViewState extends State<ChartInAppWebView> {
 
   void _startLoadingTimeout() {
     _loadingTimeout?.cancel();
-    _loadingTimeout = Timer(const Duration(seconds: 12), () {
+    _loadingTimeout = Timer(const Duration(seconds: 15), () {
       if (!mounted) return;
       if (_isReady) return;
       setState(() {
@@ -71,12 +85,18 @@ class ChartInAppWebViewState extends State<ChartInAppWebView> {
     });
   }
 
+  /// Update chart symbol via JavaScript — no page reload, no blink.
   Future<void> updateSymbol(String symbol) async {
     if (_controller == null) return;
-    if (!_isReady) return;
+    if (!_isReady) {
+      _pendingSymbol = symbol;
+      return;
+    }
 
     final String chartSymbol =
         symbol.contains('.') ? symbol.substring(0, symbol.lastIndexOf('.')) : symbol;
+
+    if (chartSymbol.isEmpty) return;
 
     try {
       await _controller!.evaluateJavascript(source: '''
@@ -98,12 +118,7 @@ class ChartInAppWebViewState extends State<ChartInAppWebView> {
         })();
       ''');
     } catch (_) {
-      // If JS bridge fails, fallback to reload the URL (keeps app alive).
-      if (_lastUrl != null) {
-        await _controller!.loadUrl(
-          urlRequest: URLRequest(url: WebUri(_lastUrl!)),
-        );
-      }
+      // JS bridge error is non-fatal — chart still shows previous symbol
     }
   }
 
@@ -111,7 +126,6 @@ class ChartInAppWebViewState extends State<ChartInAppWebView> {
     if (_controller == null) return;
     if (!_isReady) return;
 
-    // tradesJson is already JSON string; pass as JS value.
     try {
       await _controller!.evaluateJavascript(source: '''
         (function() {
@@ -147,6 +161,8 @@ class ChartInAppWebViewState extends State<ChartInAppWebView> {
       height: double.infinity,
       child: Stack(
         children: [
+          // ✅ WebView always rendered — never hidden via opacity/offstage.
+          // Loading overlay sits on top; Android renderer starts immediately.
           InAppWebView(
             initialUrlRequest: URLRequest(url: WebUri(widget.url)),
             initialSettings: InAppWebViewSettings(
@@ -155,12 +171,13 @@ class ChartInAppWebViewState extends State<ChartInAppWebView> {
               useShouldOverrideUrlLoading: true,
               mediaPlaybackRequiresUserGesture: false,
               allowsInlineMediaPlayback: true,
+              cacheEnabled: true,
+              cacheMode: CacheMode.LOAD_DEFAULT,
             ),
             onWebViewCreated: (controller) {
               _controller = controller;
             },
             shouldOverrideUrlLoading: (controller, action) async {
-              // Keep navigation inside the same webview.
               return NavigationActionPolicy.ALLOW;
             },
             onLoadStart: (controller, url) {
@@ -179,54 +196,65 @@ class ChartInAppWebViewState extends State<ChartInAppWebView> {
                 _hasError = false;
                 _isReady = true;
               });
-              // Ensure symbol is set after load.
-              unawaited(updateSymbol(widget.symbol));
+
+              // Apply any symbol that was set before/during page load.
+              // Use _pendingSymbol if queued, else current widget symbol.
+              final symbolToApply = _pendingSymbol ?? widget.symbol;
+              _pendingSymbol = null;
+              unawaited(updateSymbol(symbolToApply));
             },
             onReceivedError: (controller, request, error) {
               if (!mounted) return;
-              setState(() {
-                _hasError = true;
-                _isLoading = false;
-                _isReady = false;
-              });
-            },
-            androidOnRenderProcessGone: (controller, detail) async {
-              // ✅ Prevent the whole app from crashing when WebView renderer dies.
-              if (!mounted) return;
-              if (kDebugMode) {
-                debugPrint('Chart WebView renderer died: $detail');
+              if (request.isForMainFrame == true) {
+                setState(() {
+                  _hasError = true;
+                  _isLoading = false;
+                  _isReady = false;
+                });
               }
+            },
+            onRenderProcessGone: (controller, detail) async {
+              if (!mounted) return;
+              if (kDebugMode) debugPrint('Chart WebView renderer died: $detail');
               setState(() {
                 _hasError = true;
                 _isLoading = false;
                 _isReady = false;
               });
-              // Returning void here is correct for this callback signature.
             },
           ),
-          if (_isLoading)
+
+          // Loading overlay — shown only during initial load or broker URL change.
+          // Symbol switches do NOT trigger this (JS update, no reload).
+          if (_isLoading && !_hasError)
             Container(
-              color: Colors.transparent,
+              color: AppColors.tradeBackgroundCenterColor,
               child: Center(
                 child: CommonLoadingWidget(
-                  message: 'Loading chart...',
                   size: 40.0,
                   color: AppColors.primary,
                 ),
               ),
             ),
+
+          // Error state
           if (_hasError)
             Container(
-              color: Colors.transparent,
+              color: AppColors.tradeBackgroundCenterColor,
               child: Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.error_outline, size: 48.h, color: AppColors.textGrey),
+                    Icon(
+                      Icons.signal_wifi_off_rounded,
+                      size: 48.h,
+                      color: AppColors.textGrey,
+                    ),
                     SizedBox(height: 12.h),
                     Text(
                       'Chart unavailable',
-                      style: AppTextStyles.subheading.copyWith(color: AppColors.textGrey),
+                      style: AppTextStyles.subheading
+                          .copyWith(color: AppColors.textGrey),
                     ),
                     SizedBox(height: 12.h),
                     SizedBox(
@@ -259,4 +287,3 @@ class ChartInAppWebViewState extends State<ChartInAppWebView> {
     );
   }
 }
-

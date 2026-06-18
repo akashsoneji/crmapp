@@ -1782,7 +1782,9 @@ Placing Order:
         !_isFetchingDatafeedSymbol) {
       final symbolToLookup = selectedSymbol;
       _lastSymbolForDatafeedLookup = selectedSymbol;
-      _datafeedSymbolForSelected = '';
+      // ✅ FIX: Do NOT reset _datafeedSymbolForSelected to '' here.
+      // Keeping old value prevents the first spurious URL change that causes blink #1.
+      // The URL will update exactly ONCE when the lookup resolves.
       _isFetchingDatafeedSymbol = true;
 
       Future(() async {
@@ -1791,7 +1793,6 @@ Placing Order:
         if (accountNumber == null) {
           if (!mounted) return;
           setState(() {
-            _datafeedSymbolForSelected = '';
             _isFetchingDatafeedSymbol = false;
           });
           return;
@@ -1805,7 +1806,8 @@ Placing Order:
 
         if (!ok) {
           setState(() {
-            _datafeedSymbolForSelected = '';
+            // Fallback: use display symbol so chart loads something
+            _datafeedSymbolForSelected = displaySymbol;
             _isFetchingDatafeedSymbol = false;
           });
           return;
@@ -1826,35 +1828,38 @@ Placing Order:
         setState(() {
           // If API value isn't available, fallback to display symbol.
           _datafeedSymbolForSelected =
-              resolvedDatafeedSymbol.isNotEmpty ? resolvedDatafeedSymbol : '';
+              resolvedDatafeedSymbol.isNotEmpty ? resolvedDatafeedSymbol : displaySymbol;
           _isFetchingDatafeedSymbol = false;
         });
       });
     }
 
+    // ✅ FIX: Use resolved datafeed symbol if available,
+    // else displaySymbol (never empty string — avoids a blank intermediate URL).
     final effectiveDatafeedSymbol =
         _datafeedSymbolForSelected.isNotEmpty
             ? _datafeedSymbolForSelected
             : displaySymbol;
 
-    // print(
-    //   '🔵 Flavor: ${FlavorConfig.instance.chartBaseUrl}/mobile-chart?symbol=$effectiveDatafeedSymbol&theme=${AppColors.chartTheme}',
-    // );
-    // print('🔵 Chart Area: ${FlavorConfig.instance.chartBaseUrl}');
+    // ✅ FIX: Symbol is intentionally NOT in the URL.
+    // Including ?symbol= in the URL causes a full WebView page reload every time the
+    // symbol changes, which produces the visible "blink". Instead:
+    //  - URL stays constant for the same broker (only theme changes it)
+    //  - Symbol is passed as a separate `symbol` prop
+    //  - ChartInAppWebView.didUpdateWidget updates via JS (updateSymbol) – no reload
+    //  - onLoadStop already calls updateSymbol(widget.symbol) after initial load
+    final stableUrl =
+        '${FlavorConfig.instance.chartBaseUrl}/mobile-chart?theme=${AppColors.chartTheme}';
+
     return Container(
       width: double.infinity,
-      height: MediaQuery.of(context).size.height * 0.4, // Responsive height
+      height: MediaQuery.of(context).size.height * 0.4,
       padding: EdgeInsets.zero,
       margin: EdgeInsets.zero,
-
-      // margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
       child: ChartInAppWebView(
         key: _webViewKey,
-        symbol: selectedSymbol,
-        // Removed ValueKey to allow didUpdateWidget to handle symbol changes
-        // This enables JavaScript-based updates instead of full widget recreation
-        url:
-            '${FlavorConfig.instance.chartBaseUrl}/mobile-chart?symbol=$effectiveDatafeedSymbol&theme=${AppColors.chartTheme}',
+        symbol: effectiveDatafeedSymbol, // ✅ JS-updated, no URL reload
+        url: stableUrl,                  // ✅ Constant — never changes per symbol
       ),
     );
   }
@@ -2076,6 +2081,7 @@ Placing Order:
           child: ClipRRect(
             borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
             child: SearchInstrumentsScreen(
+              favoritesOnly: true, // Only show favourites, hide segments & add button
               onNavigateToChart: (symbol) {
                 _onSymbolChanged(symbol);
               },
@@ -2085,6 +2091,7 @@ Placing Order:
       },
     );
   }
+
 
   Widget _buildInteractiveIcons() {
     return Padding(

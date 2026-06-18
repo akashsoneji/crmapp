@@ -34,11 +34,21 @@ class SecureStorageService {
       }
 
       if (!hasInstallMarker) {
-        print(
-          'SecureStorage: Fresh iOS install/reinstall detected. Clearing stale auth session keys only.',
-        );
-        await _clearSessionKeysForFreshInstall();
-        print('SecureStorage: Fresh-install auth keys cleared');
+        // ✅ FIX: If a valid Keychain token exists, this is most likely an app
+        // UPDATE (not a fresh install). iOS Keychain survives updates but
+        // SharedPreferences may have been reset by the OS. In this case, restore
+        // the marker and preserve the user's session.
+        if (tokenBeforeCleanup != null && tokenBeforeCleanup.isNotEmpty) {
+          print(
+            'SecureStorage: Marker missing but token found – treating as update, restoring marker and preserving session.',
+          );
+        } else {
+          print(
+            'SecureStorage: Fresh iOS install/reinstall detected. Clearing stale auth session keys only.',
+          );
+          await _clearSessionKeysForFreshInstall();
+          print('SecureStorage: Fresh-install auth keys cleared');
+        }
       } else {
         print(
           'SecureStorage: Existing iOS install detected. Preserving secure session.',

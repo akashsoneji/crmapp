@@ -477,7 +477,7 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
           ),
           onTap: () => _showCountryOptions(),
           decoration: InputDecoration(
-            labelText: 'Country',
+            labelText: 'Country / Region',
             labelStyle: TextStyle(color: AppColors.textGrey),
             floatingLabelStyle: TextStyle(color: AppColors.primary),
             contentPadding: EdgeInsets.symmetric(
@@ -1000,7 +1000,7 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
                   ),
                   SizedBox(height: 10.h),
                   Text(
-                    'Select Country',
+                    'Select Country / Region',
                     style: TextStyle(
                       fontSize: 18.sp,
                       fontWeight: FontWeight.w600,

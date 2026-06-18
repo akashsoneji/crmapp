@@ -181,7 +181,7 @@ class _EditProfileState extends State<EditProfile> {
                   ),
                   SizedBox(height: 20.h),
                   Text(
-                    'Select Country',
+                    'Select Country / Region',
                     style: TextStyle(
                       fontSize: 18.sp,
                       fontWeight: FontWeight.w600,

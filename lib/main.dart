@@ -540,6 +540,37 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
             print('AuthCheckScreen: Error fetching accounts: $e');
           }
 
+          // ✅ FIX: Trigger full MT5 accounts fetch in background at app launch.
+          // DashboardController was created in initServices() but its onInit() skipped
+          // checkMT5Accounts() because isAuthenticated was false at that time.
+          // Now that token is validated, kick off the fetch before navigating.
+          unawaited(
+            Future.microtask(() async {
+              try {
+                final dc = Get.find<DashboardController>();
+                await dc.forceCheckMT5Accounts();
+                print(
+                  'AuthCheckScreen: MT5 accounts prefetched at launch (${dc.mt5Accounts.length} accounts)',
+                );
+              } catch (e) {
+                print('AuthCheckScreen: Error prefetching MT5 accounts: $e');
+              }
+            }),
+          );
+
+          // 🚀 CHART PRELOAD: Background me chart WebSocket pre-connect karo
+          // Taaki user jab chart tab pe jaye, data already ready ho (loading time = 0)
+          unawaited(
+            Future.microtask(() async {
+              try {
+                await ChartSocketController.preloadForDefaultSymbol();
+                print('AuthCheckScreen: Chart WebSocket preload initiated in background');
+              } catch (e) {
+                print('AuthCheckScreen: Chart preload error (non-critical): $e');
+              }
+            }),
+          );
+
           if (Get.isRegistered<EnabledModulesService>()) {
             unawaited(
               Get.find<EnabledModulesService>().fetchEnabledModules(
@@ -634,11 +665,22 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
     if (!FlavorConfig.isMultiBrokerEnabled) return false;
     final isEnabled = await SecureStorageService.getTenaxBrokerSelectionFlag();
     if (!isEnabled) return false;
+
+    // ✅ FIX: If the user is already logged in, NEVER redirect to broker
+    // selection – even if the flag is set. This prevents the broker selection
+    // screen from appearing after an app update where the SharedPreferences
+    // install-marker may have been reset while the Keychain session (token)
+    // was preserved.
+    if (isLoggedIn) return false;
+
+    // For non-logged-in users in demo mode, skip broker selection when a
+    // previous broker selection is already saved.
     if (FlavorConfig.isTenaxBrokerDemoEnabled &&
         await SecureStorageService.hasTenaxBrokerSelection()) {
       return false;
     }
-    return !isLoggedIn;
+
+    return true; // Not logged in → show broker selection
   }
 
   Future<bool> _shouldSkipWelcomeForTenax() async {
