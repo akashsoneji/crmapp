@@ -93,20 +93,22 @@ class _SplashScreenState extends State<SplashScreen> {
         } else {
           print('SplashScreen: Token invalid → auth entry screen');
           await SecureStorageService.clearAuthData();
-          final shouldGoToLogin =
-              FlavorConfig.isTenaxBrokerDemoEnabled &&
-              await SecureStorageService.hasTenaxBrokerSelection();
+          // If a broker is already selected, go to LOGIN directly (no need for GET_STARTED)
+          final hasBroker = await SecureStorageService.hasTenaxBrokerSelection();
           Get.offAllNamed(
-            shouldGoToLogin ? AppPages.LOGIN : AppPages.GET_STARTED,
+            (FlavorConfig.isMultiBrokerEnabled && hasBroker)
+                ? AppPages.LOGIN
+                : AppPages.GET_STARTED,
           );
         }
       } else {
         print('SplashScreen: Not logged in → auth entry screen');
-        final shouldGoToLogin =
-            FlavorConfig.isTenaxBrokerDemoEnabled &&
-            await SecureStorageService.hasTenaxBrokerSelection();
+        // If a broker is already selected, go to LOGIN directly
+        final hasBroker = await SecureStorageService.hasTenaxBrokerSelection();
         Get.offAllNamed(
-          shouldGoToLogin ? AppPages.LOGIN : AppPages.GET_STARTED,
+          (FlavorConfig.isMultiBrokerEnabled && hasBroker)
+              ? AppPages.LOGIN
+              : AppPages.GET_STARTED,
         );
       }
     } catch (e) {
@@ -116,10 +118,12 @@ class _SplashScreenState extends State<SplashScreen> {
       } catch (clearError) {
         print('SplashScreen: Error clearing storage: $clearError');
       }
-      final shouldGoToLogin =
-          FlavorConfig.isTenaxBrokerDemoEnabled &&
-          await SecureStorageService.hasTenaxBrokerSelection();
-      Get.offAllNamed(shouldGoToLogin ? AppPages.LOGIN : AppPages.GET_STARTED);
+      final hasBroker = await SecureStorageService.hasTenaxBrokerSelection();
+      Get.offAllNamed(
+        (FlavorConfig.isMultiBrokerEnabled && hasBroker)
+            ? AppPages.LOGIN
+            : AppPages.GET_STARTED,
+      );
     }
   }
 

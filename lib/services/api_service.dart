@@ -982,9 +982,12 @@ class ApiService {
         await authController.logoutWithOutApi();
       } catch (e) {
         print('AuthController not found, clearing data manually: $e');
-        // Fallback: clear auth data and navigate to login
+        // Fallback: clear auth data; go to LOGIN if broker is already chosen
         await SecureStorageService.clearAuthData();
-        g.Get.offAllNamed(AppPages.GET_STARTED);
+        final hasBroker = await SecureStorageService.hasTenaxBrokerSelection();
+        g.Get.offAllNamed(
+          hasBroker ? AppPages.LOGIN : AppPages.GET_STARTED,
+        );
       }
     } catch (e) {
       print('Error handling unauthenticated error: $e');
@@ -996,7 +999,10 @@ class ApiService {
         );
         await Future.delayed(Duration(seconds: 1));
         await SecureStorageService.clearAuthData();
-        g.Get.offAllNamed(AppPages.GET_STARTED);
+        final hasBroker = await SecureStorageService.hasTenaxBrokerSelection();
+        g.Get.offAllNamed(
+          hasBroker ? AppPages.LOGIN : AppPages.GET_STARTED,
+        );
       } catch (fallbackError) {
         print('Fallback error handling failed: $fallbackError');
         // Last resort: just navigate

@@ -1164,27 +1164,37 @@ class AuthController extends GetxController {
         return;
       }
 
+      // After logout: if a broker is already saved, go to LOGIN.
+      // Otherwise go to broker selection (or GET_STARTED for non-multibroker).
+      final hasBroker =
+          isTenaxBrokerFlow &&
+          await SecureStorageService.hasTenaxBrokerSelection();
+
       if (response.success && response.data != null) {
         await _clearAllUserData();
         Get.offAllNamed(
-          isTenaxBrokerFlow
-              ? AppPages.TENAX_BROKER_SELECTION
-              : AppPages.GET_STARTED,
+          hasBroker
+              ? AppPages.LOGIN
+              : (isTenaxBrokerFlow
+                  ? AppPages.TENAX_BROKER_SELECTION
+                  : AppPages.GET_STARTED),
           arguments:
-              isTenaxBrokerFlow
-                  ? {'allowBack': false, 'nextRoute': AppPages.LOGIN}
+              (!hasBroker && isTenaxBrokerFlow)
+                  ? {'allowBack': false}
                   : null,
         );
       } else {
         print('AuthController: Logout failed - ${response.message}');
         await _clearAllUserData();
         Get.offAllNamed(
-          isTenaxBrokerFlow
-              ? AppPages.TENAX_BROKER_SELECTION
-              : AppPages.GET_STARTED,
+          hasBroker
+              ? AppPages.LOGIN
+              : (isTenaxBrokerFlow
+                  ? AppPages.TENAX_BROKER_SELECTION
+                  : AppPages.GET_STARTED),
           arguments:
-              isTenaxBrokerFlow
-                  ? {'allowBack': false, 'nextRoute': AppPages.LOGIN}
+              (!hasBroker && isTenaxBrokerFlow)
+                  ? {'allowBack': false}
                   : null,
         );
       }
@@ -1205,14 +1215,19 @@ class AuthController extends GetxController {
         final isTenaxBrokerFlow =
             FlavorConfig.isMultiBrokerEnabled &&
             await SecureStorageService.getTenaxBrokerSelectionFlag();
+        final hasBroker =
+            isTenaxBrokerFlow &&
+            await SecureStorageService.hasTenaxBrokerSelection();
         await _clearAllUserData();
         Get.offAllNamed(
-          isTenaxBrokerFlow
-              ? AppPages.TENAX_BROKER_SELECTION
-              : AppPages.GET_STARTED,
+          hasBroker
+              ? AppPages.LOGIN
+              : (isTenaxBrokerFlow
+                  ? AppPages.TENAX_BROKER_SELECTION
+                  : AppPages.GET_STARTED),
           arguments:
-              isTenaxBrokerFlow
-                  ? {'allowBack': false, 'nextRoute': AppPages.LOGIN}
+              (!hasBroker && isTenaxBrokerFlow)
+                  ? {'allowBack': false}
                   : null,
         );
       } catch (cleanupError) {
@@ -1281,14 +1296,17 @@ class AuthController extends GetxController {
       final isTenaxBrokerFlow =
           FlavorConfig.isMultiBrokerEnabled &&
           await SecureStorageService.getTenaxBrokerSelectionFlag();
+      final hasBroker =
+          isTenaxBrokerFlow &&
+          await SecureStorageService.hasTenaxBrokerSelection();
       Get.offAllNamed(
-        isTenaxBrokerFlow
-            ? AppPages.TENAX_BROKER_SELECTION
-            : AppPages.GET_STARTED,
+        hasBroker
+            ? AppPages.LOGIN
+            : (isTenaxBrokerFlow
+                ? AppPages.TENAX_BROKER_SELECTION
+                : AppPages.GET_STARTED),
         arguments:
-            isTenaxBrokerFlow
-                ? {'allowBack': false, 'nextRoute': AppPages.LOGIN}
-                : null,
+            (!hasBroker && isTenaxBrokerFlow) ? {'allowBack': false} : null,
       );
     } catch (e) {
       print('AuthController: Logout without API error: $e');

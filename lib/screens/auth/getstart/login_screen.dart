@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:crm_app/flavor_config.dart';
 import 'package:crm_app/widgets/brand_logo.dart';
 import 'package:flutter/material.dart';
@@ -35,6 +37,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool _biometricPrompted = false;
 
+  // Multibroker: other saved profiles for "Back to previous account"
+  List<Map<String, dynamic>> _otherProfiles = [];
+  bool _multibrokerEnabled = false;
+
   // Validation states
   bool isEmailValid = false;
   bool isPasswordValid = false;
@@ -68,7 +74,249 @@ class _LoginScreenState extends State<LoginScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _tryBiometricLogin();
+      _loadOtherProfiles();
     });
+  }
+
+  /// Loads all saved Tenax profiles except the currently active one.
+  /// These are shown as "Back to previous account" options.
+  Future<void> _loadOtherProfiles() async {
+    if (!FlavorConfig.isMultiBrokerEnabled) return;
+    final isEnabled = await SecureStorageService.getTenaxBrokerSelectionFlag();
+    if (!isEnabled) return;
+
+    final allProfiles = await SecureStorageService.getTenaxUserBrokerProfiles();
+    final currentKey = await SecureStorageService.getTenaxCurrentProfileKey();
+
+    // Keep every profile whose key differs from the current one.
+    final others = allProfiles
+        .where((p) => (p['profile_key'] ?? '').toString() != (currentKey ?? ''))
+        .toList();
+
+    if (!mounted) return;
+    setState(() {
+      _multibrokerEnabled = true;
+      _otherProfiles = others;
+    });
+  }
+
+  /// Restores a saved profile's auth token + broker config and navigates to TRADING.
+  Future<void> _switchToProfile(Map<String, dynamic> profile) async {
+    final brokerData = profile['broker_data'];
+    if (brokerData is! Map<String, dynamic>) return;
+
+    // 1. Apply broker config (URL, colors, logo)
+    final runtimeConfig =
+        (brokerData['broker_runtime_config'] is Map<String, dynamic>
+            ? brokerData['broker_runtime_config'] as Map<String, dynamic>
+            : brokerData);
+    final selectedName = (brokerData['selected_name'] ?? '').toString();
+    final selectedLogo = (brokerData['selected_logo_local_path'] ??
+            brokerData['selected_logo_url'] ??
+            '')
+        .toString();
+    FlavorConfig.applyTenaxBrokerRuntimeConfig(
+      config: runtimeConfig,
+      brokerName: selectedName.isNotEmpty ? selectedName : null,
+      brokerLogoUrl: selectedLogo.isNotEmpty ? selectedLogo : null,
+      brokerData: brokerData,
+    );
+
+    // 2. Save broker selection
+    await SecureStorageService.saveTenaxBrokerSelection(brokerData);
+
+    // 3. Restore this profile's auth token
+    final loginData = profile['login_data'];
+    if (loginData is Map) {
+      final token = (loginData['token'] ?? '').toString();
+      final wsToken = (loginData['websocket_token'] ?? '').toString();
+      final userData = loginData['user'];
+      if (token.isNotEmpty) {
+        await SecureStorageService.saveAuthToken(token);
+        await SecureStorageService.saveWebsocketToken(wsToken);
+        if (userData is Map<String, dynamic>) {
+          await SecureStorageService.saveUserData(
+            jsonEncode({
+              'token': token,
+              'websocket_token': wsToken,
+              'user': userData,
+              'is_logged_in': true,
+            }),
+          );
+        }
+        await SecureStorageService.saveLoginStatus(true);
+      }
+    }
+
+    // 4. Mark this as current profile
+    await SecureStorageService.setTenaxCurrentProfileKey(
+      (profile['profile_key'] ?? '').toString(),
+    );
+
+    // 5. Refresh branding
+    Get.find<LanguageService>().brandingUpdateIndex.value++;
+
+    // 6. Navigate to trading
+    Get.offAllNamed(AppPages.TRADING);
+  }
+
+  /// Shows a bottom sheet listing all other saved profiles to switch to.
+  void _showProfilePickerSheet() {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) => Container(
+        margin: EdgeInsets.symmetric(horizontal: 14.w, vertical: 16.h),
+        padding: EdgeInsets.fromLTRB(18.w, 16.h, 18.w, 18.h),
+        decoration: BoxDecoration(
+          color: AppColors.whiteColor,
+          borderRadius: BorderRadius.circular(18.r),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Switch to saved account',
+                    style: TextStyle(
+                      fontSize: 17.sp,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+                InkWell(
+                  onTap: () => Navigator.pop(ctx),
+                  child: Container(
+                    width: 28.w,
+                    height: 28.w,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppColors.border,
+                    ),
+                    child: const Icon(Icons.close, size: 18),
+                  ),
+                ),
+              ],
+            ),
+            Divider(height: 20.h, color: AppColors.border),
+            ..._otherProfiles.map(
+              (profile) => InkWell(
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  await Future.delayed(const Duration(milliseconds: 120));
+                  await _switchToProfile(profile);
+                },
+                child: Container(
+                  padding: EdgeInsets.symmetric(vertical: 12.h),
+                  decoration: BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(color: AppColors.border),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 18.r,
+                        backgroundColor:
+                            AppColors.primary.withValues(alpha: 0.12),
+                        child: Icon(
+                          Icons.person,
+                          size: 18.r,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                      SizedBox(width: 12.w),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              (profile['user_name'] ?? '').toString(),
+                              style: TextStyle(
+                                fontSize: 15.sp,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            SizedBox(height: 2.h),
+                            Text(
+                              (profile['user_email'] ?? '').toString(),
+                              style: TextStyle(
+                                fontSize: 12.sp,
+                                color: AppColors.textGrey,
+                              ),
+                            ),
+                            SizedBox(height: 1.h),
+                            Text(
+                              'Broker: ${(profile['broker_name'] ?? '').toString()}',
+                              style: TextStyle(
+                                fontSize: 12.sp,
+                                color: AppColors.textGrey.withValues(alpha: 0.9),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        size: 14.sp,
+                        color: AppColors.textGrey,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(height: 8.h),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Builds the "Back to previous account" button/link shown below the login button.
+  Widget _buildBackToPreviousAccountButton() {
+    if (!_multibrokerEnabled || _otherProfiles.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    if (_otherProfiles.length == 1) {
+      final p = _otherProfiles.first;
+      final name = (p['user_name'] ?? '').toString();
+      final broker = (p['broker_name'] ?? '').toString();
+      final label = name.isNotEmpty
+          ? '← Back to $name${broker.isNotEmpty ? ' ($broker)' : ''}'
+          : '← Back to previous account';
+      return TextButton(
+        onPressed: () => _switchToProfile(p),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: AppColors.primary,
+            fontWeight: FontWeight.w600,
+            fontSize: 14.sp,
+          ),
+        ),
+      );
+    }
+
+    // Multiple profiles → show picker sheet
+    return TextButton(
+      onPressed: _showProfilePickerSheet,
+      child: Text(
+        '← Back to previous account',
+        style: TextStyle(
+          color: AppColors.primary,
+          fontWeight: FontWeight.w600,
+          fontSize: 14.sp,
+        ),
+      ),
+    );
   }
 
   Future<void> _tryBiometricLogin() async {
@@ -353,7 +601,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                       ),
                                     );
                                   }),
-                                  SizedBox(height: 16.h),
+                                  SizedBox(height: 8.h),
+                                  _buildBackToPreviousAccountButton(),
+                                  SizedBox(height: 8.h),
                                 ],
                               ),
                             ),

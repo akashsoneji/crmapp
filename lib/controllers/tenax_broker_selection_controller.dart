@@ -1,6 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
-
 import 'package:crm_app/constants/color.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -161,36 +159,18 @@ class TenaxBrokerSelectionController extends GetxController {
                 .toString();
         return nestedSlug == broker.slug;
       });
+      // Always clear current auth so user gets a fresh login for this broker.
+      // The per-profile token is safely stored inside each profile's login_data
+      // and will be restored via "Back to previous account" on the login screen.
+      await SecureStorageService.clearAuthData();
+      await SecureStorageService.saveLoginStatus(false);
+
+      // If we already have a profile for this broker, keep its profile_key as
+      // current so the login screen can identify "other" profiles correctly.
       if (existingProfile != null) {
-        // Restore session for this broker
-        final loginData = existingProfile['login_data'];
-        if (loginData is Map<String, dynamic>) {
-          final token = (loginData['token'] ?? '').toString();
-          final wsToken = (loginData['websocket_token'] ?? '').toString();
-          final userData = loginData['user'];
-          if (token.isNotEmpty) {
-            await SecureStorageService.saveAuthToken(token);
-            await SecureStorageService.saveWebsocketToken(wsToken);
-            if (userData is Map<String, dynamic>) {
-              await SecureStorageService.saveUserData(
-                jsonEncode({
-                  'token': token,
-                  'websocket_token': wsToken,
-                  'user': userData,
-                  'is_logged_in': true,
-                }),
-              );
-            }
-            await SecureStorageService.saveLoginStatus(true);
-          }
-        }
         await SecureStorageService.setTenaxCurrentProfileKey(
           (existingProfile['profile_key'] ?? '').toString(),
         );
-      } else {
-        // New broker: Clear current session to force fresh login for this broker
-        await SecureStorageService.clearAuthData();
-        await SecureStorageService.saveLoginStatus(false);
       }
 
       await SecureStorageService.saveTenaxBrokerSelection(payload);
@@ -204,15 +184,8 @@ class TenaxBrokerSelectionController extends GetxController {
       // Trigger UI refresh
       Get.find<LanguageService>().brandingUpdateIndex.value++;
 
-      if (existingProfile != null) {
-        Get.offAllNamed(AppPages.SPLASH);
-      } else {
-        Get.offAllNamed(
-          FlavorConfig.isTenaxBrokerDemoEnabled
-              ? AppPages.LOGIN
-              : AppPages.GET_STARTED,
-        );
-      }
+      // Always go to LOGIN — broker is already selected, GET_STARTED is unnecessary.
+      Get.offAllNamed(AppPages.LOGIN);
     } finally {
       isSaving.value = false;
     }
