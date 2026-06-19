@@ -688,19 +688,30 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                 (stage?.personalDetails == true);
 
             return IconButton(
-              icon: SvgPicture.asset(
-                'assets/svg/edit_profile.svg',
-                height: 24.h,
-                width: 24.w,
-                color: AppColors.primary,
-              ),
+              icon: isProfileVerified
+                  ? Icon(
+                      Icons.remove_red_eye_outlined,
+                      size: 24.sp,
+                      color: AppColors.primary,
+                    )
+                  : SvgPicture.asset(
+                      'assets/svg/edit_profile.svg',
+                      height: 24.h,
+                      width: 24.w,
+                      color: AppColors.primary,
+                    ),
               padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
               onPressed: () {
-                // Pass the current verification status
-                Get.toNamed(
-                  AppPages.EDIT_PROFILE,
-                  arguments: isProfileVerified,
-                );
+                if (isProfileVerified) {
+                  // All required fields verified → show read-only view profile
+                  Get.toNamed(AppPages.VIEW_PROFILE);
+                } else {
+                  // Existing edit profile flow
+                  Get.toNamed(
+                    AppPages.EDIT_PROFILE,
+                    arguments: isProfileVerified,
+                  );
+                }
               },
             );
           }),

@@ -185,6 +185,7 @@
 				9705A1C41CF9048500538489 /* Embed Frameworks */,
 				3B06AD1E1E4923F5004D2608 /* Thin Binary */,
 				25BF57D3596E15ABD171639E /* [CP] Embed Pods Frameworks */,
+				A1B2C3D4E5F60001A1B2C3D4 /* Strip Simulator Slices */,
 				BC973F0906CEC36ACCD61DC0 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
@@ -346,6 +347,22 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
+		A1B2C3D4E5F60001A1B2C3D4 /* Strip Simulator Slices */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Strip Simulator Slices";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Strip simulator (x86_64 + arm64-sim) slices from embedded frameworks.\n# Fixes: \"Invalid executable. The Runner.app/Frameworks/objective_c.framework/objective_c\n# executable references an unsupported platform in the arm64 slice.\"\necho \"[Strip Simulator Slices] Scanning frameworks in ${TARGET_BUILD_DIR}/${WRAPPER_NAME}...\"\nfind \"${TARGET_BUILD_DIR}/${WRAPPER_NAME}\" -name '*.framework' -type d | while read -r FRAMEWORK; do\n    EXECUTABLE=$(defaults read \"$FRAMEWORK/Info.plist\" CFBundleExecutable 2>/dev/null)\n    if [ -z \"$EXECUTABLE\" ]; then continue; fi\n    BIN=\"$FRAMEWORK/$EXECUTABLE\"\n    if [ ! -f \"$BIN\" ]; then continue; fi\n    ARCHS=$(lipo -archs \"$BIN\" 2>/dev/null)\n    DEVICE_ARCHS=()\n    for ARCH in $ARCHS; do\n        if [[ \"$ARCH\" != *simulator* ]]; then\n            DEVICE_ARCHS+=(\"$ARCH\")\n        fi\n    done\n    if [ ${#DEVICE_ARCHS[@]} -eq 0 ]; then\n        echo \"[Strip Simulator Slices] WARNING: No device archs found in $BIN, skipping\"\n        continue\n    fi\n    NEEDS_STRIP=false\n    for ARCH in $ARCHS; do\n        if [[ \"$ARCH\" == *simulator* ]]; then\n            NEEDS_STRIP=true\n            break\n        fi\n    done\n    if [ \"$NEEDS_STRIP\" = true ]; then\n        TMP=\"${BIN}.stripped\"\n        LIPO_ARGS=()\n        for ARCH in \"${DEVICE_ARCHS[@]}\"; do\n            LIPO_ARGS+=(\"-extract\" \"$ARCH\")\n        done\n        lipo \"$BIN\" ${LIPO_ARGS[@]} -output \"$TMP\" 2>/dev/null || lipo \"$BIN\" -remove x86_64 -output \"$TMP\" 2>/dev/null\n        if [ -f \"$TMP\" ]; then\n            mv \"$TMP\" \"$BIN\"\n            echo \"[Strip Simulator Slices] Stripped: $BIN (kept: ${DEVICE_ARCHS[*]})\"\n        fi\n    fi\ndone\necho \"[Strip Simulator Slices] Done.\"\n";
+			showEnvVarsInLog = 0;
+		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -460,7 +477,7 @@
 				DEVELOPMENT_TEAM = W4MU85TDRR;
 				ENABLE_BITCODE = NO;
 				FLUTTER_BUILD_NAME = 1.0;
-				FLUTTER_BUILD_NUMBER = 10;
+				FLUTTER_BUILD_NUMBER = 11;
 				INFOPLIST_FILE = Runner/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -655,7 +672,7 @@
 				DEVELOPMENT_TEAM = W4MU85TDRR;
 				ENABLE_BITCODE = NO;
 				FLUTTER_BUILD_NAME = 1.0;
-				FLUTTER_BUILD_NUMBER = 10;
+				FLUTTER_BUILD_NUMBER = 11;
 				INFOPLIST_FILE = Runner/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -690,7 +707,7 @@
 				DEVELOPMENT_TEAM = W4MU85TDRR;
 				ENABLE_BITCODE = NO;
 				FLUTTER_BUILD_NAME = 1.0;
-				FLUTTER_BUILD_NUMBER = 10;
+				FLUTTER_BUILD_NUMBER = 11;
 				INFOPLIST_FILE = Runner/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				LD_RUNPATH_SEARCH_PATHS = (

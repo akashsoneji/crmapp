@@ -43,11 +43,14 @@ class ChartInAppWebViewState extends State<ChartInAppWebView> {
   void didUpdateWidget(covariant ChartInAppWebView oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    // URL changed (e.g. broker switch) → full reload required
+    // URL changed (symbol or broker switch) → full reload required
     if (oldWidget.url != widget.url) {
-      _isReady = false;
-      _hasError = false;
-      _isLoading = true;
+      // Show loading overlay immediately
+      setState(() {
+        _isReady = false;
+        _hasError = false;
+        _isLoading = true;
+      });
       _pendingSymbol = widget.symbol;
       _startLoadingTimeout();
       _controller?.loadUrl(urlRequest: URLRequest(url: WebUri(widget.url)));
@@ -198,10 +201,12 @@ class ChartInAppWebViewState extends State<ChartInAppWebView> {
               });
 
               // Apply any symbol that was set before/during page load.
-              // Use _pendingSymbol if queued, else current widget symbol.
+              // Small delay ensures the page's JS functions are fully
+              // registered before we call updateSymbol().
               final symbolToApply = _pendingSymbol ?? widget.symbol;
               _pendingSymbol = null;
-              unawaited(updateSymbol(symbolToApply));
+              await Future<void>.delayed(const Duration(milliseconds: 300));
+              if (mounted) unawaited(updateSymbol(symbolToApply));
             },
             onReceivedError: (controller, request, error) {
               if (!mounted) return;

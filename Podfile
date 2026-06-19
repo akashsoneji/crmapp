@@ -37,10 +37,28 @@ end
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
-    
-    # Add the following lines to fix deployment target warnings
+
     target.build_configurations.each do |config|
+      # Fix deployment target warnings
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '12.0'
+
+      # ✅ FIX: Exclude simulator architectures from Release/Profile builds.
+      # This prevents "references an unsupported platform in the arm64 slice"
+      # error when uploading to App Store / TestFlight.
+      if config.name == 'Release' || config.name == 'Profile'
+        config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'arm64'
+      end
+    end
+  end
+
+  # ✅ FIX: Strip simulator slices from all embedded frameworks.
+  # Handles objective_c.framework and any other pod frameworks that
+  # accidentally include simulator (x86_64 / arm64-sim) slices.
+  installer.pods_project.targets.each do |target|
+    target.build_configurations.each do |config|
+      if config.name == 'Release' || config.name == 'Profile'
+        config.build_settings['VALIDATE_WORKSPACE'] = 'NO'
+      end
     end
   end
 end

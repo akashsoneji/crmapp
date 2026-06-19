@@ -44,6 +44,7 @@ import '../screens/home/more/two_factor_auth_screen.dart';
 import '../screens/auth/google_login_otp_screen.dart';
 import '../screens/home/more/chat_with_us_screen.dart';
 import '../screens/home/more/edit_profile_screen.dart';
+import '../screens/home/more/view_profile_screen.dart';
 import '../screens/home/more/finance/deposit_screen.dart';
 import '../screens/home/more/finance/internal_transfer_history_screen.dart';
 import '../screens/home/more/finance/internal_transfer_screen.dart';
@@ -107,6 +108,7 @@ class AppPages {
   static const LANGUAGE_SELECTOR = _Paths.LANGUAGE_SELECTOR;
   static const ACCOUNT_MANAGEMENT = _Paths.ACCOUNT_MANAGEMENT;
   static const EDIT_PROFILE = _Paths.EDIT_PROFILE;
+  static const VIEW_PROFILE = _Paths.VIEW_PROFILE;
   static const WITHDRAWAL = _Paths.WITHDRAWAL;
   static const DEPOSIT = _Paths.DEPOSIT;
   static const WALLET = _Paths.WALLET;
@@ -261,6 +263,7 @@ class AppPages {
       binding: AccountBinding(),
     ),
     GetPage(name: _Paths.EDIT_PROFILE, page: () => EditProfile()),
+    GetPage(name: _Paths.VIEW_PROFILE, page: () => const ViewProfileScreen()),
     GetPage(name: _Paths.WITHDRAWAL, page: () => const WithdrawalScreen()),
     GetPage(
       name: _Paths.DEPOSIT,

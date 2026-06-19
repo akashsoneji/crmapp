@@ -891,8 +891,17 @@ Placing Order:
     print('📡 Current Symbol: $selectedSymbol');
     print('🔌 Socket Connected: ${chartSocketController.isConnected.value}');
 
+    // ✅ FIX: Reset datafeed symbol cache so that _buildChartArea() passes the new
+    // displaySymbol as ChartInAppWebView.symbol prop. Without this reset,
+    // _datafeedSymbolForSelected holds the old symbol's value and the prop
+    // doesn't change → didUpdateWidget never fires → JS updateSymbol not called.
+    // This ensures the prop changes immediately on rebuild, triggering didUpdateWidget
+    // even when _webViewKey.currentState is null (chart tab not yet rendered in PageView).
     setState(() {
       selectedSymbol = newSymbol;
+      _datafeedSymbolForSelected = ''; // force prop change in ChartInAppWebView
+      _lastSymbolForDatafeedLookup = ''; // allow fresh datafeed lookup for new symbol
+      _isFetchingDatafeedSymbol = false;
     });
     symbolSelectionService.setSymbol(newSymbol);
     if (ChartScreen._selectedSymbolNotifier.value != newSymbol) {
@@ -1834,22 +1843,17 @@ Placing Order:
       });
     }
 
-    // ✅ FIX: Use resolved datafeed symbol if available,
-    // else displaySymbol (never empty string — avoids a blank intermediate URL).
+    // Use resolved datafeed symbol if available, else displaySymbol.
     final effectiveDatafeedSymbol =
         _datafeedSymbolForSelected.isNotEmpty
             ? _datafeedSymbolForSelected
             : displaySymbol;
 
-    // ✅ FIX: Symbol is intentionally NOT in the URL.
-    // Including ?symbol= in the URL causes a full WebView page reload every time the
-    // symbol changes, which produces the visible "blink". Instead:
-    //  - URL stays constant for the same broker (only theme changes it)
-    //  - Symbol is passed as a separate `symbol` prop
-    //  - ChartInAppWebView.didUpdateWidget updates via JS (updateSymbol) – no reload
-    //  - onLoadStop already calls updateSymbol(widget.symbol) after initial load
-    final stableUrl =
-        '${FlavorConfig.instance.chartBaseUrl}/mobile-chart?theme=${AppColors.chartTheme}';
+    // Include symbol in URL so the server loads the correct chart immediately.
+    // Symbol is also passed as a prop so JS updateSymbol() can handle fast
+    // in-session symbol switches without a full reload (via didUpdateWidget).
+    final chartUrl =
+        '${FlavorConfig.instance.chartBaseUrl}/mobile-chart?symbol=$effectiveDatafeedSymbol&theme=${AppColors.chartTheme}';
 
     return Container(
       width: double.infinity,
@@ -1858,11 +1862,13 @@ Placing Order:
       margin: EdgeInsets.zero,
       child: ChartInAppWebView(
         key: _webViewKey,
-        symbol: effectiveDatafeedSymbol, // ✅ JS-updated, no URL reload
-        url: stableUrl,                  // ✅ Constant — never changes per symbol
+        symbol: effectiveDatafeedSymbol, // JS-updated for fast in-session switches
+        url: chartUrl,                   // includes symbol for correct initial server load
       ),
     );
   }
+
+
 
   /// Build notification stack overlay (only shown when one-click trading is enabled)
   /// NOTE: Notifications are now handled globally via AppNotificationStack in main.dart

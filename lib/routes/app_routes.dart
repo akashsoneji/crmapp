@@ -17,6 +17,7 @@ abstract class Routes {
   static const LANGUAGE_SELECTOR = _Paths.LANGUAGE_SELECTOR;
   static const ACCOUNT_MANAGEMENT = _Paths.ACCOUNT_MANAGEMENT;
   static const EDIT_PROFILE = _Paths.EDIT_PROFILE;
+  static const VIEW_PROFILE = _Paths.VIEW_PROFILE;
   static const WITHDRAWAL = _Paths.WITHDRAWAL;
   static const DEPOSIT = _Paths.DEPOSIT;
   static const WALLET = _Paths.WALLET;
@@ -95,6 +96,7 @@ abstract class _Paths {
   static const LANGUAGE_SELECTOR = '/language-selector';
   static const ACCOUNT_MANAGEMENT = '/account-management';
   static const EDIT_PROFILE = '/edit-profile';
+  static const VIEW_PROFILE = '/view-profile';
   static const WITHDRAWAL = '/withdrawal';
   static const DEPOSIT = '/deposit';
   static const WALLET = '/wallet';
