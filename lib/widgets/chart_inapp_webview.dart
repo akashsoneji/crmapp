@@ -193,10 +193,16 @@ class ChartInAppWebViewState extends State<ChartInAppWebView> {
               // Load from disk cache when available, fall back to network.
               // With nginx `immutable` Cache-Control on charting_library bundles,
               // this makes re-entries to the chart near-instant after the first load.
-              androidCacheMode: AndroidCacheMode.LOAD_CACHE_ELSE_NETWORK,
+              cacheMode: CacheMode.LOAD_CACHE_ELSE_NETWORK,
               cacheEnabled: true,
               // TradingView uses localStorage for layout/drawings state.
               domStorageEnabled: true,
+              // Keep the renderer hot so the first paint isn't delayed by raster
+              // warm-up; matches the background warm-up WebView settings so both
+              // share the same hot disk cache (see ChartPreloadService).
+              offscreenPreRaster: true,
+              hardwareAcceleration: true,
+              useHybridComposition: true,
             ),
             onWebViewCreated: (controller) {
               _controller = controller;

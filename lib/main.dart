@@ -15,6 +15,7 @@ import 'package:crm_app/services/price_alert_service.dart';
 import 'package:crm_app/services/loading_service.dart';
 import 'package:crm_app/services/notification_service.dart';
 import 'package:crm_app/services/secure_storage_service.dart';
+import 'package:crm_app/services/chart_preload_service.dart';
 import 'constants/color.dart';
 
 import 'flavor_config.dart';
@@ -408,6 +409,14 @@ class MyGetXApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // ✅ COLD-START OPTIMIZATION: begin warming the chart WebView at the very
+    // first frame — in parallel with auth/account/services init — so the ~5 MB
+    // chart bundle is already downloading (and DNS/TLS is preconnected) while
+    // the user is still on the splash/login screen. By the time they open the
+    // chart tab it loads from disk cache instead of a cold ~10s download.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(ChartPreloadService.instance.prewarm());
+    });
     return ScreenUtilInit(
       designSize: const Size(375, 812),
       minTextAdapt: true,
@@ -526,12 +535,19 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
         await authController.checkAuthStatus();
 
         // Only navigate to trading if token is valid
-        if (authController.isAuthenticated) {
+          if (authController.isAuthenticated) {
           // AppLock: if enabled, AppLockOverlay will block UI + auto-prompt.
           // Avoid triggering device auth here to prevent double-prompts/loops.
           await Get.find<AppLockService>().lockIfNeeded(
             reason: 'Authenticate to continue.',
           );
+
+          // ✅ Start warming the chart WebView in the background *now* — in
+          // parallel with the account fetch and modules fetch below. By the
+          // time the user lands on the chart tab, the bundle is already in
+          // disk cache.
+          unawaited(ChartPreloadService.instance.preload());
+
           print(
             'AuthCheckScreen: User is authenticated, fetching accounts before navigation...',
           );

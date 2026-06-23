@@ -22,6 +22,7 @@ import '../../controllers/trading_controller.dart';
 import '../../controllers/more/more_controller.dart';
 import '../../services/one_click_trading_service.dart';
 import '../../services/app_status/app_status_service.dart';
+import '../../services/chart_preload_service.dart';
 
 class TradingMainScreen extends StatefulWidget {
   const TradingMainScreen({super.key});
@@ -125,6 +126,15 @@ class _TradingMainScreenState extends State<TradingMainScreen> {
 
     // ✅ Safety net: Ensure one-click trading is enabled by default
     _ensureOneClickTradingEnabled();
+
+    // ✅ Warm up the chart WebView in the background as soon as the user lands
+    // on the main tab shell (covers login, register and already-logged-in
+    // flows). This loads the heavy charting_library bundle into the WebView
+    // disk cache so the first time the user opens the chart it renders almost
+    // instantly instead of taking ~10s.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(ChartPreloadService.instance.preload());
+    });
 
     // Ensure app update check runs after the main UI is mounted.
     // This covers the "already logged-in" flow where AuthCheckScreen may navigate
