@@ -37,7 +37,15 @@ class ChartInAppWebViewState extends State<ChartInAppWebView> {
   void didUpdateWidget(covariant ChartInAppWebView oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    if (oldWidget.url != widget.url) {
+    // Compare URLs ignoring the `symbol` query param. A symbol change must
+    // never reload the WebView — the 3-5 MB charting_library bundle would be
+    // re-evaluated from scratch (the disk cache is per-page, and a new URL
+    // is a new page). Instead, push the new symbol through the JS
+    // `updateSymbol()` bridge which calls the TradingView `setSymbol()` API.
+    final urlChangedIgnoringSymbol = _stripSymbolParam(oldWidget.url) !=
+        _stripSymbolParam(widget.url);
+
+    if (urlChangedIgnoringSymbol) {
       _lastUrl = widget.url;
       _isReady = false;
       _hasError = false;
@@ -47,9 +55,26 @@ class ChartInAppWebViewState extends State<ChartInAppWebView> {
       return;
     }
 
-    // If only symbol changed, try JS update first (no reload).
+    // If only the symbol changed (or even if the prop changes with the same
+    // URL), push the new symbol through JS — no reload.
     if (oldWidget.symbol != widget.symbol) {
       unawaited(updateSymbol(widget.symbol));
+    }
+  }
+
+  /// Returns [url] with the `symbol` query parameter removed, so two URLs
+  /// that differ only by symbol compare equal.
+  ///
+  /// e.g. `.../mobile-chart?symbol=XAUUSD&theme=Dark`
+  ///   -> `.../mobile-chart?theme=Dark`
+  static String _stripSymbolParam(String url) {
+    try {
+      final uri = Uri.parse(url);
+      if (!uri.queryParameters.containsKey('symbol')) return url;
+      final params = Map<String, String>.from(uri.queryParameters)..remove('symbol');
+      return uri.replace(queryParameters: params.isEmpty ? null : params).toString();
+    } catch (_) {
+      return url;
     }
   }
 
@@ -82,15 +107,25 @@ class ChartInAppWebViewState extends State<ChartInAppWebView> {
       await _controller!.evaluateJavascript(source: '''
         (function() {
           try {
-            if (typeof selectedSymbol !== 'undefined') {
-              selectedSymbol = "$chartSymbol";
+            // MobileWebViewChart.vue exposes the symbol-change bridge as
+            // window.changeSymbol (set in onMounted). It just sets the Vue
+            // ref, and the <TradingChart :symbol="currentSymbol"> prop-binding
+            // pushes the new symbol into the TradingView widget.
+            if (typeof window.changeSymbol === 'function') {
+              window.changeSymbol("$chartSymbol");
+              return true;
             }
+            // Defensive fallbacks for other chart pages / older builds.
             if (typeof updateSymbol === 'function') {
               updateSymbol("$chartSymbol");
               return true;
             }
             if (typeof createTradingViewChart === 'function') {
               createTradingViewChart("$chartSymbol");
+              return true;
+            }
+            if (typeof selectedSymbol !== 'undefined') {
+              selectedSymbol = "$chartSymbol";
               return true;
             }
           } catch (e) {}
