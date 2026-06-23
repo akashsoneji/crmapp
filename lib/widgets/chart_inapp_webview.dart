@@ -155,6 +155,13 @@ class ChartInAppWebViewState extends State<ChartInAppWebView> {
               useShouldOverrideUrlLoading: true,
               mediaPlaybackRequiresUserGesture: false,
               allowsInlineMediaPlayback: true,
+              // Load from disk cache when available, fall back to network.
+              // With nginx `immutable` Cache-Control on charting_library bundles,
+              // this makes re-entries to the chart near-instant after the first load.
+              androidCacheMode: AndroidCacheMode.LOAD_CACHE_ELSE_NETWORK,
+              cacheEnabled: true,
+              // TradingView uses localStorage for layout/drawings state.
+              domStorageEnabled: true,
             ),
             onWebViewCreated: (controller) {
               _controller = controller;
