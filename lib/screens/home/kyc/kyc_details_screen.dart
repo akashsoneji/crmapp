@@ -1028,7 +1028,7 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
                       }
                     },
                     decoration: InputDecoration(
-                      hintText: 'Search countries...',
+                      hintText: 'Search',
                       prefixIcon: Icon(Icons.search, color: AppColors.icongrey),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),

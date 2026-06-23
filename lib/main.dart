@@ -10,6 +10,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:crm_app/controllers/chart_socket_controller.dart';
 import 'package:crm_app/services/price_alert_service.dart';
 import 'package:crm_app/services/loading_service.dart';
@@ -540,23 +541,29 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
             print('AuthCheckScreen: Error fetching accounts: $e');
           }
 
-          // ✅ FIX: Trigger full MT5 accounts fetch in background at app launch.
-          // DashboardController was created in initServices() but its onInit() skipped
-          // checkMT5Accounts() because isAuthenticated was false at that time.
-          // Now that token is validated, kick off the fetch before navigating.
-          unawaited(
-            Future.microtask(() async {
-              try {
-                final dc = Get.find<DashboardController>();
-                await dc.forceCheckMT5Accounts();
-                print(
-                  'AuthCheckScreen: MT5 accounts prefetched at launch (${dc.mt5Accounts.length} accounts)',
-                );
-              } catch (e) {
-                print('AuthCheckScreen: Error prefetching MT5 accounts: $e');
-              }
-            }),
+          // ✅ FIX: FIRST API call after login = getMT5Account.
+          // We AWAIT this (do not fire-and-forget) so that:
+          //   1. The Trading screen is only shown after MT5 account data is available
+          //   2. AccountHeaderWidget and Dashboard show real data immediately
+          //   3. An activity indicator is shown via isLoadingMT5Accounts while loading
+          print(
+            'AuthCheckScreen: First API call -> getMT5Accounts (awaiting response)...',
           );
+          try {
+            final dc = Get.find<DashboardController>();
+            // Mark loading=true synchronously so any Obx listening to
+            // isLoadingMT5Accounts (Dashboard overlay, AccountHeaderWidget) immediately
+            // renders its loading indicator.
+            dc.isLoadingMT5Accounts.value = true;
+            await dc.forceCheckMT5Accounts();
+            print(
+              'AuthCheckScreen: getMT5Accounts response received (${dc.mt5Accounts.length} accounts). Navigating to Trading.',
+            );
+          } catch (e) {
+            print('AuthCheckScreen: Error fetching MT5 accounts: $e');
+            // Continue to Trading screen even on error so the user is not
+            // stuck on splash; the dashboard's empty-state will guide them.
+          }
 
           // 🚀 CHART PRELOAD: Background me chart WebSocket pre-connect karo
           // Taaki user jab chart tab pe jaye, data already ready ho (loading time = 0)
@@ -697,6 +704,9 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
   Widget build(BuildContext context) {
     // Show neutral loading UI while async auth check runs.
     // Prevents SR flavor's red background "flash" before GetStarted.
+    // The auth flow awaits getMT5Account before navigating to Trading, so this
+    // activity indicator stays visible until the first MT5 accounts response
+    // arrives — the user never sees a blank/empty account header.
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       body: Center(
@@ -705,7 +715,10 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
           children: [
             // SvgPicture.asset(FlavorConfig.instance.splashLogoPath),
             const SizedBox(height: 24),
-            // const CircularProgressIndicator(),
+            LoadingAnimationWidget.fourRotatingDots(
+              color: FlavorConfig.instance.primaryColor,
+              size: 48,
+            ),
           ],
         ),
       ),

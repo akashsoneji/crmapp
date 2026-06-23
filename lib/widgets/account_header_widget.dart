@@ -112,6 +112,15 @@ class AccountHeaderWidget extends StatelessWidget {
                     final double displayEquity =
                         realTimeEquity ?? (apiEquity ?? 0.0);
 
+                    // ✅ FIX: While the very first getMT5Account API is still in
+                    // flight (app just opened), primaryAccount is null. Show a
+                    // full loading state (spinner only, no $0.00 / blank account
+                    // number) instead of empty placeholders.
+                    final bool isFetchingAccounts =
+                        dashboardController?.isLoadingMT5Accounts.value ?? false;
+                    final bool isWaitingForAccounts =
+                        primaryAccount == null && isFetchingAccounts;
+
                     // Determine if we should show loading indicator
                     // Show loading if:
                     // 1. We have a primary account
@@ -129,6 +138,28 @@ class AccountHeaderWidget extends StatelessWidget {
                         (!isWebSocketConnected || !hasAccountInfo) &&
                         displayEquity ==
                             0.0; // Only show loading if equity is 0 (not yet loaded)
+
+                    // While accounts are still being fetched and there is no
+                    // primary account yet, render only a spinner in place of the
+                    // equity + account-number rows.
+                    if (isWaitingForAccounts) {
+                      return Row(
+                        children: [
+                          LoadingAnimationWidget.fourRotatingDots(
+                            color: AppColors.primary,
+                            size: 20.w,
+                          ),
+                          SizedBox(width: 8.w),
+                          Text(
+                            'Loading account...',
+                            style: AppTextStyles.subheading.copyWith(
+                              fontSize: 12.sp,
+                              color: AppColors.textGrey,
+                            ),
+                          ),
+                        ],
+                      );
+                    }
 
                     // Ensure WebSocket is initialized when widget builds
                     // This is the ONLY place we call ensureWebSocketInitialized - only on first render

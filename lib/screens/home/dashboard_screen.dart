@@ -34,11 +34,14 @@ class DashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final languageService = Get.find<LanguageService>();
-    // ✅ FIX: Ensure WebSocket is initialized when Dashboard appears.
-    // MT5 accounts are prefetched at app launch (splash screen), so we don't
-    // force-refresh here to avoid redundant API calls on every tab visit.
+    // ✅ FIX: Ensure WebSocket is initialized when Dashboard appears AND make
+    // sure MT5 accounts are loaded. maybeRefreshOnAppear() only triggers an API
+    // call when there is no data yet (or data is stale >2s), so it does NOT
+    // cause redundant calls on every tab visit — but it guarantees the dashboard
+    // auto-loads on first open instead of requiring a manual pull-to-refresh.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       controller.ensureWebSocketInitialized();
+      controller.maybeRefreshOnAppear();
     });
 
     // Set the navigation callback in the controller

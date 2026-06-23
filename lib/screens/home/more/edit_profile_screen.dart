@@ -195,8 +195,7 @@ class _EditProfileState extends State<EditProfile> {
                     autocorrect: false,
                     style: TextStyle(color: AppColors.textPrimary),
                     decoration: InputDecoration(
-                      hintText: 'Search countries...',
-                      hintStyle: TextStyle(color: AppColors.textGrey),
+
                       prefixIcon: Icon(Icons.search, color: AppColors.textGrey),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
