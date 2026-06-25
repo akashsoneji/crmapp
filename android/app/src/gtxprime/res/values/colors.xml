@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="primary_color">#01061A</color>
+    <color name="secondary_color">#011947</color>
+    <color name="accent_color">#011947</color>
+    <!-- SR wants white native splash background -->
+    <color name="my_splash_color">#01061A</color> <!-- gtxprime -->
+</resources>

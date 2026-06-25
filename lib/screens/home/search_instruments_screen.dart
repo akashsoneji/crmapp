@@ -56,7 +56,7 @@ class _SearchInstrumentsScreenState extends State<SearchInstrumentsScreen> {
       _instrumentsController = Get.find<InstrumentsController>();
     } else {
       _searchController2 = Get.put(SearchInstrumentsController());
-      _searchController2.filterByCategory('Currency');
+      _searchController2.filterByCategory('All');
     }
   }
 

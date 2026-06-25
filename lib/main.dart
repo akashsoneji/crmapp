@@ -825,6 +825,9 @@ Future<void> _initializeFlavor() async {
       } else if (packageName.contains('amirifx')) {
         FlavorConfig.amirifx;
         AppLogger.debug('Flavor initialized from package id: amirifx');
+      } else if (packageName.contains('gtxprime')) {
+        FlavorConfig.gtxprime;
+        AppLogger.debug('Flavor initialized from package id: gtxprime');
       } else {
         FlavorConfig.pipze;
         AppLogger.debug('Flavor initialized: pipze (default)');
@@ -883,6 +886,9 @@ void _initializeFlavorByName(String flavorName) {
       break;
     case 'amirifx':
       FlavorConfig.amirifx;
+      break;
+    case 'gtxprime':
+      FlavorConfig.gtxprime;
       break;
 
     default:

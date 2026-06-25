@@ -93,6 +93,10 @@ case "$FLAVOR" in
         APP_NAME="AmiriFX"
         APP_ICON="AppIcon"
         ;;
+    gtxprime)
+        APP_NAME="GTX Prime"
+        APP_ICON="AppIcon"
+        ;;
     *)
         APP_NAME="CRMApp"
         APP_ICON="AppIcon"

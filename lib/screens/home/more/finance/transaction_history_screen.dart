@@ -427,7 +427,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                           : 'Select start date',
                       style: TextStyle(
                         fontSize: 12.sp,
-                        color: AppColors.whiteColor,
+                        color: AppColors.pureWhite,
                       ),
                     ),
                   ),
@@ -471,7 +471,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                           : 'Select end date',
                       style: TextStyle(
                         fontSize: 12.sp,
-                        color: AppColors.whiteColor,
+                        color: AppColors.pureWhite,
                       ),
                     ),
                   ),

@@ -22,11 +22,16 @@ class DepositInstructionScreen extends StatefulWidget {
   final Map<String, dynamic> object;
   final String amountString;
   final String selectedMT5AccountID;
+  final String currency;
+  final bool fromBonus;
+
   const DepositInstructionScreen({
     super.key,
     required this.object,
     required this.amountString,
     required this.selectedMT5AccountID,
+    this.currency = 'USD',
+    this.fromBonus = false,
   });
 
   @override
@@ -1427,6 +1432,9 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
                           "gateway_method_id": widget.object['deposit_slug'],
                           "amount": widget.amountString,
                           "mt5_account_id": widget.selectedMT5AccountID,
+                          "currency": widget.currency,
+                          "utr_referce": transactionNumberController.text,
+                          if (widget.fromBonus) "is_bonus": 1,
                         });
                       }
                     } else if (widget.object['type'].toString().toLowerCase() ==
@@ -1435,6 +1443,9 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
                         "gateway_method_id": widget.object['deposit_slug'],
                         "amount": widget.amountString,
                         "mt5_account_id": widget.selectedMT5AccountID,
+                        "currency": widget.currency,
+                        "utr_referce": transactionNumberController.text,
+                        if (widget.fromBonus) "is_bonus": 1,
                       });
                     } else if (widget.object['type'].toString().toLowerCase() ==
                         'crypto') {
@@ -1442,6 +1453,9 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
                         "gateway_method_id": widget.object['deposit_slug'],
                         "amount": widget.amountString,
                         "mt5_account_id": widget.selectedMT5AccountID,
+                        "currency": widget.currency,
+                        "utr_referce": transactionNumberController.text,
+                        if (widget.fromBonus) "is_bonus": 1,
                       });
                     } else {
                       // UPI
@@ -1451,6 +1465,9 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
                           "gateway_method_id": widget.object['deposit_slug'],
                           "amount": widget.amountString,
                           "mt5_account_id": widget.selectedMT5AccountID,
+                          "currency": widget.currency,
+                          "utr_referce": transactionNumberController.text,
+                          if (widget.fromBonus) "is_bonus": 1,
                         });
                       }
                     }

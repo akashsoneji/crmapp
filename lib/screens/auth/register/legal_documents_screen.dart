@@ -154,8 +154,9 @@ class _LegalDocumentsScreenState extends State<LegalDocumentsScreen> {
           width: 25.w,
           height: 25.h,
           child: Checkbox(
-            checkColor: AppColors.whiteColor,
-            side: BorderSide(color: AppColors.textGrey, width: 1.5),
+            activeColor: AppColors.whiteColor,
+            checkColor: AppColors.primary,
+            side: BorderSide(color: AppColors.border),
             value: _isAgreementChecked,
             onChanged: (value) {
               setState(() {
@@ -163,7 +164,6 @@ class _LegalDocumentsScreenState extends State<LegalDocumentsScreen> {
                 _validateForm();
               });
             },
-            activeColor: AppColors.primary,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(4),
             ),

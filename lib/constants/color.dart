@@ -20,6 +20,9 @@ class AppColors {
   static const Color _pureWhite = Color(0xFFFFFFFF);
   static const Color _pureBlack = Color(0xFF000000);
 
+  static Color get pureWhite => _pureWhite;
+  static Color get pureBlack => _pureBlack;
+
   /// Flavor brand color — unchanged in dark mode (logos, splash glow).
   static Color get brandPrimary => FlavorConfig.instance.primaryColor;
 

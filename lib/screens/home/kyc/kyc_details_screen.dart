@@ -14,6 +14,9 @@ import 'package:crm_app/controllers/auth_controller.dart';
 import 'package:crm_app/controllers/app_notification_controller.dart';
 import 'package:crm_app/models/settings_profile_model.dart';
 import 'package:crm_app/services/language_service.dart';
+import 'package:country_picker/country_picker.dart';
+import 'package:phone_numbers_parser/phone_numbers_parser.dart';
+import 'package:phone_numbers_parser/metadata.dart';
 
 class KycDetailsScreen extends StatefulWidget {
   const KycDetailsScreen({Key? key}) : super(key: key);
@@ -61,6 +64,11 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
   late LanguageService languageService;
   bool _isInitializing = true;
 
+  String _selectedCountryCode = '';
+  String _selectedCountryFlag = '';
+  IsoCode? _selectedIsoCode;
+  int _maxPhoneDigits = 15;
+
   @override
   void initState() {
     super.initState();
@@ -69,6 +77,21 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
     authController = Get.find<AuthController>();
     languageService = Get.find<LanguageService>();
     _initializeData();
+    ever(dropdownService.selectedCountry, (country) {
+      if (country != null && _selectedCountryCode.isEmpty) {
+        final countries = CountryService().getAll();
+        final matchedCountry = countries.firstWhereOrNull(
+          (c) => c.name.toLowerCase() == country.name?.toLowerCase() || c.countryCode.toLowerCase() == country.iso2?.toLowerCase()
+        );
+        if (matchedCountry != null) {
+          _applyCountry(
+            phoneCode: matchedCountry.phoneCode,
+            flagEmoji: matchedCountry.flagEmoji,
+            countryIso2: matchedCountry.countryCode,
+          );
+        }
+      }
+    });
   }
 
   Future<void> _initializeData() async {
@@ -98,7 +121,7 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
     _firstNameController.text = user.firstName;
     _lastNameController.text = user.lastName;
     _emailController.text = user.email;
-    _phoneController.text = user.mobile;
+    _parseAndSetPhoneNumber(user.mobile);
     // Set title, default to 'mr' if empty
     _selectedTitle = userDetails.title.isNotEmpty ? userDetails.title : 'Mr';
     _selectedGender = userDetails.gender.toLowerCase();
@@ -182,6 +205,181 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
     _titleController.dispose();
     _dobController.dispose();
     super.dispose();
+  }
+
+  IsoCode? _isoFromCountryCode(String? countryCode) {
+    if (countryCode == null || countryCode.isEmpty) return null;
+    final upper = countryCode.toUpperCase();
+    for (final iso in IsoCode.values) {
+      if (iso.name == upper) return iso;
+    }
+    return null;
+  }
+
+  int _maxDigitsForIso(IsoCode? iso) {
+    if (iso == null) return 15;
+    final lengths = metadataLenghtsByIsoCode[iso];
+    if (lengths == null) return 15;
+    final all = <int>[
+      ...lengths.general,
+      ...lengths.mobile,
+      ...lengths.fixedLine,
+    ];
+    if (all.isEmpty) return 15;
+    return all.reduce((a, b) => a > b ? a : b);
+  }
+
+  String get _phoneDigits =>
+      _phoneController.text.replaceAll(RegExp(r'[^0-9]'), '');
+
+  // ignore: unused_element
+  bool _isPhoneValid() {
+    final digits = _phoneDigits;
+    if (digits.isEmpty) return false;
+    final iso = _selectedIsoCode;
+    if (iso == null) return digits.length >= 6;
+    try {
+      final number = PhoneNumber.parse(digits, destinationCountry: iso);
+      return number.isValid(type: PhoneNumberType.mobile) || number.isValid();
+    } catch (_) {
+      return false;
+    }
+  }
+
+  void _formatPhoneInput() {
+    final iso = _selectedIsoCode;
+    final digits = _phoneDigits;
+    if (iso == null || digits.isEmpty) return;
+    try {
+      final formatted =
+          PhoneNumber.parse(digits, destinationCountry: iso).formatNsn();
+      if (formatted.isNotEmpty && formatted != _phoneController.text) {
+        _phoneController.value = TextEditingValue(
+          text: formatted,
+          selection: TextSelection.collapsed(offset: formatted.length),
+        );
+      }
+    } catch (_) {}
+  }
+
+  void _applyCountry({
+    required String phoneCode,
+    required String flagEmoji,
+    required String countryIso2,
+  }) {
+    final iso = _isoFromCountryCode(countryIso2);
+    setState(() {
+      _selectedCountryCode = "+$phoneCode";
+      _selectedCountryFlag = "$flagEmoji +$phoneCode";
+      _selectedIsoCode = iso;
+      _maxPhoneDigits = _maxDigitsForIso(iso);
+    });
+    final digits = _phoneDigits;
+    if (digits.length > _maxPhoneDigits) {
+      _phoneController.text = digits.substring(0, _maxPhoneDigits);
+    }
+    _formatPhoneInput();
+  }
+
+  // ignore: unused_element
+  void _showCountryPicker() {
+    showCountryPicker(
+      context: context,
+      showPhoneCode: true,
+      countryListTheme: CountryListThemeData(
+        flagSize: 25,
+        backgroundColor: AppColors.whiteColor,
+        textStyle: TextStyle(fontSize: 16, color: AppColors.textPrimary),
+        bottomSheetHeight: 500,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(20.0),
+          topRight: Radius.circular(20.0),
+        ),
+        inputDecoration: InputDecoration(
+          labelText: 'Search',
+          hintText: 'Start typing to search',          
+          prefixIcon: Icon(Icons.search, color: AppColors.textPrimary),
+          border: OutlineInputBorder(
+            borderSide: BorderSide(
+              color: AppColors.border,
+            ),
+          ),
+        ),
+      ),
+      onSelect: (Country country) {
+        _applyCountry(
+          phoneCode: country.phoneCode,
+          flagEmoji: country.flagEmoji,
+          countryIso2: country.countryCode,
+        );
+      },
+    );
+  }
+
+  void _parseAndSetPhoneNumber(String fullNumber) {
+    if (fullNumber.isEmpty) {
+      _phoneController.text = '';
+      return;
+    }
+
+    String nationalNumber = fullNumber;
+    String phoneCode = '';
+    String countryIso = '';
+
+    if (fullNumber.startsWith('+')) {
+      try {
+        final parsed = PhoneNumber.parse(fullNumber);
+        phoneCode = parsed.countryCode;
+        nationalNumber = parsed.nsn;
+        countryIso = parsed.isoCode.name;
+      } catch (e) {
+        final countries = CountryService().getAll();
+        for (final country in countries) {
+          final prefix = '+${country.phoneCode}';
+          if (fullNumber.startsWith(prefix)) {
+            phoneCode = country.phoneCode;
+            nationalNumber = fullNumber.substring(prefix.length);
+            countryIso = country.countryCode;
+            break;
+          }
+        }
+      }
+    }
+
+    if (phoneCode.isNotEmpty) {
+      final countries = CountryService().getAll();
+      final country = countries.firstWhereOrNull(
+        (c) => c.phoneCode == phoneCode && (countryIso.isEmpty || c.countryCode.toUpperCase() == countryIso.toUpperCase())
+      );
+      if (country != null) {
+        final iso = _isoFromCountryCode(country.countryCode);
+        setState(() {
+          _selectedCountryCode = "+${country.phoneCode}";
+          _selectedCountryFlag = "${country.flagEmoji} +${country.phoneCode}";
+          _selectedIsoCode = iso;
+          _maxPhoneDigits = _maxDigitsForIso(iso);
+        });
+      }
+    } else {
+      final selectedCountry = dropdownService.selectedCountry.value;
+      if (selectedCountry != null) {
+        final countries = CountryService().getAll();
+        final country = countries.firstWhereOrNull(
+          (c) => c.name.toLowerCase() == selectedCountry.name?.toLowerCase() || c.countryCode.toLowerCase() == selectedCountry.iso2?.toLowerCase()
+        );
+        if (country != null) {
+          final iso = _isoFromCountryCode(country.countryCode);
+          setState(() {
+            _selectedCountryCode = "+${country.phoneCode}";
+            _selectedCountryFlag = "${country.flagEmoji} +${country.phoneCode}";
+            _selectedIsoCode = iso;
+            _maxPhoneDigits = _maxDigitsForIso(iso);
+          });
+        }
+      }
+    }
+
+    _phoneController.text = nationalNumber;
   }
 
   @override
@@ -407,60 +605,79 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
   Widget _buildPhoneField() {
     return Padding(
       padding: EdgeInsets.only(bottom: 24.h),
-      child: RTLHelper.rtlTextField(
-        controller: _phoneController,
-        keyboardType: TextInputType.phone,
-        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-        decoration: InputDecoration(
-          labelText: 'Phone Number',
-          labelStyle: TextStyle(color: AppColors.textGrey),
-          floatingLabelStyle: TextStyle(color: AppColors.primary),
-          contentPadding: EdgeInsets.symmetric(
-            horizontal: 16.w,
-            vertical: 16.h,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          InkWell(
+            onTap: null,
+            child: Container(
+              padding: EdgeInsets.symmetric(
+                horizontal: 12.w,
+                vertical: 16.h,
+              ),
+              decoration: BoxDecoration(
+                border: Border.all(color: AppColors.border),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                _selectedCountryFlag.isNotEmpty
+                    ? _selectedCountryFlag
+                    : "🌐 +--",
+                style: TextStyle(
+                  fontSize: 16.sp,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ),
           ),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: AppColors.border),
+          SizedBox(width: 8.w),
+          Expanded(
+            child: TextFormField(
+              controller: _phoneController,
+              readOnly: true,
+              keyboardType: TextInputType.phone,
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'[0-9\s\-()]')),
+                _PhoneDigitsLimitFormatter(() => _maxPhoneDigits),
+              ],
+              onChanged: (_) => _formatPhoneInput(),
+              style: TextStyle(color: AppColors.textPrimary),
+              decoration: InputDecoration(
+                labelText: 'Phone Number',
+                labelStyle: TextStyle(color: AppColors.textGrey),
+                floatingLabelStyle: TextStyle(color: AppColors.primary),
+                counterText: '',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: AppColors.border),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: AppColors.border),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: AppColors.primary, width: 2),
+                ),
+                errorBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: AppColors.error),
+                ),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 16.w,
+                  vertical: 16.h,
+                ),
+              ),
+              validator: (value) {
+                final digits = (value ?? '').replaceAll(RegExp(r'[^0-9]'), '');
+                if (digits.isEmpty) {
+                  return 'Please enter your phone number';
+                }
+                return null;
+              },
+            ),
           ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: AppColors.border),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: AppColors.primary, width: 2),
-          ),
-          errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: AppColors.error),
-          ),
-
-          // suffixIcon:
-          //     _isPhoneVerified
-          //         ? Container(
-          //           margin: EdgeInsets.only(right: 8.w),
-          //           child: Icon(
-          //             Icons.verified,
-          //             color: AppColors.green,
-          //             size: 20.w,
-          //           ),
-          //         )
-          //         : TextButton(
-          //           onPressed: _isPhoneVerified ? null : _showOtpModal,
-          //           child: Text(
-          //             _isPhoneVerified ? 'Verified' : 'Send OTP',
-          //             style: TextStyle(
-          //               color:
-          //                   _isPhoneVerified
-          //                       ? AppColors.icongrey
-          //                       : AppColors.primary,
-          //               fontSize: 14.sp,
-          //               fontWeight: FontWeight.w500,
-          //             ),
-          //           ),
-          //         ),
-        ),
+        ],
       ),
     );
   }
@@ -1597,7 +1814,10 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
       return;
     }
 
-    if (_phoneController.text.trim().isEmpty) {
+    final digits = _phoneController.text.replaceAll(RegExp(r'[^0-9]'), '');
+    final combinedPhone = '$_selectedCountryCode$digits';
+
+    if (digits.isEmpty) {
       if (Get.isRegistered<AppNotificationController>()) {
         Get.find<AppNotificationController>().showError(
           message: 'Please enter your phone number',
@@ -1663,7 +1883,7 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
       firstName: _firstNameController.text.trim(),
       lastName: _lastNameController.text.trim(),
       email: _emailController.text.trim(),
-      phone: _phoneController.text.trim(),
+      phone: combinedPhone,
       dob: _dobController.text.trim(),
       gender: _selectedGender,
       state: dropdownService.selectedState.value?.id ?? 0,
@@ -1675,5 +1895,23 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
       // otp: _otpController.text.trim(),
       countryId: dropdownService.selectedCountry.value?.id ?? 0,
     );
+  }
+}
+
+class _PhoneDigitsLimitFormatter extends TextInputFormatter {
+  _PhoneDigitsLimitFormatter(this.maxDigits);
+
+  final int Function() maxDigits;
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final digits = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
+    if (digits.length <= maxDigits()) {
+      return newValue;
+    }
+    return oldValue;
   }
 }

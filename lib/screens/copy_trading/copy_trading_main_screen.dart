@@ -113,18 +113,13 @@ class _CopyTradingMainScreenState extends State<CopyTradingMainScreen> {
       return Scaffold(
         backgroundColor: AppColors.tradeBackgroundCenterColor,
         body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.only(
-              bottom: kBottomNavigationBarHeight,
-            ),
-            child: PageView(
-              controller: _pageController,
-              onPageChanged: (idx) {
-                _hubController.currentTabIndex.value = idx;
-              },
-              physics: const NeverScrollableScrollPhysics(),
-              children: tabs,
-            ),
+          child: PageView(
+            controller: _pageController,
+            onPageChanged: (idx) {
+              _hubController.currentTabIndex.value = idx;
+            },
+            physics: const NeverScrollableScrollPhysics(),
+            children: tabs,
           ),
         ),
 

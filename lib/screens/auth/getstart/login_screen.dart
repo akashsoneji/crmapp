@@ -349,7 +349,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       textStyle: TextStyle(
                                         fontSize: 16.sp,
                                         fontWeight: FontWeight.w600,
-                                        color: AppColors.whiteColor,
+                                        color: AppColors.isDarkMode ? AppColors.textPrimaryLight : AppColors.textPrimaryDark,
                                       ),
                                     );
                                   }),

@@ -1360,18 +1360,11 @@ class AccountMenuBottomSheet extends StatelessWidget {
                 ),
                 SizedBox(height: 8),
                 _buildMenuItem(
-                  icon: Icons.card_giftcard,
+                  svgPath: 'assets/svg/more/bonus.svg',
                   label: languageService.tr('dashboard_bonus'),
                   onTap: () {
                     Get.back(closeOverlays: true);
-                    if (Get.isRegistered<AppNotificationController>()) {
-                      Get.find<AppNotificationController>().showInfo(
-                        message: languageService.tr(
-                          'dashboard_bonus_coming_soon_message',
-                        ),
-                        title: languageService.tr('common_coming_soon'),
-                      );
-                    }
+                    Get.toNamed(AppPages.BONUS);
                   },
                 ),
                 SizedBox(height: 8),
@@ -1450,7 +1443,8 @@ class AccountMenuBottomSheet extends StatelessWidget {
   }
 
   Widget _buildMenuItem({
-    required IconData icon,
+    IconData? icon,
+    String? svgPath,
     required String label,
     required VoidCallback onTap,
   }) {
@@ -1464,7 +1458,15 @@ class AccountMenuBottomSheet extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(icon, size: 22, color: AppColors.primary),
+            if (svgPath != null)
+              SvgPicture.asset(
+                svgPath,
+                width: 22.w,
+                height: 22.h,
+                colorFilter: ColorFilter.mode(AppColors.primary, BlendMode.srcIn),
+              )
+            else if (icon != null)
+              Icon(icon, size: 22, color: AppColors.primary),
             SizedBox(width: 12),
             Expanded(
               child: Text(

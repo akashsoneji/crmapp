@@ -236,6 +236,17 @@ android {
             buildConfigField("String", "FLAVOR", "\"vr19\"")
             manifestPlaceholders["FLAVOR"] = "vr19"
         }
+
+        create("gtxprime") {
+            dimension = "brand"
+            applicationId = "com.gtxprime.app"
+            resValue("string", "app_name", "GTX Prime")
+            resValue("color", "primary_color", "#01061A")
+            resValue("color", "secondary_color", "#011947")
+            resValue("color", "accent_color", "#011947")
+            buildConfigField("String", "FLAVOR", "\"gtxprime\"")
+            manifestPlaceholders["FLAVOR"] = "gtxprime"
+        }
     }
 
     signingConfigs {
@@ -367,6 +378,13 @@ afterEvaluate {
   // Profx flavor currently has no Firebase config.
   tasks.matching {
       it.name.startsWith("processProfx") && it.name.endsWith("GoogleServices")
+  }.configureEach {
+      enabled = false
+  }
+
+  // Gtxprime flavor currently has no Firebase config.
+  tasks.matching {
+      it.name.startsWith("processGtxprime") && it.name.endsWith("GoogleServices")
   }.configureEach {
       enabled = false
   }

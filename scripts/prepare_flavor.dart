@@ -56,6 +56,7 @@ Future<void> cleanOtherClientAssets(String currentFlavor) async {
     'celestial',
     'pipze',
     'amirifx',
+    'gtxprime',
 
     'afx',
     'kantara',
@@ -160,6 +161,7 @@ Future<void> updatePubspec(String flavor) async {
     'celestial',
     'pipze',
     'amirifx',
+    'gtxprime',
 
     'afx',
     'kantara',
@@ -561,6 +563,7 @@ Future<void> configureIosFlavor(String flavor) async {
     'askbid': 'com.example.askbid',
     'sr': 'com.example.sr',
     'vr19': 'com.example.vr19',
+    'gtxprime': 'com.gtxprime.app',
   };
 
   final bundleId = bundleIds[flavor] ?? 'com.example.$flavor';
