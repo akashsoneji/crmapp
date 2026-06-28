@@ -683,6 +683,12 @@ class ApiService {
     Map<String, dynamic>? queryParameters,
     Map<String, dynamic>? extraHeaders,
   }) {
+    // ✅ PERF (Bug #M3): In release builds `print()` output goes nowhere visible,
+    // but the surrounding `JsonEncoder.withIndent('  ').convert(...)` calls
+    // STILL run — full pretty-print of query params + body + headers on EVERY
+    // API request. Early-return out of release builds removes that wasted work
+    // in one place instead of touching every caller.
+    if (!kDebugMode) return;
     final timestamp = DateTime.now().toIso8601String();
     print('═══════════════════════════════════════════════════════════');
     print('📤 API REQUEST [$timestamp]');
@@ -730,6 +736,10 @@ class ApiService {
   }
 
   static void _logResponse(http.Response response) {
+    // ✅ PERF (Bug #M3): Same release-mode early-return as _logRequest above.
+    // The expensive bit here is the response-body pretty-print (jsonDecode +
+    // JsonEncoder.withIndent.convert) on every API response.
+    if (!kDebugMode) return;
     final timestamp = DateTime.now().toIso8601String();
     final statusEmoji =
         response.statusCode >= 200 && response.statusCode < 300

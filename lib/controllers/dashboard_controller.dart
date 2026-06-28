@@ -952,36 +952,27 @@ class DashboardController extends GetxController {
       // print('Endpoint: $endpoint');
       // print('Response:');
 
-      try {
-        if (decodedData is Map) {
-          final formatted = JsonEncoder.withIndent('  ').convert(decodedData);
-          // dev.log(formatted, name: 'DASHBOARD_WS_RESPONSE');
-          print(formatted);
-        } else if (decodedData is List) {
-          // dev.log(
-          //   'Array with ${decodedData.length} items:',
-          //   name: 'DASHBOARD_WS_RESPONSE',
-          // );
-          // print('Array with ${decodedData.length} items:');
-          if (decodedData.length <= 10) {
-            // dev.log(JsonEncoder.withIndent('  ').convert(decodedData), name: 'DASHBOARD_WS_RESPONSE');
-            // print(JsonEncoder.withIndent('  ').convert(decodedData));
-          } else {
-            // dev.log(
-            //   '  [First 5 items shown, total: ${decodedData.length}]',
-            //   name: 'DASHBOARD_WS_RESPONSE',
-            // );
-            print('  [First 5 items shown, total: ${decodedData.length}]');
-            // dev.log(JsonEncoder.withIndent('  ').convert(firstFive), name: 'DASHBOARD_WS_RESPONSE');
-            // print(JsonEncoder.withIndent('  ').convert(firstFive));
+      // ✅ PERF (Bug #M1): Gate the pretty-print debug log behind `kDebugMode`.
+      // This block runs on EVERY WebSocket message (account update on every price
+      // tick) — in release builds the `print()` output is invisible but the
+      // `JsonEncoder.withIndent('  ').convert(decodedData)` ALWAYS ran, doing a
+      // full recursive walk + string allocation of the entire account payload
+      // for every tick. On a busy account that's tens of ticks/sec of pure waste.
+      // Guarding with `kDebugMode` lets the Dart compiler tree-shake the entire
+      // block out of release builds.
+      if (kDebugMode) {
+        try {
+          if (decodedData is Map) {
+            final formatted = JsonEncoder.withIndent('  ').convert(decodedData);
+            print(formatted);
+          } else if (decodedData is List) {
+            if (decodedData.length > 10) {
+              print('  [First 5 items shown, total: ${decodedData.length}]');
+            }
           }
-        } else {
-          // dev.log('  $decodedData', name: 'DASHBOARD_WS_RESPONSE');
-          // print('  $decodedData');
+        } catch (_) {
+          // Swallow — debug-only logging must never affect message processing.
         }
-      } catch (e) {
-        // dev.log('  $messageStr', name: 'DASHBOARD_WS_RESPONSE');
-        // print('  $messageStr');
       }
       // dev.log(
       //   '═══════════════════════════════════════════════════════════',

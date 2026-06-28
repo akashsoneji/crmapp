@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
@@ -139,12 +140,25 @@ class MarketWatchV2Service extends GetxService {
             : Uint8List.fromList(message as List<int>);
         decoded = MessagePackDecoder.decodeBinary(u8);
         if (decoded == null) {
-          _appendLog(
-            '← RESPONSE (binary decode failed, ${u8.length} bytes)',
-          );
+          // ✅ PERF (Bug #M2): Decode-failure log is rare — keep gated only.
+          if (kDebugMode) {
+            _appendLog(
+              '← RESPONSE (binary decode failed, ${u8.length} bytes)',
+            );
+          }
           return;
         }
-        _logResponse(decoded, note: 'binary ${u8.length} bytes → decoded');
+        // ✅ PERF (Bug #M2): Gate the response-pretty-print behind kDebugMode.
+        // _logResponse → _stringifyDecoded → _jsonify recursively walks the entire
+        // decoded payload AND runs `JsonEncoder.withIndent('  ').convert(...)` on
+        // every WS frame — at multiple ticks/sec per subscribed symbol. The UI
+        // panel that consumed `decodedLog` is already commented out in
+        // instruments_screen.dart:123, so this work was pure CPU/memory burn in
+        // release builds. The hot data path (`_decodedBroadcast.add`) below is
+        // UNTOUCHED.
+        if (kDebugMode) {
+          _logResponse(decoded, note: 'binary ${u8.length} bytes → decoded');
+        }
       } else {
         final s = message.toString();
         try {
@@ -152,13 +166,19 @@ class MarketWatchV2Service extends GetxService {
         } catch (_) {
           decoded = s;
         }
-        _logResponse(decoded, note: 'text/json');
+        // ✅ PERF (Bug #M2): Same gating reasoning as the binary branch above.
+        if (kDebugMode) {
+          _logResponse(decoded, note: 'text/json');
+        }
       }
       if (!_decodedBroadcast.isClosed) {
         _decodedBroadcast.add(decoded);
       }
     } catch (e) {
-      _appendLog('← RESPONSE (onMessage error: $e)');
+      // ✅ PERF (Bug #M2): Error log kept debug-only — same UI consumer is dead.
+      if (kDebugMode) {
+        _appendLog('← RESPONSE (onMessage error: $e)');
+      }
     }
   }
 
