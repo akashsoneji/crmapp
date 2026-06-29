@@ -1,13 +1,16 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 
 import 'package:adaptive_platform_ui/adaptive_platform_ui.dart' as adaptive;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/flavor_config.dart';
 import 'package:crm_app/services/language_service.dart';
+import 'package:crm_app/services/symbol_selection_service.dart';
 import 'package:crm_app/utils/rtl_wrapper.dart';
 import 'package:crm_app/widgets/exit_confirmation_wrapper.dart';
 import '../../widgets/trading_bottom_navigation.dart';
@@ -36,6 +39,11 @@ class _TradingMainScreenState extends State<TradingMainScreen> {
   late List<Widget> _screens;
   late PageController _pageController;
 
+  // 🚀 Android-only: HeadlessInAppWebView to pre-warm the WebView renderer
+  // and cache chart HTML/JS/CSS before user opens Chart tab.
+  // iOS WKWebView doesn't need this — it starts fast natively.
+  HeadlessInAppWebView? _headlessChartWebView;
+  bool _headlessDisposed = false;
 
   // Get the instruments controller
   final InstrumentsController instrumentsController =
@@ -127,6 +135,7 @@ class _TradingMainScreenState extends State<TradingMainScreen> {
     // ✅ Safety net: Ensure one-click trading is enabled by default
     _ensureOneClickTradingEnabled();
 
+
     // ✅ Warm up the chart WebView in the background as soon as the user lands
     // on the main tab shell (covers login, register and already-logged-in
     // flows). This loads the heavy charting_library bundle into the WebView
@@ -135,6 +144,17 @@ class _TradingMainScreenState extends State<TradingMainScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(ChartPreloadService.instance.preload());
     });
+
+    // 🚀 ANDROID CHART PRELOAD: Pre-warm Android WebView renderer + cache chart assets.
+    // Android WebView has a cold-start renderer penalty (3-5s) that iOS doesn't.
+    // HeadlessInAppWebView loads the chart URL silently in background so the
+    // visible WebView on Chart tab starts with a warm renderer + cached assets.
+    if (Platform.isAndroid) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _preloadChartWebViewAndroid();
+      });
+    }
+
 
     // Ensure app update check runs after the main UI is mounted.
     // This covers the "already logged-in" flow where AuthCheckScreen may navigate
@@ -167,7 +187,76 @@ class _TradingMainScreenState extends State<TradingMainScreen> {
   @override
   void dispose() {
     _pageController.dispose();
+    _disposeHeadlessWebView();
     super.dispose();
+  }
+
+  void _disposeHeadlessWebView() {
+    if (!_headlessDisposed && _headlessChartWebView != null) {
+      _headlessDisposed = true;
+      try {
+        _headlessChartWebView!.dispose();
+      } catch (_) {}
+      _headlessChartWebView = null;
+    }
+  }
+
+  /// Android-only: Load chart URL in a hidden WebView to:
+  /// 1. Pre-warm the WebView renderer process (biggest win — saves 3-5s)
+  /// 2. Cache chart HTML/JS/CSS so visible WebView loads from cache
+  Future<void> _preloadChartWebViewAndroid() async {
+    if (!Platform.isAndroid) return;
+    if (!mounted) return;
+
+    try {
+      // Get default/saved symbol
+      String symbol = 'XAUUSD';
+      try {
+        if (Get.isRegistered<SymbolSelectionService>()) {
+          final svc = Get.find<SymbolSelectionService>();
+          await svc.ensureDefault();
+          if (svc.currentSymbol.isNotEmpty) symbol = svc.currentSymbol;
+        }
+      } catch (_) {}
+
+      // Strip suffix for display (e.g. XAUUSD.c → XAUUSD)
+      final displaySymbol = symbol.contains('.')
+          ? symbol.substring(0, symbol.lastIndexOf('.'))
+          : symbol;
+
+      final chartUrl =
+          '${FlavorConfig.instance.chartBaseUrl}/mobile-chart'
+          '?symbol=$displaySymbol&theme=${AppColors.chartTheme}';
+
+      print('📱 Android Chart Preload: Starting headless WebView for $chartUrl');
+
+      _headlessChartWebView = HeadlessInAppWebView(
+        initialUrlRequest: URLRequest(url: WebUri(chartUrl)),
+        initialSettings: InAppWebViewSettings(
+          javaScriptEnabled: true,
+          cacheEnabled: true,
+          cacheMode: CacheMode.LOAD_DEFAULT,
+          // Use off-screen size so renderer fully initialises
+          transparentBackground: true,
+        ),
+        onLoadStop: (controller, url) async {
+          print('📱 Android Chart Preload: Chart assets cached ✅ ($url)');
+          // Keep alive a moment so cache is flushed, then dispose
+          await Future.delayed(const Duration(seconds: 2));
+          _disposeHeadlessWebView();
+        },
+        onReceivedError: (controller, request, error) {
+          print('📱 Android Chart Preload: Error (non-critical): $error');
+          _disposeHeadlessWebView();
+        },
+      );
+
+      await _headlessChartWebView!.run();
+      print('📱 Android Chart Preload: Headless WebView running...');
+    } catch (e) {
+      print('📱 Android Chart Preload: Failed (non-critical): $e');
+      _disposeHeadlessWebView();
+    }
   }
 
   // Ensure one-click trading is enabled (safety net)

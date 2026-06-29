@@ -387,264 +387,117 @@ class _TradeScreenState extends State<TradeScreen> {
                             await controller.refreshTradeHistory();
                           }
                         },
-                        child:
-                            controller.selectedTab == 2
-                                // History tab: keep the summary cards fixed, only list scrolls below.
-                                ? Column(
-                                  children: [
-                                    summaryCard,
-                                    floatingSummary,
-                                    SizedBox(height: 8.h),
-                                    Expanded(
-                                      child: NotificationListener<
-                                        ScrollNotification
-                                      >(
-                                        onNotification: (n) {
-                                          controller.notifyUserScrollActivity();
-                                          return false;
-                                        },
-                                        child: CustomScrollView(
-                                          controller: _scrollController,
-                                          slivers: [
-                                            if (positions.isEmpty &&
-                                                !isLoadingHistory)
-                                              SliverFillRemaining(
-                                                hasScrollBody: false,
-                                                child: Center(
-                                                  child: Column(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .center,
-                                                    children: [
-                                                      FutureBuilder<Widget>(
-                                                        future:
-                                                            _emptyStateSvgFuture,
-                                                        builder: (
-                                                          context,
-                                                          snapshot,
-                                                        ) {
-                                                          if (snapshot
-                                                              .hasData) {
-                                                            return snapshot
-                                                                .data!;
-                                                          }
-                                                          return SizedBox(
-                                                            height: 100.h,
-                                                            width: 100.w,
-                                                          );
-                                                        },
-                                                      ),
-                                                      SizedBox(height: 16.h),
-                                                      SizedBox(height: 8.h),
-                                                      Text(
-                                                        'You have no data',
-                                                        style: AppTextStyles
-                                                            .subheading
-                                                            .copyWith(
-                                                              color:
-                                                                  AppColors
-                                                                      .textGrey,
-                                                            ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                              )
-                                            else
-                                              SliverPadding(
-                                                padding: EdgeInsets.only(
-                                                  left: 16.w,
-                                                  right: 16.w,
-                                                  bottom:
-                                                      77.h +
-                                                      MediaQuery.of(
-                                                        context,
-                                                      ).padding.bottom,
-                                                ),
-                                                sliver: SliverList(
-                                                  delegate: SliverChildBuilderDelegate((
-                                                    context,
-                                                    index,
-                                                  ) {
-                                                    final position =
-                                                        positions[index];
-                                                    return RepaintBoundary(
-                                                      child: GetBuilder<
-                                                        TradingController
-                                                      >(
-                                                        id:
-                                                            'position_${position.orderId}',
-                                                        builder: (
-                                                          innerController,
-                                                        ) {
-                                                          final TradePosition?
-                                                          fresh =
-                                                              innerController
-                                                                          .selectedTab ==
-                                                                      0
-                                                                  ? innerController
-                                                                      .getMarketPositionById(
-                                                                        position
-                                                                            .orderId,
-                                                                      )
-                                                                  : (innerController
-                                                                              .selectedTab ==
-                                                                          1
-                                                                      ? innerController.getPendingPositionById(
-                                                                        position
-                                                                            .orderId,
-                                                                      )
-                                                                      : innerController.getClosedPositionById(
-                                                                        position
-                                                                            .orderId,
-                                                                      ));
-
-                                                          return _buildPositionCard(
-                                                            innerController,
-                                                            fresh ?? position,
-                                                          );
-                                                        },
-                                                      ),
-                                                    );
-                                                  }, childCount: positions.length),
-                                                ),
-                                              ),
-                                            if (hasMorePages)
-                                              SliverToBoxAdapter(
-                                                child: Builder(
-                                                  builder: (context) {
-                                                    WidgetsBinding.instance
-                                                        .addPostFrameCallback((
-                                                          _,
-                                                        ) {
-                                                          if (mounted &&
-                                                              !_isLoadingMore &&
-                                                              !controller
-                                                                  .isLoadingHistory) {
-                                                            _loadMoreIfNeeded();
-                                                          }
-                                                        });
-                                                    return _buildPaginationLoader(
-                                                      controller,
-                                                    );
-                                                  },
-                                                ),
-                                              ),
-                                          ],
+                        child: NotificationListener<ScrollNotification>(
+                          onNotification: (n) {
+                            controller.notifyUserScrollActivity();
+                            return false;
+                          },
+                          child: CustomScrollView(
+                            controller: _scrollController,
+                            slivers: [
+                              SliverToBoxAdapter(child: summaryCard),
+                              if (controller.selectedTab == 2)
+                                SliverToBoxAdapter(child: floatingSummary),
+                              SliverToBoxAdapter(child: SizedBox(height: 8.h)),
+                              if (positions.isEmpty && !isLoadingHistory)
+                                SliverFillRemaining(
+                                  hasScrollBody: false,
+                                  child: Center(
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        FutureBuilder<Widget>(
+                                          future: _emptyStateSvgFuture,
+                                          builder: (context, snapshot) {
+                                            if (snapshot.hasData) {
+                                              return snapshot.data!;
+                                            }
+                                            return SizedBox(
+                                              height: 100.h,
+                                              width: 100.w,
+                                            );
+                                          },
                                         ),
-                                      ),
+                                        SizedBox(height: 16.h),
+                                        SizedBox(height: 8.h),
+                                        Text(
+                                          'You have no data',
+                                          style: AppTextStyles.subheading
+                                              .copyWith(
+                                            color: AppColors.textGrey,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                  ],
+                                  ),
                                 )
-                                // Market/Pending: current behavior (summary scrolls with list)
-                                : NotificationListener<ScrollNotification>(
-                                  onNotification: (n) {
-                                    controller.notifyUserScrollActivity();
-                                    return false;
-                                  },
-                                  child: CustomScrollView(
-                                    controller: _scrollController,
-                                    slivers: [
-                                      SliverToBoxAdapter(child: summaryCard),
-                                      SliverToBoxAdapter(
-                                        child: SizedBox(height: 8.h),
-                                      ),
-                                      if (positions.isEmpty &&
-                                          !isLoadingHistory)
-                                        SliverFillRemaining(
-                                          hasScrollBody: false,
-                                          child: Center(
-                                            child: Column(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
-                                              children: [
-                                                FutureBuilder<Widget>(
-                                                  future: _emptyStateSvgFuture,
-                                                  builder: (context, snapshot) {
-                                                    if (snapshot.hasData) {
-                                                      return snapshot.data!;
-                                                    }
-                                                    return SizedBox(
-                                                      height: 100.h,
-                                                      width: 100.w,
-                                                    );
-                                                  },
-                                                ),
-                                                SizedBox(height: 16.h),
-                                                SizedBox(height: 8.h),
-                                                Text(
-                                                  'You have no data',
-                                                  style: AppTextStyles
-                                                      .subheading
-                                                      .copyWith(
-                                                        color:
-                                                            AppColors.textGrey,
-                                                      ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        )
-                                      else
-                                        SliverPadding(
-                                          padding: EdgeInsets.only(
-                                            left: 16.w,
-                                            right: 16.w,
-                                            bottom:
-                                                77.h +
-                                                MediaQuery.of(
-                                                  context,
-                                                ).padding.bottom,
-                                          ),
-                                          sliver: SliverList(
-                                            delegate: SliverChildBuilderDelegate((
-                                              context,
-                                              index,
-                                            ) {
-                                              final position = positions[index];
-                                              return RepaintBoundary(
-                                                child: GetBuilder<
-                                                  TradingController
-                                                >(
-                                                  id:
-                                                      'position_${position.orderId}',
-                                                  builder: (innerController) {
-                                                    final TradePosition? fresh =
-                                                        innerController
-                                                                    .selectedTab ==
-                                                                0
-                                                            ? innerController
-                                                                .getMarketPositionById(
-                                                                  position
-                                                                      .orderId,
-                                                                )
-                                                            : (innerController
-                                                                        .selectedTab ==
-                                                                    1
-                                                                ? innerController
-                                                                    .getPendingPositionById(
-                                                                      position
-                                                                          .orderId,
-                                                                    )
-                                                                : innerController
-                                                                    .getClosedPositionById(
-                                                                      position
-                                                                          .orderId,
-                                                                    ));
+                              else
+                                SliverPadding(
+                                  padding: EdgeInsets.only(
+                                    left: 16.w,
+                                    right: 16.w,
+                                    bottom:
+                                        77.h +
+                                        MediaQuery.of(context).padding.bottom,
+                                  ),
+                                  sliver: SliverList(
+                                    delegate: SliverChildBuilderDelegate((
+                                      context,
+                                      index,
+                                    ) {
+                                      final position = positions[index];
+                                      return RepaintBoundary(
+                                        child: GetBuilder<TradingController>(
+                                          id: 'position_${position.orderId}',
+                                          builder: (innerController) {
+                                            final TradePosition? fresh =
+                                                innerController.selectedTab == 0
+                                                    ? innerController
+                                                        .getMarketPositionById(
+                                                          position.orderId,
+                                                        )
+                                                    : (innerController
+                                                                .selectedTab ==
+                                                            1
+                                                        ? innerController
+                                                            .getPendingPositionById(
+                                                              position.orderId,
+                                                            )
+                                                        : innerController
+                                                            .getClosedPositionById(
+                                                              position.orderId,
+                                                            ));
 
-                                                    return _buildPositionCard(
-                                                      innerController,
-                                                      fresh ?? position,
-                                                    );
-                                                  },
-                                                ),
-                                              );
-                                            }, childCount: positions.length),
-                                          ),
+                                            return _buildPositionCard(
+                                              innerController,
+                                              fresh ?? position,
+                                            );
+                                          },
                                         ),
-                                    ],
+                                      );
+                                    }, childCount: positions.length),
                                   ),
                                 ),
+                              if (hasMorePages && controller.selectedTab == 2)
+                                SliverToBoxAdapter(
+                                  child: Builder(
+                                    builder: (context) {
+                                      WidgetsBinding.instance
+                                          .addPostFrameCallback((_) {
+                                            if (mounted &&
+                                                !_isLoadingMore &&
+                                                !controller.isLoadingHistory) {
+                                              _loadMoreIfNeeded();
+                                            }
+                                          });
+                                      return _buildPaginationLoader(controller);
+                                    },
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
                       );
                     },
                   ),

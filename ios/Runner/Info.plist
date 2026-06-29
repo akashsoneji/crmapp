@@ -39,12 +39,12 @@
 	<string>Allow to upload document for validation</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>Use Face ID to sign in securely.</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>We need photo library access for Identity verification.</string>
-	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>We need photo library access to save verification documents and statements.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>We need microphone access for Identity verification videos.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>We need photo library access to save verification documents and statements.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>We need photo library access for Identity verification.</string>
 	<key>NSUserNotificationUsageDescription</key>
 	<string>This app needs notification permissions to send you price alerts for your trading instruments.</string>
 	<key>UIApplicationSceneManifest</key>
@@ -70,6 +70,11 @@
 	</dict>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>remote-notification</string>
+	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
@@ -82,11 +87,6 @@
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
 		<string>UIInterfaceOrientationPortraitUpsideDown</string>
-	</array>
-	<key>UIBackgroundModes</key>
-	<array>
-		<string>fetch</string>
-		<string>remote-notification</string>
 	</array>
 </dict>
 </plist>

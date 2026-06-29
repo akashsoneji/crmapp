@@ -20,9 +20,9 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # version: 1.0.93+90
 
 # FOR STAGING
-# version: 1.0.104+101
+version: 1.0.7+7
 # for OTHERS 
-version: 2.0.10+12
+# version: 2.0.7+8
 #For Tenax
 # version: 1.0.0+7
 
@@ -65,6 +65,9 @@ dependencies:
   
   # Country Picker
   country_picker: ^2.0.25
+
+  # Country-aware phone parsing/validation/formatting (pure Dart, libphonenumber metadata)
+  phone_numbers_parser: ^9.0.23
 
   # Socket
   web_socket_channel: ^3.0.3
@@ -127,10 +130,6 @@ dependencies:
   encrypt: ^5.0.3
   fl_chart: ^1.1.1
   # local_auth + app_settings are declared above (Local Storage section)
-
-  # ✅ YAML parser for reading feature flags from bundled brand.yaml
-  yaml: ^3.1.2
-
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -158,7 +157,7 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:    
-    - assets/clients/tenax/
+    - assets/clients/gtxprime/
 
     - assets/translations/
     - assets/image/

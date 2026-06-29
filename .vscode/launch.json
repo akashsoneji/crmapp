@@ -212,6 +212,48 @@
             "console": "integratedTerminal"
         },
 
+        // ─── GTX Prime ──────────────────────────────────────────────────────────
+        {
+            "name": "🌌 GTX Prime (Debug)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "gtxprime",
+                "--dart-define=FLAVOR=gtxprime",
+                "--no-enable-impeller"
+            ],
+            "flutterMode": "debug",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "🌌 GTX Prime (Profile)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "gtxprime",
+                "--dart-define=FLAVOR=gtxprime"
+            ],
+            "flutterMode": "profile",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "🌌 GTX Prime (Release)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--flavor",
+                "gtxprime",
+                "--dart-define=FLAVOR=gtxprime"
+            ],
+            "flutterMode": "release",
+            "console": "integratedTerminal"
+        },
+
         // ─── Kantara ────────────────────────────────────────────────────────────
         {
             "name": "🟦 Kantara (Debug)",

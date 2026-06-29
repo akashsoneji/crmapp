@@ -17,6 +17,10 @@ import 'package:crm_app/constants/api_const.dart';
 import 'package:crm_app/services/unified_websocket_service.dart';
 import 'package:crm_app/services/single_websocket_service.dart';
 
+import 'package:crm_app/services/app_lock_service.dart';
+import 'package:crm_app/services/symbol_selection_service.dart';
+
+
 class ChartSocketController extends GetxController with WidgetsBindingObserver {
   // Connection state
   final RxBool isConnected = false.obs;
@@ -267,6 +271,49 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
     if (symbol == null || symbol.isEmpty) return;
     await initializeSocketForSymbol(symbol);
     handleAppRestart();
+  }
+
+  /// 🚀 PRELOAD: Background me chart WebSocket start karo default/saved symbol ke saath.
+  /// Yeh AuthCheckScreen call karta hai jab user already logged in hota hai.
+  /// Isse chart screen open hone pe data already available hota hai - loading time zero!
+  static Future<void> preloadForDefaultSymbol() async {
+    try {
+      // Authentication check
+      final isLoggedIn = await SecureStorageService.isUserLoggedIn();
+      if (!isLoggedIn) return;
+
+      // Get saved symbol (persisted from last session)
+      String symbol = 'XAUUSD'; // fallback default
+      try {
+        if (Get.isRegistered<SymbolSelectionService>()) {
+          final selSvc = Get.find<SymbolSelectionService>();
+          await selSvc.ensureDefault();
+          if (selSvc.currentSymbol.isNotEmpty) {
+            symbol = selSvc.currentSymbol;
+          }
+        } else {
+          // Try reading directly from storage
+          final saved = await SecureStorageService.getSelectedSymbol();
+          if (saved != null && saved.isNotEmpty) symbol = saved;
+        }
+      } catch (_) {}
+
+      // Get the controller (already registered permanently in main.dart)
+      if (!Get.isRegistered<ChartSocketController>()) return;
+      final ctrl = Get.find<ChartSocketController>();
+
+      // Skip if already connected with the same symbol - nothing to do
+      if (ctrl.isConnected.value && ctrl.currentSymbol.value == symbol) {
+        dev.log('🚀 Chart Preload: Already connected to $symbol, skipping.');
+        return;
+      }
+
+      dev.log('🚀 Chart Preload: Starting background preload for symbol: $symbol');
+      await ctrl.initializeSocketForSymbol(symbol);
+      dev.log('🚀 Chart Preload: Background preload initiated for $symbol');
+    } catch (e) {
+      dev.log('🚀 Chart Preload: Error during preload: $e');
+    }
   }
 
   // Get WebSocket URL based on account type (MT5 vs self-hosted)

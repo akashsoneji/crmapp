@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "memories": [
+    {
+      "id": "mem_kv8vimu",
+      "text": "single websocket service debug logs are commented out to prevent high-frequency console spam",
+      "createdAt": 1781247636328,
+      "source": "agent"
+    }
+  ]
+}

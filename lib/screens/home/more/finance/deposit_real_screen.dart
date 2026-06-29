@@ -463,6 +463,8 @@ class _DepositRealScreenState extends State<DepositRealScreen> {
         selectedMT5AccountID:
             controller.selectedTransferAccount.value!['meta_account_number']
                 as String,
+        currency: selectedCurrency,
+        fromBonus: Get.arguments != null && Get.arguments is Map && Get.arguments['from'] == 'bonus',
       ),
     );
 

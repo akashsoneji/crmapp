@@ -10,6 +10,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:crm_app/controllers/chart_socket_controller.dart';
 import 'package:crm_app/services/price_alert_service.dart';
 import 'package:crm_app/services/loading_service.dart';
@@ -566,6 +567,43 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
             print('AuthCheckScreen: Error fetching accounts: $e');
           }
 
+          // ✅ FIX: FIRST API call after login = getMT5Account.
+          // We AWAIT this (do not fire-and-forget) so that:
+          //   1. The Trading screen is only shown after MT5 account data is available
+          //   2. AccountHeaderWidget and Dashboard show real data immediately
+          //   3. An activity indicator is shown via isLoadingMT5Accounts while loading
+          print(
+            'AuthCheckScreen: First API call -> getMT5Accounts (awaiting response)...',
+          );
+          try {
+            final dc = Get.find<DashboardController>();
+            // Mark loading=true synchronously so any Obx listening to
+            // isLoadingMT5Accounts (Dashboard overlay, AccountHeaderWidget) immediately
+            // renders its loading indicator.
+            dc.isLoadingMT5Accounts.value = true;
+            await dc.forceCheckMT5Accounts();
+            print(
+              'AuthCheckScreen: getMT5Accounts response received (${dc.mt5Accounts.length} accounts). Navigating to Trading.',
+            );
+          } catch (e) {
+            print('AuthCheckScreen: Error fetching MT5 accounts: $e');
+            // Continue to Trading screen even on error so the user is not
+            // stuck on splash; the dashboard's empty-state will guide them.
+          }
+
+          // 🚀 CHART PRELOAD: Background me chart WebSocket pre-connect karo
+          // Taaki user jab chart tab pe jaye, data already ready ho (loading time = 0)
+          unawaited(
+            Future.microtask(() async {
+              try {
+                await ChartSocketController.preloadForDefaultSymbol();
+                print('AuthCheckScreen: Chart WebSocket preload initiated in background');
+              } catch (e) {
+                print('AuthCheckScreen: Chart preload error (non-critical): $e');
+              }
+            }),
+          );
+
           if (Get.isRegistered<EnabledModulesService>()) {
             unawaited(
               Get.find<EnabledModulesService>().fetchEnabledModules(
@@ -660,11 +698,22 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
     if (!FlavorConfig.isMultiBrokerEnabled) return false;
     final isEnabled = await SecureStorageService.getTenaxBrokerSelectionFlag();
     if (!isEnabled) return false;
+
+    // ✅ FIX: If the user is already logged in, NEVER redirect to broker
+    // selection – even if the flag is set. This prevents the broker selection
+    // screen from appearing after an app update where the SharedPreferences
+    // install-marker may have been reset while the Keychain session (token)
+    // was preserved.
+    if (isLoggedIn) return false;
+
+    // For non-logged-in users in demo mode, skip broker selection when a
+    // previous broker selection is already saved.
     if (FlavorConfig.isTenaxBrokerDemoEnabled &&
         await SecureStorageService.hasTenaxBrokerSelection()) {
       return false;
     }
-    return !isLoggedIn;
+
+    return true; // Not logged in → show broker selection
   }
 
   Future<bool> _shouldSkipWelcomeForTenax() async {
@@ -681,6 +730,9 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
   Widget build(BuildContext context) {
     // Show neutral loading UI while async auth check runs.
     // Prevents SR flavor's red background "flash" before GetStarted.
+    // The auth flow awaits getMT5Account before navigating to Trading, so this
+    // activity indicator stays visible until the first MT5 accounts response
+    // arrives — the user never sees a blank/empty account header.
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       body: Center(
@@ -689,7 +741,10 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
           children: [
             // SvgPicture.asset(FlavorConfig.instance.splashLogoPath),
             const SizedBox(height: 24),
-            // const CircularProgressIndicator(),
+            LoadingAnimationWidget.fourRotatingDots(
+              color: FlavorConfig.instance.primaryColor,
+              size: 48,
+            ),
           ],
         ),
       ),
@@ -796,6 +851,9 @@ Future<void> _initializeFlavor() async {
       } else if (packageName.contains('amirifx')) {
         FlavorConfig.amirifx;
         AppLogger.debug('Flavor initialized from package id: amirifx');
+      } else if (packageName.contains('gtxprime')) {
+        FlavorConfig.gtxprime;
+        AppLogger.debug('Flavor initialized from package id: gtxprime');
       } else {
         FlavorConfig.pipze;
         AppLogger.debug('Flavor initialized: pipze (default)');
@@ -854,6 +912,9 @@ void _initializeFlavorByName(String flavorName) {
       break;
     case 'amirifx':
       FlavorConfig.amirifx;
+      break;
+    case 'gtxprime':
+      FlavorConfig.gtxprime;
       break;
 
     default:

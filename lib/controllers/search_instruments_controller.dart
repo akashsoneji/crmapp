@@ -15,7 +15,7 @@ class SearchInstrumentsController extends GetxController {
   var searchQuery = ''.obs;
   /// Chips order: All, Currency, Metals, Crypto, Indices, Energy, Commodities.
   /// Default tab is Currency (Forex/Currency API names via aliases).
-  var currentCategory = 'Currency'.obs;
+  var currentCategory = 'All'.obs;
 
   static const List<String> _categoryChipOrder = [
     'All',
@@ -30,7 +30,7 @@ class SearchInstrumentsController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    availableCategories.assignAll(_categoryChipOrder);
+    // Categories are populated dynamically after API response via _updateAvailableCategories().
     fetchInstruments();
   }
 
@@ -52,9 +52,7 @@ class SearchInstrumentsController extends GetxController {
           allSymbols.assignAll(searchResponse.data!.symbols);
           _updateAvailableCategories();
 
-          if (!availableCategories.contains(currentCategory.value)) {
-            currentCategory.value = 'Currency';
-          }
+            currentCategory.value = 'All';
 
           _applyFilter();
         }
@@ -77,8 +75,25 @@ class SearchInstrumentsController extends GetxController {
   }
 
   void _updateAvailableCategories() {
-    // Fixed chip order (not driven by API category list order).
-    availableCategories.assignAll(_categoryChipOrder);
+    // Only show categories that have at least one symbol in the API response.
+    // 'All' is always shown first (if there are any symbols at all).
+    final presentChips = <String>[];
+
+    if (allSymbols.isNotEmpty) {
+      presentChips.add('All');
+    }
+
+    for (final chip in _categoryChipOrder) {
+      if (chip == 'All') continue; // already handled above
+      final hasMatch = allSymbols.any(
+        (s) => symbolMatchesCategoryChip(s.categoryName, chip),
+      );
+      if (hasMatch) {
+        presentChips.add(chip);
+      }
+    }
+
+    availableCategories.assignAll(presentChips);
   }
 
   /// Maps a symbol's API [categoryName] to the chip bucket [selectedChip], or false if no match.

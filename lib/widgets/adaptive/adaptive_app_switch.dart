@@ -1,5 +1,5 @@
 import 'package:adaptive_platform_ui/adaptive_platform_ui.dart' as adaptive;
-import 'package:crm_app/flavor_config.dart';
+import 'package:crm_app/constants/color.dart';
 import 'package:flutter/material.dart';
 
 class AdaptiveAppSwitch extends StatelessWidget {
@@ -21,7 +21,7 @@ class AdaptiveAppSwitch extends StatelessWidget {
     return adaptive.AdaptiveSwitch(
       value: value,
       onChanged: onChanged,
-      activeColor: activeColor ?? FlavorConfig.instance.primaryColor,
+      activeColor: activeColor ?? AppColors.primary,
       thumbColor: thumbColor,
     );
   }

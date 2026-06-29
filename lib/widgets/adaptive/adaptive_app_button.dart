@@ -1,6 +1,5 @@
 import 'package:adaptive_platform_ui/adaptive_platform_ui.dart' as adaptive;
 import 'package:crm_app/constants/color.dart';
-import 'package:crm_app/flavor_config.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -115,11 +114,11 @@ class AdaptiveAppButton extends StatelessWidget {
   Color _backgroundColor(BuildContext context) {
     switch (variant) {
       case AdaptiveAppButtonVariant.primary:
-        return FlavorConfig.instance.primaryColor;
+        return AppColors.primary;
       case AdaptiveAppButtonVariant.secondary:
       case AdaptiveAppButtonVariant.outline:
       case AdaptiveAppButtonVariant.text:
-        return FlavorConfig.instance.primaryColor;
+        return AppColors.primary;
     }
   }
 
@@ -130,7 +129,7 @@ class AdaptiveAppButton extends StatelessWidget {
       case AdaptiveAppButtonVariant.secondary:
       case AdaptiveAppButtonVariant.outline:
       case AdaptiveAppButtonVariant.text:
-        return FlavorConfig.instance.primaryColor;
+        return AppColors.primary;
     }
   }
 }

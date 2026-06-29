@@ -31,23 +31,27 @@ fi
 case "$FLAVOR" in
     afx)
         APP_NAME="AFX"
-        APP_ICON="AppIcon"  # Using default icon for now
+        APP_ICON="AppIcon"
         ;;
     pipze)
         APP_NAME="Pipze"
-        APP_ICON="AppIcon"  # Using default icon for now
+        APP_ICON="AppIcon"
         ;;
     octa)
         APP_NAME="Octa"
-        APP_ICON="AppIcon"  # Using default icon for now
+        APP_ICON="AppIcon"
         ;;
     fleza)
         APP_NAME="Fleza"
-        APP_ICON="AppIcon"  # Using default icon for now
+        APP_ICON="AppIcon"
         ;;
     tenax)
         APP_NAME="Tenax"
         APP_ICON="tenax_app_icon"
+        ;;
+    tenax3)
+        APP_NAME="Tenax3"
+        APP_ICON="AppIcon"
         ;;
     celestial)
         APP_NAME="Celestial"
@@ -61,8 +65,40 @@ case "$FLAVOR" in
         APP_NAME="ProFX"
         APP_ICON="profx_app_icon"
         ;;
+    kantara)
+        APP_NAME="Kantara"
+        APP_ICON="AppIcon"
+        ;;
+    tradoxy)
+        APP_NAME="Tradoxy"
+        APP_ICON="AppIcon"
+        ;;
+    askbid)
+        APP_NAME="Askbid"
+        APP_ICON="AppIcon"
+        ;;
+    sr)
+        APP_NAME="SR"
+        APP_ICON="AppIcon"
+        ;;
+    vr19)
+        APP_NAME="VR19"
+        APP_ICON="AppIcon"
+        ;;
+    goldenwolffx)
+        APP_NAME="GoldenWolfFX"
+        APP_ICON="AppIcon"
+        ;;
+    amirifx)
+        APP_NAME="AmiriFX"
+        APP_ICON="AppIcon"
+        ;;
+    gtxprime)
+        APP_NAME="GTX Prime"
+        APP_ICON="AppIcon"
+        ;;
     *)
-        APP_NAME="Pipze"
+        APP_NAME="CRMApp"
         APP_ICON="AppIcon"
         ;;
 esac

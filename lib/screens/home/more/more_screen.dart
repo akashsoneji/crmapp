@@ -157,27 +157,25 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
     final loginData = await SecureStorageService.getCompleteLoginData();
     final loginUser =
         loginData != null && loginData['user'] is Map<String, dynamic>
-            ? loginData['user'] as Map<String, dynamic>
-            : null;
-    final loginEmail =
-        (loginUser?['email'] ?? loginUser?['user_email'] ?? '')
-            .toString()
-            .trim()
-            .toLowerCase();
+        ? loginData['user'] as Map<String, dynamic>
+        : null;
+    final loginEmail = (loginUser?['email'] ?? loginUser?['user_email'] ?? '')
+        .toString()
+        .trim()
+        .toLowerCase();
     if (authToken == null || authToken.isEmpty) return;
     if (loginEmail.isNotEmpty && loginEmail != email) return;
 
     final profile = <String, dynamic>{
       'profile_key': profileKey,
       'user_email': email,
-      'user_name':
-          name.isNotEmpty
-              ? name
-              : (loginUser?['full_name'] ??
-                      loginUser?['fullName'] ??
-                      loginUser?['name'] ??
-                      '')
-                  .toString(),
+      'user_name': name.isNotEmpty
+          ? name
+          : (loginUser?['full_name'] ??
+                    loginUser?['fullName'] ??
+                    loginUser?['name'] ??
+                    '')
+                .toString(),
       'broker_name':
           (brokerData['selected_name'] ?? FlavorConfig.instance.appName)
               .toString(),
@@ -207,91 +205,86 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder:
-          (context) => TweenAnimationBuilder<double>(
-            duration: const Duration(milliseconds: 260),
-            curve: Curves.easeOutCubic,
-            tween: Tween(begin: 0.95, end: 1),
-            builder:
-                (context, value, child) =>
-                    Transform.scale(scale: value, child: child),
-            child: Container(
-              margin: EdgeInsets.symmetric(horizontal: 14.w, vertical: 16.h),
-              padding: EdgeInsets.fromLTRB(18.w, 16.h, 18.w, 18.h),
-              decoration: BoxDecoration(
-                color: AppColors.whiteColor,
-                borderRadius: BorderRadius.circular(18.r),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
+      builder: (context) => TweenAnimationBuilder<double>(
+        duration: const Duration(milliseconds: 260),
+        curve: Curves.easeOutCubic,
+        tween: Tween(begin: 0.95, end: 1),
+        builder: (context, value, child) =>
+            Transform.scale(scale: value, child: child),
+        child: Container(
+          margin: EdgeInsets.symmetric(horizontal: 14.w, vertical: 16.h),
+          padding: EdgeInsets.fromLTRB(18.w, 16.h, 18.w, 18.h),
+          decoration: BoxDecoration(
+            color: AppColors.whiteColor,
+            borderRadius: BorderRadius.circular(18.r),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          'Switch Account',
-                          style: AppTextStyles.heading,
-                        ),
-                      ),
-                      InkWell(
-                        onTap: () => Navigator.pop(context),
-                        child: Container(
-                          width: 28.w,
-                          height: 28.w,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: AppColors.border,
-                          ),
-                          child: const Icon(Icons.close, size: 18),
-                        ),
-                      ),
-                    ],
+                  Expanded(
+                    child: Text('Switch Account', style: AppTextStyles.heading),
                   ),
-                  Divider(height: 20.h, color: AppColors.border),
-                  if (_tenaxProfiles.isEmpty)
-                    Padding(
-                      padding: EdgeInsets.symmetric(vertical: 20.h),
-                      child: Text(
-                        'No accounts yet',
-                        style: TextStyle(
-                          color: AppColors.textGrey,
-                          fontSize: 14.sp,
-                        ),
+                  InkWell(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      width: 28.w,
+                      height: 28.w,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColors.border,
                       ),
-                    )
-                  else
-                    ..._tenaxProfiles.map(_buildAccountTile),
-                  SizedBox(height: 12.h),
-                  SafeArea(
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          _showAddAccountBottomSheet();
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          padding: EdgeInsets.symmetric(vertical: 8.h),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12.r),
-                          ),
-                        ),
-                        child: Text(
-                          'Add New +',
-                          style: TextStyle(
-                            color: AppColors.whiteColor,
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
+                      child: const Icon(Icons.close, size: 18),
                     ),
                   ),
                 ],
               ),
-            ),
+              Divider(height: 20.h, color: AppColors.border),
+              if (_tenaxProfiles.isEmpty)
+                Padding(
+                  padding: EdgeInsets.symmetric(vertical: 20.h),
+                  child: Text(
+                    'No accounts yet',
+                    style: TextStyle(
+                      color: AppColors.textGrey,
+                      fontSize: 14.sp,
+                    ),
+                  ),
+                )
+              else
+                ..._tenaxProfiles.map(_buildAccountTile),
+              SizedBox(height: 12.h),
+              SafeArea(
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _showAddAccountBottomSheet();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      padding: EdgeInsets.symmetric(vertical: 8.h),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                    ),
+                    child: Text(
+                      'Add New +',
+                      style: TextStyle(
+                        color: AppColors.whiteColor,
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
+        ),
+      ),
     );
   }
 
@@ -357,14 +350,9 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                 shape: BoxShape.circle,
                 color: isSelected ? AppColors.primary : AppColors.textGrey,
               ),
-              child:
-                  isSelected
-                      ? Icon(
-                        Icons.check,
-                        color: AppColors.whiteColor,
-                        size: 14.sp,
-                      )
-                      : null,
+              child: isSelected
+                  ? Icon(Icons.check, color: AppColors.whiteColor, size: 14.sp)
+                  : null,
             ),
           ],
         ),
@@ -374,10 +362,9 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
 
   Future<void> _selectTenaxProfile(Map<String, dynamic> profile) async {
     if (!await _isTenaxBrokerFeatureEnabled()) return;
-    final brokerData =
-        profile['broker_data'] is Map<String, dynamic>
-            ? profile['broker_data'] as Map<String, dynamic>
-            : null;
+    final brokerData = profile['broker_data'] is Map<String, dynamic>
+        ? profile['broker_data'] as Map<String, dynamic>
+        : null;
     if (brokerData == null) return;
 
     await SecureStorageService.saveTenaxBrokerSelection(brokerData);
@@ -388,8 +375,8 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
     // ── Apply FlavorConfig (URL, colors, logo) ───────────────────────────
     final runtimeConfig =
         brokerData['broker_runtime_config'] is Map<String, dynamic>
-            ? brokerData['broker_runtime_config'] as Map<String, dynamic>
-            : brokerData;
+        ? brokerData['broker_runtime_config'] as Map<String, dynamic>
+        : brokerData;
     final selectedName = (brokerData['selected_name'] ?? '').toString();
     final selectedLogo =
         (brokerData['selected_logo_local_path'] ??
@@ -446,74 +433,72 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder:
-          (context) => TweenAnimationBuilder<double>(
-            duration: const Duration(milliseconds: 260),
-            curve: Curves.easeOutCubic,
-            tween: Tween(begin: 0.96, end: 1),
-            builder:
-                (context, value, child) => Transform.translate(
-                  offset: Offset(0, (1 - value) * 20),
-                  child: child,
+      builder: (context) => TweenAnimationBuilder<double>(
+        duration: const Duration(milliseconds: 260),
+        curve: Curves.easeOutCubic,
+        tween: Tween(begin: 0.96, end: 1),
+        builder: (context, value, child) => Transform.translate(
+          offset: Offset(0, (1 - value) * 20),
+          child: child,
+        ),
+        child: Container(
+          margin: EdgeInsets.symmetric(horizontal: 14.w, vertical: 16.h),
+          padding: EdgeInsets.fromLTRB(18.w, 16.h, 18.w, 18.h),
+          decoration: BoxDecoration(
+            color: AppColors.whiteColor,
+            borderRadius: BorderRadius.circular(18.r),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Add Account', style: AppTextStyles.heading),
+              SizedBox(height: 12.h),
+              Text(
+                'Current broker: $selectedBrokerName',
+                style: TextStyle(
+                  fontSize: 15.sp,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textGrey,
                 ),
-            child: Container(
-              margin: EdgeInsets.symmetric(horizontal: 14.w, vertical: 16.h),
-              padding: EdgeInsets.fromLTRB(18.w, 16.h, 18.w, 18.h),
-              decoration: BoxDecoration(
-                color: AppColors.whiteColor,
-                borderRadius: BorderRadius.circular(18.r),
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Add Account', style: AppTextStyles.heading),
-                  SizedBox(height: 12.h),
-                  Text(
-                    'Current broker: $selectedBrokerName',
-                    style: TextStyle(
-                      fontSize: 15.sp,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.textGrey,
-                    ),
-                  ),
-                  SizedBox(height: 14.h),
-                  SafeArea(
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          Get.toNamed(
-                            AppPages.TENAX_BROKER_SELECTION,
-                            arguments: {
-                              'nextRoute': AppPages.LOGIN,
-                              'allowBack': true,
-                            },
-                          );
+              SizedBox(height: 14.h),
+              SafeArea(
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      Get.toNamed(
+                        AppPages.TENAX_BROKER_SELECTION,
+                        arguments: {
+                          'nextRoute': AppPages.LOGIN,
+                          'allowBack': true,
                         },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          padding: EdgeInsets.symmetric(vertical: 12.h),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12.r),
-                          ),
-                        ),
-                        child: Text(
-                          'Choose Broker',
-                          style: TextStyle(
-                            color: AppColors.whiteColor,
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      padding: EdgeInsets.symmetric(vertical: 12.h),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                    ),
+                    child: Text(
+                      'Choose Broker',
+                      style: TextStyle(
+                        color: AppColors.whiteColor,
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
+        ),
+      ),
     );
   }
 
@@ -688,19 +673,30 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                 (stage?.personalDetails == true);
 
             return IconButton(
-              icon: SvgPicture.asset(
-                'assets/svg/edit_profile.svg',
-                height: 24.h,
-                width: 24.w,
-                color: AppColors.primary,
-              ),
+              icon: isProfileVerified
+                  ? Icon(
+                      Icons.remove_red_eye_outlined,
+                      size: 24.sp,
+                      color: AppColors.primary,
+                    )
+                  : SvgPicture.asset(
+                      'assets/svg/edit_profile.svg',
+                      height: 24.h,
+                      width: 24.w,
+                      color: AppColors.primary,
+                    ),
               padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
               onPressed: () {
-                // Pass the current verification status
-                Get.toNamed(
-                  AppPages.EDIT_PROFILE,
-                  arguments: isProfileVerified,
-                );
+                if (isProfileVerified) {
+                  // All required fields verified → show read-only view profile
+                  Get.toNamed(AppPages.VIEW_PROFILE);
+                } else {
+                  // Existing edit profile flow
+                  Get.toNamed(
+                    AppPages.EDIT_PROFILE,
+                    arguments: isProfileVerified,
+                  );
+                }
               },
             );
           }),
@@ -770,12 +766,11 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                                   );
                                   return Icon(
                                     Icons.verified,
-                                    color:
-                                        (completion == 100)
-                                            ? AppColors.primary
-                                            : AppColors.icongrey.withValues(
-                                              alpha: 0.3,
-                                            ),
+                                    color: (completion == 100)
+                                        ? AppColors.primary
+                                        : AppColors.icongrey.withValues(
+                                            alpha: 0.3,
+                                          ),
                                     size: 18.r,
                                   );
                                 },
@@ -834,16 +829,16 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                   return completion == 100
                       ? const SizedBox.shrink()
                       : Column(
-                        children: [
-                          VerifyAccountCard(
-                            title: languageService.tr('verify_your_account'),
-                            subTitle: languageService.tr(
-                              'complete_verification_to_unlock',
+                          children: [
+                            VerifyAccountCard(
+                              title: languageService.tr('verify_your_account'),
+                              subTitle: languageService.tr(
+                                'complete_verification_to_unlock',
+                              ),
+                              percentage: '',
                             ),
-                            percentage: '',
-                          ),
-                        ],
-                      );
+                          ],
+                        );
                 },
               ),
               SizedBox(height: 8.h),
@@ -856,10 +851,8 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                     icon: 'deposit',
                     label: languageService.tr('general_deposit'),
                     color: AppColors.quickActionGreen, // Green
-                    onTap:
-                        () => Get.to(
-                          () => PaymentMethodsScreen(accountNumber: ''),
-                        ),
+                    onTap: () =>
+                        Get.to(() => PaymentMethodsScreen(accountNumber: '')),
                   ),
                   _QuickActionButton(
                     icon: 'withdrawal',
@@ -915,11 +908,10 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                     _MenuItem(
                       icon: 'promotional',
                       label: languageService.tr('general_promotional'),
-                      onTap:
-                          () => Get.to(
-                            () => const PromotionalScreen(),
-                            transition: Transition.rightToLeft,
-                          ),
+                      onTap: () => Get.to(
+                        () => const PromotionalScreen(),
+                        transition: Transition.rightToLeft,
+                      ),
                     ),
                   );
                 }
@@ -1060,15 +1052,15 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
             mainAxisSize: MainAxisSize.min,
             children: [
               // App logo - replace asset path with your app logo svg or image
-              BrandLogo(
-                source: logoSource,
-                height: 60.h,
-                width: 60.w,
-                color:
-                    FlavorConfig.isONSA() && !FlavorConfig.hasRemoteLogo
-                        ? AppColors.primary
-                        : null,
-              ),
+              // BrandLogo(
+              //   source: logoSource,
+              //   height: 60.h,
+              //   width: 60.w,
+              //   color:
+              //       FlavorConfig.isONSA() && !FlavorConfig.hasRemoteLogo
+              //           ? AppColors.primary
+              //           : null,
+              // ),
               SizedBox(height: 24.h),
               Text(
                 languageService.tr('logout_confirm_message'),
@@ -1087,12 +1079,11 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                     child: Obx(
                       () => InkWell(
                         borderRadius: BorderRadius.circular(12),
-                        onTap:
-                            authController.isLoading
-                                ? null
-                                : () async {
-                                  await authController.logout();
-                                },
+                        onTap: authController.isLoading
+                            ? null
+                            : () async {
+                                await authController.logout();
+                              },
                         child: Container(
                           height: 44.h,
                           decoration: BoxDecoration(
@@ -1167,10 +1158,9 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                 source: FlavorConfig.effectiveLogo,
                 height: 80.h,
                 width: 80.w,
-                color:
-                    FlavorConfig.isONSA() && !FlavorConfig.hasRemoteLogo
-                        ? AppColors.primary
-                        : null,
+                color: FlavorConfig.isONSA() && !FlavorConfig.hasRemoteLogo
+                    ? AppColors.primary
+                    : null,
               ),
               SizedBox(height: 24.h),
               Text(
@@ -1195,28 +1185,25 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide(
-                          color:
-                              _isPasswordEmpty.value
-                                  ? AppColors.error
-                                  : AppColors.textGrey,
+                          color: _isPasswordEmpty.value
+                              ? AppColors.error
+                              : AppColors.textGrey,
                         ),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide(
-                          color:
-                              _isPasswordEmpty.value
-                                  ? AppColors.error
-                                  : AppColors.textGrey,
+                          color: _isPasswordEmpty.value
+                              ? AppColors.error
+                              : AppColors.textGrey,
                         ),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide(
-                          color:
-                              _isPasswordEmpty.value
-                                  ? AppColors.error
-                                  : AppColors.primary,
+                          color: _isPasswordEmpty.value
+                              ? AppColors.error
+                              : AppColors.primary,
                         ),
                       ),
                     ),
@@ -1230,24 +1217,23 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                     child: Obx(
                       () => InkWell(
                         borderRadius: BorderRadius.circular(12),
-                        onTap:
-                            authController.isLoading
-                                ? null
-                                : () {
-                                  if (_passwordController.text.isEmpty) {
-                                    _isPasswordEmpty.value = true;
-                                  } else {
-                                    _isPasswordEmpty.value = false;
-                                    authController.deleteAccount({
-                                      "password": _passwordController.text,
-                                      "reason": languageService.tr(
-                                        'delete_account_reason_no_longer_needed',
-                                      ),
-                                      "accept_terms": true,
-                                      "confirm_deletion": true,
-                                    });
-                                  }
-                                },
+                        onTap: authController.isLoading
+                            ? null
+                            : () {
+                                if (_passwordController.text.isEmpty) {
+                                  _isPasswordEmpty.value = true;
+                                } else {
+                                  _isPasswordEmpty.value = false;
+                                  authController.deleteAccount({
+                                    "password": _passwordController.text,
+                                    "reason": languageService.tr(
+                                      'delete_account_reason_no_longer_needed',
+                                    ),
+                                    "accept_terms": true,
+                                    "confirm_deletion": true,
+                                  });
+                                }
+                              },
                         child: Container(
                           height: 48.h,
                           decoration: BoxDecoration(
@@ -1394,24 +1380,23 @@ class _CardGroup extends StatelessWidget {
         border: Border.all(color: AppColors.icongrey.withValues(alpha: 0.14)),
       ),
       child: Column(
-        children:
-            children.asMap().entries.map((entry) {
-              int idx = entry.key;
-              Widget val = entry.value;
-              if (idx == children.length - 1) return val;
-              return Column(
-                children: [
-                  val,
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 14.w),
-                    child: Divider(
-                      height: 1,
-                      color: AppColors.icongrey.withValues(alpha: 0.14),
-                    ),
-                  ),
-                ],
-              );
-            }).toList(),
+        children: children.asMap().entries.map((entry) {
+          int idx = entry.key;
+          Widget val = entry.value;
+          if (idx == children.length - 1) return val;
+          return Column(
+            children: [
+              val,
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 14.w),
+                child: Divider(
+                  height: 1,
+                  color: AppColors.icongrey.withValues(alpha: 0.14),
+                ),
+              ),
+            ],
+          );
+        }).toList(),
       ),
     );
   }
@@ -1638,8 +1623,8 @@ class _OneClickTradingMenuItemState extends State<_OneClickTradingMenuItem> {
                 await Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder:
-                        (context) => const OneClickTradingDisclaimerScreen(),
+                    builder: (context) =>
+                        const OneClickTradingDisclaimerScreen(),
                   ),
                 );
                 await _loadState();
@@ -1653,16 +1638,16 @@ class _OneClickTradingMenuItemState extends State<_OneClickTradingMenuItem> {
               width: 44.w,
               height: 24.h,
               decoration: BoxDecoration(
-                color:
-                    _isEnabled
-                        ? AppColors.primary
-                        : AppColors.icongrey.withValues(alpha: 0.2),
+                color: _isEnabled
+                    ? AppColors.primary
+                    : AppColors.icongrey.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(20.r),
               ),
               child: AnimatedAlign(
                 duration: const Duration(milliseconds: 200),
-                alignment:
-                    _isEnabled ? Alignment.centerRight : Alignment.centerLeft,
+                alignment: _isEnabled
+                    ? Alignment.centerRight
+                    : Alignment.centerLeft,
                 curve: Curves.easeOut,
                 child: Container(
                   padding: EdgeInsets.all(2.w),
@@ -1723,7 +1708,9 @@ class _BiometricLoginMenuItemState extends State<_BiometricLoginMenuItem> {
       builder: (ctx) {
         return AlertDialog(
           backgroundColor: AppColors.cardBackground,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16.r),
+          ),
           title: Text(
             _languageService.tr('biometric_not_enabled_title'),
             style: TextStyle(
@@ -1733,9 +1720,7 @@ class _BiometricLoginMenuItemState extends State<_BiometricLoginMenuItem> {
           ),
           content: Text(
             _languageService.tr('biometric_not_enabled_message'),
-            style: TextStyle(
-              color: AppColors.textSecondary,
-            ),
+            style: TextStyle(color: AppColors.textSecondary),
           ),
           actions: [
             TextButton(
@@ -1855,16 +1840,16 @@ class _BiometricLoginMenuItemState extends State<_BiometricLoginMenuItem> {
                 width: 44.w,
                 height: 24.h,
                 decoration: BoxDecoration(
-                  color:
-                      _isEnabled
-                          ? AppColors.primary
-                          : AppColors.icongrey.withValues(alpha: 0.2),
+                  color: _isEnabled
+                      ? AppColors.primary
+                      : AppColors.icongrey.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(20.r),
                 ),
                 child: AnimatedAlign(
                   duration: const Duration(milliseconds: 200),
-                  alignment:
-                      _isEnabled ? Alignment.centerRight : Alignment.centerLeft,
+                  alignment: _isEnabled
+                      ? Alignment.centerRight
+                      : Alignment.centerLeft,
                   curve: Curves.easeOut,
                   child: Container(
                     padding: EdgeInsets.all(2.w),

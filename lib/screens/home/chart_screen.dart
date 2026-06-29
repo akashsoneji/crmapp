@@ -891,8 +891,17 @@ Placing Order:
     print('📡 Current Symbol: $selectedSymbol');
     print('🔌 Socket Connected: ${chartSocketController.isConnected.value}');
 
+    // ✅ FIX: Reset datafeed symbol cache so that _buildChartArea() passes the new
+    // displaySymbol as ChartInAppWebView.symbol prop. Without this reset,
+    // _datafeedSymbolForSelected holds the old symbol's value and the prop
+    // doesn't change → didUpdateWidget never fires → JS updateSymbol not called.
+    // This ensures the prop changes immediately on rebuild, triggering didUpdateWidget
+    // even when _webViewKey.currentState is null (chart tab not yet rendered in PageView).
     setState(() {
       selectedSymbol = newSymbol;
+      _datafeedSymbolForSelected = ''; // force prop change in ChartInAppWebView
+      _lastSymbolForDatafeedLookup = ''; // allow fresh datafeed lookup for new symbol
+      _isFetchingDatafeedSymbol = false;
     });
     symbolSelectionService.setSymbol(newSymbol);
     if (ChartScreen._selectedSymbolNotifier.value != newSymbol) {
@@ -1782,7 +1791,9 @@ Placing Order:
         !_isFetchingDatafeedSymbol) {
       final symbolToLookup = selectedSymbol;
       _lastSymbolForDatafeedLookup = selectedSymbol;
-      _datafeedSymbolForSelected = '';
+      // ✅ FIX: Do NOT reset _datafeedSymbolForSelected to '' here.
+      // Keeping old value prevents the first spurious URL change that causes blink #1.
+      // The URL will update exactly ONCE when the lookup resolves.
       _isFetchingDatafeedSymbol = true;
 
       Future(() async {
@@ -1791,7 +1802,6 @@ Placing Order:
         if (accountNumber == null) {
           if (!mounted) return;
           setState(() {
-            _datafeedSymbolForSelected = '';
             _isFetchingDatafeedSymbol = false;
           });
           return;
@@ -1805,7 +1815,8 @@ Placing Order:
 
         if (!ok) {
           setState(() {
-            _datafeedSymbolForSelected = '';
+            // Fallback: use display symbol so chart loads something
+            _datafeedSymbolForSelected = displaySymbol;
             _isFetchingDatafeedSymbol = false;
           });
           return;
@@ -1826,38 +1837,38 @@ Placing Order:
         setState(() {
           // If API value isn't available, fallback to display symbol.
           _datafeedSymbolForSelected =
-              resolvedDatafeedSymbol.isNotEmpty ? resolvedDatafeedSymbol : '';
+              resolvedDatafeedSymbol.isNotEmpty ? resolvedDatafeedSymbol : displaySymbol;
           _isFetchingDatafeedSymbol = false;
         });
       });
     }
 
+    // Use resolved datafeed symbol if available, else displaySymbol.
     final effectiveDatafeedSymbol =
         _datafeedSymbolForSelected.isNotEmpty
             ? _datafeedSymbolForSelected
             : displaySymbol;
 
-    // print(
-    //   '🔵 Flavor: ${FlavorConfig.instance.chartBaseUrl}/mobile-chart?symbol=$effectiveDatafeedSymbol&theme=${AppColors.chartTheme}',
-    // );
-    // print('🔵 Chart Area: ${FlavorConfig.instance.chartBaseUrl}');
+    // Include symbol in URL so the server loads the correct chart immediately.
+    // Symbol is also passed as a prop so JS updateSymbol() can handle fast
+    // in-session symbol switches without a full reload (via didUpdateWidget).
+    final chartUrl =
+        '${FlavorConfig.instance.chartBaseUrl}/mobile-chart?symbol=$effectiveDatafeedSymbol&theme=${AppColors.chartTheme}';
+
     return Container(
       width: double.infinity,
-      height: MediaQuery.of(context).size.height * 0.4, // Responsive height
+      height: MediaQuery.of(context).size.height * 0.4,
       padding: EdgeInsets.zero,
       margin: EdgeInsets.zero,
-
-      // margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
       child: ChartInAppWebView(
         key: _webViewKey,
-        symbol: selectedSymbol,
-        // Removed ValueKey to allow didUpdateWidget to handle symbol changes
-        // This enables JavaScript-based updates instead of full widget recreation
-        url:
-            '${FlavorConfig.instance.chartBaseUrl}/mobile-chart?symbol=$effectiveDatafeedSymbol&theme=${AppColors.chartTheme}',
+        symbol: effectiveDatafeedSymbol, // JS-updated for fast in-session switches
+        url: chartUrl,                   // includes symbol for correct initial server load
       ),
     );
   }
+
+
 
   /// Build notification stack overlay (only shown when one-click trading is enabled)
   /// NOTE: Notifications are now handled globally via AppNotificationStack in main.dart
@@ -2076,6 +2087,7 @@ Placing Order:
           child: ClipRRect(
             borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
             child: SearchInstrumentsScreen(
+              favoritesOnly: true, // Only show favourites, hide segments & add button
               onNavigateToChart: (symbol) {
                 _onSymbolChanged(symbol);
               },
@@ -2085,6 +2097,7 @@ Placing Order:
       },
     );
   }
+
 
   Widget _buildInteractiveIcons() {
     return Padding(

@@ -1,6 +1,5 @@
 import 'package:adaptive_platform_ui/adaptive_platform_ui.dart' as adaptive;
 import 'package:crm_app/constants/color.dart';
-import 'package:crm_app/flavor_config.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -89,7 +88,7 @@ class AdaptiveAppTextField extends StatelessWidget {
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12.r),
               borderSide: BorderSide(
-                color: FlavorConfig.instance.primaryColor,
+                color: AppColors.primary,
                 width: 2,
               ),
             ),

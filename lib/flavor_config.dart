@@ -14,6 +14,7 @@ import 'clients/sr/config.dart';
 import 'clients/vr19/config.dart';
 import 'clients/goldenwolffx/config.dart';
 import 'clients/amirifx/config.dart';
+import 'clients/gtxprime/config.dart';
 
 
 enum Flavor {
@@ -32,6 +33,7 @@ enum Flavor {
   vr19,
   goldenwolffx,
   amirifx,
+  gtxprime,
 }
 
 
@@ -143,6 +145,7 @@ class FlavorConfig {
   static bool isVr19() => _instance?.flavor == Flavor.vr19;
   static bool isGoldenwolffx() => _instance?.flavor == Flavor.goldenwolffx;
   static bool isAmirifx() => _instance?.flavor == Flavor.amirifx;
+  static bool isGtxprime() => _instance?.flavor == Flavor.gtxprime;
 
   static String get svgLogoAsset => instance.svgLogoPath;
   static String? get remoteLogo => instance.remoteLogoUrl;
@@ -653,6 +656,27 @@ class FlavorConfig {
       appIconPath: config.getAssetPath('amirifx', config.appIconPath),
       svgLogoPath: config.getAssetPath('amirifx', config.logoSvgPath),
       splashLogoPath: config.getAssetPath('amirifx', config.splashLogoPath),
+      remoteLogoUrl: null,
+      selectedBrokerData: null,
+    );
+  }
+
+  static FlavorConfig get gtxprime {
+    _selectedFlavor = Flavor.gtxprime;
+    const config = GtxprimeConfig(); // Load centralized config
+    return FlavorConfig(
+      flavor: Flavor.gtxprime,
+      appName: config.brandName,
+      appTitle: config.appTitle,
+      primaryColor: config.primaryColor,
+      secondaryColor: config.secondaryColor,
+      accentColor: config.accentColor,
+      apiBaseUrl: config.apiBaseUrl,
+      websocketUrl: config.websocketUrl,
+      chartBaseUrl: config.chartBaseUrl,
+      appIconPath: config.getAssetPath('gtxprime', config.appIconPath),
+      svgLogoPath: config.getAssetPath('gtxprime', config.logoSvgPath),
+      splashLogoPath: config.getAssetPath('gtxprime', config.splashLogoPath),
       remoteLogoUrl: null,
       selectedBrokerData: null,
     );

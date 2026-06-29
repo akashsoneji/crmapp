@@ -3,7 +3,7 @@ import 'package:crm_app/widgets/app_svg_back_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+
 import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
@@ -278,7 +278,11 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
     return Padding(
       padding: EdgeInsets.only(bottom: 16.h),
       child: RTLHelper.rtlTextField(
-        style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w400),
+        style: TextStyle(
+          fontSize: 16.sp,
+          fontWeight: FontWeight.w400,
+          color: AppColors.textPrimary,
+        ),
         controller: _transferFromController,
         readOnly: true,
         onTap: _showOtpSection ? null : () => _showTransferFromDropdown(),
@@ -328,7 +332,11 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
     return Padding(
       padding: EdgeInsets.only(bottom: 16.h),
       child: RTLHelper.rtlTextField(
-        style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w400),
+        style: TextStyle(
+          fontSize: 16.sp,
+          fontWeight: FontWeight.w400,
+          color: AppColors.textPrimary,
+        ),
         controller: _transferToController,
         readOnly: true,
         onTap: _showOtpSection ? null : () => _showTransferToDropdown(),
@@ -378,7 +386,11 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
     return Padding(
       padding: EdgeInsets.only(bottom: 16.h),
       child: RTLHelper.rtlTextField(
-        style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w400),
+        style: TextStyle(
+          fontSize: 16.sp,
+          fontWeight: FontWeight.w400,
+          color: AppColors.textPrimary,
+        ),
         controller: _amountController,
         focusNode: _amountFocusNode,
         readOnly: _showOtpSection,
@@ -424,7 +436,11 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
     return Padding(
       padding: EdgeInsets.only(bottom: 16.h),
       child: RTLHelper.rtlTextField(
-        style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w400),
+        style: TextStyle(
+          fontSize: 16.sp,
+          fontWeight: FontWeight.w400,
+          color: AppColors.textPrimary,
+        ),
         controller: _commentController,
         readOnly: _showOtpSection,
         maxLines: 3,
@@ -490,7 +506,7 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
         onPressed: _isSubmitting.value ? null : _onActionButtonPressed,
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
-          foregroundColor: AppColors.whiteColor,
+          foregroundColor: AppColors.pureWhite,
           padding: EdgeInsets.zero,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -502,14 +518,14 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
                 ? Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    ButtonLoadingWidget(size: 18.0, color: AppColors.whiteColor),
+                    ButtonLoadingWidget(size: 18.0, color: AppColors.pureWhite),
                     SizedBox(width: 10.w),
                     Text(
                       _showOtpSection ? 'Submitting...' : 'Sending OTP...',
                       style: TextStyle(
                         fontSize: 14.sp,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.whiteColor,
+                        color: AppColors.pureWhite,
                       ),
                     ),
                   ],
@@ -519,7 +535,7 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
                   style: TextStyle(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.whiteColor,
+                    color: AppColors.pureWhite,
                   ),
                 ),
       ),
@@ -1200,18 +1216,21 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
         return;
       }
 
-      // 4. Check balance
+      // 4. Set submitting to true BEFORE checking balance to disable the button instantly
+      _isSubmitting.value = true;
+
+      // Check balance
       final isValid = await controller.checkBalance(
         fromAccountId,
         parsedAmount,
       );
       if (!isValid) {
         // Error already shown in checkBalance method
+        _isSubmitting.value = false;
         return;
       }
 
       // 5. Send OTP
-      _isSubmitting.value = true;
       final otpSent = await controller.sendOTP(fromAccountId);
       _isSubmitting.value = false;
       if (otpSent) {

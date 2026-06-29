@@ -467,6 +467,14 @@ class AuthController extends GetxController {
 
         _fetchEnabledModulesInBackground();
 
+        // 🚀 CHART PRELOAD: Background me chart WebSocket pre-connect karo after login
+        // Isse chart tab pe pehli baar jane pe data already ready hoga
+        Future.delayed(const Duration(milliseconds: 500), () {
+          ChartSocketController.preloadForDefaultSymbol().catchError((e) {
+            print('AuthController: Chart preload error (non-critical): $e');
+          });
+        });
+
         Get.offAllNamed(AppPages.TRADING);
   }
 

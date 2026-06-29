@@ -34,15 +34,16 @@ class DashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final languageService = Get.find<LanguageService>();
-    // ✅ FIX: Ensure WebSocket is initialized and always refresh accounts when Dashboard appears
-    // This works for Get.back, Get.offAll, and bottom navigation
+    // ✅ FIX: Ensure WebSocket is initialized when Dashboard appears AND make
+    // sure MT5 accounts are loaded. maybeRefreshOnAppear() only triggers an API
+    // call when there is no data yet (or data is stale >2s), so it does NOT
+    // cause redundant calls on every tab visit — but it guarantees the dashboard
+    // auto-loads on first open instead of requiring a manual pull-to-refresh.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       controller.ensureWebSocketInitialized();
-      // Call getMT5Accounts in background. Controller keeps existing visible
-      // data while the response is pending, so no empty-container flicker.
-      controller.refreshMT5Accounts(force: true);
-      // Dashboard controller will handle account data request via _requestAccountData()
+      controller.maybeRefreshOnAppear();
     });
+
     // Set the navigation callback in the controller
     if (onNavigateToTab != null) {
       controller.setNavigationCallback(onNavigateToTab!);
@@ -1359,18 +1360,11 @@ class AccountMenuBottomSheet extends StatelessWidget {
                 ),
                 SizedBox(height: 8),
                 _buildMenuItem(
-                  icon: Icons.card_giftcard,
+                  svgPath: 'assets/svg/more/bonus.svg',
                   label: languageService.tr('dashboard_bonus'),
                   onTap: () {
                     Get.back(closeOverlays: true);
-                    if (Get.isRegistered<AppNotificationController>()) {
-                      Get.find<AppNotificationController>().showInfo(
-                        message: languageService.tr(
-                          'dashboard_bonus_coming_soon_message',
-                        ),
-                        title: languageService.tr('common_coming_soon'),
-                      );
-                    }
+                    Get.toNamed(AppPages.BONUS);
                   },
                 ),
                 SizedBox(height: 8),
@@ -1449,7 +1443,8 @@ class AccountMenuBottomSheet extends StatelessWidget {
   }
 
   Widget _buildMenuItem({
-    required IconData icon,
+    IconData? icon,
+    String? svgPath,
     required String label,
     required VoidCallback onTap,
   }) {
@@ -1463,7 +1458,15 @@ class AccountMenuBottomSheet extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(icon, size: 22, color: AppColors.primary),
+            if (svgPath != null)
+              SvgPicture.asset(
+                svgPath,
+                width: 22.w,
+                height: 22.h,
+                colorFilter: ColorFilter.mode(AppColors.primary, BlendMode.srcIn),
+              )
+            else if (icon != null)
+              Icon(icon, size: 22, color: AppColors.primary),
             SizedBox(width: 12),
             Expanded(
               child: Text(
