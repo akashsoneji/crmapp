@@ -127,6 +127,7 @@
   "validation_password_special": "कम से कम एक विशेष अक्षर",
   "validation_name_required": "नाम आवश्यक है",
   "validation_name_min_length": "नाम कम से कम {min} अक्षर होना चाहिए",
+  "validation_name_invalid_characters": "केवल अक्षर और रिक्त स्थान की अनुमति है। विशेष वर्ण, इमोजी और संख्याएँ अनुमत नहीं हैं।",
   "validation_date_required": "जन्म तिथि आवश्यक है",
   "validation_country_required": "देश आवश्यक है",
   "validation_experience_required": "ट्रेडिंग अनुभव आवश्यक है",

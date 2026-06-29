@@ -127,6 +127,7 @@
   "validation_password_special": "حرف خاص واحد على الأقل",
   "validation_name_required": "الاسم مطلوب",
   "validation_name_min_length": "يجب أن يكون الاسم {min} أحرف على الأقل",
+  "validation_name_invalid_characters": "يُسمح فقط بالحروف والمسافات. لا يُسمح بالأحرف الخاصة والرموز التعبيرية والأرقام.",
   "validation_date_required": "تاريخ الميلاد مطلوب",
   "validation_country_required": "البلد مطلوب",
   "validation_experience_required": "خبرة التداول مطلوبة",

@@ -128,6 +128,7 @@
   "validation_password_special": "At least one special character",
   "validation_name_required": "Name is required",
   "validation_name_min_length": "Name must be at least {6} characters",
+  "validation_name_invalid_characters": "Only letters and spaces are allowed. Special characters, emojis and numbers are not allowed.",
   "validation_date_required": "Date of birth is required",
   "validation_country_required": "Country / Region is required",
   "validation_experience_required": "Trading experience is required",

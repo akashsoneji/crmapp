@@ -54,6 +54,10 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
   bool _enableBiometricLogin = true;
   final ValueNotifier<bool> _passwordVisible = ValueNotifier<bool>(false);
 
+  // Live tracking of whether first/last name has invalid characters
+  bool _firstNameHasInvalidChars = false;
+  bool _lastNameHasInvalidChars = false;
+
   // ==================== SERVICES ====================
   final AuthController _authController = Get.find<AuthController>();
   final LanguageService _languageService = Get.find<LanguageService>();
@@ -90,6 +94,8 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
 
   // ==================== LISTENERS & VALIDATION ====================
   void _addListeners() {
+    _firstNameController.addListener(_onFirstNameChanged);
+    _lastNameController.addListener(_onLastNameChanged);
     _firstNameController.addListener(_validateForm);
     _lastNameController.addListener(_validateForm);
     // _cityController.addListener(_validateForm);
@@ -97,6 +103,26 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
     _phoneController.addListener(_validateForm);
     _emailController.addListener(_validateForm);
     _passwordController.addListener(_validateForm);
+  }
+
+  void _onFirstNameChanged() {
+    final text = _firstNameController.text;
+    final hasInvalid = text.isNotEmpty && _hasInvalidNameCharacters(text);
+    if (hasInvalid != _firstNameHasInvalidChars) {
+      setState(() {
+        _firstNameHasInvalidChars = hasInvalid;
+      });
+    }
+  }
+
+  void _onLastNameChanged() {
+    final text = _lastNameController.text;
+    final hasInvalid = text.isNotEmpty && _hasInvalidNameCharacters(text);
+    if (hasInvalid != _lastNameHasInvalidChars) {
+      setState(() {
+        _lastNameHasInvalidChars = hasInvalid;
+      });
+    }
   }
 
   void _validateForm() {
@@ -372,7 +398,18 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
     );
   }
 
-  // ==================== UI HELPER METHODS ====================
+  // ==================== NAME VALIDATION HELPERS ====================
+  /// Returns true when [value] contains any character other than letters or
+  /// spaces. Catches emojis, numbers, punctuation and other special characters.
+  bool _hasInvalidNameCharacters(String value) {
+    if (value.isEmpty) return false;
+    // Allow Unicode letters (covers accented chars) plus spaces.
+    // Reject anything else: digits, emojis, punctuation, symbols.
+    final allowed = RegExp(r"^[\p{L}\s]+$", unicode: true);
+    return !allowed.hasMatch(value);
+  }
+
+
   void _showLoadingDialog(String message) {
     CommonLoadingWidget(isFullScreen: true);
   }
@@ -577,15 +614,17 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
   Widget _buildFormFields() {
     return Column(
       children: [
-        _buildTextField(
+        _buildNameTextField(
           controller: _firstNameController,
           label: _languageService.tr("register_first_name"),
+          showInvalidCharsError: _firstNameHasInvalidChars,
           validator:
               (value) => _validateRequired(value, 'validation_name_required'),
         ),
-        _buildTextField(
+        _buildNameTextField(
           controller: _lastNameController,
           label: _languageService.tr("register_last_name"),
+          showInvalidCharsError: _lastNameHasInvalidChars,
           validator:
               (value) => _validateRequired(value, 'validation_name_required'),
         ),
@@ -692,6 +731,87 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
             maxLength != null
                 ? [LengthLimitingTextInputFormatter(maxLength)]
                 : null,
+      ),
+    );
+  }
+
+  /// Wraps [RTLHelper.rtlTextField] with a live-updating error banner
+  /// shown above the field. The error message reads "Only letters and spaces
+  /// are allowed. Special characters, emojis and numbers are not allowed."
+  /// and is rendered whenever [showInvalidCharsError] is true.
+  Widget _buildNameTextField({
+    required TextEditingController controller,
+    required String label,
+    required bool showInvalidCharsError,
+    TextInputType? keyboardType,
+    String? Function(String?)? validator,
+    int? maxLength,
+  }) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 16.h),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (showInvalidCharsError)
+            Padding(
+              padding: EdgeInsets.only(bottom: 6.h),
+              child: Text(
+                _languageService.tr('validation_name_invalid_characters'),
+                style: TextStyle(
+                  color: AppColors.error,
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          RTLHelper.rtlTextField(
+            obscureText: false,
+            controller: controller,
+            labelText: label,
+            keyboardType: keyboardType ?? TextInputType.text,
+            validator: validator,
+            inputFormatters:
+                maxLength != null
+                    ? [LengthLimitingTextInputFormatter(maxLength)]
+                    : null,
+            decoration: InputDecoration(
+              labelText: label,
+              labelStyle: TextStyle(color: AppColors.textGrey),
+              floatingLabelStyle:
+                  showInvalidCharsError
+                      ? TextStyle(color: AppColors.error)
+                      : TextStyle(color: AppColors.primary),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color:
+                      showInvalidCharsError
+                          ? AppColors.error
+                          : AppColors.border,
+                ),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color:
+                      showInvalidCharsError
+                          ? AppColors.error
+                          : AppColors.border,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color:
+                      showInvalidCharsError
+                          ? AppColors.error
+                          : AppColors.primary,
+                  width: 2,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

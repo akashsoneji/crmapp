@@ -916,24 +916,24 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                   );
                 }
 
-                if (showCopyTrading) {
-                  items.add(
-                    _MenuItem(
-                      icon: 'copy-trading',
-                      label: languageService.tr('more_copy_trading'),
-                      onTap: () => Get.toNamed(AppPages.COPY_TRADING_MAIN),
-                    ),
-                  );
-                }
-                if (showPmam) {
-                  items.add(
-                    _MenuItem(
-                      icon: 'dashboard',
-                      label: 'PAMM',
-                      onTap: () => Get.toNamed(AppPages.PMAM_MAIN),
-                    ),
-                  );
-                }
+                // if (showCopyTrading) {
+                //   items.add(
+                //     _MenuItem(
+                //       icon: 'copy-trading',
+                //       label: languageService.tr('more_copy_trading'),
+                //       onTap: () => Get.toNamed(AppPages.COPY_TRADING_MAIN),
+                //     ),
+                //   );
+                // }
+                // if (showPmam) {
+                //   items.add(
+                //     _MenuItem(
+                //       icon: 'dashboard',
+                //       label: 'PAMM',
+                //       onTap: () => Get.toNamed(AppPages.PMAM_MAIN),
+                //     ),
+                //   );
+                // }
 
                 return _CardGroup(children: items);
               }),

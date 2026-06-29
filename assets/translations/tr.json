@@ -127,6 +127,7 @@
   "validation_password_special": "En az bir özel karakter",
   "validation_name_required": "Ad gereklidir",
   "validation_name_min_length": "Ad en az {min} karakter olmalıdır",
+  "validation_name_invalid_characters": "Yalnızca harflere ve boşluklara izin verilir. Özel karakterler, emojiler ve rakamlar kabul edilmez.",
   "validation_date_required": "Doğum tarihi gereklidir",
   "validation_country_required": "Ülke gereklidir",
   "validation_experience_required": "Ticaret deneyimi gereklidir",
