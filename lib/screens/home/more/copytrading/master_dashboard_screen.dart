@@ -998,21 +998,15 @@ class _OpenPositionItemTileState extends State<_OpenPositionItemTile> {
       profitStr = '${profit > 0 ? '+' : '-'}\$${widget.formatPrice(profit.abs())}';
     }
 
-    return Container(
-      margin: EdgeInsets.only(bottom: 8.h),
-      decoration: BoxDecoration(
-        color: AppColors.card,
-        borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: AppColors.border.withValues(alpha: 0.12)),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.shadowAlpha(0.02),
-            offset: const Offset(0, 2),
-            blurRadius: 6,
-          ),
-        ],
-      ),
-      child: Column(
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12.r),
+      child: Container(
+        margin: EdgeInsets.only(bottom: 8.h),
+        decoration: BoxDecoration(
+          color: AppColors.card,
+          border: Border.all(color: AppColors.border.withValues(alpha: 0.12)),
+        ),
+        child: Column(
         children: [
           // Header Row (Clickable)
           InkWell(
@@ -1117,7 +1111,8 @@ class _OpenPositionItemTileState extends State<_OpenPositionItemTile> {
           ),
         ],
       ),
-    );
+    ),
+  );
   }
 }
 

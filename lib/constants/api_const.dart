@@ -141,6 +141,13 @@ class ApiConstants {
       '${ajax}copytrading/master/status';
   static const String copyTradingMasterDashboardStats =
       '${ajax}copytrading/master/dashboard-stats';
+
+  /// Master dashboard overview (range + hero + main chart + copier_health
+  /// + plans + payouts + recent_trades + alerts).
+  /// Example: copytrading/master/dashboard-overview?range=30d
+  static String copyTradingMasterDashboardOverview({String range = '30d'}) =>
+      '${ajax}copytrading/master/dashboard-overview?range=$range';
+
   static const String copyTradingMasterPlans = '${ajax}copytrading/master/plans';
   static String copyTradingMasterOpenPositions(int planId) =>
       '$copyTradingMasterPlans/$planId/open-positions';

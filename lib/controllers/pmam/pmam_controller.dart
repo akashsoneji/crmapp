@@ -24,6 +24,29 @@ class PmamController extends GetxController {
       <Map<String, dynamic>>[].obs; // from GET manager/investors API
   final RxBool isInvestorsLoading = false.obs;
 
+  // ── Manager Dashboard derived state ──
+  /// Currently selected dashboard time-range preset (Today / 7d / 30d / 90d / 1y / all)
+  final RxString dashboardRange = '30d'.obs;
+
+  /// Hero stat tiles for the manager dashboard. Each block contains
+  /// `current`, optional `delta_pct` / `delta`, and `series.data` for sparkline.
+  final RxMap<String, dynamic> heroStats = <String, dynamic>{}.obs;
+
+  /// Main performance chart payload — keys: `equity`, `aum`, `pnl`. Each entry
+  /// contains a `series` map with `data` list.
+  final RxMap<String, dynamic> mainChartData = <String, dynamic>{}.obs;
+
+  /// Investor health breakdown (active / pending / inactive counts + retention stats).
+  final RxMap<String, dynamic> investorHealth = <String, dynamic>{}.obs;
+
+  /// Payout summary (earned in period + pending payout amount).
+  final RxMap<String, dynamic> payoutsData = <String, dynamic>{}.obs;
+
+  /// Recent trades displayed on the dashboard (placeholder until a dedicated
+  /// "recent trades" endpoint exists — currently empty).
+  final RxList<Map<String, dynamic>> recentDashboardTrades =
+      <Map<String, dynamic>>[].obs;
+
   // ── Investor state ──
   final RxList<PmamManager> managersList = <PmamManager>[].obs; // from datatable API
   final RxBool isManagersLoading = false.obs;
@@ -109,21 +132,33 @@ class PmamController extends GetxController {
     }
   }
 
-  Future<void> loadManagerDashboard() async {
+  /// Load the manager dashboard data for the given [range] preset.
+  ///
+  /// Combines `manager/dashboard-stats` and `manager/plans` into the rich
+  /// derived maps consumed by [PmamManagerDashboardScreen]
+  /// (`heroStats`, `mainChartData`, `investorHealth`, `payoutsData`,
+  /// `recentDashboardTrades`).
+  Future<void> loadManagerDashboard({String? range}) async {
     try {
       isLoading.value = true;
+      if (range != null && range.isNotEmpty) {
+        dashboardRange.value = range;
+      }
+
       final results = await Future.wait([
         PmamService.getManagerDashboardStats(),
         PmamService.getManagerPlans(),
+        PmamService.getManagerInvestors(),
       ]);
 
       final statsResp = results[0];
+      Map<String, dynamic> statsMap = {};
       if (statsResp.success && statsResp.data != null) {
         final d = statsResp.data as Map<String, dynamic>;
-        dashboardStats.value =
-            (d['data'] is Map<String, dynamic>)
-                ? Map<String, dynamic>.from(d['data'] as Map<String, dynamic>)
-                : {};
+        statsMap = (d['data'] is Map<String, dynamic>)
+            ? Map<String, dynamic>.from(d['data'] as Map<String, dynamic>)
+            : {};
+        dashboardStats.value = statsMap;
       }
 
       final plansResp = results[1];
@@ -134,13 +169,142 @@ class PmamController extends GetxController {
           managerPlans.assignAll(
             list.whereType<Map<String, dynamic>>().toList(),
           );
+        } else {
+          managerPlans.clear();
         }
+      } else {
+        managerPlans.clear();
       }
+
+      final investorsResp = results[2];
+      if (investorsResp.success && investorsResp.data != null) {
+        final d = investorsResp.data as Map<String, dynamic>;
+        final list = d['data'];
+        if (list is List) {
+          managerInvestors.assignAll(
+            list.whereType<Map<String, dynamic>>().toList(),
+          );
+        } else {
+          managerInvestors.clear();
+        }
+      } else {
+        managerInvestors.clear();
+      }
+
+      _hydrateDashboardViews(statsMap: statsMap);
     } catch (e) {
       errorMessage.value = e.toString();
     } finally {
       isLoading.value = false;
     }
+  }
+
+  /// Convert the flat `dashboard-stats` payload + plans + investors into the
+  /// richer structure consumed by the dashboard screen. When the backend
+  /// doesn't ship a given field yet, we emit a safe zeroed shape so the UI
+  /// never crashes on `null`/missing keys.
+  void _hydrateDashboardViews({
+    required Map<String, dynamic> statsMap,
+  }) {
+    num toNum(dynamic v) =>
+        v is num ? v : num.tryParse(v?.toString() ?? '') ?? 0;
+
+    final totalAum = toNum(statsMap['total_locked_aum']);
+    final activeInvestors = toNum(statsMap['active_investors']);
+    final pendingRequests = toNum(statsMap['pending_requests']);
+    final totalPnl = toNum(statsMap['total_pnl']);
+    final totalCommission = toNum(statsMap['total_commission']);
+    final commissionThisMonth = toNum(statsMap['commission_this_month']);
+
+    // ROI over window: total_pnl / total_locked_aum * 100, guard div-by-zero.
+    final roiPct = totalAum > 0 ? (totalPnl / totalAum) * 100.0 : 0.0;
+
+    // ── Hero stats ──
+    heroStats.assignAll({
+      'aum': {
+        'current': totalAum,
+        'delta_pct': 0,
+        'series': {'data': <num>[totalAum]},
+      },
+      'investors': {
+        'current': activeInvestors,
+        'delta': pendingRequests,
+        'series': {'data': <num>[activeInvestors]},
+      },
+      'earnings': {
+        'current': totalCommission,
+        'delta_pct': 0,
+        'series': {'data': <num>[totalCommission]},
+      },
+      'roi': {
+        'current_pct': roiPct,
+        'delta_pct': 0,
+        'series': {'data': <num>[roiPct]},
+      },
+    });
+
+    // ── Main performance chart (single-point series; backend will extend) ──
+    mainChartData.assignAll({
+      'equity': {
+        'series': {'data': <num>[totalAum + totalPnl]},
+      },
+      'aum': {
+        'series': {'data': <num>[totalAum]},
+      },
+      'pnl': {
+        'series': {'data': <num>[totalPnl]},
+      },
+    });
+
+    // ── Investor health ──
+    int active = 0, pending = 0, inactive = 0;
+    for (final inv in managerInvestors) {
+      final status =
+          (inv['status'] ?? inv['investor_status'] ?? '').toString().toLowerCase();
+      if (status == 'active' || status == 'approved') {
+        active++;
+      } else if (status == 'pending') {
+        pending++;
+      } else if (status == 'inactive' ||
+          status == 'inactivated' ||
+          status == 'rejected' ||
+          status == 'cancelled') {
+        inactive++;
+      }
+    }
+    final healthTotal = active + pending + inactive;
+    investorHealth.assignAll({
+      'active': active,
+      'pending': pending == 0 ? pendingRequests : pending,
+      'inactive': inactive,
+      'new_this_period': 0,
+      'churned': 0,
+      'avg_age_days': 0,
+      'retention_rate': healthTotal > 0
+          ? ((active / healthTotal) * 100).toStringAsFixed(1)
+          : '0',
+    });
+
+    // ── Payouts ──
+    // "Pending" = total commission earned but not yet settled (this month
+    // commission is treated as still pending until settled_at is set).
+    final recentCommissions = statsMap['recent_commissions'];
+    num settledThisMonth = 0;
+    if (recentCommissions is List) {
+      for (final c in recentCommissions) {
+        if (c is Map) {
+          settledThisMonth += toNum(c['net_profit_credited']);
+        }
+      }
+    }
+    final pendingPayout = (commissionThisMonth - settledThisMonth).clamp(0, double.infinity);
+    payoutsData.assignAll({
+      'earned_period': commissionThisMonth,
+      'pending': pendingPayout,
+    });
+
+    // ── Recent trades (placeholder until backend ships a dedicated endpoint) ──
+    recentDashboardTrades.clear();
   }
 
   Future<bool> createPlan(Map<String, dynamic> body) async {
