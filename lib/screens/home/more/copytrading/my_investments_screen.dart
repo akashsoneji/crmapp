@@ -12,8 +12,8 @@ import 'package:crm_app/controllers/copy_trading/copy_trading_master_details_con
     show CopyTradingPlan;
 import 'package:crm_app/controllers/copy_trading/copy_trading_hub_controller.dart';
 import 'package:crm_app/screens/home/trading_main_screen.dart';
-import 'package:crm_app/widgets/app_svg_back_button.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
@@ -144,131 +144,86 @@ class _MyInvestmentsScreenState extends State<MyInvestmentsScreen>
           return const Center(child: CircularProgressIndicator());
         }
 
-        return RefreshIndicator(
-          onRefresh: () async {
-            await Future.wait([
-              controller.load(showLoading: false),
-              controller.loadTrades(),
-            ]);
-          },
-          child: NotificationListener<ScrollNotification>(
-            onNotification: (notification) {
-              if (notification is ScrollUpdateNotification) {
-                final metrics = notification.metrics;
-                if (metrics.pixels >= metrics.maxScrollExtent - 200 &&
-                    controller.hasMore &&
-                    !controller.isLoadingMore.value &&
-                    !controller.isLoading.value) {
-                  controller.loadMore();
-                }
-              }
-              return false;
-            },
-            child: Column(
-              children: [
-                if (err.isNotEmpty)
-                  Padding(
-                    padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 0),
-                    child: _InlineError(
-                      message: err,
-                      onRetry: () => controller.load(showLoading: true),
-                    ),
-                  ),
-
-                // ── Summary Cards ───────────────────────────────────────────────
-                _SummarySection(controller: controller),
-
-                // ── Tabs ──────────────────────────────────────────────────────
-                Container(
-                  margin: EdgeInsets.fromLTRB(16.w, 0, 16.w, 0),
-                  decoration: BoxDecoration(
-                    color: AppColors.card,
-                    borderRadius: BorderRadius.circular(12.r),
-                  ),
-                  height: 38,
-                  child: TabBar(
-                    controller: tabController,
-                    indicator: BoxDecoration(
-                      color:
-                          AppColors.isDarkMode
-                              ? AppColors.textPrimaryDark.withValues(alpha: 0.1)
-                              : AppColors.primary,
-                      borderRadius: BorderRadius.circular(10.r),
-                    ),
-                    indicatorSize: TabBarIndicatorSize.tab,
-                    dividerColor: Colors.transparent,
-                    labelColor:
-                        AppColors.isDarkMode
-                            ? AppColors.textPrimaryDark
-                            : AppColors.onColoredBackground,
-                    unselectedLabelColor: AppColors.textGrey,
-                    labelStyle: TextStyle(
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    unselectedLabelStyle: TextStyle(
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 4.r,
-                      vertical: 4.r,
-                    ),
-                    tabs: [
-                      Tab(text: 'My Subscriptions (${list.length})'),
-                      const Tab(text: 'Trade History'),
-                    ],
-                  ),
+        return Column(
+          children: [
+            if (err.isNotEmpty)
+              Padding(
+                padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 0),
+                child: _InlineError(
+                  message: err,
+                  onRetry: () => controller.load(showLoading: true),
                 ),
-                SizedBox(height: 12.h),
+              ),
 
-                // ── Tab Content ─────────────────────────────────────────────────
-                Expanded(
-                  child: TabBarView(
-                    controller: tabController,
-                    children: [
-                      // My Subscriptions Tab
-                      _SubscriptionsTab(
-                        items: list,
-                        controller: controller,
-                        onAddCapital: (id) => _showAddCapitalDialog(id),
-                        onPause: (id) => _pause(id),
-                        onResume: (id) => _resume(id),
-                        onStop: (id) => _stop(id),
-                        onEdit: (id) => _edit(id),
-                        onView: (id) => _view(id),
-                      ),
-                      // Trade History Tab
-                      _TradeHistoryTab(controller: controller),
-                    ],
-                  ),
+            // ── Summary Cards ───────────────────────────────────────────────
+            _SummarySection(controller: controller),
+
+            // ── Tabs ──────────────────────────────────────────────────────
+            Container(
+              margin: EdgeInsets.fromLTRB(16.w, 0, 16.w, 0),
+              decoration: BoxDecoration(
+                color: AppColors.card,
+                borderRadius: BorderRadius.circular(12.r),
+              ),
+              height: 38,
+              child: TabBar(
+                controller: tabController,
+                indicator: BoxDecoration(
+                  color:
+                      AppColors.isDarkMode
+                          ? AppColors.textPrimaryDark.withValues(alpha: 0.1)
+                          : AppColors.primary,
+                  borderRadius: BorderRadius.circular(10.r),
                 ),
-
-                // Load more indicator
-                Obx(() {
-                  if (!controller.isLoadingMore.value)
-                    return const SizedBox.shrink();
-                  return Padding(
-                    padding: EdgeInsets.symmetric(vertical: 12.h),
-                    child: Column(
-                      children: [
-                        SizedBox(
-                          width: 24.r,
-                          height: 24.r,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                        SizedBox(height: 6.h),
-                        Text('Loading more...', style: AppTextStyles.caption),
-                      ],
-                    ),
-                  );
-                }),
-              ],
+                indicatorSize: TabBarIndicatorSize.tab,
+                dividerColor: Colors.transparent,
+                labelColor:
+                    AppColors.isDarkMode
+                        ? AppColors.textPrimaryDark
+                        : AppColors.onColoredBackground,
+                unselectedLabelColor: AppColors.textGrey,
+                labelStyle: TextStyle(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w600,
+                ),
+                unselectedLabelStyle: TextStyle(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w500,
+                ),
+                padding: EdgeInsets.symmetric(
+                  horizontal: 4.r,
+                  vertical: 4.r,
+                ),
+                tabs: [
+                  Tab(text: 'My Subscriptions (${list.length})'),
+                  const Tab(text: 'Trade History'),
+                ],
+              ),
             ),
-          ),
+            SizedBox(height: 12.h),
+
+            // ── Tab Content ─────────────────────────────────────────────────
+            Expanded(
+              child: TabBarView(
+                controller: tabController,
+                children: [
+                  // My Subscriptions Tab
+                  _SubscriptionsTab(
+                    items: list,
+                    controller: controller,
+                    onAddCapital: (id) => _showAddCapitalDialog(id),
+                    onPause: (id) => _pause(id),
+                    onResume: (id) => _resume(id),
+                    onStop: (id) => _stop(id),
+                    onEdit: (id) => _edit(id),
+                    onView: (id) => _view(id),
+                  ),
+                  // Trade History Tab
+                  _TradeHistoryTab(controller: controller),
+                ],
+              ),
+            ),
+          ],
         );
       }),
     );
@@ -638,23 +593,75 @@ class _SubscriptionsTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (items.isEmpty) {
-      return _EmptyInvestmentsState();
+      return RefreshIndicator(
+        onRefresh: () => controller.load(showLoading: false),
+        color: AppColors.primary,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: [
+            SizedBox(
+              height: MediaQuery.of(context).size.height * 0.4,
+              child: _EmptyInvestmentsState(),
+            ),
+          ],
+        ),
+      );
     }
-    return ListView.builder(
-      padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 90.h),
-      itemCount: items.length,
-      itemBuilder: (context, i) {
-        final item = items[i];
-        return _InvestmentRow(
-          item: item,
-          onAddCapital: () => onAddCapital(item.id),
-          onPause: () => onPause(item.id),
-          onResume: () => onResume(item.id),
-          onStop: () => onStop(item.id),
-          onEdit: () => onEdit(item.id),
-          onView: () => onView(item.id),
-        );
-      },
+    return RefreshIndicator(
+      onRefresh: () => controller.load(showLoading: false),
+      color: AppColors.primary,
+      child: NotificationListener<ScrollNotification>(
+        onNotification: (notification) {
+          if (notification is ScrollUpdateNotification) {
+            final metrics = notification.metrics;
+            if (metrics.pixels >= metrics.maxScrollExtent - 200 &&
+                controller.hasMore &&
+                !controller.isLoadingMore.value &&
+                !controller.isLoading.value) {
+              controller.loadMore();
+            }
+          }
+          return false;
+        },
+        child: Obx(() {
+          final isLoadingMore = controller.isLoadingMore.value;
+          return ListView.builder(
+            padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 90.h),
+            itemCount: items.length + (isLoadingMore ? 1 : 0),
+            itemBuilder: (context, i) {
+              if (i == items.length) {
+                return Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12.h),
+                  child: Column(
+                    children: [
+                      SizedBox(
+                        width: 24.r,
+                        height: 24.r,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                      SizedBox(height: 6.h),
+                      Text('Loading more...', style: AppTextStyles.caption),
+                    ],
+                  ),
+                );
+              }
+              final item = items[i];
+              return _InvestmentRow(
+                item: item,
+                onAddCapital: () => onAddCapital(item.id),
+                onPause: () => onPause(item.id),
+                onResume: () => onResume(item.id),
+                onStop: () => onStop(item.id),
+                onEdit: () => onEdit(item.id),
+                onView: () => onView(item.id),
+              );
+            },
+          );
+        }),
+      ),
     );
   }
 }
@@ -1064,103 +1071,130 @@ class _TradeHistoryTab extends StatelessWidget {
       final err = controller.tradeError.value;
       final trades = controller.trades.toList();
 
+      Widget child;
       if (loading && trades.isEmpty) {
-        return Center(
-          child: CircularProgressIndicator(color: AppColors.primary),
+        child = ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: [
+            SizedBox(
+              height: MediaQuery.of(context).size.height * 0.4,
+              child: Center(
+                child: CircularProgressIndicator(color: AppColors.primary),
+              ),
+            ),
+          ],
         );
-      }
-
-      if (err.isNotEmpty && trades.isEmpty) {
-        return Center(
-          child: Padding(
-            padding: EdgeInsets.all(24.w),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.error_outline, size: 40.r, color: AppColors.error),
-                SizedBox(height: 12.h),
-                Text('Failed to load trades', style: AppTextStyles.black16600),
-                SizedBox(height: 4.h),
-                Text(
-                  err,
-                  style: AppTextStyles.caption,
-                  textAlign: TextAlign.center,
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                SizedBox(height: 16.h),
-                TextButton.icon(
-                  onPressed: controller.loadTrades,
-                  icon: const Icon(Icons.refresh, size: 16),
-                  label: const Text('Retry'),
-                  style: TextButton.styleFrom(
-                    foregroundColor: AppColors.primary,
+      } else if (err.isNotEmpty && trades.isEmpty) {
+        child = ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: [
+            SizedBox(
+              height: MediaQuery.of(context).size.height * 0.4,
+              child: Center(
+                child: Padding(
+                  padding: EdgeInsets.all(24.w),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.error_outline, size: 40.r, color: AppColors.error),
+                      SizedBox(height: 12.h),
+                      Text('Failed to load trades', style: AppTextStyles.black16600),
+                      SizedBox(height: 4.h),
+                      Text(
+                        err,
+                        style: AppTextStyles.caption,
+                        textAlign: TextAlign.center,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      SizedBox(height: 16.h),
+                      TextButton.icon(
+                        onPressed: controller.loadTrades,
+                        icon: const Icon(Icons.refresh, size: 16),
+                        label: const Text('Retry'),
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppColors.primary,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
+              ),
             ),
-          ),
+          ],
         );
-      }
-
-      if (trades.isEmpty) {
-        return Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.receipt_long_outlined,
-                size: 48.r,
-                color: AppColors.textGrey.withOpacity(0.5),
+      } else if (trades.isEmpty) {
+        child = ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: [
+            SizedBox(
+              height: MediaQuery.of(context).size.height * 0.4,
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.receipt_long_outlined,
+                      size: 48.r,
+                      color: AppColors.textGrey.withOpacity(0.5),
+                    ),
+                    SizedBox(height: 12.h),
+                    Text('No trades yet', style: AppTextStyles.black16600),
+                    SizedBox(height: 4.h),
+                    Text(
+                      'Your trade history will appear here',
+                      style: AppTextStyles.caption,
+                    ),
+                  ],
+                ),
               ),
-              SizedBox(height: 12.h),
-              Text('No trades yet', style: AppTextStyles.black16600),
-              SizedBox(height: 4.h),
-              Text(
-                'Your trade history will appear here',
-                style: AppTextStyles.caption,
-              ),
-            ],
-          ),
+            ),
+          ],
         );
-      }
-
-      return NotificationListener<ScrollNotification>(
-        onNotification: (notification) {
-          if (notification is ScrollUpdateNotification) {
-            final metrics = notification.metrics;
-            if (metrics.pixels >= metrics.maxScrollExtent - 200 &&
-                controller.hasMoreTrades &&
-                !controller.isLoadingMoreTrades.value &&
-                !controller.isLoadingTrades.value) {
-              controller.loadMoreTrades();
+      } else {
+        child = NotificationListener<ScrollNotification>(
+          onNotification: (notification) {
+            if (notification is ScrollUpdateNotification) {
+              final metrics = notification.metrics;
+              if (metrics.pixels >= metrics.maxScrollExtent - 200 &&
+                  controller.hasMoreTrades &&
+                  !controller.isLoadingMoreTrades.value &&
+                  !controller.isLoadingTrades.value) {
+                controller.loadMoreTrades();
+              }
             }
-          }
-          return false;
-        },
-        child: ListView.builder(
-          padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 90.h),
-          itemCount:
-              trades.length + (controller.isLoadingMoreTrades.value ? 1 : 0),
-          itemBuilder: (context, i) {
-            if (i == trades.length) {
-              return Padding(
-                padding: EdgeInsets.symmetric(vertical: 12.h),
-                child: Center(
-                  child: SizedBox(
-                    width: 24.r,
-                    height: 24.r,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: AppColors.primary,
+            return false;
+          },
+          child: ListView.builder(
+            padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 90.h),
+            itemCount:
+                trades.length + (controller.isLoadingMoreTrades.value ? 1 : 0),
+            itemBuilder: (context, i) {
+              if (i == trades.length) {
+                return Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12.h),
+                  child: Center(
+                    child: SizedBox(
+                      width: 24.r,
+                      height: 24.r,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppColors.primary,
+                      ),
                     ),
                   ),
-                ),
-              );
-            }
-            return _TradeRow(item: trades[i]);
-          },
-        ),
+                );
+              }
+              return _TradeRow(item: trades[i]);
+            },
+          ),
+        );
+      }
+
+      return RefreshIndicator(
+        onRefresh: () => controller.loadTrades(),
+        color: AppColors.primary,
+        child: child,
       );
     });
   }

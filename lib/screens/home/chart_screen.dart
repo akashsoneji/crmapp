@@ -9,7 +9,11 @@ import 'package:crm_app/controllers/chart_controller.dart';
 import 'package:crm_app/models/instrument.dart';
 import 'package:crm_app/models/socket_response.dart';
 import 'package:crm_app/widgets/app_switch_tile.dart';
-import 'package:crm_app/widgets/chart_inapp_webview.dart';
+import 'package:crm_app/widgets/candlestick_chart.dart';
+import 'package:crm_app/models/candle.dart';
+import 'package:crm_app/models/candle_style.dart';
+import 'package:crm_app/services/live_candle_aggregator.dart';
+import 'package:crm_app/services/market_history_service.dart';
 import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/flavor_config.dart';
 import 'dart:convert';
@@ -89,6 +93,14 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
   String _lastSymbolForDatafeedLookup = '';
   bool _isFetchingDatafeedSymbol = false;
 
+  // Native chart (candlesticks package) state, populated from
+  // LiveCandleAggregator.
+  List<Candle> _candles = const [];
+  CandleStyle _currentStyle = const CandleStyle();
+  StreamSubscription<AggregatorUpdate>? _aggSub;
+  final GlobalKey<CandlestickChartState> _chartKey =
+      GlobalKey<CandlestickChartState>();
+
   bool useTradingView = true;
   final ValueNotifier<String> selectedPriceType = ValueNotifier('Asset Price');
 
@@ -114,6 +126,7 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
   Map<String, dynamic>? realTimePrice;
   bool isLoading = true;
   bool _isPlacingOrder = false; // Prevent multiple order executions
+  bool _isLoadingMore = false;
   String? errorMessage;
 
   // Trading Order Bottom Sheet State with ValueNotifier
@@ -165,9 +178,8 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
   // GetX reactive listener worker to be disposed
   Worker? _instrumentsWorker;
 
-  // GlobalKey to access WebView state for explicit symbol updates
-  final GlobalKey<ChartInAppWebViewState> _webViewKey =
-      GlobalKey<ChartInAppWebViewState>();
+  // (Legacy ChartInAppWebView removed; native chart is now default.
+  //  Fullscreen WebView is reached via Routes.FULLSCREEN_CHART.)
 
   // Helper method to remove symbol suffixes (.c, .r, etc.)
   // IMPORTANT: Use this ONLY for display and chart iframe
@@ -433,6 +445,42 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
           if (mounted) _updateTradesOnChart();
         });
       }
+
+      // Native chart wiring (candlesticks package + LiveCandleAggregator).
+      _currentStyle = CandleStyle.forCurrentTheme();
+      final agg = LiveCandleAggregator.instance;
+      _aggSub?.cancel();
+      _aggSub = agg.updates.listen((update) {
+        if (!mounted) return;
+        if (update.kind == AggregatorEventKind.snapshot) {
+          _candles = List<Candle>.from(update.candles);
+          if (_candles.isEmpty) {
+            // Empty snapshot = symbol change in progress. Reset the
+            // linear-scale latch so the next non-empty snapshot
+            // re-applies linear scale for the new price range.
+            _chartKey.currentState?.resetLinearScaleLatch();
+          } else {
+            // First time the chart has data: switch the underlying
+            // candlesticks widget to linear price scale (the package
+            // defaults to log scale which crushes 1.x-anchored pairs to a
+            // flat line).
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) _chartKey.currentState?.forceLinearScaleOnce();
+            });
+          }
+        } else if (update.kind == AggregatorEventKind.tickUpdate &&
+            update.updated != null) {
+          final list = List<Candle>.from(_candles);
+          if (list.isNotEmpty) {
+            list[0] = update.updated!;
+          } else {
+            list.add(update.updated!);
+          }
+          _candles = list;
+        }
+        // Trigger a rebuild without setState churn on the rest of the page.
+        if (mounted) setState(() {});
+      });
     } catch (e) {
       print('🚀 ChartScreen: Error in initState: $e');
       // Fallback initialization
@@ -448,10 +496,11 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
     }
   }
 
-  /// Inject open trades into the WebView Chart
+  /// Native chart no longer needs JS injection for position markers; the
+  /// marker overlay will be added in a follow-up. Kept as a no-op so the
+  /// existing `ever(...)` listener in initState does not break.
   void _updateTradesOnChart() {
-    if (!mounted || _webViewKey.currentState == null) return;
-
+    if (!mounted) return;
     try {
       final tradingController = Get.find<TradingController>();
       final positions = tradingController.marketPositions;
@@ -460,7 +509,7 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
       // to avoid UI jank and "stuck" transitions between tabs.
       _tradesInjectDebounce?.cancel();
       _tradesInjectDebounce = Timer(const Duration(milliseconds: 250), () {
-        if (!mounted || _webViewKey.currentState == null) return;
+        if (!mounted) return;
 
         // Build a lightweight signature first; skip inject if nothing meaningful changed.
         // (orderId + PnL + entry/current prices are enough for chart markers)
@@ -499,10 +548,58 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
                 .toList();
 
         final jsonString = jsonEncode(tradesList);
-        _webViewKey.currentState?.updateNativeTrades(jsonString);
+        // Position markers were injected via JS into the WebView. The
+        // native chart will render them via a separate overlay in a
+        // follow-up; for now we simply drop the JS call.
+        // ignore: unused_local_variable
+        final _ = jsonString;
       });
     } catch (e) {
       print('❌ Error injecting trades to chart: $e');
+    }
+  }
+
+  Future<void> _onLoadMoreCandles() async {
+    if (_isLoadingMore || _candles.isEmpty) return;
+    _isLoadingMore = true;
+    try {
+      final oldestCandle = _candles.last;
+      final oldestUnixSec = oldestCandle.date.millisecondsSinceEpoch ~/ 1000;
+      final interval = LiveCandleAggregator.instance.intervalSeconds;
+
+      String resolution = '5';
+      if (interval >= 86400) resolution = 'D';
+      else if (interval >= 14400) resolution = '240';
+      else if (interval >= 3600) resolution = '60';
+      else if (interval >= 1800) resolution = '30';
+      else if (interval >= 900) resolution = '15';
+      else if (interval >= 300) resolution = '5';
+      else if (interval >= 60) resolution = '1';
+
+      final olderHistory = await MarketHistoryService().fetchOlder(
+        symbol: selectedSymbol,
+        resolution: resolution,
+        beforeUnixSec: oldestUnixSec,
+      );
+
+      if (olderHistory.isOk) {
+        final newCandles = <Candle>[];
+        for (var i = 0; i < olderHistory.count; i++) {
+          newCandles.add(Candle(
+            date: DateTime.fromMillisecondsSinceEpoch(olderHistory.times[i] * 1000),
+            open: i < olderHistory.opens.length ? olderHistory.opens[i] : 0.0,
+            high: i < olderHistory.highs.length ? olderHistory.highs[i] : 0.0,
+            low: i < olderHistory.lows.length ? olderHistory.lows[i] : 0.0,
+            close: i < olderHistory.closes.length ? olderHistory.closes[i] : 0.0,
+            volume: i < olderHistory.volumes.length ? olderHistory.volumes[i] : 0.0,
+          ));
+        }
+        LiveCandleAggregator.instance.addOlderCandles(newCandles);
+      }
+    } catch (e) {
+      print('❌ Error loading older candles: $e');
+    } finally {
+      _isLoadingMore = false;
     }
   }
 
@@ -911,32 +1008,11 @@ Placing Order:
     // Change symbol in socket controller (this will handle disconnect/reconnect)
     _changeChartSymbol(newSymbol);
 
-    // Explicitly trigger WebView update after setState completes
-    // Use post-frame callback to ensure widget tree has updated
+    // Native chart updates the latest candle automatically via the
+    // aggregator tick stream; no post-frame WebView call needed.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && _webViewKey.currentState != null) {
-        print('📊 Explicitly updating WebView with symbol: $selectedSymbol');
-        // Remove suffix for chart display
-        String chartSymbol = selectedSymbol;
-        if (chartSymbol.contains('.')) {
-          chartSymbol = chartSymbol.substring(0, chartSymbol.lastIndexOf('.'));
-        }
-        _webViewKey.currentState?.updateSymbol(chartSymbol);
-      } else {
-        print('⚠️ WebView not ready yet, will update via didUpdateWidget');
-        // If WebView isn't ready, schedule another attempt
-        Future.delayed(Duration(milliseconds: 500), () {
-          if (mounted && _webViewKey.currentState != null) {
-            String chartSymbol = selectedSymbol;
-            if (chartSymbol.contains('.')) {
-              chartSymbol = chartSymbol.substring(
-                0,
-                chartSymbol.lastIndexOf('.'),
-              );
-            }
-            _webViewKey.currentState?.updateSymbol(chartSymbol);
-          }
-        });
+      if (mounted) {
+        print('📊 Native chart will pick up new symbol: $selectedSymbol');
       }
     });
 
@@ -976,6 +1052,9 @@ Placing Order:
       await chartSocketController.changeSymbol(
         newSymbol,
       ); // newSymbol already has suffix
+
+      // Restart the native candle aggregator for the new symbol.
+      await LiveCandleAggregator.instance.start(newSymbol, 300);
 
       //dev.log('✅ Chart symbol changed successfully to $newSymbol');
       //dev.log(
@@ -1410,6 +1489,7 @@ Placing Order:
     _priceStreamSubscription1?.cancel();
     _priceStreamSubscription2?.cancel();
     _tradesInjectDebounce?.cancel();
+    _aggSub?.cancel();
 
     // Dispose GetX reactive listener worker
     _instrumentsWorker?.dispose();
@@ -1559,6 +1639,8 @@ Placing Order:
     if (selectedSymbol.isNotEmpty) {
       print('📊 Chart: Initializing socket for symbol: $selectedSymbol');
       chartSocketController.initializeSocketForSymbol(selectedSymbol);
+      // Also bootstrap the native candle aggregator for the same symbol.
+      LiveCandleAggregator.instance.start(selectedSymbol, 300);
     } else {
       print('📊 Chart: Waiting for instruments to load...');
       // The _initializeWithFirstInstrument() will handle this via ever() listener
@@ -1849,21 +1931,44 @@ Placing Order:
             ? _datafeedSymbolForSelected
             : displaySymbol;
 
-    // Include symbol in URL so the server loads the correct chart immediately.
-    // Symbol is also passed as a prop so JS updateSymbol() can handle fast
-    // in-session symbol switches without a full reload (via didUpdateWidget).
-    final chartUrl =
-        '${FlavorConfig.instance.chartBaseUrl}/mobile-chart?symbol=$effectiveDatafeedSymbol&theme=${AppColors.chartTheme}';
-
     return Container(
       width: double.infinity,
       height: MediaQuery.of(context).size.height * 0.4,
       padding: EdgeInsets.zero,
       margin: EdgeInsets.zero,
-      child: ChartInAppWebView(
-        key: _webViewKey,
-        symbol: effectiveDatafeedSymbol, // JS-updated for fast in-session switches
-        url: chartUrl,                   // includes symbol for correct initial server load
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: CandlestickChart(
+              key: _chartKey,
+              candles: _candles,
+              style: _currentStyle,
+              onLoadMoreCandles: _onLoadMoreCandles,
+            ),
+          ),
+          Positioned(
+            top: 8.h,
+            right: 8.w,
+            child: FloatingActionButton.small(
+              heroTag: 'fullscreen_chart_fab',
+              tooltip: 'Full chart',
+              backgroundColor: AppColors.primary,
+              foregroundColor: AppColors.whiteColor,
+              onPressed: () async {
+                LiveCandleAggregator.instance.pause();
+                await Get.toNamed(
+                  '/chart-fullscreen',
+                  arguments: {
+                    'symbol': effectiveDatafeedSymbol,
+                    'theme': AppColors.chartTheme,
+                  },
+                );
+                LiveCandleAggregator.instance.resume();
+              },
+              child: Icon(Icons.fullscreen, size: 20.sp),
+            ),
+          ),
+        ],
       ),
     );
   }

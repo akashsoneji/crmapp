@@ -38,7 +38,9 @@ class _CopyTradingMainScreenState extends State<CopyTradingMainScreen> {
     
     _worker = ever(_hubController.currentTabIndex, (int index) {
       if (_pageController.hasClients && _pageController.page?.round() != index) {
-        _pageController.jumpToPage(index.clamp(0, isMaster ? 4 : 2));
+        final currentIsMaster = _hubController.masterStatus.value ==
+            CopyTradingMasterApplicationStatus.approved;
+        _pageController.jumpToPage(index.clamp(0, currentIsMaster ? 4 : 2));
       }
     });
   }

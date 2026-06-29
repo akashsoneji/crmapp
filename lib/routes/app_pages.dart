@@ -24,6 +24,7 @@ import 'package:crm_app/screens/home/open_account_screen.dart';
 import 'package:crm_app/screens/home/choose_account_screen.dart';
 import 'package:crm_app/screens/home/create_crm_app_account_screen.dart';
 import 'package:crm_app/screens/home/chart_screen.dart';
+import 'package:crm_app/screens/home/chart_fullscreen_screen.dart';
 import '../bindings/deposit_binding.dart';
 import '../bindings/payment_method_binding.dart';
 import '../bindings/tenax_broker_binding.dart';
@@ -314,6 +315,10 @@ class AppPages {
       page: () => const InternalTransferHistoryScreen(),
     ),
     GetPage(name: _Paths.CHART, page: () => const ChartScreen()),
+    GetPage(
+      name: _Paths.FULLSCREEN_CHART,
+      page: () => const ChartFullscreenScreen(),
+    ),
     GetPage(name: _Paths.FINANCE, page: () => const FinanceScreen()),
     GetPage(name: _Paths.IB_DASHBOARD, page: () => const IbDashboardScreen()),
     GetPage(name: _Paths.IB_MAIN, page: () => const IbMainScreen()),

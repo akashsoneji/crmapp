@@ -140,13 +140,13 @@ class _MyPlansTabState extends State<MyPlansTab> {
                     Icon(
                       Icons.add_rounded,
                       size: 15.sp,
-                      color: AppColors.onColoredBackground,
+                      color: AppColors.isDarkMode ? AppColors.textPrimaryLight : AppColors.onColoredBackground,
                     ),
                     SizedBox(width: 4.w),
                     Text(
                       'Create Plan',
                       style: TextStyle(
-                        color: AppColors.onColoredBackground,
+                        color: AppColors.isDarkMode ? AppColors.textPrimaryLight : AppColors.onColoredBackground,
                         fontSize: 12.sp,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 0.2,
@@ -346,7 +346,7 @@ class _MyPlansTabState extends State<MyPlansTab> {
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: AppColors.primary,
                                     foregroundColor:
-                                        AppColors.onColoredBackground,
+                                        AppColors.isDarkMode ? AppColors.textPrimaryLight : AppColors.onColoredBackground,
                                     padding: EdgeInsets.symmetric(
                                       horizontal: 20.w,
                                       vertical: 10.h,
@@ -482,7 +482,7 @@ class _MyPlansTabState extends State<MyPlansTab> {
               label: const Text('Create First Plan'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
-                foregroundColor: AppColors.onColoredBackground,
+                foregroundColor: AppColors.isDarkMode ? AppColors.textPrimaryLight : AppColors.onColoredBackground,
                 elevation: 0,
                 padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
                 shape: RoundedRectangleBorder(

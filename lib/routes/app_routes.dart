@@ -114,6 +114,7 @@ abstract class _Paths {
   static const INTERNAL_TRANSFER = '/internal-transfer';
   static const INTERNAL_TRANSFER_HISTORY = '/internal-transfer-history';
   static const CHART = '/chart';
+  static const FULLSCREEN_CHART = '/chart-fullscreen';
   static const FINANCE = '/finance';
   static const IB_DASHBOARD = '/ib-dashboard';
   static const IB_MAIN = '/ib-main';

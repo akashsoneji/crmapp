@@ -6,6 +6,12 @@
       "text": "single websocket service debug logs are commented out to prevent high-frequency console spam",
       "createdAt": 1781247636328,
       "source": "agent"
+    },
+    {
+      "id": "mem_pqwj5qi",
+      "text": "Plan to replace /mobile-chart WebView with native Flutter candlesticks v3.0.1 (BSD-3-Clause, Skia/CustomPainter, no WebView) as DEFAULT chart, with a floating action button opening a NEW ChartFullscreenScreen route that loads the existing ChartInAppWebView (kept alive for backwards compat). LiveCandleAggregator registered as permanent Get service, pause/resume scoped via ref count. Plan lives at .xelion/plans/lightweight-charts-integration.plan.md.",
+      "createdAt": 1782454386397,
+      "source": "agent"
     }
   ]
 }
