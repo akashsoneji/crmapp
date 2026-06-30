@@ -55,8 +55,16 @@ class _SearchInstrumentsScreenState extends State<SearchInstrumentsScreen> {
     if (widget.favoritesOnly) {
       _instrumentsController = Get.find<InstrumentsController>();
     } else {
+      // If the controller already exists from a previous open, Get.put returns
+      // the existing instance and onInit() does NOT run again. We must
+      // explicitly refetch so data reflects the current active MT5 account.
+      final alreadyRegistered =
+          Get.isRegistered<SearchInstrumentsController>();
       _searchController2 = Get.put(SearchInstrumentsController());
       _searchController2.filterByCategory('All');
+      if (alreadyRegistered) {
+        _searchController2.fetchInstruments();
+      }
     }
   }
 
