@@ -54,25 +54,25 @@ class _PmamManagerDashboardScreenState extends State<PmamManagerDashboardScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        scrolledUnderElevation: 0,
-        backgroundColor: AppColors.background,
-        elevation: 0,
-        title: Text('MANAGER DASHBOARD', style: AppTextStyles.heading.copyWith(fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-        centerTitle: true,
-        leading: AppSvgBackButton(
-          onPressed: () => Get.back(closeOverlays: true),
-          iconWidth: 30.w,
-          iconHeight: 30.h,
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.refresh_rounded, color: AppColors.primary, size: 22.sp),
-            onPressed: _ctrl.loadManagerDashboard,
-          ),
-        ],
-      ),
+      // appBar: AppBar(
+      //   automaticallyImplyLeading: false,
+      //   scrolledUnderElevation: 0,
+      //   backgroundColor: AppColors.background,
+      //   elevation: 0,
+      //   title: Text('MANAGER DASHBOARD', style: AppTextStyles.heading.copyWith(fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+      //   centerTitle: true,
+      //   leading: AppSvgBackButton(
+      //     onPressed: () => Get.back(closeOverlays: true),
+      //     iconWidth: 30.w,
+      //     iconHeight: 30.h,
+      //   ),
+      //   actions: [
+      //     IconButton(
+      //       icon: Icon(Icons.refresh_rounded, color: AppColors.primary, size: 22.sp),
+      //       onPressed: _ctrl.loadManagerDashboard,
+      //     ),
+      //   ],
+      // ),
       body: Obx(() {
         if (_ctrl.isLoading.value) {
           return Center(child: CommonLoadingWidget(size: 40, color: AppColors.primary));
@@ -262,13 +262,20 @@ class _PmamManagerDashboardScreenState extends State<PmamManagerDashboardScreen>
     String dataKey = 'equity';
     if (_selectedChartTab == 'AUM') dataKey = 'aum';
     if (_selectedChartTab == 'Net P&L') dataKey = 'pnl';
-    
+
     final series = chartData[dataKey]?['series'];
     if (series == null || series['data'] == null || (series['data'] as List).isEmpty) {
-      return Center(child: Text('No data available for $_selectedChartTab', style: TextStyle(color: AppColors.textGrey)));
+      return Center(
+        child: Text('No data available for $_selectedChartTab',
+            style: TextStyle(color: AppColors.textGrey)),
+      );
     }
 
     final rawData = series['data'] as List;
+    final rawLabels = (series['labels'] is List)
+        ? (series['labels'] as List).map((e) => e.toString()).toList()
+        : <String>[];
+
     final spots = <FlSpot>[];
     double minY = double.infinity;
     double maxY = -double.infinity;
@@ -279,43 +286,173 @@ class _PmamManagerDashboardScreenState extends State<PmamManagerDashboardScreen>
       if (y > maxY) maxY = y;
       spots.add(FlSpot(i.toDouble(), y));
     }
-    
+
     if (spots.isEmpty) return const SizedBox();
-    
+
     if (minY == maxY) {
-      minY -= 1;
-      maxY += 1;
+      // Give zero / flat series a tiny visible band.
+      final pad = minY.abs() * 0.1;
+      minY -= pad == 0 ? 1 : pad;
+      maxY += pad == 0 ? 1 : pad;
+    }
+
+    final range = maxY - minY;
+    final paddedMin = minY - range * 0.15;
+    final paddedMax = maxY + range * 0.15;
+    final isPositiveTrend =
+        spots.last.y >= spots.first.y; // simple end-vs-start trend
+    final lineColor = isPositiveTrend ? AppColors.green : AppColors.error;
+
+    // X-axis label sampling — show ~4 dates evenly spaced.
+    final labelStep = (spots.length / 4).ceil().clamp(1, spots.length);
+
+    String fmtLabel(double v) {
+      final i = v.round();
+      if (i < 0 || i >= rawLabels.length) return '';
+      final raw = rawLabels[i];
+      // raw is "YYYY-MM-DD HH:mm" → return "MMM dd"
+      try {
+        final dt = DateTime.parse(raw.replaceFirst(' ', 'T'));
+        const months = [
+          'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+          'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+        ];
+        return '${months[dt.month - 1]} ${dt.day}';
+      } catch (_) {
+        return raw.split(' ').first;
+      }
+    }
+
+    String fmtValue(double v) {
+      if (_selectedChartTab == 'Net P&L' || _selectedChartTab == 'AUM') {
+        if (v.abs() >= 1000000) return '\$${(v / 1000000).toStringAsFixed(1)}M';
+        if (v.abs() >= 1000) return '\$${(v / 1000).toStringAsFixed(1)}K';
+        return '\$${v.toStringAsFixed(2)}';
+      }
+      // Equity → same currency formatting.
+      if (v.abs() >= 1000) return '\$${(v / 1000).toStringAsFixed(1)}K';
+      return '\$${v.toStringAsFixed(2)}';
     }
 
     return LineChart(
       LineChartData(
-        gridData: FlGridData(show: false),
+        gridData: FlGridData(
+          show: true,
+          drawVerticalLine: false,
+          horizontalInterval: range / 3,
+          getDrawingHorizontalLine: (_) => FlLine(
+            color: AppColors.border.withOpacity(0.25),
+            strokeWidth: 1,
+            dashArray: const [4, 4],
+          ),
+        ),
         titlesData: FlTitlesData(
-          leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 22.h,
+              interval: labelStep.toDouble(),
+              getTitlesWidget: (value, meta) {
+                final text = fmtLabel(value);
+                if (text.isEmpty) return const SizedBox();
+                return Padding(
+                  padding: EdgeInsets.only(top: 6.h),
+                  child: Text(
+                    text,
+                    style: TextStyle(
+                      fontSize: 10.sp,
+                      color: AppColors.textGrey,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
         ),
         borderData: FlBorderData(show: false),
         minX: 0,
         maxX: (spots.length - 1).toDouble(),
-        minY: minY - (maxY - minY) * 0.2,
-        maxY: maxY + (maxY - minY) * 0.2,
+        minY: paddedMin,
+        maxY: paddedMax,
+        lineTouchData: LineTouchData(
+          handleBuiltInTouches: true,
+          touchTooltipData: LineTouchTooltipData(
+            getTooltipColor: (_) => AppColors.textPrimary.withOpacity(0.92),
+            tooltipBorderRadius: BorderRadius.circular(8),
+            tooltipPadding:
+                EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+            getTooltipItems: (touched) {
+              return touched.map((s) {
+                final label = fmtLabel(s.x);
+                final val = fmtValue(s.y);
+                return LineTooltipItem(
+                  '$val\n',
+                  TextStyle(
+                    color: AppColors.whiteColor,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12.sp,
+                  ),
+                  children: [
+                    TextSpan(
+                      text: label,
+                      style: TextStyle(
+                        color: AppColors.whiteColor.withOpacity(0.7),
+                        fontWeight: FontWeight.w500,
+                        fontSize: 10.sp,
+                      ),
+                    ),
+                  ],
+                );
+              }).toList();
+            },
+          ),
+          getTouchedSpotIndicator: (barData, indicators) {
+            return indicators.map((i) {
+              return TouchedSpotIndicatorData(
+                FlLine(color: lineColor.withOpacity(0.4), strokeWidth: 1),
+                FlDotData(
+                  show: true,
+                  getDotPainter: (spot, p, bar, idx) => FlDotCirclePainter(
+                    radius: 4,
+                    color: lineColor,
+                    strokeWidth: 2,
+                    strokeColor: AppColors.card,
+                  ),
+                ),
+              );
+            }).toList();
+          },
+        ),
         lineBarsData: [
           LineChartBarData(
             spots: spots,
             isCurved: true,
-            color: AppColors.primary,
-            barWidth: 3,
+            curveSmoothness: 0.25,
+            preventCurveOverShooting: true,
+            color: lineColor,
+            barWidth: 2.5,
             isStrokeCapRound: true,
-            dotData: FlDotData(show: false),
+            dotData: const FlDotData(show: false),
             belowBarData: BarAreaData(
               show: true,
-              color: AppColors.primary.withOpacity(0.15),
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  lineColor.withOpacity(0.22),
+                  lineColor.withOpacity(0.02),
+                ],
+              ),
             ),
           ),
         ],
       ),
+      duration: const Duration(milliseconds: 350),
+      curve: Curves.easeOutCubic,
     );
   }
 

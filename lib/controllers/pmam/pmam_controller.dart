@@ -145,166 +145,260 @@ class PmamController extends GetxController {
         dashboardRange.value = range;
       }
 
-      final results = await Future.wait([
-        PmamService.getManagerDashboardStats(),
-        PmamService.getManagerPlans(),
-        PmamService.getManagerInvestors(),
-      ]);
+      final overviewResp = await PmamService.getManagerDashboardOverview(
+        range: dashboardRange.value,
+      );
 
-      final statsResp = results[0];
-      Map<String, dynamic> statsMap = {};
-      if (statsResp.success && statsResp.data != null) {
-        final d = statsResp.data as Map<String, dynamic>;
-        statsMap = (d['data'] is Map<String, dynamic>)
-            ? Map<String, dynamic>.from(d['data'] as Map<String, dynamic>)
-            : {};
-        dashboardStats.value = statsMap;
-      }
-
-      final plansResp = results[1];
-      if (plansResp.success && plansResp.data != null) {
-        final d = plansResp.data as Map<String, dynamic>;
-        final list = d['data'];
-        if (list is List) {
-          managerPlans.assignAll(
-            list.whereType<Map<String, dynamic>>().toList(),
-          );
-        } else {
-          managerPlans.clear();
-        }
+      if (overviewResp.success && overviewResp.data != null) {
+        final root = overviewResp.data as Map<String, dynamic>;
+        final data = (root['data'] is Map<String, dynamic>)
+            ? Map<String, dynamic>.from(root['data'] as Map<String, dynamic>)
+            : <String, dynamic>{};
+        dashboardStats.value = data;
+        _hydrateFromOverview(data);
       } else {
-        managerPlans.clear();
+        errorMessage.value = overviewResp.message ?? 'Failed to load dashboard';
+        _hydrateFromOverview(const {});
       }
-
-      final investorsResp = results[2];
-      if (investorsResp.success && investorsResp.data != null) {
-        final d = investorsResp.data as Map<String, dynamic>;
-        final list = d['data'];
-        if (list is List) {
-          managerInvestors.assignAll(
-            list.whereType<Map<String, dynamic>>().toList(),
-          );
-        } else {
-          managerInvestors.clear();
-        }
-      } else {
-        managerInvestors.clear();
-      }
-
-      _hydrateDashboardViews(statsMap: statsMap);
     } catch (e) {
       errorMessage.value = e.toString();
+      if (kDebugMode) debugPrint('[PMAM] loadManagerDashboard error: $e');
     } finally {
       isLoading.value = false;
     }
   }
 
-  /// Convert the flat `dashboard-stats` payload + plans + investors into the
-  /// richer structure consumed by the dashboard screen. When the backend
-  /// doesn't ship a given field yet, we emit a safe zeroed shape so the UI
-  /// never crashes on `null`/missing keys.
-  void _hydrateDashboardViews({
-    required Map<String, dynamic> statsMap,
-  }) {
+  /// Map the rich `/manager/dashboard-overview` payload into the maps the
+  /// screen reads. Keeps the legacy field names (`series.data`, `pnl`,
+  /// `earned_period`, `retention_rate`, `new_this_period`, `churned`) so the
+  /// existing dashboard UI does not need to change.
+  void _hydrateFromOverview(Map<String, dynamic> data) {
     num toNum(dynamic v) =>
         v is num ? v : num.tryParse(v?.toString() ?? '') ?? 0;
 
-    final totalAum = toNum(statsMap['total_locked_aum']);
-    final activeInvestors = toNum(statsMap['active_investors']);
-    final pendingRequests = toNum(statsMap['pending_requests']);
-    final totalPnl = toNum(statsMap['total_pnl']);
-    final totalCommission = toNum(statsMap['total_commission']);
-    final commissionThisMonth = toNum(statsMap['commission_this_month']);
-
-    // ROI over window: total_pnl / total_locked_aum * 100, guard div-by-zero.
-    final roiPct = totalAum > 0 ? (totalPnl / totalAum) * 100.0 : 0.0;
-
-    // ── Hero stats ──
-    heroStats.assignAll({
-      'aum': {
-        'current': totalAum,
-        'delta_pct': 0,
-        'series': {'data': <num>[totalAum]},
-      },
-      'investors': {
-        'current': activeInvestors,
-        'delta': pendingRequests,
-        'series': {'data': <num>[activeInvestors]},
-      },
-      'earnings': {
-        'current': totalCommission,
-        'delta_pct': 0,
-        'series': {'data': <num>[totalCommission]},
-      },
-      'roi': {
-        'current_pct': roiPct,
-        'delta_pct': 0,
-        'series': {'data': <num>[roiPct]},
-      },
-    });
-
-    // ── Main performance chart (single-point series; backend will extend) ──
-    mainChartData.assignAll({
-      'equity': {
-        'series': {'data': <num>[totalAum + totalPnl]},
-      },
-      'aum': {
-        'series': {'data': <num>[totalAum]},
-      },
-      'pnl': {
-        'series': {'data': <num>[totalPnl]},
-      },
-    });
-
-    // ── Investor health ──
-    int active = 0, pending = 0, inactive = 0;
-    for (final inv in managerInvestors) {
-      final status =
-          (inv['status'] ?? inv['investor_status'] ?? '').toString().toLowerCase();
-      if (status == 'active' || status == 'approved') {
-        active++;
-      } else if (status == 'pending') {
-        pending++;
-      } else if (status == 'inactive' ||
-          status == 'inactivated' ||
-          status == 'rejected' ||
-          status == 'cancelled') {
-        inactive++;
+    List<num> seriesValues(dynamic seriesMap) {
+      if (seriesMap is Map) {
+        final v = seriesMap['values'] ?? seriesMap['data'];
+        if (v is List) return v.map(toNum).toList();
       }
+      return const <num>[];
     }
-    final healthTotal = active + pending + inactive;
-    investorHealth.assignAll({
-      'active': active,
-      'pending': pending == 0 ? pendingRequests : pending,
-      'inactive': inactive,
-      'new_this_period': 0,
-      'churned': 0,
-      'avg_age_days': 0,
-      'retention_rate': healthTotal > 0
-          ? ((active / healthTotal) * 100).toStringAsFixed(1)
-          : '0',
+
+    List<String> seriesLabels(dynamic seriesMap) {
+      if (seriesMap is Map) {
+        final l = seriesMap['labels'];
+        if (l is List) return l.map((e) => e.toString()).toList();
+      }
+      return const <String>[];
+    }
+
+    // ── Hero ──
+    final hero = (data['hero'] is Map<String, dynamic>)
+        ? data['hero'] as Map<String, dynamic>
+        : <String, dynamic>{};
+
+    Map<String, dynamic> heroBlock(String key, {bool absoluteDelta = false}) {
+      final block = (hero[key] is Map) ? hero[key] as Map : const {};
+      final isRoi = key == 'roi';
+      return {
+        'current': isRoi ? toNum(block['current_pct']) : toNum(block['current']),
+        'previous':
+            isRoi ? toNum(block['previous_pct']) : toNum(block['previous']),
+        if (isRoi) 'current_pct': toNum(block['current_pct']),
+        if (absoluteDelta) 'delta': toNum(block['delta']),
+        'delta_pct': toNum(block['delta_pct']),
+        'series': {
+          'labels': seriesLabels(block['series']),
+          // Keep both `values` and `data` so old consumers keep working.
+          'values': seriesValues(block['series']),
+          'data': seriesValues(block['series']),
+        },
+      };
+    }
+
+    heroStats.assignAll({
+      'aum': heroBlock('aum'),
+      'investors': heroBlock('investors', absoluteDelta: true),
+      'earnings': heroBlock('earnings'),
+      'roi': heroBlock('roi'),
     });
+
+    // ── Main performance chart ──
+    final mainChart = (data['main_chart'] is Map<String, dynamic>)
+        ? data['main_chart'] as Map<String, dynamic>
+        : <String, dynamic>{};
+    final mainLabels = (mainChart['labels'] is List)
+        ? (mainChart['labels'] as List).map((e) => e.toString()).toList()
+        : <String>[];
+
+    List<num> mainSeries(String key) {
+      final v = mainChart[key];
+      return v is List ? v.map(toNum).toList() : const <num>[];
+    }
+
+    Map<String, dynamic> chartBlock(List<num> values) => {
+          'series': {
+            'labels': mainLabels,
+            'values': values,
+            'data': values, // legacy alias
+          },
+        };
+
+    final equityVals = mainSeries('equity');
+    final aumVals = mainSeries('aum');
+    final pnlVals = mainSeries('net_pnl');
+    final earningsVals = mainSeries('earnings');
+
+    mainChartData.assignAll({
+      'labels': mainLabels,
+      'equity': chartBlock(equityVals),
+      'aum': chartBlock(aumVals),
+      'pnl': chartBlock(pnlVals), // legacy key used by screen
+      'net_pnl': chartBlock(pnlVals),
+      'earnings': chartBlock(earningsVals),
+      'benchmark': mainChart['benchmark'] ?? const [],
+    });
+
+    // ── Investor Health ──
+    final health = (data['investor_health'] is Map<String, dynamic>)
+        ? data['investor_health'] as Map<String, dynamic>
+        : <String, dynamic>{};
+    investorHealth.assignAll({
+      'active': toNum(health['active']).toInt(),
+      'pending': toNum(health['pending']).toInt(),
+      'inactive': toNum(health['inactive']).toInt(),
+      'rejected': toNum(health['rejected']).toInt(),
+      // Provide both new + legacy keys used by the UI.
+      'new_in_window': toNum(health['new_in_window']).toInt(),
+      'new_this_period': toNum(health['new_in_window']).toInt(),
+      'churned_in_window': toNum(health['churned_in_window']).toInt(),
+      'churned': toNum(health['churned_in_window']).toInt(),
+      'avg_age_days': toNum(health['avg_age_days']).toInt(),
+      'retention_pct': toNum(health['retention_pct']),
+      'retention_rate': toNum(health['retention_pct']),
+    });
+
+    // ── Plans ──
+    final plans = data['plans'];
+    if (plans is List) {
+      managerPlans.assignAll(
+        plans.whereType<Map>().map((p) {
+          final m = Map<String, dynamic>.from(p);
+          // Backwards-compat keys for the existing plan card UI.
+          m['total_locked_aum'] = m['aum'] ?? m['total_locked_aum'];
+          m['active_investors'] = m['investors'] ?? m['active_investors'];
+          return m;
+        }).toList(),
+      );
+    } else {
+      managerPlans.clear();
+    }
 
     // ── Payouts ──
-    // "Pending" = total commission earned but not yet settled (this month
-    // commission is treated as still pending until settled_at is set).
-    final recentCommissions = statsMap['recent_commissions'];
-    num settledThisMonth = 0;
-    if (recentCommissions is List) {
-      for (final c in recentCommissions) {
-        if (c is Map) {
-          settledThisMonth += toNum(c['net_profit_credited']);
-        }
-      }
-    }
-    final pendingPayout = (commissionThisMonth - settledThisMonth).clamp(0, double.infinity);
+    final payouts = (data['payouts'] is Map<String, dynamic>)
+        ? data['payouts'] as Map<String, dynamic>
+        : <String, dynamic>{};
     payoutsData.assignAll({
-      'earned_period': commissionThisMonth,
-      'pending': pendingPayout,
+      'earned_in_window': toNum(payouts['earned_in_window']),
+      'earned_period': toNum(payouts['earned_in_window']), // legacy alias
+      'pending': toNum(payouts['pending']),
+      'upcoming': payouts['upcoming'] ?? const [],
+      'recent': payouts['recent'] ?? const [],
     });
 
-    // ── Recent trades (placeholder until backend ships a dedicated endpoint) ──
-    recentDashboardTrades.clear();
+    // ── Recent trades ──
+    final trades = data['recent_trades'];
+    recentDashboardTrades.assignAll(
+      trades is List
+          ? trades.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList()
+          : const <Map<String, dynamic>>[],
+    );
+  }
+
+  /// Pause a manager plan. Returns true on success and patches the local
+  /// [managerPlans] list so the UI reflects the new status without a reload.
+  Future<({bool ok, String message})> pauseManagerPlan(int planId) async {
+    try {
+      final resp = await PmamService.pausePlan(planId);
+      if (resp.success) {
+        _patchPlanStatus(planId, status: 'paused', isPaused: true);
+        return (ok: true, message: resp.message ?? 'Plan paused successfully.');
+      }
+      return (ok: false, message: resp.message ?? 'Failed to pause plan.');
+    } catch (e) {
+      return (ok: false, message: e.toString());
+    }
+  }
+
+  /// Resume a paused manager plan. Returns true on success.
+  Future<({bool ok, String message})> resumeManagerPlan(int planId) async {
+    try {
+      final resp = await PmamService.resumePlan(planId);
+      if (resp.success) {
+        final newStatus =
+            (resp.data is Map && (resp.data as Map)['data'] is Map)
+                ? ((resp.data as Map)['data'] as Map)['status']?.toString()
+                : null;
+        _patchPlanStatus(
+          planId,
+          status: newStatus ?? 'approved',
+          isPaused: false,
+        );
+        return (
+          ok: true,
+          message: resp.message ?? 'Plan resumed successfully.',
+        );
+      }
+      return (ok: false, message: resp.message ?? 'Failed to resume plan.');
+    } catch (e) {
+      return (ok: false, message: e.toString());
+    }
+  }
+
+  /// Update the editable fields of a plan (name / strategy / risk and,
+  /// when no active investors, commission + minimum investment).
+  /// Returns `(ok, message)` so the UI can show a snackbar.
+  Future<({bool ok, String message})> updateManagerPlan(
+    int planId,
+    Map<String, dynamic> body,
+  ) async {
+    try {
+      final resp = await PmamService.updatePlan(planId, body);
+      if (resp.success) {
+        _patchPlanFields(planId, body);
+        return (ok: true, message: resp.message ?? 'Plan updated successfully.');
+      }
+      return (ok: false, message: resp.message ?? 'Failed to update plan.');
+    } catch (e) {
+      return (ok: false, message: e.toString());
+    }
+  }
+
+  /// Merge changed fields back into the local plan so the list reflects the
+  /// edit without a full reload.
+  void _patchPlanFields(int planId, Map<String, dynamic> changes) {
+    final idx = managerPlans.indexWhere((p) => (p['id'] ?? -1) == planId);
+    if (idx == -1) return;
+    final updated = Map<String, dynamic>.from(managerPlans[idx])
+      ..addAll(changes);
+    managerPlans[idx] = updated;
+    managerPlans.refresh();
+  }
+
+  /// In-place update of a single plan inside [managerPlans] so the list
+  /// rebuilds without re-hitting the network.
+  void _patchPlanStatus(
+    int planId, {
+    required String status,
+    required bool isPaused,
+  }) {
+    final idx = managerPlans.indexWhere((p) => (p['id'] ?? -1) == planId);
+    if (idx == -1) return;
+    final updated = Map<String, dynamic>.from(managerPlans[idx]);
+    updated['status'] = status;
+    updated['is_paused'] = isPaused ? 1 : 0;
+    managerPlans[idx] = updated;
+    managerPlans.refresh();
   }
 
   Future<bool> createPlan(Map<String, dynamic> body) async {

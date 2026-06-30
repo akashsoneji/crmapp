@@ -14,7 +14,16 @@ import 'package:crm_app/screens/home/more/pmam/pmam_trade_history_screen.dart';
 import 'package:crm_app/utils/app_picker_theme.dart';
 
 class PmamInvestorPortalScreen extends StatefulWidget {
-  const PmamInvestorPortalScreen({super.key});
+  const PmamInvestorPortalScreen({
+    super.key,
+    this.initialTab = 0,
+    this.embedded = false,
+  });
+
+  /// 0 = Fund Managers, 1 = My Investments.
+  final int initialTab;
+  /// When true, hides the app bar (caller provides its own).
+  final bool embedded;
 
   @override
   State<PmamInvestorPortalScreen> createState() =>
@@ -69,7 +78,11 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
   @override
   void initState() {
     super.initState();
-    _tabCtrl = TabController(length: 2, vsync: this);
+    _tabCtrl = TabController(
+      length: 2,
+      vsync: this,
+      initialIndex: widget.initialTab.clamp(0, 1),
+    );
     if (Get.isRegistered<PmamController>()) {
       _ctrl = Get.find<PmamController>();
     } else {
@@ -100,7 +113,9 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
+      appBar: widget.embedded
+          ? null
+          : AppBar(
         scrolledUnderElevation: 0,
         backgroundColor: AppColors.background,
         elevation: 0,

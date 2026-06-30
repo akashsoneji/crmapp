@@ -40,6 +40,12 @@ class PmamManagerPlanDetailController extends GetxController {
   final RxString invSearch = ''.obs;
   final RxInt invPerPage = 10.obs;
 
+  // Investor Requests
+  final RxList<Map<String, dynamic>> investorRequests =
+      <Map<String, dynamic>>[].obs;
+  final RxBool isRequestsLoading = false.obs;
+  final RxSet<int> processingRequestIds = <int>{}.obs;
+
   @override
   void onInit() {
     super.onInit();
@@ -47,6 +53,67 @@ class PmamManagerPlanDetailController extends GetxController {
     loadAllPlanInvestors();
     loadAllocations(refresh: true);
     loadInvestors(refresh: true);
+    loadInvestorRequests();
+  }
+
+  // INVESTOR REQUESTS
+  Future<void> loadInvestorRequests() async {
+    try {
+      isRequestsLoading.value = true;
+      final response = await PmamService.getInvestorRequests(planId);
+      if (response.success && response.data != null) {
+        final d = response.data as Map<String, dynamic>;
+        final list = d['data'];
+        if (list is List) {
+          investorRequests.assignAll(
+            list.whereType<Map<String, dynamic>>().toList(),
+          );
+        } else {
+          investorRequests.clear();
+        }
+      } else {
+        investorRequests.clear();
+      }
+    } catch (e) {
+      errorMessage.value = e.toString();
+    } finally {
+      isRequestsLoading.value = false;
+    }
+  }
+
+  Future<bool> approveInvestorRequest(int requestId) async {
+    if (processingRequestIds.contains(requestId)) return false;
+    processingRequestIds.add(requestId);
+    try {
+      final res = await PmamService.approveInvestorRequest(requestId);
+      if (res.success) {
+        await loadInvestorRequests();
+        // Refresh investors + plan details so AUM / counts update.
+        loadInvestors(refresh: true);
+        loadPlanDetails();
+      }
+      return res.success;
+    } catch (_) {
+      return false;
+    } finally {
+      processingRequestIds.remove(requestId);
+    }
+  }
+
+  Future<bool> rejectInvestorRequest(int requestId) async {
+    if (processingRequestIds.contains(requestId)) return false;
+    processingRequestIds.add(requestId);
+    try {
+      final res = await PmamService.rejectInvestorRequest(requestId);
+      if (res.success) {
+        await loadInvestorRequests();
+      }
+      return res.success;
+    } catch (_) {
+      return false;
+    } finally {
+      processingRequestIds.remove(requestId);
+    }
   }
 
   Future<void> loadAllPlanInvestors() async {

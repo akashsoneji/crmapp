@@ -81,18 +81,18 @@ class _PmamBecomeManagerScreenState extends State<PmamBecomeManagerScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.tradeBackgroundCenterColor,
-      appBar: AppBar(
-        scrolledUnderElevation: 0,
-        backgroundColor: AppColors.tradeBackgroundCenterColor,
-        elevation: 0,
-        leading: AppSvgBackButton(
-          onPressed: () => Get.back(closeOverlays: true),
-          iconWidth: 30.w,
-          iconHeight: 30.h,
-        ),
-        title: Text('Become a Manager', style: AppTextStyles.heading),
-        centerTitle: true,
-      ),
+      // appBar: AppBar(
+      //   scrolledUnderElevation: 0,
+      //   backgroundColor: AppColors.tradeBackgroundCenterColor,
+      //   elevation: 0,
+      //   leading: AppSvgBackButton(
+      //     onPressed: () => Get.back(closeOverlays: true),
+      //     iconWidth: 30.w,
+      //     iconHeight: 30.h,
+      //   ),
+      //   title: Text('Become a Manager', style: AppTextStyles.heading),
+      //   centerTitle: true,
+      // ),
       body: SingleChildScrollView(
         padding: EdgeInsets.symmetric(horizontal: 22.w, vertical: 16.h),
         child: Column(
