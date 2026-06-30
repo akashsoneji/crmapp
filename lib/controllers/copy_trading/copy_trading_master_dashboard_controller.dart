@@ -371,6 +371,10 @@ class CopyTradingMasterDashboardController extends GetxController {
   /// Currently selected overview time-range preset (e.g. '1m', '3m', '6m', 'all').
   final RxString overviewRange = RxString('1m');
 
+  /// True while [loadDashboardOverview] is in-flight. Lets the overview tab
+  /// show its own spinner without interfering with the rest of the dashboard.
+  final RxBool isOverviewLoading = false.obs;
+
   /// Default-empty overview so legacy getters on existing screens keep working.
   /// Set to a real [CopyTradingDashboardOverview] once the backend ships the
   /// overview endpoint.
@@ -432,11 +436,42 @@ class CopyTradingMasterDashboardController extends GetxController {
     );
   }
 
+  /// Map a chip label (Today / 7D / 30D / 90D / 1Y / All) to the API range
+  /// preset the overview endpoint expects.
+  static String chipToRangePreset(String chip) {
+    switch (chip) {
+      case 'Today':
+        return 'today';
+      case '7D':
+        return '7d';
+      case '30D':
+        return '30d';
+      case '90D':
+        return '90d';
+      case '1Y':
+        return '1y';
+      case 'All':
+      default:
+        return 'all';
+    }
+  }
+
   /// Apply a new overview time-range preset and reload relevant data.
-  Future<void> setOverviewRange(String preset) async {
-    overviewRange.value = preset;
-    // Reload profile so the backend can return range-aware metrics.
-    await _loadProfile();
+  ///
+  /// Accepts either a chip label (`Today`, `7D`, `30D`, `90D`, `1Y`, `All`)
+  /// or a backend preset string (`today`, `7d`, `30d`, `90d`, `1y`, `all`,
+  /// `1m`, `3m`, `6m`).
+  Future<void> changeRange(String presetOrChip) async {
+    final p = presetOrChip.trim();
+    String normalised = p.toLowerCase();
+    // If it looks like a chip label (mixed case + trailing letter), map it.
+    if (p == 'Today' || p == '7D' || p == '30D' || p == '90D' || p == '1Y' || p == 'All') {
+      normalised = chipToRangePreset(p);
+    }
+    debugPrint('[MasterDashboard] changeRange chip="$presetOrChip" '
+        '→ preset="$normalised" (was: "${overviewRange.value}")');
+    overviewRange.value = normalised;
+    await loadDashboardOverview();
   }
 
   @override
@@ -445,16 +480,77 @@ class CopyTradingMasterDashboardController extends GetxController {
     refreshAll(showLoading: true);
   }
 
+  /// Reload every panel of the master dashboard: stats, profile, plans,
+  /// MT5 accounts, open positions, AND the redesigned overview block.
   Future<void> refreshAll({bool showLoading = false}) async {
     if (showLoading) isLoading.value = true;
     errorMessage.value = '';
     try {
-      await Future.wait([_loadStats(), _loadProfile(), _loadPlans(), _loadMt5Accounts()]);
+      await Future.wait([
+        _loadStats(),
+        _loadProfile(),
+        _loadPlans(),
+        _loadMt5Accounts(),
+        loadDashboardOverview(),
+      ]);
       await _loadOpenPositions();
     } catch (e) {
       errorMessage.value = 'Failed to load dashboard: $e';
     } finally {
       if (showLoading) isLoading.value = false;
+    }
+  }
+
+  /// Fetch the redesigned `master/dashboard-overview` panel
+  /// (range, hero, main_chart, copier_health, plans, payouts,
+  /// recent_trades, alerts). Populates [overview]; non-fatal on failure.
+  Future<void> loadDashboardOverview() async {
+    isOverviewLoading.value = true;
+    // IMPORTANT: do NOT embed `?range=` in the endpoint path.
+    // `ApiService.get` uses `Uri.replace(queryParameters: ...)`, which
+    // *wipes* any query string already in the endpoint string. So we
+    // pass both the range and the cache-buster in queryParameters here.
+    // (Bug: previously the endpoint was `...dashboard-overview?range=7d`
+    // and `queryParameters: {_t: ...}` overwrote it → API always
+    // received only `_t`, returned the default 30d window, so every
+    // chip felt like it returned the same data.)
+    final range = overviewRange.value;
+    final endpoint = ApiConstants.copyTradingMasterDashboardOverviewPath;
+    final queryParameters = {
+      'range': range,
+      '_t': DateTime.now().millisecondsSinceEpoch.toString(),
+    };
+    debugPrint(
+      '[MasterDashboard] loadDashboardOverview → range="$range" '
+      'endpoint="$endpoint" query=$queryParameters',
+    );
+    try {
+      final res = await ApiService.get(
+        endpoint: endpoint,
+        queryParameters: queryParameters,
+      );
+      debugPrint(
+        '[MasterDashboard] loadDashboardOverview ← success=${res.success} '
+        'hasData=${res.data != null}',
+      );
+      debugPrint(
+        '[MasterDashboard] loadDashboardOverview ← success=${res.success} '
+        'hasData=${res.data != null}',
+      );
+      if (!res.success || res.data == null) {
+        // Non-fatal — many screens fall back to derived metrics.
+        return;
+      }
+      final body = res.data?['data'];
+      if (body is Map) {
+        overview.value = CopyTradingDashboardOverview.fromJson(
+          body.cast<String, dynamic>(),
+        );
+      }
+    } catch (e) {
+      debugPrint('loadDashboardOverview error: $e');
+    } finally {
+      isOverviewLoading.value = false;
     }
   }
 

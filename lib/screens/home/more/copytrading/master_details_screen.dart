@@ -1323,3 +1323,78 @@ class _ErrorState extends StatelessWidget {
     );
   }
 }
+
+// ─────────────────────────── Strategy & risk disclosure ───────────────────────────
+
+class _StrategyDisclosureCard extends StatelessWidget {
+  final CopyTradingMasterProfile profile;
+  const _StrategyDisclosureCard({required this.profile});
+
+  @override
+  Widget build(BuildContext context) {
+    final strategy = profile.strategyDescription.trim();
+    final hasStrategy = strategy.isNotEmpty;
+    final risk = profile.riskInformation.trim();
+    final hasRisk = risk.isNotEmpty;
+    return Container(
+      padding: EdgeInsets.fromLTRB(14.w, 14.h, 14.w, 16.h),
+      decoration: BoxDecoration(
+        color: AppColors.whiteColor,
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: AppColors.border, width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Strategy & risk disclosure',
+            style: AppTextStyles.label.copyWith(
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          SizedBox(height: 10.h),
+          Text(
+            'STRATEGY',
+            style: AppTextStyles.caption.copyWith(
+              fontSize: 10.sp,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textGrey,
+              letterSpacing: 0.5,
+            ),
+          ),
+          SizedBox(height: 4.h),
+          Text(
+            hasStrategy ? strategy : 'No strategy description provided.',
+            style: AppTextStyles.bodyText.copyWith(
+              fontSize: 12.sp,
+              color:
+                  hasStrategy ? AppColors.textPrimary : AppColors.textGrey,
+            ),
+          ),
+          if (hasRisk) ...[
+            SizedBox(height: 12.h),
+            Text(
+              'RISK',
+              style: AppTextStyles.caption.copyWith(
+                fontSize: 10.sp,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textGrey,
+                letterSpacing: 0.5,
+              ),
+            ),
+            SizedBox(height: 4.h),
+            Text(
+              risk,
+              style: AppTextStyles.bodyText.copyWith(
+                fontSize: 12.sp,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}

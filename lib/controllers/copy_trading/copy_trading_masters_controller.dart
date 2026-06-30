@@ -79,13 +79,30 @@ class CopyTradingMasterListItem {
   }
 }
 
+/// Top-level filter tab on the Explore Masters screen.
+enum MasterFilterTab { all, enrolled, discover }
+
 class CopyTradingMastersController extends GetxController {
   final RxBool isLoading = false.obs;
   final RxString errorMessage = ''.obs;
-  final RxList<CopyTradingMasterListItem> masters = <CopyTradingMasterListItem>[].obs;
+  final RxList<CopyTradingMasterListItem> masters =
+      <CopyTradingMasterListItem>[].obs;
 
   final RxString search = ''.obs;
   final RxString sort = ''.obs; // aum | copiers | gain
+
+  /// Top-level tabs on Explore Masters: All / Enrolled / Discover.
+  final Rx<MasterFilterTab> selectedFilter = MasterFilterTab.all.obs;
+
+  /// Filter chips shown under the tab bar.
+  final RxString riskFilter = 'All Risks'.obs;
+  final RxString timeFilter = 'All Time'.obs;
+  final RxString sortBy = 'Gain %'.obs;
+
+  /// Aliases used by the redesigned UI.
+  RxString get searchQuery => search;
+  RxList<CopyTradingMasterListItem> get allMasters => masters;
+  Future<void> refreshMasters() async => loadMasters();
 
   /// Masters from API; [search] filters this list **client-side** (nickname / name / code).
   List<CopyTradingMasterListItem> get filteredMasters {
