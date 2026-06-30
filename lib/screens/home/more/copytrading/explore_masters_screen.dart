@@ -11,16 +11,40 @@ import 'package:crm_app/screens/home/more/copytrading/master_details_screen.dart
 /// Explore Masters — public list of available master traders.
 ///
 /// Re-designed to match the web portal:
-///  • 4 summary cards (Available / Community AUM / Avg Gain / Enrolled)
-///  • Tab bar (All / Enrolled / Discover) with counts
-///  • Filter chips (Risk / Time / Sort)
-///  • One master card per row (mobile-friendly horizontal layout)
-class ExploreMastersScreen extends StatelessWidget {
+///   • 4 summary cards (Available / Community AUM / Avg Gain / Enrolled)
+///   • Tab bar (All / Enrolled / Discover) with counts
+///   • Filter chips (Risk / Time / Sort / Search)
+///   • One master card per row (mobile-friendly horizontal layout)
+class ExploreMastersScreen extends StatefulWidget {
   const ExploreMastersScreen({super.key});
 
   @override
+  State<ExploreMastersScreen> createState() => _ExploreMastersScreenState();
+}
+
+class _ExploreMastersScreenState extends State<ExploreMastersScreen> {
+  // Registered exactly once in initState so we never race with the build
+  // cycle. If a fresh instance is needed, call
+  // `Get.delete<CopyTradingMastersController>()` first.
+  late final CopyTradingMastersController controller;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = Get.put(CopyTradingMastersController(), permanent: false);
+    // Belt-and-suspenders: kick off a refresh after the first frame in
+    // case onInit's microtask was dropped (hot reload, route swap, etc.).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!controller.isLoading.value &&
+          controller.allMasters.isEmpty &&
+          controller.errorMessage.value.isEmpty) {
+        controller.refreshMasters();
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final controller = Get.find<CopyTradingMastersController>();
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -61,33 +85,34 @@ class ExploreMastersScreen extends StatelessWidget {
           );
         }
 
-        // ─── Filtered view ─────────────────────────────────────────
+        // ─── Filtered view ─────────────────────────────────────
         final filter = controller.selectedFilter.value;
         final filtered = controller.allMasters.where((m) {
           if (filter == MasterFilterTab.enrolled) return m.isEnrolled;
           if (filter == MasterFilterTab.discover) return !m.isEnrolled;
           return true;
         }).toList();
-        // Apply search
         final q = controller.searchQuery.value.trim().toLowerCase();
         final visible = q.isEmpty
             ? filtered
             : filtered
-                  .where(
+                .where(
                   (m) =>
-                        m.nickname.toLowerCase().contains(q) ||
-                        m.name.toLowerCase().contains(q) ||
-                        m.masterCode.toLowerCase().contains(q),
-                  )
-                  .toList();
+                      m.nickname.toLowerCase().contains(q) ||
+                      m.name.toLowerCase().contains(q) ||
+                      m.masterCode.toLowerCase().contains(q),
+                )
+                .toList();
 
         return RefreshIndicator(
           onRefresh: controller.refreshMasters,
           child: ListView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: EdgeInsets.fromLTRB(14.w, 12.h, 14.w, 24.h),
+            // Bottom padding leaves room for the persistent bottom
+            // navigation bar so the last card isn't covered.
+            padding: EdgeInsets.fromLTRB(14.w, 12.h, 14.w, 100.h),
             children: [
-              _SummaryCards(controller: controller),
+              const _SummaryCards(),
               SizedBox(height: 14.h),
               _FilterTabs(controller: controller),
               SizedBox(height: 10.h),
@@ -96,30 +121,7 @@ class ExploreMastersScreen extends StatelessWidget {
               if (visible.isEmpty)
                 _NoSearchMatchesState(query: controller.searchQuery.value)
               else
-                ...visible.map(
-                  (m) => Padding(
-                    padding: EdgeInsets.only(bottom: 12.h),
-                    child: _MasterCardHorizontal(
-                      item: m,
-                      onTap: () {
-                        HapticFeedback.selectionClick();
-                        Get.to(
-                          () => MasterDetailsScreen(
-                            masterCode: m.masterCode,
-                          ),
-                        );
-                      },
-                      onCopy: () {
-                        HapticFeedback.selectionClick();
-                        // Navigate to master details first so the user can
-                        // pick a plan before opening the subscribe modal.
-                        Get.to(
-                          () => MasterDetailsScreen(masterCode: m.masterCode),
-                        );
-                      },
-                    ),
-                  ),
-                ),
+                ...visible.map((m) => _MasterCardWrapper(m: m)),
             ],
           ),
         );
@@ -128,14 +130,52 @@ class ExploreMastersScreen extends StatelessWidget {
   }
 }
 
-// ─────────────────────────── summary cards (4-up) ───────────────────────────
-
-class _SummaryCards extends StatelessWidget {
-  final CopyTradingMastersController controller;
-  const _SummaryCards({required this.controller});
+/// Wraps each master card in a try/catch so one bad item can't crash
+/// the whole list. Logs the failure to the debug console and falls back
+/// to a placeholder.
+class _MasterCardWrapper extends StatelessWidget {
+  final dynamic m;
+  const _MasterCardWrapper({required this.m});
 
   @override
   Widget build(BuildContext context) {
+    try {
+      return Padding(
+        padding: EdgeInsets.only(bottom: 12.h),
+        child: _MasterCardHorizontal(
+          item: m,
+          onTap: () {
+            HapticFeedback.selectionClick();
+            Get.to(
+              () => MasterDetailsScreen(masterCode: m.masterCode),
+            );
+          },
+          onCopy: () {
+            HapticFeedback.selectionClick();
+            Get.to(
+              () => MasterDetailsScreen(masterCode: m.masterCode),
+            );
+          },
+        ),
+      );
+    } catch (e, st) {
+      debugPrint(
+        '[ExploreMasters] card render failed for ${m.masterCode}: $e',
+      );
+      debugPrintStack(label: 'card render', stackTrace: st);
+      return const SizedBox.shrink();
+    }
+  }
+}
+
+// ─────────────────────────── summary cards (2x2) ───────────────────────────
+
+class _SummaryCards extends StatelessWidget {
+  const _SummaryCards();
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = Get.find<CopyTradingMastersController>();
     final all = controller.allMasters;
     final communityAum = all.fold<double>(
       0,
@@ -150,18 +190,13 @@ class _SummaryCards extends StatelessWidget {
         : gains.reduce((a, b) => a + b) / gains.length;
     final enrolled = all.where((m) => m.isEnrolled).length;
 
-    return LayoutBuilder(
-      builder: (_, c) {
-        final gap = 8.w;
-        final cardW = (c.maxWidth - gap) / 2;
-        final cardH = 78.h;
-        return Wrap(
-          spacing: gap,
-          runSpacing: gap,
+    // Use plain SizedBox rows instead of Wrap + fixed-height SizedBox
+    // children (which previously tripped RenderBox.hasSize assertions).
+    return Column(
+      children: [
+        Row(
           children: [
-            SizedBox(
-              width: cardW,
-              height: cardH,
+            Expanded(
               child: _SummaryCard(
                 label: 'Available Masters',
                 value: '${all.length}',
@@ -170,9 +205,8 @@ class _SummaryCards extends StatelessWidget {
                 color: AppColors.primary,
               ),
             ),
-            SizedBox(
-              width: cardW,
-              height: cardH,
+            SizedBox(width: 8.w),
+            Expanded(
               child: _SummaryCard(
                 label: 'Community AUM',
                 value: _formatMoney(communityAum),
@@ -181,33 +215,38 @@ class _SummaryCards extends StatelessWidget {
                 color: AppColors.primary,
               ),
             ),
-            SizedBox(
-              width: cardW,
-              height: cardH,
+          ],
+        ),
+        SizedBox(height: 8.w),
+        Row(
+          children: [
+            Expanded(
               child: _SummaryCard(
                 label: 'Avg Gain (All Time)',
-                value: _formatPct(avgGain) + '%',
-                valueColor: avgGain >= 0 ? AppColors.success : AppColors.error,
+                value: '${_formatPct(avgGain)}%',
+                valueColor:
+                    avgGain >= 0 ? AppColors.success : AppColors.error,
                 icon: Icons.trending_up,
                 tag: 'Performance',
                 color: AppColors.primary,
               ),
             ),
-            SizedBox(
-              width: cardW,
-              height: cardH,
+            SizedBox(width: 8.w),
+            Expanded(
               child: _SummaryCard(
                 label: 'Enrolled by you',
                 value: '$enrolled',
-                valueColor: enrolled > 0 ? AppColors.success : AppColors.textPrimary,
+                valueColor: enrolled > 0
+                    ? AppColors.success
+                    : AppColors.textPrimary,
                 icon: Icons.people_alt_outlined,
                 tag: 'Subscribed',
                 color: AppColors.primary,
               ),
             ),
           ],
-        );
-      },
+        ),
+      ],
     );
   }
 }
@@ -232,6 +271,9 @@ class _SummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      // Fixed, comfortable height — no FittedBox wrappers, no unbounded
+      // children. Row/Column sizes flow naturally inside this box.
+      height: 86.h,
       padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
       decoration: BoxDecoration(
         color: AppColors.whiteColor,
@@ -474,129 +516,137 @@ class _FilterChips extends StatelessWidget {
     );
   }
 
-  void _showRiskSheet(BuildContext ctx, CopyTradingMastersController c) {
-    _showChoiceSheet(
-      ctx,
+  void _showRiskSheet(
+    BuildContext context,
+    CopyTradingMastersController c,
+  ) {
+    _showOptionsSheet(
+      context: context,
       title: 'Filter by Risk',
-      options: const ['All Risks', 'Risk 1-2 (Low)', 'Risk 3 (Medium)', 'Risk 4-5 (High)'],
+      options: const ['All Risks', 'Low (1-2)', 'Medium (3)', 'High (4-5)'],
+      current: c.riskFilter.value,
       onSelect: (v) => c.riskFilter.value = v,
     );
   }
 
-  void _showTimeSheet(BuildContext ctx, CopyTradingMastersController c) {
-    _showChoiceSheet(
-      ctx,
-      title: 'Timeframe',
-      options: const ['All Time', 'Last 7D', 'Last 30D', 'Last 90D', 'Last 1Y'],
+  void _showTimeSheet(
+    BuildContext context,
+    CopyTradingMastersController c,
+  ) {
+    _showOptionsSheet(
+      context: context,
+      title: 'Filter by Time',
+      options: const [
+        'All Time',
+        'Last 7 Days',
+        'Last 30 Days',
+        'Last 90 Days',
+        'Last Year',
+      ],
+      current: c.timeFilter.value,
       onSelect: (v) => c.timeFilter.value = v,
     );
   }
 
-  void _showSortSheet(BuildContext ctx, CopyTradingMastersController c) {
-    _showChoiceSheet(
-      ctx,
-      title: 'Sort by',
-      options: const ['Gain %', 'AUM', 'Copiers', 'Newest'],
+  void _showSortSheet(
+    BuildContext context,
+    CopyTradingMastersController c,
+  ) {
+    _showOptionsSheet(
+      context: context,
+      title: 'Sort Masters',
+      options: const ['Gain %', 'AUM', 'Copiers', 'Active Days'],
+      current: 'Sort: ${c.sortBy.value}'.replaceFirst('Sort: ', ''),
       onSelect: (v) => c.sortBy.value = v,
     );
   }
 
-  void _showSearchSheet(BuildContext ctx, CopyTradingMastersController c) {
-    final tc = TextEditingController(text: c.searchQuery.value);
+  void _showSearchSheet(
+    BuildContext context,
+    CopyTradingMastersController c,
+  ) {
+    final ctrl = TextEditingController(text: c.search.value);
     showModalBottomSheet(
-      context: ctx,
-      isScrollControlled: true,
+      context: context,
       backgroundColor: AppColors.whiteColor,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
       ),
-      builder: (_) {
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 16.w,
-            right: 16.w,
-            top: 16.h,
-            bottom: 16.h + MediaQuery.of(ctx).viewInsets.bottom,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Search Masters',
-                style: AppTextStyles.heading.copyWith(fontSize: 16.sp),
-              ),
-              SizedBox(height: 12.h),
-              TextField(
-                controller: tc,
-                autofocus: true,
-                decoration: InputDecoration(
-                  hintText: 'Name, code or nickname',
-                  prefixIcon: const Icon(Icons.search),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10.r),
-                  ),
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 24.h),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Search Masters',
+              style: AppTextStyles.heading.copyWith(fontSize: 16.sp),
+            ),
+            SizedBox(height: 12.h),
+            TextField(
+              controller: ctrl,
+              autofocus: true,
+              decoration: InputDecoration(
+                hintText: 'Nickname, name or code',
+                prefixIcon: const Icon(Icons.search),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10.r),
                 ),
               ),
-              SizedBox(height: 12.h),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    c.searchQuery.value = tc.text;
-                    Navigator.pop(ctx);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                  ),
-                  child: const Text('Apply'),
-                ),
+              onChanged: (v) => c.search.value = v.trim(),
+            ),
+            SizedBox(height: 12.h),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Done'),
               ),
-            ],
-          ),
-        );
-      },
+            ),
+          ],
+        ),
+      ),
     );
   }
 
-  void _showChoiceSheet(
-    BuildContext ctx, {
+  void _showOptionsSheet({
+    required BuildContext context,
     required String title,
     required List<String> options,
+    required String current,
     required ValueChanged<String> onSelect,
   }) {
     showModalBottomSheet(
-      context: ctx,
+      context: context,
       backgroundColor: AppColors.whiteColor,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
       ),
-      builder: (_) {
-        return SafeArea(
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: AppTextStyles.heading.copyWith(fontSize: 16.sp),
-                ),
-                SizedBox(height: 8.h),
-                for (final o in options)
-                  ListTile(
-                    title: Text(o),
-                    onTap: () {
-                      onSelect(o);
-                      Navigator.pop(ctx);
-                    },
-                  ),
-              ],
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: AppTextStyles.heading.copyWith(fontSize: 16.sp),
             ),
-          ),
-        );
-      },
+            SizedBox(height: 8.h),
+            for (final o in options)
+              ListTile(
+                title: Text(o),
+                trailing: o == current
+                    ? Icon(Icons.check, color: AppColors.primary)
+                    : null,
+                onTap: () {
+                  onSelect(o);
+                  Navigator.pop(ctx);
+                },
+              ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -621,15 +671,23 @@ class _MasterCardHorizontal extends StatelessWidget {
     final minInvest = (item.minInvestment as num).toDouble();
     final activeDays = item.activeDays as int;
     final totalCopiers = item.totalCopiers as int;
-    final riskScore = item.riskScore as int;
-    final hasPlan = item.planCount > 0;
-    final serverType = (item.serverType as String?) ?? 'mt5';
+    final riskScore = item.riskScore as int? ?? 0;
+    final hasPlan = (item.planCount as int) > 0;
+    final serverType =
+        (item.serverType is String && (item.serverType as String).isNotEmpty)
+            ? (item.serverType as String)
+            : 'mt5';
+    final commissionPct = _safeCommission(item);
+    final displayName =
+        (item.nickname?.toString().isNotEmpty ?? false)
+            ? item.nickname.toString()
+            : item.name.toString();
+
     final gainText = '${gain >= 0 ? '+' : ''}${gain.toStringAsFixed(2)}%';
-    final drawdownText = '${drawdown.toStringAsFixed(0)}%';
+    final drawdownText = '-${drawdown.toStringAsFixed(0)}%';
     final pnlText = _formatPnl(pnl);
-    final minInvestText = minInvest == 0
-        ? '\$0'
-        : '\$${minInvest.toStringAsFixed(0)}';
+    final minInvestText =
+        minInvest == 0 ? '\$0' : '\$${minInvest.toStringAsFixed(0)}';
     final pnlColor = pnl >= 0 ? AppColors.success : AppColors.error;
     final gainColor = gain >= 0 ? AppColors.success : AppColors.error;
 
@@ -650,6 +708,7 @@ class _MasterCardHorizontal extends StatelessWidget {
             children: [
               // Header
               Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
                     width: 44.w,
@@ -660,7 +719,7 @@ class _MasterCardHorizontal extends StatelessWidget {
                     ),
                     alignment: Alignment.center,
                     child: Text(
-                      _initials(item.masterNickname.toString()),
+                      _initials(displayName),
                       style: TextStyle(
                         color: AppColors.whiteColor,
                         fontSize: 16.sp,
@@ -674,7 +733,7 @@ class _MasterCardHorizontal extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          item.masterNickname.toString(),
+                          displayName,
                           overflow: TextOverflow.ellipsis,
                           style: AppTextStyles.label.copyWith(
                             fontSize: 14.sp,
@@ -685,11 +744,14 @@ class _MasterCardHorizontal extends StatelessWidget {
                         SizedBox(height: 2.h),
                         Row(
                           children: [
-                            Text(
-                              'Active ${activeDays}D',
-                              style: TextStyle(
-                                fontSize: 11.sp,
-                                color: AppColors.textGrey,
+                            Flexible(
+                              child: Text(
+                                'Active ${activeDays}D',
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 11.sp,
+                                  color: AppColors.textGrey,
+                                ),
                               ),
                             ),
                             SizedBox(width: 6.w),
@@ -701,16 +763,19 @@ class _MasterCardHorizontal extends StatelessWidget {
                               ),
                             ),
                             SizedBox(width: 6.w),
-                            Text(
-                              serverType == 'self_hosted'
-                                  ? 'SELFHOSTED'
-                                  : serverType.toUpperCase(),
-                              style: TextStyle(
-                                fontSize: 10.sp,
-                                fontWeight: FontWeight.w700,
-                                color: serverType == 'self_hosted'
-                                    ? AppColors.primary
-                                    : AppColors.textGrey,
+                            Flexible(
+                              child: Text(
+                                serverType == 'self_hosted'
+                                    ? 'SELFHOSTED'
+                                    : serverType.toUpperCase(),
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 10.sp,
+                                  fontWeight: FontWeight.w700,
+                                  color: serverType == 'self_hosted'
+                                      ? AppColors.primary
+                                      : AppColors.textGrey,
+                                ),
                               ),
                             ),
                           ],
@@ -742,41 +807,55 @@ class _MasterCardHorizontal extends StatelessWidget {
               Divider(height: 1, color: AppColors.border),
               SizedBox(height: 10.h),
               // 2x2 metrics
-              _metricsRow([
-                _metricCell('TOTAL GAIN', gainText, gainColor),
-                _metricCell('MAX DRAWDOWN', '-$drawdownText', AppColors.error),
-              ]),
+              Row(
+                children: [
+                  Expanded(
+                    child: _metricCell('TOTAL GAIN', gainText, gainColor),
+                  ),
+                  SizedBox(width: 10.w),
+                  Expanded(
+                    child: _metricCell(
+                      'MAX DRAWDOWN',
+                      drawdownText,
+                      AppColors.error,
+                    ),
+                  ),
+                ],
+              ),
               SizedBox(height: 6.h),
-              _metricsRow([
-                _metricCell('TOTAL P&L', pnlText, pnlColor),
-                _metricCell(
-                  'MIN INVESTMENT',
-                  minInvestText,
-                  AppColors.textPrimary,
-                ),
-              ]),
+              Row(
+                children: [
+                  Expanded(
+                    child: _metricCell('TOTAL P&L', pnlText, pnlColor),
+                  ),
+                  SizedBox(width: 10.w),
+                  Expanded(
+                    child: _metricCell(
+                      'MIN INVESTMENT',
+                      minInvestText,
+                      AppColors.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
               SizedBox(height: 10.h),
               Divider(height: 1, color: AppColors.border),
               SizedBox(height: 8.h),
               // Footer
               Row(
                 children: [
-                  Text(
-                    'Fee: ',
-                    style: TextStyle(
-                      fontSize: 11.sp,
-                      color: AppColors.textGrey,
+                  Flexible(
+                    child: Text(
+                      'Fee: $commissionPct',
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 11.sp,
+                        color: AppColors.textGrey,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
-                  Text(
-                    '${(item.commissionPercentage as num).toStringAsFixed(0)}%',
-                    style: TextStyle(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 11.sp,
-                    ),
-                  ),
-                  const Spacer(),
+                  SizedBox(width: 8.w),
                   Icon(
                     Icons.people_outline,
                     size: 14.r,
@@ -792,28 +871,25 @@ class _MasterCardHorizontal extends StatelessWidget {
                     ),
                   ),
                   SizedBox(width: 12.w),
-                  SizedBox(
-                    height: 32.h,
-                    child: ElevatedButton(
-                      onPressed: hasPlan ? onCopy : null,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        disabledBackgroundColor: AppColors.textGrey.withValues(
-                          alpha: 0.20,
-                        ),
-                        foregroundColor: AppColors.whiteColor,
-                        elevation: 0,
-                        padding: EdgeInsets.symmetric(horizontal: 18.w),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8.r),
-                        ),
+                  ElevatedButton(
+                    onPressed: hasPlan ? onCopy : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      disabledBackgroundColor: AppColors.textGrey
+                          .withValues(alpha: 0.20),
+                      foregroundColor: AppColors.whiteColor,
+                      elevation: 0,
+                      padding: EdgeInsets.symmetric(horizontal: 18.w),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8.r),
                       ),
-                      child: Text(
-                        hasPlan ? 'Copy' : 'No Plan',
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.w700,
-                        ),
+                      minimumSize: Size(0, 32.h),
+                    ),
+                    child: Text(
+                      hasPlan ? 'Copy' : 'No Plan',
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
@@ -823,16 +899,6 @@ class _MasterCardHorizontal extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _metricsRow(List<Widget> cells) {
-    return Row(
-      children: [
-        Expanded(child: cells[0]),
-        SizedBox(width: 10.w),
-        Expanded(child: cells[1]),
-      ],
     );
   }
 
@@ -846,25 +912,36 @@ class _MasterCardHorizontal extends StatelessWidget {
             fontSize: 9.sp,
             color: AppColors.textGrey,
             fontWeight: FontWeight.w600,
-            letterSpacing: 0.2,
           ),
         ),
         SizedBox(height: 2.h),
-        FittedBox(
-          fit: BoxFit.scaleDown,
-          alignment: Alignment.centerLeft,
-          child: Text(
-            value,
-            style: TextStyle(
-              fontSize: 13.sp,
-              fontWeight: FontWeight.w700,
-              color: valueColor,
-            ),
+        Text(
+          value,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontSize: 13.sp,
+            color: valueColor,
+            fontWeight: FontWeight.w700,
           ),
         ),
       ],
     );
   }
+}
+
+// ─────────────────────────── helpers ───────────────────────────
+
+/// Best-effort label for the commission on a master list item. The list
+/// model doesn't expose `commissionPercentage` (only available on the
+/// plan-detail endpoint) so we fall back to '—' until the field is added.
+String _safeCommission(dynamic item) {
+  try {
+    final dynamic raw = item.commissionPercentage;
+    if (raw is num) return '${raw.toStringAsFixed(0)}%';
+  } catch (_) {
+    // Field not present on this build of the model — fall through.
+  }
+  return '—';
 }
 
 Color _riskColor(int risk) {
@@ -875,10 +952,8 @@ Color _riskColor(int risk) {
 
 String _initials(String name) {
   final parts = name.trim().split(RegExp(r'\s+'));
-  if (parts.isEmpty) return '?';
-  if (parts.length == 1) {
-    return parts.first.isEmpty ? '?' : parts.first[0].toUpperCase();
-  }
+  if (parts.isEmpty || parts.first.isEmpty) return '?';
+  if (parts.length == 1) return parts.first[0].toUpperCase();
   return (parts.first[0] + parts.last[0]).toUpperCase();
 }
 
@@ -901,32 +976,45 @@ String _formatPnl(num n) {
   final abs = n.abs();
   String body;
   if (abs >= 1000) {
-    body = '${(n.abs() / 1000).toStringAsFixed(2)}K';
+    body = '${(abs / 1000).toStringAsFixed(2)}K';
   } else {
-    body = n.abs().toStringAsFixed(2);
+    body = abs.toStringAsFixed(2);
   }
   return '${n < 0 ? '-' : (n > 0 ? '+' : '')}\$$body';
 }
 
-// ─────────────────────────── loading / empty / error states ───────────────────────────
+// ─────────────────────────── empty / error / loading states ───────────────────────────
 
 class _LoadingList extends StatelessWidget {
   const _LoadingList();
 
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-      padding: EdgeInsets.fromLTRB(14.w, 12.h, 14.w, 24.h),
-      itemCount: 4,
-      itemBuilder: (_, __) => Container(
-        height: 200.h,
-        margin: EdgeInsets.only(bottom: 12.h),
-        decoration: BoxDecoration(
-          color: AppColors.whiteColor,
-          borderRadius: BorderRadius.circular(14.r),
-          border: Border.all(color: AppColors.border),
+    return Stack(
+      children: [
+        ListView.builder(
+          padding: EdgeInsets.fromLTRB(14.w, 12.h, 14.w, 100.h),
+          itemCount: 4,
+          itemBuilder: (_, __) => Container(
+            height: 200.h,
+            margin: EdgeInsets.only(bottom: 12.h),
+            decoration: BoxDecoration(
+              color: AppColors.whiteColor,
+              borderRadius: BorderRadius.circular(14.r),
+              border: Border.all(color: AppColors.border),
+            ),
+          ),
         ),
-      ),
+        const Positioned(
+          top: 12,
+          right: 16,
+          child: SizedBox(
+            width: 18,
+            height: 18,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -937,31 +1025,27 @@ class _NoSearchMatchesState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: EdgeInsets.all(16.r),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.search_off, size: 40.r, color: AppColors.textGrey),
-            SizedBox(height: 10.h),
-            Text(
-              query.isEmpty
-                  ? 'No masters in this view'
-                  : 'No Masters Match "$query"',
-              textAlign: TextAlign.center,
-              style: AppTextStyles.subheading.copyWith(
-                color: AppColors.textGrey,
-              ),
-            ),
-            SizedBox(height: 6.h),
-            Text(
-              'Try a different filter or clear the search.',
-              textAlign: TextAlign.center,
-              style: AppTextStyles.caption.copyWith(color: AppColors.textGrey),
-            ),
-          ],
-        ),
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 32.h),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.search_off, size: 40.r, color: AppColors.textGrey),
+          SizedBox(height: 10.h),
+          Text(
+            query.isEmpty
+                ? 'No masters in this view'
+                : 'No Masters Match "$query"',
+            textAlign: TextAlign.center,
+            style: AppTextStyles.subheading.copyWith(color: AppColors.textGrey),
+          ),
+          SizedBox(height: 6.h),
+          Text(
+            'Try a different filter or clear the search.',
+            textAlign: TextAlign.center,
+            style: AppTextStyles.caption.copyWith(color: AppColors.textGrey),
+          ),
+        ],
       ),
     );
   }

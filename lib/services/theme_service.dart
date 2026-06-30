@@ -26,6 +26,13 @@ class ThemeService extends GetxService with WidgetsBindingObserver {
     }
   }
 
+  // Observable mirror of [isDarkMode] — used by widgets inside Obx to
+  // rebuild when the theme flips (the underlying [currentMode] is an Rx,
+  // but [platformBrightness] changes are not observable through GetX
+  // directly, so we recompute and update this whenever either source
+  // changes).
+  final RxBool isDarkModeObs = false.obs;
+
   // Convenience getter — true when dark mode is effectively active
   // (dark mode selected OR system mode with dark system preference)
   bool get isDarkMode {
@@ -37,26 +44,32 @@ class ThemeService extends GetxService with WidgetsBindingObserver {
     return false;
   }
 
+  void _refreshDarkMode() {
+    isDarkModeObs.value = isDarkMode;
+  }
+
   late final Future<void> _initialization;
 
   @override
   void onInit() {
     super.onInit();
     WidgetsBinding.instance.addObserver(this);
+    // Recompute whenever the user-selected mode changes.
+    ever(currentMode, (_) => _refreshDarkMode());
+    _refreshDarkMode();
     _initialization = _initialize();
+  }
+
+  @override
+  void didChangePlatformBrightness() {
+    _refreshDarkMode();
+    super.didChangePlatformBrightness();
   }
 
   @override
   void onClose() {
     WidgetsBinding.instance.removeObserver(this);
     super.onClose();
-  }
-
-  @override
-  void didChangePlatformBrightness() {
-    if (currentMode.value == ThemeServiceMode.system) {
-      Get.forceAppUpdate();
-    }
   }
 
   Future<void> _initialize() async {

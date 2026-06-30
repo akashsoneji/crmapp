@@ -1,5 +1,7 @@
 import 'package:crm_app/constants/api_const.dart';
 import 'package:crm_app/services/api_service.dart';
+import 'package:crm_app/utils/app_logger.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
 class CopyTradingMasterListItem {
@@ -120,7 +122,16 @@ class CopyTradingMastersController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    loadMasters(showLoading: true);
+    if (kDebugMode) {
+      AppLogger.api(
+        '[CopyTradingMasters] onInit() — scheduling loadMasters()',
+      );
+    }
+    // Defer to the next microtask so the controller is fully wired and
+    // the screen has had a chance to register its Obx listeners before
+    // the first assignAll() runs (avoids any race on the very first
+    // build).
+    Future.microtask(() => loadMasters(showLoading: true));
   }
 
   Future<void> loadMasters({bool showLoading = false}) async {
@@ -130,24 +141,81 @@ class CopyTradingMastersController extends GetxController {
       final qp = <String, dynamic>{};
       if (sort.value.trim().isNotEmpty) qp['sort'] = sort.value.trim();
 
-      final res = await ApiService.get(endpoint: ApiConstants.copyTradingMasters, queryParameters: qp);
+      if (kDebugMode) {
+        AppLogger.api(
+          '[CopyTradingMasters] GET ${ApiConstants.copyTradingMasters} '
+          'qp=$qp',
+        );
+      }
+
+      final res = await ApiService.get(
+        endpoint: ApiConstants.copyTradingMasters,
+        queryParameters: qp,
+      );
+      if (kDebugMode) {
+        AppLogger.api(
+          '[CopyTradingMasters] ← success=${res.success} '
+          'hasData=${res.data != null} '
+          'message=${res.message}',
+        );
+      }
       if (!res.success || res.data == null) {
         masters.clear();
         errorMessage.value = res.message ?? 'Failed to load masters';
         return;
       }
 
-      final data = res.data?['data'];
-      if (data is! List) {
+      // The backend may return either:
+      //   1) { data: [ ... ] }      ← standard wrapped payload
+      //   2) [ ... ]                ← raw array
+      //   3) { data: { masters: [ ... ] } }   ← nested wrapper
+      // Try each shape in order.
+      dynamic body = res.data?['data'];
+      List<dynamic> raw = const [];
+      if (body is List) {
+        raw = body;
+      } else if (body is Map &&
+          body['masters'] is List) {
+        raw = body['masters'] as List;
+      } else if (body is Map &&
+          body['items'] is List) {
+        raw = body['items'] as List;
+      } else if (res.data is List) {
+        raw = res.data as List;
+      } else {
+        if (kDebugMode) {
+          AppLogger.error(
+            '[CopyTradingMasters] unexpected response shape; '
+            'res.data keys=${res.data is Map ? (res.data as Map).keys.toList() : 'not-a-map'}',
+          );
+        }
         masters.clear();
         errorMessage.value = 'Invalid response';
         return;
       }
 
-      masters.assignAll(
-        data.whereType<Map>().map((e) => CopyTradingMasterListItem.fromJson(e.cast<String, dynamic>())),
-      );
-    } catch (e) {
+      final parsed = raw
+          .whereType<Map>()
+          .map(
+            (e) => CopyTradingMasterListItem.fromJson(
+              e.cast<String, dynamic>(),
+            ),
+          )
+          .toList();
+      masters.assignAll(parsed);
+      if (kDebugMode) {
+        AppLogger.api(
+          '[CopyTradingMasters] ← loaded ${parsed.length} master(s)',
+        );
+      }
+    } catch (e, st) {
+      if (kDebugMode) {
+        AppLogger.error(
+          '[CopyTradingMasters] loadMasters threw: $e',
+          error: e,
+          stackTrace: st,
+        );
+      }
       masters.clear();
       errorMessage.value = 'Load error: $e';
     } finally {
