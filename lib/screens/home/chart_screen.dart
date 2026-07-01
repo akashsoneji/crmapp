@@ -1582,7 +1582,9 @@ Placing Order:
         MediaQuery.of(context).padding.bottom; // Safe area
 
     return Scaffold(
-      resizeToAvoidBottomInset: false,
+      // Resize so the on-screen keyboard (e.g. TradingView text/annotation
+      // input inside the WebView) does not cover the chart on iOS.
+      resizeToAvoidBottomInset: true,
       backgroundColor: AppColors.tradeBackgroundCenterColor,
       body: SafeArea(
         child: Stack(
