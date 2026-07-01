@@ -196,7 +196,10 @@ class _SearchInstrumentsScreenState extends State<SearchInstrumentsScreen> {
           child: Row(
             children: [
               AppSvgBackButton(
-                onPressed: () => Get.back(closeOverlays: true),
+                onPressed: () {
+                  FocusManager.instance.primaryFocus?.unfocus();
+                  Get.back(closeOverlays: true);
+                },
                 iconWidth: 30.w,
                 iconHeight: 30.h,
               ),
@@ -380,6 +383,7 @@ class _SearchInstrumentsScreenState extends State<SearchInstrumentsScreen> {
   // ─── Navigation ──────────────────────────────────────────────────────────
 
   void _navigateToChartWithSymbol(String symbol) {
+    FocusManager.instance.primaryFocus?.unfocus();
     _symbolSelectionService.setSymbol(symbol);
     ChartScreen.setSelectedSymbol(symbol);
     if (widget.onNavigateToChart != null) {
@@ -490,6 +494,7 @@ class _SearchInstrumentsScreenState extends State<SearchInstrumentsScreen> {
 
   @override
   void dispose() {
+    FocusManager.instance.primaryFocus?.unfocus();
     _searchController.removeListener(_onSearchTextChanged);
     _searchController.dispose();
     super.dispose();
