@@ -7,7 +7,14 @@ import 'package:crm_app/screens/home/more/bonus/bonus_screen.dart';
 import 'package:crm_app/screens/home/more/copytrading/copy_trading_hub_screen.dart';
 import 'package:crm_app/screens/copy_trading/copy_trading_main_screen.dart';
 import 'package:crm_app/screens/copy_trading/trader_details_screen.dart';
+import 'package:crm_app/bindings/demo_contest_binding.dart';
+import 'package:crm_app/screens/home/more/demo_contest/contest_details_screen.dart';
+import 'package:crm_app/screens/home/more/demo_contest/contest_rules_screen.dart';
 import 'package:crm_app/screens/home/more/demo_contest/demo_contest_screen.dart';
+import 'package:crm_app/screens/home/more/demo_contest/join_contest_screen.dart';
+import 'package:crm_app/screens/home/more/demo_contest/leaderboard_screen.dart';
+import 'package:crm_app/screens/home/more/demo_contest/my_contest_history_screen.dart';
+import 'package:crm_app/screens/home/more/demo_contest/winners_screen.dart';
 import 'package:crm_app/screens/home/more/finance/finance_screen.dart';
 import 'package:crm_app/screens/home/more/finance/payment_methods_screen.dart';
 import 'package:crm_app/screens/home/more/ib_dashboard/ib_dashboard_screen.dart';
@@ -132,6 +139,12 @@ class AppPages {
   static const TRADER_DETAILS = _Paths.TRADER_DETAILS;
   static const BONUS = _Paths.BONUS;
   static const DEMO_CONTEST = _Paths.DEMO_CONTEST;
+  static const DEMO_CONTEST_RULES = _Paths.DEMO_CONTEST_RULES;
+  static const DEMO_CONTEST_JOIN = _Paths.DEMO_CONTEST_JOIN;
+  static const DEMO_CONTEST_DETAILS = _Paths.DEMO_CONTEST_DETAILS;
+  static const DEMO_CONTEST_LEADERBOARD = _Paths.DEMO_CONTEST_LEADERBOARD;
+  static const DEMO_CONTEST_HISTORY = _Paths.DEMO_CONTEST_HISTORY;
+  static const DEMO_CONTEST_WINNERS = _Paths.DEMO_CONTEST_WINNERS;
   static const SETTING = _Paths.SETTING;
   static const SUPPORT = _Paths.SUPPORT;
   static const TICKET_LIST = _Paths.TICKET_LIST;
@@ -333,6 +346,45 @@ class AppPages {
     ),
     GetPage(name: _Paths.BONUS, page: () => const BonusScreen()),
     GetPage(name: _Paths.DEMO_CONTEST, page: () => const DemoContestScreen()),
+    GetPage(
+      name: _Paths.DEMO_CONTEST_RULES,
+      page: () => const ContestRulesScreen(),
+      binding: DemoContestBinding(),
+    ),
+    GetPage(
+      name: _Paths.DEMO_CONTEST_JOIN,
+      page: () => const JoinContestScreen(),
+      binding: DemoContestBinding(),
+    ),
+    GetPage(
+      name: _Paths.DEMO_CONTEST_DETAILS,
+      page: () {
+        final id = (Get.arguments as String?) ?? '';
+        return ContestDetailsScreen(contestId: id);
+      },
+      binding: DemoContestBinding(),
+    ),
+    GetPage(
+      name: _Paths.DEMO_CONTEST_LEADERBOARD,
+      page: () {
+        final id = Get.arguments as String?;
+        return LeaderboardScreen(contestIdArg: id);
+      },
+      binding: DemoContestBinding(),
+    ),
+    GetPage(
+      name: _Paths.DEMO_CONTEST_HISTORY,
+      page: () => const MyContestHistoryScreen(),
+      binding: DemoContestBinding(),
+    ),
+    GetPage(
+      name: _Paths.DEMO_CONTEST_WINNERS,
+      page: () {
+        final id = Get.arguments as String?;
+        return WinnersScreen(contestIdArg: id);
+      },
+      binding: DemoContestBinding(),
+    ),
     GetPage(name: _Paths.SETTING, page: () => const SettingScreen()),
     GetPage(name: _Paths.SUPPORT, page: () => const SupportScreen()),
     GetPage(
