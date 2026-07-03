@@ -198,9 +198,10 @@ class _ContestDetailsScreenState extends State<ContestDetailsScreen> {
                               }
                             : () => _handleJoin(controller, contest),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: joined
-                              ? AppColors.success
-                              : AppColors.primary,
+                          backgroundColor:  AppColors.primary,
+                          // backgroundColor: joined
+                          //     ? AppColors.success
+                          //     : AppColors.primary,
                           foregroundColor: AppColors.whiteColor,
                           disabledBackgroundColor: AppColors.icongrey
                               .withValues(alpha: 0.3),

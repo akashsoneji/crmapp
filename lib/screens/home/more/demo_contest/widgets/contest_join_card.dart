@@ -200,8 +200,8 @@ class ContestJoinCard extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: onTap,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        joined ? AppColors.success : AppColors.primary,
+                    backgroundColor: AppColors.primary,
+                    // backgroundColor: joined ? AppColors.success : AppColors.primary,
                     foregroundColor: AppColors.whiteColor,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
