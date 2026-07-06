@@ -836,6 +836,11 @@ class AuthController extends GetxController {
               .toString();
       final profileKey = '$email|$brokerSlug';
 
+      print(
+        'AuthController: Persisting Tenax profile → email=$email, '
+        'brokerSlug=$brokerSlug, key=$profileKey',
+      );
+
       final profile = <String, dynamic>{
         'profile_key': profileKey,
         'user_email': user.email,

@@ -96,6 +96,13 @@ class _SplashScreenState extends State<SplashScreen> {
         await Future.delayed(const Duration(milliseconds: 100));
 
         if (authController.isAuthenticated) {
+          // ✅ Step 6: Log the active Tenax profile_key for debugging the
+          // multi-user (email+slug) identity layer.
+          try {
+            final activeKey =
+                await SecureStorageService.getTenaxCurrentProfileKey();
+            print('SplashScreen: Active Tenax profile_key = $activeKey');
+          } catch (_) {}
           print('SplashScreen: User authenticated → Trading screen');
           // ✅ Fetch MT5 accounts in background immediately at app launch.
           // Don't await — let navigation proceed instantly while data loads.

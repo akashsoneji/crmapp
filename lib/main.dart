@@ -16,6 +16,7 @@ import 'package:crm_app/services/price_alert_service.dart';
 import 'package:crm_app/services/loading_service.dart';
 import 'package:crm_app/services/notification_service.dart';
 import 'package:crm_app/services/secure_storage_service.dart';
+import 'package:crm_app/middleware/auth_route_guard.dart';
 import 'constants/color.dart';
 
 import 'flavor_config.dart';
@@ -73,6 +74,12 @@ void main() async {
   FlavorConfig.reset();
 
   WidgetsFlutterBinding.ensureInitialized();
+
+  // ✅ Step 8 (tenax-same-broker-multi-user): Verify saved Tenax profiles
+  // have consistent identity keys (email + broker_slug) before app start.
+  // This is a safety net for legacy data that may have been saved before the
+  // identity-key fix landed. Runs once on app start; never blocks startup.
+  unawaited(SecureStorageService.assertIdentityConsistency());
 
   // Configure audio players to respect system silent/mute settings
   try {
@@ -455,6 +462,22 @@ class MyGetXApp extends StatelessWidget {
                   // initialRoute: AppPages.GET_STARTED,
                   getPages: AppPages.routes,
                   navigatorObservers: [KeyboardUnfocusNavigatorObserver()],
+                  // ✅ Step 10c (tenax-same-broker-multi-user): Global
+                  // auth-only route guard. If a logged-in user lands on an
+                  // auth-only route, bounce them to TRADING on the next
+                  // microtask. Layered with per-screen initState guards.
+                  routingCallback: (routing) {
+                    final newRoute = routing?.current;
+                    if (newRoute == null) return;
+                    // Defer redirect to the next event-loop tick so we don't
+                    // disrupt the current route build cycle.
+                    Future.microtask(() async {
+                      final redirect = await authOnlyRouteRedirect(newRoute);
+                      if (redirect != null && redirect != newRoute) {
+                        Get.offAllNamed(redirect);
+                      }
+                    });
+                  },
                   home: const AuthCheckScreen(),
                 ),
               ),

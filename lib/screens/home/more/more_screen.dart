@@ -276,7 +276,7 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                   ),
                 )
               else
-                ..._tenaxProfiles.map(_buildAccountTile),
+                ..._buildBrokerGroups(),
               SizedBox(height: 12.h),
               SafeArea(
                 child: SizedBox(
@@ -354,15 +354,6 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                       fontWeight: FontWeight.w400,
                     ),
                   ),
-                  SizedBox(height: 1.h),
-                  Text(
-                    'Broker: ${(profile['broker_name'] ?? '').toString()}',
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      color: AppColors.textGrey.withValues(alpha: 0.9),
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -381,6 +372,177 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
         ),
       ),
     );
+  }
+
+  // ── BROKER-GROUPED LIST ───────────────────────────────────────────────────
+  // Group the flat list of saved profiles by `broker_slug` so the same broker
+  // with multiple users appears as a single broker header followed by a row
+  // per user (avatar + name + email). This is the UI for Step 4 of the
+  // tenax-same-broker-multi-user plan.
+
+  List<Widget> _buildBrokerGroups() {
+    final groups = <String, List<Map<String, dynamic>>>{};
+    for (final p in _tenaxProfiles) {
+      final slug =
+          (p['broker_slug'] ??
+                  p['broker_data']?['selected_slug'] ??
+                  p['broker_data']?['slug'] ??
+                  '')
+              .toString();
+      groups.putIfAbsent(slug, () => <Map<String, dynamic>>[]).add(p);
+    }
+    final widgets = <Widget>[];
+    final orderedKeys = groups.keys.toList();
+    // Put the active broker's group first, then any others in stable order.
+    orderedKeys.sort((a, b) {
+      if (a == _currentBrokerSlug()) return -1;
+      if (b == _currentBrokerSlug()) return 1;
+      return a.compareTo(b);
+    });
+    for (final slug in orderedKeys) {
+      widgets.add(_buildBrokerGroupHeader(slug, groups[slug]!.length));
+      for (final profile in groups[slug]!) {
+        widgets.add(_buildAccountTile(profile));
+      }
+      // Per-group "Log in with another account" affordance — only for the
+      // currently active broker (since that's the broker we can re-select
+      // without disrupting the user's session).
+      if (slug == _currentBrokerSlug()) {
+        widgets.add(_buildAddAnotherAccountTile());
+      }
+      widgets.add(SizedBox(height: 8.h));
+    }
+    return widgets;
+  }
+
+  Widget _buildBrokerGroupHeader(String brokerSlug, int userCount) {
+    final displayName = _tenaxProfiles
+        .firstWhere(
+          (p) =>
+              (p['broker_slug'] ?? p['broker_data']?['selected_slug'] ?? '')
+                  .toString() ==
+              brokerSlug,
+          orElse: () => <String, dynamic>{'broker_name': brokerSlug},
+        )['broker_name']
+        ?.toString() ??
+        brokerSlug;
+    return Container(
+      padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 4.w),
+      child: Row(
+        children: [
+          Icon(Icons.business, size: 16.sp, color: AppColors.primary),
+          SizedBox(width: 8.w),
+          Expanded(
+            child: Text(
+              displayName,
+              style: TextStyle(
+                fontSize: 13.sp,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ),
+          if (userCount > 1)
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10.r),
+              ),
+              child: Text(
+                '$userCount accounts',
+                style: TextStyle(
+                  fontSize: 11.sp,
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAddAnotherAccountTile() {
+    return InkWell(
+      onTap: () async {
+        Navigator.pop(context);
+        await Future.delayed(const Duration(milliseconds: 120));
+        await _addAnotherAccountOnCurrentBroker();
+      },
+      child: Container(
+        margin: EdgeInsets.only(left: 36.w, top: 4.h, bottom: 8.h),
+        padding: EdgeInsets.symmetric(vertical: 10.h, horizontal: 12.w),
+        decoration: BoxDecoration(
+          color: AppColors.primary.withValues(alpha: 0.06),
+          borderRadius: BorderRadius.circular(10.r),
+          border: Border.all(
+            color: AppColors.primary.withValues(alpha: 0.3),
+            width: 1.w,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.person_add_alt_1, size: 18.sp, color: AppColors.primary),
+            SizedBox(width: 10.w),
+            Expanded(
+              child: Text(
+                'Log in with another account',
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primary,
+                ),
+              ),
+            ),
+            Icon(Icons.arrow_forward_ios, size: 14.sp, color: AppColors.primary),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String? _currentBrokerSlug() {
+    if (_tenaxProfiles.isEmpty) return null;
+    final current = _currentTenaxProfileKey;
+    if (current == null) return null;
+    final match = _tenaxProfiles.firstWhereOrNull(
+      (p) => (p['profile_key'] ?? '').toString() == current,
+    );
+    if (match == null) return null;
+    return (match['broker_slug'] ??
+            match['broker_data']?['selected_slug'] ??
+            match['broker_data']?['slug'] ??
+            '')
+        .toString();
+  }
+
+  /// Flow: clear active auth session, KEEP broker selection + saved profiles,
+  /// route to LOGIN/GET_STARTED with {preserveBroker: true, forceAuth: true}.
+  /// After successful login, `_persistTenaxUserBrokerProfile` will create the
+  /// new `(newEmail, brokerSlug)` profile under the same broker group.
+  Future<void> _addAnotherAccountOnCurrentBroker() async {
+    if (!await _isTenaxBrokerFeatureEnabled()) return;
+    try {
+      // Clear only the active auth session — keep broker selection + profiles.
+      await SecureStorageService.clearAuthData();
+      await SecureStorageService.saveLoginStatus(false);
+      print(
+        'MoreScreen: Active session cleared; routing to login to add another '
+        'account on the current broker (preserveBroker=true).',
+      );
+      Get.offAllNamed(
+        FlavorConfig.isTenaxBrokerDemoEnabled
+            ? AppPages.LOGIN
+            : AppPages.GET_STARTED,
+        arguments: {
+          'preserveBroker': true,
+          'forceAuth': true,
+        },
+      );
+    } catch (e) {
+      print('MoreScreen: Error adding another account: $e');
+    }
   }
 
   Future<void> _selectTenaxProfile(Map<String, dynamic> profile) async {
@@ -497,6 +659,8 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                         arguments: {
                           'nextRoute': AppPages.LOGIN,
                           'allowBack': true,
+                          'preserveBroker': true,
+                          'forceAuth': true,
                         },
                       );
                     },

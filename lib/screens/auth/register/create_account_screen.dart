@@ -15,6 +15,7 @@ import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/routes/app_pages.dart';
 import 'package:crm_app/screens/auth/register/legal_documents_screen.dart';
 import 'package:crm_app/services/language_service.dart';
+import 'package:crm_app/middleware/auth_screen_guard.dart';
 import 'package:crm_app/utils/trl_helper.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
@@ -75,6 +76,9 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
     super.initState();
     _addListeners();
     _setDeviceCountry();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      checkAndRedirectIfLoggedIn(screenName: 'CreateAccountScreen');
+    });
   }
 
   @override

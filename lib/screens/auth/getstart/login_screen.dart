@@ -63,12 +63,40 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  // Whether the login screen was entered via the "Log in with another account"
+  // / Switch Account flow (Step 5 of the multi-user plan). When true:
+  //   - A banner is shown at the top of the screen.
+  //   - The auth-session guard in `initState` does NOT bounce the user.
+  //   - The biometric prompt is skipped (no active session to restore).
+  bool _preserveBroker = false;
+  bool _forceAuth = false;
+
   @override
   void initState() {
     super.initState();
+    final args = Get.arguments as Map<String, dynamic>?;
+    _preserveBroker = args?['preserveBroker'] == true;
+    _forceAuth = args?['forceAuth'] == true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _tryBiometricLogin();
+      _checkAndRedirectIfLoggedIn();
+      if (!_forceAuth) {
+        _tryBiometricLogin();
+      }
     });
+  }
+
+  /// Step 10d backstop: if a logged-in user lands on the login screen
+  /// (deep link, race condition, manual `Get.toNamed`), bounce them to
+  /// TRADING — unless `forceAuth == true` (legitimate re-auth flow).
+  Future<void> _checkAndRedirectIfLoggedIn() async {
+    if (_forceAuth) return;
+    final session = await SecureStorageService.getActiveSession();
+    if (!session.loggedIn) return;
+    print(
+      'LoginScreen: Logged-in user (${session.email}) reached login screen — '
+      'bouncing to ${AppPages.TRADING}.',
+    );
+    Get.offAllNamed(AppPages.TRADING);
   }
 
   Future<void> _tryBiometricLogin() async {
@@ -195,6 +223,38 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  Widget _buildPreservingBrokerBanner(BuildContext context) {
+    final brokerName = FlavorConfig.instance.appName;
+    return Container(
+      margin: EdgeInsets.only(bottom: 16.h),
+      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(10.r),
+        border: Border.all(
+          color: AppColors.primary.withValues(alpha: 0.3),
+          width: 1.w,
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.info_outline, size: 18.sp, color: AppColors.primary),
+          SizedBox(width: 10.w),
+          Expanded(
+            child: Text(
+              'Logging in to $brokerName — different account',
+              style: TextStyle(
+                fontSize: 13.sp,
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -222,6 +282,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
                                   SizedBox(height: 16.h),
+                                  if (_preserveBroker)
+                                    _buildPreservingBrokerBanner(context),
                                   Center(
                                     child: BrandLogo(
                                       source: FlavorConfig.effectiveLogo,

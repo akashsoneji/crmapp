@@ -624,4 +624,123 @@ class SecureStorageService {
 
     return normalized;
   }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // IDENTITY-AWARE PROFILE LOOKUPS (Tenax multi-broker multi-user)
+  //
+  // The canonical profile identity is `profile_key = '<lowercased_email>|<broker_slug>'`.
+  // All match logic in the broker selection / switch-account flow MUST use
+  // these helpers — never match by `broker_slug` alone, otherwise users on the
+  // same broker will silently collide.
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// Returns the profile whose `profile_key` matches '<email>|<broker_slug>'.
+  /// Email is normalized to lowercase+trim to match `_normalizeTenaxProfile`.
+  static Future<Map<String, dynamic>?> findTenaxProfileByIdentity({
+    required String email,
+    required String brokerSlug,
+  }) async {
+    final normalizedEmail = email.trim().toLowerCase();
+    final normalizedSlug = brokerSlug.trim();
+    if (normalizedEmail.isEmpty || normalizedSlug.isEmpty) return null;
+    final key = '$normalizedEmail|$normalizedSlug';
+    final profiles = await getTenaxUserBrokerProfiles();
+    for (final p in profiles) {
+      if ((p['profile_key'] ?? '').toString() == key) return p;
+    }
+    return null;
+  }
+
+  /// Returns ALL saved profiles for a given broker slug (across all users/emails).
+  /// Matches by `profile_key` suffix first, then falls back to legacy slug-only
+  /// fields for any profile that lacks a `profile_key` (pre-fix legacy data).
+  static Future<List<Map<String, dynamic>>> findTenaxProfilesByBrokerSlug(
+    String brokerSlug,
+  ) async {
+    final normalizedSlug = brokerSlug.trim();
+    if (normalizedSlug.isEmpty) return const <Map<String, dynamic>>[];
+    final profiles = await getTenaxUserBrokerProfiles();
+    return profiles.where((p) {
+      final key = (p['profile_key'] ?? '').toString();
+      if (key.isNotEmpty && key.endsWith('|$normalizedSlug')) return true;
+      // Fallback for legacy profile without profile_key:
+      final topSlug =
+          (p['broker_slug'] ?? p['selected_slug'] ?? p['slug'] ?? '')
+              .toString();
+      if (topSlug == normalizedSlug) return true;
+      final brokerData =
+          p['broker_data'] is Map<String, dynamic>
+              ? p['broker_data'] as Map<String, dynamic>
+              : null;
+      final nestedSlug =
+          (brokerData?['selected_slug'] ??
+                  brokerData?['slug'] ??
+                  brokerData?['broker_list_item']?['slug'] ??
+                  '')
+              .toString();
+      return nestedSlug == normalizedSlug;
+    }).toList();
+  }
+
+  /// Returns the active profile based on the current session's email +
+  /// selected broker slug. Returns null if there is no active session or no
+  /// matching saved profile.
+  static Future<Map<String, dynamic>?>
+  findTenaxProfileForActiveSession() async {
+    final token = await getAuthToken();
+    if (token == null || token.isEmpty) return null;
+    final user = await getUserData();
+    if (user == null) return null;
+    final broker = await getTenaxBrokerSelection();
+    if (broker == null) return null;
+    final brokerSlug =
+        (broker['selected_slug'] ?? broker['slug'] ?? '').toString();
+    return findTenaxProfileByIdentity(
+      email: user.email,
+      brokerSlug: brokerSlug,
+    );
+  }
+
+  /// Returns the canonical "is someone currently logged in?" check used by the
+  /// auth-route guard. Returns a record so callers can also read the active
+  /// user's email without an extra round-trip to storage.
+  static Future<({bool loggedIn, String? email})> getActiveSession() async {
+    final token = await getAuthToken();
+    final status = await getLoginStatus();
+    final user = await getUserData();
+    final loggedIn =
+        token != null && token.isNotEmpty && status && user != null;
+    return (loggedIn: loggedIn, email: user?.email);
+  }
+
+  /// Logs a warning if any saved profile is missing `profile_key` or if
+  /// duplicate `(email, slug)` pairs exist. Safety net for legacy data that
+  /// was saved before the identity-key fix.
+  static Future<void> assertIdentityConsistency() async {
+    try {
+      final profiles = await getTenaxUserBrokerProfiles();
+      final seenKeys = <String>{};
+      for (final p in profiles) {
+        final key = (p['profile_key'] ?? '').toString();
+        if (key.isEmpty) {
+          print(
+            'SecureStorage: WARNING — profile missing profile_key '
+            '(email=${p['user_email']}, broker=${p['broker_slug']})',
+          );
+          continue;
+        }
+        if (!seenKeys.add(key)) {
+          print(
+            'SecureStorage: WARNING — duplicate profile_key detected: $key',
+          );
+        }
+      }
+      print(
+        'SecureStorage: Identity consistency check passed '
+        '(${profiles.length} profile(s))',
+      );
+    } catch (e) {
+      print('SecureStorage: Identity consistency check error: $e');
+    }
+  }
 }

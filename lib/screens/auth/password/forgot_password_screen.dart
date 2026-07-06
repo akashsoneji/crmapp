@@ -8,6 +8,7 @@ import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/screens/auth/getstart/login_screen.dart';
 import 'package:crm_app/services/language_service.dart';
+import 'package:crm_app/middleware/auth_screen_guard.dart';
 import 'package:crm_app/utils/trl_helper.dart';
 import '../../../controllers/auth_controller.dart';
 import '../../../widgets/common_loading_widget.dart';
@@ -31,6 +32,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     super.initState();
     _emailController.addListener(_validateForm);
     _validateForm();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      checkAndRedirectIfLoggedIn(screenName: 'ForgotPasswordScreen');
+    });
   }
 
   void _validateForm() {

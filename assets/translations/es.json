@@ -205,5 +205,10 @@
   "dc_faq_q2": "¿Puedo unirme a más de un concurso?",
   "dc_faq_a2": "Sí — puedes unirte a varios concursos simultáneamente. Cada uno usa su propia cuenta demo.",
   "dc_faq_q3": "¿Qué pasa si me desconecto durante el concurso?",
-  "dc_faq_a3": "Tus operaciones siguen activas. El concurso usa la G/P al final de la ventana, por lo que desconexiones temporales no te descalifican."
+  "dc_faq_a3": "Tus operaciones siguen activas. El concurso usa la G/P al final de la ventana, por lo que desconexiones temporales no te descalifican.",
+  "tenax_switch_account_broker_group": "Broker",
+  "tenax_switch_account_other_user": "Other account on this broker",
+  "tenax_switch_account_add_another": "Log in with another account",
+  "tenax_switch_account_add_new_broker": "Use a different broker",
+  "tenax_login_preserving_broker_banner": "Logging in to {{brokerName}} — different account"
 }

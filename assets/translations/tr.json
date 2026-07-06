@@ -515,5 +515,10 @@
   "dc_faq_q2": "Birden fazla yarışmaya katılabilir miyim?",
   "dc_faq_a2": "Evet — birden fazla aktif veya yaklaşan yarışmaya aynı anda katılabilirsin. Her birinin kendi demo hesabı vardır.",
   "dc_faq_q3": "İşlem sırasında bağlantım koparsa ne olur?",
-  "dc_faq_a3": "İşlemlerin geçerli kalır. Yarışma pencere sonu K/Z'sini kullanır, bu yüzden pozisyonların süre bitmeden kapanması kaydıyla geçici kopmalar diskalifiye etmez."
+  "dc_faq_a3": "İşlemlerin geçerli kalır. Yarışma pencere sonu K/Z'sini kullanır, bu yüzden pozisyonların süre bitmeden kapanması kaydıyla geçici kopmalar diskalifiye etmez.",
+  "tenax_switch_account_broker_group": "Broker",
+  "tenax_switch_account_other_user": "Other account on this broker",
+  "tenax_switch_account_add_another": "Log in with another account",
+  "tenax_switch_account_add_new_broker": "Use a different broker",
+  "tenax_login_preserving_broker_banner": "Logging in to {{brokerName}} — different account"
 }

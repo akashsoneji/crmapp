@@ -1170,5 +1170,10 @@
   "dc_faq_q2": "هل يمكنني الانضمام لأكثر من مسابقة؟",
   "dc_faq_a2": "نعم — يمكنك الانضمام إلى أي مسابقة نشطة أو قادمة في وقت واحد. لكل واحدة حسابها التجريبي الخاص.",
   "dc_faq_q3": "ماذا يحدث إذا انقطعت عن التداول؟",
-  "dc_faq_a3": "تظل صفقاتك سارية. تستخدم المسابقة الربح/الخسارة عند نهاية النافذة، لذا لا تُفقد أهليتك بسبب انقطاعات مؤقتة طالما أُغلقت مراكزك قبل انتهاء المؤقت."
+  "dc_faq_a3": "تظل صفقاتك سارية. تستخدم المسابقة الربح/الخسارة عند نهاية النافذة، لذا لا تُفقد أهليتك بسبب انقطاعات مؤقتة طالما أُغلقت مراكزك قبل انتهاء المؤقت.",
+  "tenax_switch_account_broker_group": "Broker",
+  "tenax_switch_account_other_user": "Other account on this broker",
+  "tenax_switch_account_add_another": "Log in with another account",
+  "tenax_switch_account_add_new_broker": "Use a different broker",
+  "tenax_login_preserving_broker_banner": "Logging in to {{brokerName}} — different account"
 }

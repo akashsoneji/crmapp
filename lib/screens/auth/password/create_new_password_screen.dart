@@ -6,6 +6,7 @@ import 'package:crm_app/utils/trl_helper.dart';
 import '../../../controllers/auth_controller.dart';
 import '../../../widgets/common_loading_widget.dart';
 import '../../../services/language_service.dart';
+import 'package:crm_app/middleware/auth_screen_guard.dart';
 
 class CreateNewPasswordScreen extends StatefulWidget {
   const CreateNewPasswordScreen({super.key});
@@ -33,6 +34,9 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
     final args = Get.arguments as Map<String, dynamic>? ?? {};
     email = args['email'] ?? '';
     otp = args['otp'] ?? '';
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      checkAndRedirectIfLoggedIn(screenName: 'CreateNewPasswordScreen');
+    });
   }
 
   @override

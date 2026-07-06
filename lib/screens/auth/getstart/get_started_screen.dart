@@ -10,13 +10,42 @@ import 'package:crm_app/utils/agreement_launcher.dart';
 import 'package:crm_app/widgets/brand_logo.dart';
 import '../../../routes/app_pages.dart';
 
-class GetStartedScreen extends StatelessWidget {
-  GetStartedScreen({super.key});
+class GetStartedScreen extends StatefulWidget {
+  const GetStartedScreen({super.key});
+
+  @override
+  State<GetStartedScreen> createState() => _GetStartedScreenState();
+}
+
+class _GetStartedScreenState extends State<GetStartedScreen> {
   final LanguageService languageService = Get.find<LanguageService>();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAndRedirectIfLoggedIn();
+    });
+  }
 
   Future<bool> _isTenaxBrokerFlowEnabled() async {
     if (!FlavorConfig.isMultiBrokerEnabled) return false;
     return await SecureStorageService.getTenaxBrokerSelectionFlag();
+  }
+
+  // ✅ Step 10d: backstop for the auth-route guard. If a logged-in user
+  // lands here, bounce to TRADING. `forceAuth` arg allows the legitimate
+  // "Log in with another account" flow to bypass.
+  Future<void> _checkAndRedirectIfLoggedIn() async {
+    final args = Get.arguments as Map<String, dynamic>?;
+    if (args?['forceAuth'] == true) return;
+    final session = await SecureStorageService.getActiveSession();
+    if (!session.loggedIn) return;
+    print(
+      'GetStartedScreen: Logged-in user (${session.email}) reached this screen — '
+      'bouncing to ${AppPages.TRADING}.',
+    );
+    Get.offAllNamed(AppPages.TRADING);
   }
 
   @override

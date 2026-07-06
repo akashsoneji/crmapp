@@ -2,6 +2,7 @@ import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/auth_controller.dart';
 import 'package:crm_app/services/language_service.dart';
+import 'package:crm_app/middleware/auth_screen_guard.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
 import 'package:crm_app/widgets/otp_modal.dart';
 import 'package:flutter/material.dart';
@@ -25,6 +26,9 @@ class _GoogleLoginOtpScreenState extends State<GoogleLoginOtpScreen> {
   void initState() {
     super.initState();
     _email = Get.arguments as String? ?? '';
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      checkAndRedirectIfLoggedIn(screenName: 'GoogleLoginOtpScreen');
+    });
   }
 
   void _showOtpModal() {

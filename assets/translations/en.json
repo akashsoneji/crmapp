@@ -1346,5 +1346,10 @@
   "dc_faq_q2": "Can I join more than one contest?",
   "dc_faq_a2": "Yes — you can join any active or upcoming contest simultaneously. Each uses its own demo account.",
   "dc_faq_q3": "What happens if I disconnect during trading?",
-  "dc_faq_a3": "Your trades remain in effect. The contest uses end-of-window P&L, so temporary disconnects do not disqualify you as long as your positions are closed before the timer ends."
+  "dc_faq_a3": "Your trades remain in effect. The contest uses end-of-window P&L, so temporary disconnects do not disqualify you as long as your positions are closed before the timer ends.",
+  "tenax_switch_account_broker_group": "Broker",
+  "tenax_switch_account_other_user": "Other account on this broker",
+  "tenax_switch_account_add_another": "Log in with another account",
+  "tenax_switch_account_add_new_broker": "Use a different broker",
+  "tenax_login_preserving_broker_banner": "Logging in to {{brokerName}} — different account"
 }

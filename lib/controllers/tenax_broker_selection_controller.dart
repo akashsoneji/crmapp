@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:crm_app/constants/color.dart';
 import 'package:flutter/material.dart';
@@ -108,6 +107,16 @@ class TenaxBrokerSelectionController extends GetxController {
       return;
     }
 
+    // ── Honor `preserveBroker` arg ─────────────────────────────────────────
+    // If the caller passed `preserveBroker: true` (e.g. Switch Account →
+    // "Choose Broker") AND the user already has a profile on this broker,
+    // re-tapping the same broker should NOT clear auth and re-route to login.
+    // The caller is responsible for having cleared the active session before
+    // navigating here, so the only thing we need to do is treat the existing
+    // profile as "keep broker context, route home after login".
+    final args = Get.arguments as Map<String, dynamic>?;
+    final preserveBroker = args?['preserveBroker'] == true;
+
     isSaving.value = true;
     try {
       final decryptedConfig = await _brokerService.fetchBrokerConfigBySlug(
@@ -140,59 +149,41 @@ class TenaxBrokerSelectionController extends GetxController {
         'broker_runtime_config': decryptedConfig,
       };
 
-      // ── PROFILE & SESSION MANAGEMENT ──────────────────────────────────
-      // Check if we have an existing profile for this broker to restore session
-      final profiles = await SecureStorageService.getTenaxUserBrokerProfiles();
-      final existingProfile = profiles.firstWhereOrNull((p) {
-        final topLevelSlug =
-            (p['broker_slug'] ?? p['selected_slug'] ?? p['slug'] ?? '')
-                .toString();
-        if (topLevelSlug == broker.slug) return true;
+      // ── PROFILE & SESSION MANAGEMENT (IDENTITY-AWARE) ────────────────────
+      // Canonical identity = profile_key = '<lowercased_email>|<broker_slug>'.
+      // We resolve the broker tap in one of three ways:
+      //   (A) Active session matches this broker's profile_key → keep session,
+      //       just re-apply runtime config and route home.
+      //   (B) Active session is logged in but a DIFFERENT user has a profile
+      //       for this broker → keep current session, raise a one-time snackbar
+      //       telling the user to use Switch Account. Never silently switch.
+      //   (C) No active session OR no profile for this user on this broker
+      //       → fresh login path.
+      final activeSession = await SecureStorageService.getActiveSession();
+      final activeEmail = activeSession.email;
+      final isLoggedIn = activeSession.loggedIn;
 
-        final brokerData =
-            p['broker_data'] is Map<String, dynamic>
-                ? p['broker_data'] as Map<String, dynamic>
-                : null;
-        final nestedSlug =
-            (brokerData?['selected_slug'] ??
-                    brokerData?['slug'] ??
-                    brokerData?['broker_list_item']?['slug'] ??
-                    '')
-                .toString();
-        return nestedSlug == broker.slug;
-      });
-      if (existingProfile != null) {
-        // Restore session for this broker
-        final loginData = existingProfile['login_data'];
-        if (loginData is Map<String, dynamic>) {
-          final token = (loginData['token'] ?? '').toString();
-          final wsToken = (loginData['websocket_token'] ?? '').toString();
-          final userData = loginData['user'];
-          if (token.isNotEmpty) {
-            await SecureStorageService.saveAuthToken(token);
-            await SecureStorageService.saveWebsocketToken(wsToken);
-            if (userData is Map<String, dynamic>) {
-              await SecureStorageService.saveUserData(
-                jsonEncode({
-                  'token': token,
-                  'websocket_token': wsToken,
-                  'user': userData,
-                  'is_logged_in': true,
-                }),
-              );
-            }
-            await SecureStorageService.saveLoginStatus(true);
-          }
-        }
-        await SecureStorageService.setTenaxCurrentProfileKey(
-          (existingProfile['profile_key'] ?? '').toString(),
-        );
-      } else {
-        // New broker: Clear current session to force fresh login for this broker
-        await SecureStorageService.clearAuthData();
-        await SecureStorageService.saveLoginStatus(false);
+      Map<String, dynamic>? ownProfileForBroker;
+      if (activeEmail != null) {
+        ownProfileForBroker = await SecureStorageService
+            .findTenaxProfileByIdentity(
+              email: activeEmail,
+              brokerSlug: broker.slug,
+            );
       }
 
+      final profilesForThisBroker = await SecureStorageService
+          .findTenaxProfilesByBrokerSlug(broker.slug);
+      final hasOtherUsersOnThisBroker = profilesForThisBroker.any((p) {
+        final key = (p['profile_key'] ?? '').toString();
+        if (key.isEmpty) return false;
+        final myKey =
+            activeEmail == null ? '' : '${activeEmail.trim().toLowerCase()}|${broker.slug}';
+        return key != myKey;
+      });
+
+      // Always save the broker selection + re-apply runtime config first, so
+      // the branding is correct regardless of which branch we end up in.
       await SecureStorageService.saveTenaxBrokerSelection(payload);
       FlavorConfig.applyTenaxBrokerRuntimeConfig(
         config: decryptedConfig,
@@ -200,17 +191,60 @@ class TenaxBrokerSelectionController extends GetxController {
         brokerLogoUrl: localLogoPath ?? logoFromPayload,
         brokerData: payload,
       );
-
-      // Trigger UI refresh
       Get.find<LanguageService>().brandingUpdateIndex.value++;
 
-      if (existingProfile != null) {
+      if (isLoggedIn && ownProfileForBroker != null) {
+        // (A) Same user, same broker — session is already active, just route home.
+        print(
+          'TenaxBrokerSelection: Active session matches profile_key='
+          '${ownProfileForBroker['profile_key']} — keeping current session.',
+        );
+        await SecureStorageService.setTenaxCurrentProfileKey(
+          (ownProfileForBroker['profile_key'] ?? '').toString(),
+        );
+        Get.offAllNamed(AppPages.SPLASH);
+      } else if (isLoggedIn && hasOtherUsersOnThisBroker) {
+        // (B) Different user already saved for this broker — keep current session,
+        // let user switch explicitly via the Switch Account sheet.
+        print(
+          'TenaxBrokerSelection: Active session is ${activeEmail ?? '?'}, but another '
+          'user has a profile on broker=${broker.slug}. Keeping current session.',
+        );
+        if (ownProfileForBroker != null) {
+          await SecureStorageService.setTenaxCurrentProfileKey(
+            (ownProfileForBroker['profile_key'] ?? '').toString(),
+          );
+        }
+        Get.snackbar(
+          'Another account is registered on ${broker.displayName}',
+          'Open "Switch Account" in More to use it.',
+          snackPosition: SnackPosition.BOTTOM,
+        );
         Get.offAllNamed(AppPages.SPLASH);
       } else {
+        // (C) Fresh login path — either no active session, or active session
+        // but no profile for this broker yet (legitimately new).
+        print(
+          'TenaxBrokerSelection: No matching profile for active session on '
+          'broker=${broker.slug} — forcing fresh login.',
+        );
+        // When preserveBroker is true, the caller (Switch Account →
+        // "Log in with another account") has already cleared the active
+        // session and we just need to route to login WITHOUT also clearing
+        // the broker selection / saved profiles. The (C) branch only
+        // clears auth data; broker selection + profiles are untouched.
+        await SecureStorageService.clearAuthData();
+        await SecureStorageService.saveLoginStatus(false);
+        final nextRoute = preserveBroker
+            ? AppPages.LOGIN
+            : (FlavorConfig.isTenaxBrokerDemoEnabled
+                  ? AppPages.LOGIN
+                  : AppPages.GET_STARTED);
         Get.offAllNamed(
-          FlavorConfig.isTenaxBrokerDemoEnabled
-              ? AppPages.LOGIN
-              : AppPages.GET_STARTED,
+          nextRoute,
+          arguments: preserveBroker
+              ? {'preserveBroker': true, 'forceAuth': true}
+              : null,
         );
       }
     } finally {

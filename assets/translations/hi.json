@@ -515,5 +515,10 @@
   "dc_faq_q2": "क्या मैं एक से अधिक प्रतियोगिता में शामिल हो सकता हूँ?",
   "dc_faq_a2": "हाँ — आप एक साथ कई प्रतियोगिताओं में शामिल हो सकते हैं। हर एक का अपना डेमो अकाउंट होता है।",
   "dc_faq_q3": "ट्रेडिंग के दौरान डिस्कनेक्ट होने पर क्या होगा?",
-  "dc_faq_a3": "आपके ट्रेड बने रहते हैं। प्रतियोगिता अंतिम P&L का उपयोग करती है, इसलिए अस्थायी डिस्कनेक्ट आपको अयोग्य नहीं करते।"
+  "dc_faq_a3": "आपके ट्रेड बने रहते हैं। प्रतियोगिता अंतिम P&L का उपयोग करती है, इसलिए अस्थायी डिस्कनेक्ट आपको अयोग्य नहीं करते।",
+  "tenax_switch_account_broker_group": "Broker",
+  "tenax_switch_account_other_user": "Other account on this broker",
+  "tenax_switch_account_add_another": "Log in with another account",
+  "tenax_switch_account_add_new_broker": "Use a different broker",
+  "tenax_login_preserving_broker_banner": "Logging in to {{brokerName}} — different account"
 }
