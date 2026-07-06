@@ -45,8 +45,14 @@ increment_version_code() {
     fi
     
     # Extract version name and build number
-    local VERSION_NAME=$(echo "$CURRENT_VERSION" | cut -d'+' -f1)
-    local BUILD_NUMBER=$(echo "$CURRENT_VERSION" | cut -d'+' -f2)
+    # Only treat '+' as the separator if it actually exists; otherwise the
+    # whole string is the versionName with no versionCode.
+    local VERSION_NAME="$CURRENT_VERSION"
+    local BUILD_NUMBER=""
+    if [[ "$CURRENT_VERSION" == *"+"* ]]; then
+        VERSION_NAME=$(echo "$CURRENT_VERSION" | cut -d'+' -f1)
+        BUILD_NUMBER=$(echo "$CURRENT_VERSION" | cut -d'+' -f2 | tr -d '[:space:]')
+    fi
 
     # Parse semantic version parts
     local MAJOR=0
@@ -58,11 +64,13 @@ increment_version_code() {
     if [ -z "$MINOR" ]; then MINOR=0; fi
     if [ -z "$PATCH" ]; then PATCH=0; fi
 
-    # If no build number exists, start at 1
-    if [ -z "$BUILD_NUMBER" ] || [ "$BUILD_NUMBER" == "$CURRENT_VERSION" ]; then
+    # Build number rule:
+    #   - if no build number exists at all -> start at 1
+    #   - if build number is non-numeric (legacy/corrupt) -> start at 1
+    #   - otherwise -> always increment (never silently reset)
+    if [ -z "$BUILD_NUMBER" ] || ! [[ "$BUILD_NUMBER" =~ ^[0-9]+$ ]]; then
         BUILD_NUMBER=1
     else
-        # Increment build number
         BUILD_NUMBER=$((BUILD_NUMBER + 1))
     fi
 
