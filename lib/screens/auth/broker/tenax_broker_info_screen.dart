@@ -146,7 +146,7 @@ class TenaxBrokerInfoScreen extends StatelessWidget {
             ),
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
+                backgroundColor: AppColors.isDarkMode ? Color(0xFFFFFFFF) : Color(0xFF4A0C54),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14.r),
                 ),
