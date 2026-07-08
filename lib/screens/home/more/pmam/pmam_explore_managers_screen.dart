@@ -560,7 +560,7 @@ class _PmamExploreManagersScreenState extends State<PmamExploreManagersScreen> {
           crossAxisCount: 2,
           crossAxisSpacing: 10.w,
           mainAxisSpacing: 10.h,
-          childAspectRatio: 0.72,
+          childAspectRatio: 0.62,
         ),
         delegate: SliverChildBuilderDelegate(
           (ctx, i) => _ManagerCard(manager: managers[i], compact: true),
@@ -679,7 +679,9 @@ class _ManagerCard extends StatelessWidget {
         ? AppColors.green
         : gain < 0
             ? AppColors.error
-            : AppColors.textGrey;
+            : AppColors.textPrimary;
+
+    final hasInvestment = manager.isEnrolled;
     final risk = _risk;
 
     return Material(
@@ -808,50 +810,82 @@ class _ManagerCard extends StatelessWidget {
                 ],
               ),
 
-              SizedBox(height: 12.h),
-              // Footer row: fee + investors + View button
+              SizedBox(height: 8.h),
+              // Footer row: fee + investors
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'Fee: ',
-                    style: TextStyle(fontSize: 11.sp, color: AppColors.textGrey),
-                  ),
-                  Text(
-                    '${manager.avgCommission.toStringAsFixed(0)}%',
-                    style: TextStyle(
-                      fontSize: 11.sp,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                  SizedBox(width: 10.w),
-                  Icon(Icons.group, size: 12.sp, color: AppColors.textGrey),
-                  SizedBox(width: 4.w),
-                  Text(
-                    '${manager.totalInvestors}',
-                    style: TextStyle(
-                      fontSize: 11.sp,
-                      color: AppColors.textPrimary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const Spacer(),
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      'View',
-                      style: TextStyle(
-                        color: AppColors.whiteColor,
-                        fontSize: 11.sp,
-                        fontWeight: FontWeight.w700,
+                  Row(
+                    children: [
+                      Text(
+                        'Fee: ',
+                        style: TextStyle(fontSize: 11.sp, color: AppColors.textGrey),
                       ),
-                    ),
+                      Text(
+                        '${manager.avgCommission.toStringAsFixed(0)}%',
+                        style: TextStyle(
+                          fontSize: 11.sp,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      Icon(Icons.group, size: 12.sp, color: AppColors.textGrey),
+                      SizedBox(width: 4.w),
+                      Text(
+                        '${manager.totalInvestors}',
+                        style: TextStyle(
+                          fontSize: 11.sp,
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
+              ),
+              SizedBox(height: 8.h),
+              InkWell(
+                onTap: () {
+                  if (hasInvestment) {
+                    Get.toNamed(
+                      Routes.PMAM_MY_INVESTMENT,
+                      arguments: {'managerCode': manager.managerCode},
+                    );
+                  } else {
+                    // Handled by outer card tap for regular view
+                  }
+                },
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.symmetric(vertical: 8.h),
+                  decoration: BoxDecoration(
+                    color: hasInvestment ? const Color(0xFF10B981) : AppColors.primary,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  alignment: Alignment.center,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      if (hasInvestment) ...[
+                        Icon(Icons.pie_chart_rounded, size: 14.sp, color: AppColors.whiteColor),
+                        SizedBox(width: 6.w),
+                      ],
+                      Text(
+                        hasInvestment ? 'My Investment' : 'View Details',
+                        style: TextStyle(
+                          color: AppColors.whiteColor,
+                          fontSize: 11.sp,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),

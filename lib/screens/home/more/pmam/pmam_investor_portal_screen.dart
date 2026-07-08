@@ -18,12 +18,15 @@ class PmamInvestorPortalScreen extends StatefulWidget {
     super.key,
     this.initialTab = 0,
     this.embedded = false,
+    this.managerCode,
   });
 
   /// 0 = Fund Managers, 1 = My Investments.
   final int initialTab;
   /// When true, hides the app bar (caller provides its own).
   final bool embedded;
+  /// If provided, only shows this manager's investments and hides tabs.
+  final String? managerCode;
 
   @override
   State<PmamInvestorPortalScreen> createState() =>
@@ -78,10 +81,17 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
   @override
   void initState() {
     super.initState();
+    int initIdx = widget.initialTab;
+    if (Get.arguments != null && Get.arguments is Map) {
+      final args = Get.arguments as Map;
+      if (args['initialTab'] != null) {
+        initIdx = args['initialTab'] as int;
+      }
+    }
     _tabCtrl = TabController(
       length: 2,
       vsync: this,
-      initialIndex: widget.initialTab.clamp(0, 1),
+      initialIndex: initIdx.clamp(0, 1),
     );
     if (Get.isRegistered<PmamController>()) {
       _ctrl = Get.find<PmamController>();
@@ -116,40 +126,41 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
       appBar: widget.embedded
           ? null
           : AppBar(
-        scrolledUnderElevation: 0,
-        backgroundColor: AppColors.background,
-        elevation: 0,
-       leading: AppSvgBackButton(
-          onPressed: () => Get.back(closeOverlays: true),
-          iconWidth: 30.w,
-          iconHeight: 30.h,
-        ),
-
-        title: Text('Investor Portal', style: AppTextStyles.heading),
-        centerTitle: true,
-        bottom: PreferredSize(
-          preferredSize: Size.fromHeight(46.h),
-          child: Container(
-            color: AppColors.whiteColor,
-            child: TabBar(
-              controller: _tabCtrl,
-              labelColor: AppColors.primary,
-              unselectedLabelColor: AppColors.textGrey,
-              indicatorColor: AppColors.primary,
-              indicatorWeight: 2.5,
-              labelStyle: TextStyle(
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w600,
+              backgroundColor: AppColors.card,
+              elevation: 0,
+              centerTitle: false,
+              leading: AppSvgBackButton(
+                onPressed: () => Get.back(closeOverlays: true),
+                iconWidth: 30.w,
+                iconHeight: 30.h,
               ),
-              unselectedLabelStyle: TextStyle(fontSize: 14.sp),
-              tabs: const [
-                Tab(text: 'Fund Managers'),
-                Tab(text: 'My Investments'),
-              ],
+              title: Text(
+                widget.managerCode != null ? 'My Investment' : 'PAMM Investor',
+                style: TextStyle(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              bottom: widget.managerCode != null 
+                  ? null 
+                  : TabBar(
+                      controller: _tabCtrl,
+                      indicatorColor: AppColors.primary,
+                      indicatorWeight: 3,
+                      labelColor: AppColors.primary,
+                      labelStyle: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w700,
+                      ),
+                      unselectedLabelColor: AppColors.textGrey,
+                      unselectedLabelStyle: TextStyle(fontSize: 14.sp),
+                      tabs: const [
+                        Tab(text: 'Fund Managers'),
+                        Tab(text: 'My Investments'),
+                      ],
+                    ),
             ),
-          ),
-        ),
-      ),
       body: Obx(() {
         if (_ctrl.isLoading.value &&
             _ctrl.enrollments.isEmpty &&
@@ -157,6 +168,9 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
           return Center(
             child: CommonLoadingWidget(size: 40, color: AppColors.primary),
           );
+        }
+        if (widget.managerCode != null) {
+          return _buildMyInvestmentsTab();
         }
         return TabBarView(
           controller: _tabCtrl,
@@ -1260,7 +1274,13 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
   }
 
   Widget _buildMyInvestmentsTab() {
-    final all = _ctrl.enrollments;
+    var all = _ctrl.enrollments.toList();
+    if (widget.managerCode != null) {
+      all = all.where((e) {
+        final code = (e['manager_code'] ?? e['manager']?['manager_code'] ?? e['manager']?['code'] ?? '').toString();
+        return code == widget.managerCode;
+      }).toList();
+    }
     final openAllocations = _ctrl.openAllocations;
     final fundEntries = _ctrl.fundEntries;
 

@@ -66,6 +66,7 @@ abstract class Routes {
 
   // ── PMAM Routes ──
   static const PMAM_MAIN = _Paths.PMAM_MAIN;
+  static const PMAM_MY_INVESTMENT = _Paths.PMAM_MY_INVESTMENT;
   static const PMAM_BECOME_MANAGER = _Paths.PMAM_BECOME_MANAGER;
   static const PMAM_MANAGER_DASHBOARD = _Paths.PMAM_MANAGER_DASHBOARD;
   static const PMAM_MANAGER_PORTAL = _Paths.PMAM_MANAGER_PORTAL;
@@ -164,6 +165,7 @@ abstract class _Paths {
 
   // ── PMAM Paths ──
   static const PMAM_MAIN = '/pmam-main';
+  static const PMAM_MY_INVESTMENT = '/pmam-my-investment';
   static const PMAM_BECOME_MANAGER = '/pmam-become-manager';
   static const PMAM_MANAGER_DASHBOARD = '/pmam-manager-dashboard';
   static const PMAM_MANAGER_PORTAL = '/pmam-manager-portal';
