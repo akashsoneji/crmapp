@@ -77,16 +77,17 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
         final plansRaw = data['plans'];
         _plans = (plansRaw is List)
             ? plansRaw
-                .whereType<Map>()
-                .map((e) => Map<String, dynamic>.from(e))
-                .toList()
+                  .whereType<Map>()
+                  .map((e) => Map<String, dynamic>.from(e))
+                  .toList()
             : <Map<String, dynamic>>[];
         _selectedPlan = _plans.isNotEmpty ? _plans.first : null;
         if (_selectedPlan != null) {
           _loadPlanData(_selectedPlan!);
         }
       }
-    } catch (_) {} finally {
+    } catch (_) {
+    } finally {
       if (mounted) setState(() => _loadingProfile = false);
     }
   }
@@ -143,7 +144,8 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
               .toList();
         }
       }
-    } catch (_) {} finally {
+    } catch (_) {
+    } finally {
       if (mounted) {
         setState(() {
           _loadingOpen = false;
@@ -172,14 +174,14 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
     if (val >= 1000) return '$prefix${(val / 1000).toStringAsFixed(2)}K';
     return '$prefix${val.toStringAsFixed(2)}';
   }
-  
+
   void _showInvestSheet(BuildContext btnCtx) {
     if (_selectedPlan == null) {
       Get.snackbar(
         'Not Available',
         'This manager has no active plans to invest in.',
         backgroundColor: Colors.orange,
-        colorText: Colors.white,
+        colorText: AppColors.onColoredBackground,
       );
       return;
     }
@@ -219,14 +221,17 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
 
           final double commission = _num(sheetPlan!['commission_percentage']);
           final double minInvest = _num(sheetPlan!['minimum_investment']);
-          final String planName = (sheetPlan!['plan_name'] ?? 'Plan').toString();
+          final String planName = (sheetPlan!['plan_name'] ?? 'Plan')
+              .toString();
 
-          final double availBalance = double.tryParse(
+          final double availBalance =
+              double.tryParse(
                 selectedAccount?['available_balance']?.toString() ?? '0',
-              ) ?? 0;
-          final double accBalance = double.tryParse(
-                selectedAccount?['balance']?.toString() ?? '0',
-              ) ?? 0;
+              ) ??
+              0;
+          final double accBalance =
+              double.tryParse(selectedAccount?['balance']?.toString() ?? '0') ??
+              0;
           final String accNo =
               selectedAccount?['meta_account_number']?.toString() ?? '';
           final bool isBalanceEnough = availBalance >= minInvest;
@@ -239,10 +244,8 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
             child: Container(
               width: double.infinity,
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(
-                  top: Radius.circular(20.r),
-                ),
+                color: AppColors.card,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -258,20 +261,23 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                           style: TextStyle(
                             fontSize: 18.sp,
                             fontWeight: FontWeight.w800,
-                            color: const Color(0xFF2D1B36),
+                            color: AppColors.textPrimary,
                           ),
                         ),
                         IconButton(
                           onPressed: () => Navigator.pop(ctx),
-                          icon: Icon(Icons.close,
-                              size: 22.sp, color: const Color(0xFF6B7280)),
+                          icon: Icon(
+                            Icons.close,
+                            size: 22.sp,
+                            color: AppColors.textGrey,
+                          ),
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(),
                         ),
                       ],
                     ),
                   ),
-                  Divider(height: 1, color: const Color(0xFFE5E7EB)),
+                  Divider(height: 1, color: AppColors.border),
 
                   // ── Body ──
                   Padding(
@@ -285,7 +291,7 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                           style: TextStyle(
                             fontSize: 13.sp,
                             fontWeight: FontWeight.w600,
-                            color: const Color(0xFF2D1B36),
+                            color: AppColors.textPrimary,
                           ),
                         ),
                         SizedBox(height: 8.h),
@@ -294,12 +300,12 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                             value: sheetPlan,
                             hint: 'Select a plan',
                             sheetTitle: 'Select Plan',
-                            backgroundColor: Colors.white,
+                            backgroundColor: AppColors.card,
                             valueEquals: (a, b) =>
                                 a['id'].toString() == b['id'].toString(),
                             options: _plans.map((p) {
-                              final pName =
-                                  (p['plan_name'] ?? 'Plan').toString();
+                              final pName = (p['plan_name'] ?? 'Plan')
+                                  .toString();
                               final pComm = _num(p['commission_percentage']);
                               return AppSelectOption<Map<String, dynamic>>(
                                 value: p,
@@ -325,19 +331,22 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                           Container(
                             width: double.infinity,
                             padding: EdgeInsets.symmetric(
-                                horizontal: 14.w, vertical: 13.h),
+                              horizontal: 14.w,
+                              vertical: 13.h,
+                            ),
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(10.r),
-                              border:
-                                  Border.all(color: const Color(0xFFE5E7EB)),
-                              color: Colors.white,
+                              border: Border.all(color: AppColors.border),
+                              color: AppColors.onColoredBackground,
                             ),
                             child: Text(
                               '$planName - ${commission.toStringAsFixed(2)}% Commission',
                               style: TextStyle(
                                 fontSize: 13.sp,
                                 fontWeight: FontWeight.w500,
-                                color: AppColors.textPrimary,
+                                color: AppColors.isDarkMode
+                                    ? AppColors.pureBlack
+                                    : AppColors.textPrimaryLight,
                               ),
                             ),
                           ),
@@ -346,7 +355,7 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                           'Min. Investment: \$${minInvest.toStringAsFixed(2)}',
                           style: TextStyle(
                             fontSize: 11.sp,
-                            color: const Color(0xFF6B7280),
+                            color: AppColors.textGrey,
                           ),
                         ),
                         SizedBox(height: 20.h),
@@ -357,7 +366,7 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                           style: TextStyle(
                             fontSize: 13.sp,
                             fontWeight: FontWeight.w600,
-                            color: const Color(0xFF2D1B36),
+                            color: AppColors.textPrimary,
                           ),
                         ),
                         SizedBox(height: 8.h),
@@ -376,16 +385,18 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                             value: selectedAccount,
                             hint: 'Select Account',
                             sheetTitle: 'Select Trading Account',
-                            backgroundColor: Colors.white,
+                            backgroundColor: AppColors.card,
                             valueEquals: (a, b) => a['id'] == b['id'],
                             options: _ctrl.eligibleAccounts.map((acc) {
                               final no =
                                   acc['meta_account_number']?.toString() ?? '-';
-                              final bal = double.tryParse(
+                              final bal =
+                                  double.tryParse(
                                     acc['balance']?.toString() ?? '0',
                                   ) ??
                                   0;
-                              final avail = double.tryParse(
+                              final avail =
+                                  double.tryParse(
                                     acc['available_balance']?.toString() ?? '0',
                                   ) ??
                                   0;
@@ -406,8 +417,11 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                             padding: EdgeInsets.only(top: 8.h),
                             child: Row(
                               children: [
-                                Icon(Icons.warning_amber_rounded,
-                                    size: 14.sp, color: AppColors.error),
+                                Icon(
+                                  Icons.warning_amber_rounded,
+                                  size: 14.sp,
+                                  color: AppColors.error,
+                                ),
                                 SizedBox(width: 6.w),
                                 Expanded(
                                   child: Text(
@@ -429,17 +443,18 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                           RichText(
                             text: TextSpan(
                               style: TextStyle(
-                                  fontSize: 12.sp,
-                                  color: const Color(0xFF6B7280)),
+                                fontSize: 12.sp,
+                                color: AppColors.textGrey,
+                              ),
                               children: [
                                 const TextSpan(
-                                    text: 'Full balance will be invested: '),
+                                  text: 'Full balance will be invested: ',
+                                ),
                                 TextSpan(
-                                  text:
-                                      '\$${availBalance.toStringAsFixed(2)}',
+                                  text: '\$${availBalance.toStringAsFixed(2)}',
                                   style: TextStyle(
                                     fontWeight: FontWeight.w700,
-                                    color: const Color(0xFF2D1B36),
+                                    color: AppColors.textPrimary,
                                   ),
                                 ),
                               ],
@@ -454,24 +469,29 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                             width: double.infinity,
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(10.r),
-                              border:
-                                  Border.all(color: const Color(0xFFE5E7EB)),
+                              border: Border.all(color: AppColors.border),
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 _summaryRow('Plan', planName, isFirst: true),
                                 _summaryDivider(),
-                                _summaryRow('Commission',
-                                    '${commission.toStringAsFixed(2)}%'),
+                                _summaryRow(
+                                  'Commission',
+                                  '${commission.toStringAsFixed(2)}%',
+                                ),
                                 _summaryDivider(),
-                                _summaryRow('Min. Investment',
-                                    '\$${minInvest.toStringAsFixed(2)}'),
+                                _summaryRow(
+                                  'Min. Investment',
+                                  '\$${minInvest.toStringAsFixed(2)}',
+                                ),
                                 _summaryDivider(),
-                                _summaryRow('Investment Amount',
-                                    '\$${availBalance.toStringAsFixed(2)}',
-                                    valueColor: const Color(0xFF2D1B36),
-                                    isLast: true),
+                                _summaryRow(
+                                  'Investment Amount',
+                                  '\$${availBalance.toStringAsFixed(2)}',
+                                  valueColor: AppColors.textPrimary,
+                                  isLast: true,
+                                ),
                               ],
                             ),
                           ),
@@ -480,21 +500,22 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                   ),
 
                   SizedBox(height: 20.h),
-                  Divider(height: 1, color: const Color(0xFFE5E7EB)),
+                  Divider(height: 1, color: AppColors.border),
 
                   // ── Bottom buttons ──
                   SafeArea(
                     child: Padding(
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 20.w,
+                        vertical: 16.h,
+                      ),
                       child: Row(
                         children: [
                           Expanded(
                             child: OutlinedButton(
                               onPressed: () => Navigator.pop(ctx),
                               style: OutlinedButton.styleFrom(
-                                side: BorderSide(
-                                    color: const Color(0xFFE5E7EB)),
+                                side: BorderSide(color: AppColors.border),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(10.r),
                                 ),
@@ -503,7 +524,7 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                               child: Text(
                                 'Cancel',
                                 style: TextStyle(
-                                  color: const Color(0xFF2D1B36),
+                                  color: AppColors.textPrimary,
                                   fontSize: 14.sp,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -516,8 +537,10 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                             child: ElevatedButton(
                               onPressed: canInvest
                                   ? () {
-                                      final curPlanId = int.tryParse(
-                                              sheetPlan!['id'].toString()) ??
+                                      final curPlanId =
+                                          int.tryParse(
+                                            sheetPlan!['id'].toString(),
+                                          ) ??
                                           0;
                                       Navigator.pop(ctx);
                                       _ctrl.joinPlan(
@@ -528,8 +551,8 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                                     }
                                   : null,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF2D1B36),
-                                disabledBackgroundColor: const Color(0xFF2D1B36)
+                                backgroundColor: AppColors.textPrimary,
+                                disabledBackgroundColor: AppColors.textPrimary
                                     .withValues(alpha: 0.4),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(10.r),
@@ -540,7 +563,9 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                               child: Text(
                                 'Confirm Investment',
                                 style: TextStyle(
-                                  color: Colors.white,
+                                  color: AppColors.isDarkMode
+                                      ? AppColors.pureBlack
+                                      : AppColors.onColoredBackground,
                                   fontSize: 14.sp,
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -560,8 +585,13 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
     );
   }
 
-  Widget _summaryRow(String label, String value,
-      {Color? valueColor, bool isFirst = false, bool isLast = false}) {
+  Widget _summaryRow(
+    String label,
+    String value, {
+    Color? valueColor,
+    bool isFirst = false,
+    bool isLast = false,
+  }) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
       child: Column(
@@ -569,10 +599,7 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
         children: [
           Text(
             label,
-            style: TextStyle(
-              fontSize: 11.sp,
-              color: const Color(0xFF6B7280),
-            ),
+            style: TextStyle(fontSize: 11.sp, color: AppColors.textGrey),
           ),
           SizedBox(height: 4.h),
           Text(
@@ -580,7 +607,7 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
             style: TextStyle(
               fontSize: 14.sp,
               fontWeight: FontWeight.w700,
-              color: valueColor ?? const Color(0xFF2D1B36),
+              color: valueColor ?? AppColors.textPrimary,
             ),
           ),
         ],
@@ -589,20 +616,16 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
   }
 
   Widget _summaryDivider() {
-    return Divider(
-      height: 1,
-      color: const Color(0xFFE5E7EB),
-    );
+    return Divider(height: 1, color: AppColors.border);
   }
-
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F8FA),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         scrolledUnderElevation: 0,
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.card,
         elevation: 0,
         centerTitle: true,
         leading: AppSvgBackButton(
@@ -613,7 +636,7 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
         title: Text(
           'Fund Manager',
           style: TextStyle(
-            color: Colors.black,
+            color: AppColors.textPrimary,
             fontSize: 16.sp,
             fontWeight: FontWeight.w700,
           ),
@@ -622,23 +645,23 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
       body: _loadingProfile
           ? const Center(child: CircularProgressIndicator())
           : _profile.isEmpty
-              ? _buildEmpty()
-              : RefreshIndicator(
-                  onRefresh: _loadProfile,
-                  child: ListView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 32.h),
-                    children: [
-                      _buildTopCard(),
-                      SizedBox(height: 16.h),
-                      _buildPerformanceChart(),
-                      SizedBox(height: 16.h),
-                      _buildOpenPositionsSection(),
-                      SizedBox(height: 16.h),
-                      _buildTradeHistory(),
-                    ],
-                  ),
-                ),
+          ? _buildEmpty()
+          : RefreshIndicator(
+              onRefresh: _loadProfile,
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 32.h),
+                children: [
+                  _buildTopCard(),
+                  SizedBox(height: 16.h),
+                  _buildPerformanceChart(),
+                  SizedBox(height: 16.h),
+                  _buildOpenPositionsSection(),
+                  SizedBox(height: 16.h),
+                  _buildTradeHistory(),
+                ],
+              ),
+            ),
     );
   }
 
@@ -648,25 +671,25 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
     final s = (_profile['performance_summary'] is Map)
         ? Map<String, dynamic>.from(_profile['performance_summary'] as Map)
         : <String, dynamic>{};
-        
+
     final profit = _num(s['total_profit']);
     final pnl = _num(s['total_pnl_value']);
     final aum = _num(_profile['total_aum']);
     final investors = _num(_profile['total_investors']).toInt();
-    
+
     double commission = 0;
     double minInv = 0;
     String risk = 'Risk 1';
     double drawdown = 0;
     String description = '';
-    
+
     if (_selectedPlan != null) {
       commission = _num(_selectedPlan!['commission_percentage']);
       minInv = _num(_selectedPlan!['minimum_investment']);
       risk = (_selectedPlan!['risk_information'] ?? 'Risk 1').toString();
       description = (_selectedPlan!['strategy_description'] ?? '').toString();
       if (_selectedPlan!['performance'] is Map) {
-         drawdown = _num(_selectedPlan!['performance']['max_drawdown']);
+        drawdown = _num(_selectedPlan!['performance']['max_drawdown']);
       }
     }
 
@@ -674,9 +697,9 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -694,11 +717,11 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                       children: [
                         CircleAvatar(
                           radius: 26.r,
-                          backgroundColor: const Color(0xFFF3F4F6),
+                          backgroundColor: AppColors.chipSurface,
                           child: Text(
                             _initials,
                             style: TextStyle(
-                              color: Colors.black,
+                              color: AppColors.textPrimary,
                               fontWeight: FontWeight.bold,
                               fontSize: 18.sp,
                             ),
@@ -710,10 +733,14 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                           child: Container(
                             decoration: const BoxDecoration(
                               shape: BoxShape.circle,
-                              color: Colors.white,
+                              color: AppColors.onColoredBackground,
                             ),
                             padding: const EdgeInsets.all(2),
-                            child: Icon(Icons.check_circle, size: 16.sp, color: const Color(0xFF2D1B36)),
+                            child: Icon(
+                              Icons.check_circle,
+                              size: 16.sp,
+                              color: AppColors.textPrimary,
+                            ),
                           ),
                         ),
                       ],
@@ -728,16 +755,19 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                             style: TextStyle(
                               fontSize: 16.sp,
                               fontWeight: FontWeight.w800,
-                              color: Colors.black,
+                              color: AppColors.textPrimary,
                             ),
                           ),
                           SizedBox(height: 4.h),
                           Row(
                             children: [
                               Container(
-                                padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 6.w,
+                                  vertical: 2.h,
+                                ),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFF3F4F6),
+                                  color: AppColors.chipSurface,
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Text(
@@ -745,7 +775,7 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                                   style: TextStyle(
                                     fontSize: 9.sp,
                                     fontWeight: FontWeight.w700,
-                                    color: const Color(0xFF4B5563),
+                                    color: AppColors.textPrimary,
                                   ),
                                 ),
                               ),
@@ -757,7 +787,7 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
                                     fontSize: 10.sp,
-                                    color: const Color(0xFF6B7280),
+                                    color: AppColors.textGrey,
                                   ),
                                 ),
                               ),
@@ -767,7 +797,10 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                       ),
                     ),
                     Container(
-                      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 8.w,
+                        vertical: 4.h,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFFEF3C7),
                         borderRadius: BorderRadius.circular(16),
@@ -775,7 +808,11 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.shield, size: 12.sp, color: const Color(0xFFD97706)),
+                          Icon(
+                            Icons.shield,
+                            size: 12.sp,
+                            color: const Color(0xFFD97706),
+                          ),
                           SizedBox(width: 4.w),
                           Text(
                             risk,
@@ -805,7 +842,9 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                       }
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: hasInvestment ? const Color(0xFF10B981) : const Color(0xFF2D1B36),
+                      backgroundColor: hasInvestment
+                          ? const Color(0xFF10B981)
+                          : AppColors.textPrimary,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -816,7 +855,9 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                     child: Text(
                       hasInvestment ? 'My Investment' : 'INVEST NOW',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: AppColors.isDarkMode
+                            ? AppColors.pureBlack
+                            : AppColors.onColoredBackground,
                         fontWeight: FontWeight.w700,
                         fontSize: 12.sp,
                       ),
@@ -830,7 +871,7 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                     'Min. Investment: \$${minInv.toStringAsFixed(0)}',
                     style: TextStyle(
                       fontSize: 10.sp,
-                      color: const Color(0xFF6B7280),
+                      color: AppColors.textGrey,
                     ),
                   ),
                 ),
@@ -842,19 +883,49 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
             scrollDirection: Axis.horizontal,
             child: Row(
               children: [
-                _buildTopMetric('GAIN', '${profit.toStringAsFixed(1)}%', profit >= 0 ? const Color(0xFF10B981) : const Color(0xFFEF4444)),
+                _buildTopMetric(
+                  'GAIN',
+                  '${profit.toStringAsFixed(1)}%',
+                  profit >= 0
+                      ? const Color(0xFF10B981)
+                      : const Color(0xFFEF4444),
+                ),
                 _buildMetricDivider(),
-                _buildTopMetric('TOTAL P&L', _money(pnl), pnl >= 0 ? const Color(0xFF10B981) : const Color(0xFFEF4444)),
+                _buildTopMetric(
+                  'TOTAL P&L',
+                  _money(pnl),
+                  pnl >= 0 ? const Color(0xFF10B981) : const Color(0xFFEF4444),
+                ),
                 _buildMetricDivider(),
-                _buildTopMetric('TOTAL AUM', _money(aum), Colors.black),
+                _buildTopMetric(
+                  'TOTAL AUM',
+                  _money(aum),
+                  AppColors.textPrimary,
+                ),
                 _buildMetricDivider(),
-                _buildTopMetric('INVESTORS', '$investors', Colors.black),
+                _buildTopMetric(
+                  'INVESTORS',
+                  '$investors',
+                  AppColors.textPrimary,
+                ),
                 _buildMetricDivider(),
-                _buildTopMetric('COMMISSION', '${commission.toStringAsFixed(2)}%', Colors.black),
+                _buildTopMetric(
+                  'COMMISSION',
+                  '${commission.toStringAsFixed(2)}%',
+                  AppColors.textPrimary,
+                ),
                 _buildMetricDivider(),
-                _buildTopMetric('FLOATING PROFIT', '\$0', const Color(0xFF10B981)),
+                _buildTopMetric(
+                  'FLOATING PROFIT',
+                  '\$0',
+                  const Color(0xFF10B981),
+                ),
                 _buildMetricDivider(),
-                _buildTopMetric('MAX DRAWDOWN', '-${drawdown.toStringAsFixed(2)}%', const Color(0xFFEF4444)),
+                _buildTopMetric(
+                  'MAX DRAWDOWN',
+                  '-${drawdown.toStringAsFixed(2)}%',
+                  const Color(0xFFEF4444),
+                ),
               ],
             ),
           ),
@@ -870,7 +941,7 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                     style: TextStyle(
                       fontSize: 10.sp,
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFF6B7280),
+                      color: AppColors.textGrey,
                       letterSpacing: 0.5,
                     ),
                   ),
@@ -879,7 +950,7 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                     description,
                     style: TextStyle(
                       fontSize: 12.sp,
-                      color: Colors.black,
+                      color: AppColors.textPrimary,
                     ),
                   ),
                 ],
@@ -901,7 +972,7 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
             style: TextStyle(
               fontSize: 10.sp,
               fontWeight: FontWeight.w700,
-              color: const Color(0xFF6B7280),
+              color: AppColors.textGrey,
               letterSpacing: 0.5,
             ),
           ),
@@ -920,19 +991,15 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
   }
 
   Widget _buildMetricDivider() {
-    return Container(
-      width: 1,
-      height: 30.h,
-      color: const Color(0xFFE5E7EB),
-    );
+    return Container(width: 1, height: 30.h, color: AppColors.border);
   }
 
   Widget _buildPerformanceChart() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(color: AppColors.border),
       ),
       padding: EdgeInsets.all(16.w),
       child: Column(
@@ -946,7 +1013,7 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                 style: TextStyle(
                   fontSize: 14.sp,
                   fontWeight: FontWeight.w800,
-                  color: Colors.black,
+                  color: AppColors.textPrimary,
                 ),
               ),
               Flexible(
@@ -956,9 +1023,14 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                     final isSelected = e == '1M';
                     return Container(
                       margin: EdgeInsets.only(left: 4.w),
-                      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 8.w,
+                        vertical: 4.h,
+                      ),
                       decoration: BoxDecoration(
-                        color: isSelected ? const Color(0xFF2D1B36) : const Color(0xFFF3F4F6),
+                        color: isSelected
+                            ? AppColors.textPrimary
+                            : AppColors.chipSurface,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
@@ -966,7 +1038,11 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                         style: TextStyle(
                           fontSize: 10.sp,
                           fontWeight: FontWeight.bold,
-                          color: isSelected ? Colors.white : const Color(0xFF6B7280),
+                          color: isSelected
+                              ? AppColors.isDarkMode
+                                    ? AppColors.pureBlack
+                                    : Colors.white
+                              : AppColors.textGrey,
                         ),
                       ),
                     );
@@ -985,16 +1061,17 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                   drawVerticalLine: false,
                   horizontalInterval: 100,
                   getDrawingHorizontalLine: (value) {
-                    return FlLine(
-                      color: const Color(0xFFF3F4F6),
-                      strokeWidth: 1,
-                    );
+                    return FlLine(color: AppColors.chipSurface, strokeWidth: 1);
                   },
                 ),
                 titlesData: FlTitlesData(
                   show: true,
-                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  topTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
                   bottomTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
@@ -1017,7 +1094,10 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                       getTitlesWidget: (value, meta) {
                         return Text(
                           value == 0 ? '\$0' : '\$${value.toInt()}',
-                          style: TextStyle(color: const Color(0xFF9CA3AF), fontSize: 9.sp),
+                          style: TextStyle(
+                            color: AppColors.textGreyLight,
+                            fontSize: 9.sp,
+                          ),
                         );
                       },
                     ),
@@ -1048,13 +1128,13 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                       FlSpot(10, 80),
                     ],
                     isCurved: true,
-                    color: const Color(0xFF2D1B36),
+                    color: AppColors.textPrimary,
                     barWidth: 2,
                     isStrokeCapRound: true,
                     dotData: const FlDotData(show: false),
                     belowBarData: BarAreaData(
                       show: true,
-                      color: const Color(0xFF2D1B36).withValues(alpha: 0.05),
+                      color: AppColors.textPrimary.withValues(alpha: 0.05),
                     ),
                   ),
                 ],
@@ -1071,7 +1151,7 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
       padding: const EdgeInsets.only(top: 8.0),
       child: Text(
         text,
-        style: TextStyle(color: const Color(0xFF9CA3AF), fontSize: 9.sp),
+        style: TextStyle(color: AppColors.textGreyLight, fontSize: 9.sp),
       ),
     );
   }
@@ -1079,9 +1159,9 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
   Widget _buildOpenPositionsSection() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1096,7 +1176,7 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                   style: TextStyle(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w800,
-                    color: Colors.black,
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 Container(
@@ -1129,10 +1209,7 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
               child: Center(
                 child: Text(
                   'No open positions',
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    color: const Color(0xFF6B7280),
-                  ),
+                  style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey),
                 ),
               ),
             )
@@ -1153,8 +1230,11 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
             ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              itemCount: _showAllOpenPositions ? _openPositions.length : (_openPositions.length > 5 ? 5 : _openPositions.length),
-              separatorBuilder: (_, _) => const Divider(height: 1, color: Color(0xFFE5E7EB)),
+              itemCount: _showAllOpenPositions
+                  ? _openPositions.length
+                  : (_openPositions.length > 5 ? 5 : _openPositions.length),
+              separatorBuilder: (_, _) =>
+                  const Divider(height: 1, color: Color(0xFFE5E7EB)),
               itemBuilder: (context, index) {
                 final p = _openPositions[index];
                 final symbol = (p['symbol'] ?? '—').toString();
@@ -1164,22 +1244,36 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                 final openPrice = (p['open_price'] ?? '—').toString();
                 final openTime = (p['open_time'] ?? '—').toString();
                 return Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 10.h,
+                  ),
                   child: Row(
                     children: [
                       Expanded(
                         flex: 3,
                         child: Text(
                           symbol,
-                          style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w700, color: Colors.black),
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
+                          ),
                         ),
                       ),
                       Expanded(
                         flex: 2,
                         child: Container(
-                          padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 6.w,
+                            vertical: 2.h,
+                          ),
                           decoration: BoxDecoration(
-                            color: (isBuy ? const Color(0xFF10B981) : const Color(0xFFEF4444)).withValues(alpha: 0.1),
+                            color:
+                                (isBuy
+                                        ? const Color(0xFF10B981)
+                                        : const Color(0xFFEF4444))
+                                    .withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
@@ -1187,7 +1281,9 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                             style: TextStyle(
                               fontSize: 9.sp,
                               fontWeight: FontWeight.w700,
-                              color: isBuy ? const Color(0xFF10B981) : const Color(0xFFEF4444),
+                              color: isBuy
+                                  ? const Color(0xFF10B981)
+                                  : const Color(0xFFEF4444),
                             ),
                           ),
                         ),
@@ -1196,21 +1292,33 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                         flex: 3,
                         child: Text(
                           '${lot.toStringAsFixed(2)} lot',
-                          style: TextStyle(fontSize: 10.sp, color: const Color(0xFF6B7280)),
+                          style: TextStyle(
+                            fontSize: 10.sp,
+                            color: AppColors.textGrey,
+                          ),
                         ),
                       ),
                       Expanded(
                         flex: 4,
                         child: Text(
                           openPrice,
-                          style: TextStyle(fontSize: 10.sp, color: Colors.black, fontWeight: FontWeight.w600),
+                          style: TextStyle(
+                            fontSize: 10.sp,
+                            color: AppColors.textPrimary,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                       Expanded(
                         flex: 4,
                         child: Text(
-                          openTime.length > 10 ? openTime.substring(0, 10) : openTime,
-                          style: TextStyle(fontSize: 10.sp, color: const Color(0xFF6B7280)),
+                          openTime.length > 10
+                              ? openTime.substring(0, 10)
+                              : openTime,
+                          style: TextStyle(
+                            fontSize: 10.sp,
+                            color: AppColors.textGrey,
+                          ),
                         ),
                       ),
                     ],
@@ -1235,7 +1343,7 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                     style: TextStyle(
                       fontSize: 12.sp,
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFF2D1B36),
+                      color: AppColors.textPrimary,
                     ),
                   ),
                 ),
@@ -1248,12 +1356,11 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
   }
 
   Widget _buildTradeHistory() {
-
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1268,13 +1375,13 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                   style: TextStyle(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w800,
-                    color: Colors.black,
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 Container(
                   padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF3F4F6),
+                    color: AppColors.chipSurface,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -1282,7 +1389,7 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                     style: TextStyle(
                       fontSize: 10.sp,
                       fontWeight: FontWeight.bold,
-                      color: const Color(0xFF6B7280),
+                      color: AppColors.textGrey,
                     ),
                   ),
                 ),
@@ -1317,8 +1424,11 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
             ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              itemCount: _showAllTrades ? _trades.length : (_trades.length > 5 ? 5 : _trades.length),
-              separatorBuilder: (context, index) => const Divider(height: 1, color: Color(0xFFE5E7EB)),
+              itemCount: _showAllTrades
+                  ? _trades.length
+                  : (_trades.length > 5 ? 5 : _trades.length),
+              separatorBuilder: (context, index) =>
+                  const Divider(height: 1, color: Color(0xFFE5E7EB)),
               itemBuilder: (context, index) {
                 final t = _trades[index];
                 return _buildTradeRow(t);
@@ -1341,12 +1451,12 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                   style: TextStyle(
                     fontSize: 12.sp,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF2D1B36),
+                    color: AppColors.textPrimary,
                   ),
                 ),
               ),
             ),
-          ]
+          ],
         ],
       ),
     );
@@ -1358,7 +1468,7 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
       style: TextStyle(
         fontSize: 10.sp,
         fontWeight: FontWeight.w600,
-        color: const Color(0xFF6B7280),
+        color: AppColors.textGrey,
       ),
     );
   }
@@ -1368,23 +1478,23 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
     final typeStr = (t['type'] ?? '').toString();
     final profit = _num(t['profit']);
     final closeTime = (t['close_time'] ?? '').toString();
-    
+
     // Attempting to calculate duration if open_time and close_time exist
     String duration = '0m';
     final openTimeStr = (t['open_time'] ?? '').toString();
     if (openTimeStr.isNotEmpty && closeTime.isNotEmpty) {
-       try {
-         final o = DateTime.parse(openTimeStr);
-         final c = DateTime.parse(closeTime);
-         final diff = c.difference(o);
-         if (diff.inDays > 0) {
-           duration = '${diff.inDays}d ${diff.inHours % 24}h';
-         } else if (diff.inHours > 0) {
-           duration = '${diff.inHours}h ${diff.inMinutes % 60}m';
-         } else {
-           duration = '${diff.inMinutes}m';
-         }
-       } catch (_) {}
+      try {
+        final o = DateTime.parse(openTimeStr);
+        final c = DateTime.parse(closeTime);
+        final diff = c.difference(o);
+        if (diff.inDays > 0) {
+          duration = '${diff.inDays}d ${diff.inHours % 24}h';
+        } else if (diff.inHours > 0) {
+          duration = '${diff.inHours}h ${diff.inMinutes % 60}m';
+        } else {
+          duration = '${diff.inMinutes}m';
+        }
+      } catch (_) {}
     }
 
     final isBuy = typeStr.toLowerCase() == 'buy' || typeStr == '0';
@@ -1401,7 +1511,7 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
               style: TextStyle(
                 fontSize: 12.sp,
                 fontWeight: FontWeight.w700,
-                color: Colors.black,
+                color: AppColors.textPrimary,
               ),
             ),
           ),
@@ -1412,7 +1522,11 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                 Container(
                   padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
                   decoration: BoxDecoration(
-                    color: (isBuy ? const Color(0xFF10B981) : const Color(0xFFEF4444)).withValues(alpha: 0.1),
+                    color:
+                        (isBuy
+                                ? const Color(0xFF10B981)
+                                : const Color(0xFFEF4444))
+                            .withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
@@ -1420,7 +1534,9 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                     style: TextStyle(
                       fontSize: 9.sp,
                       fontWeight: FontWeight.w700,
-                      color: isBuy ? const Color(0xFF10B981) : const Color(0xFFEF4444),
+                      color: isBuy
+                          ? const Color(0xFF10B981)
+                          : const Color(0xFFEF4444),
                     ),
                   ),
                 ),
@@ -1430,11 +1546,15 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
           Expanded(
             flex: 2,
             child: Text(
-              isProfit ? '+\$${profit.toStringAsFixed(2)}' : '-\$${profit.abs().toStringAsFixed(2)}',
+              isProfit
+                  ? '+\$${profit.toStringAsFixed(2)}'
+                  : '-\$${profit.abs().toStringAsFixed(2)}',
               style: TextStyle(
                 fontSize: 12.sp,
                 fontWeight: FontWeight.w700,
-                color: isProfit ? const Color(0xFF10B981) : const Color(0xFFEF4444),
+                color: isProfit
+                    ? const Color(0xFF10B981)
+                    : const Color(0xFFEF4444),
               ),
             ),
           ),
@@ -1442,20 +1562,14 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
             flex: 3,
             child: Text(
               closeTime.isNotEmpty ? closeTime : '-',
-              style: TextStyle(
-                fontSize: 10.sp,
-                color: const Color(0xFF6B7280),
-              ),
+              style: TextStyle(fontSize: 10.sp, color: AppColors.textGrey),
             ),
           ),
           Expanded(
             flex: 2,
             child: Text(
               duration,
-              style: TextStyle(
-                fontSize: 10.sp,
-                color: const Color(0xFF6B7280),
-              ),
+              style: TextStyle(fontSize: 10.sp, color: AppColors.textGrey),
             ),
           ),
         ],
@@ -1470,14 +1584,18 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.person_off_rounded, size: 48.sp, color: const Color(0xFF9CA3AF)),
+            Icon(
+              Icons.person_off_rounded,
+              size: 48.sp,
+              color: AppColors.textGreyLight,
+            ),
             SizedBox(height: 12.h),
             Text(
               'Manager not found',
               style: TextStyle(
                 fontSize: 14.sp,
                 fontWeight: FontWeight.w700,
-                color: Colors.black,
+                color: AppColors.textPrimary,
               ),
             ),
             SizedBox(height: 6.h),
@@ -1486,10 +1604,7 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                   ? 'No manager id was provided.'
                   : 'Unable to load profile for $_managerCode.',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 12.sp,
-                color: const Color(0xFF6B7280),
-              ),
+              style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey),
             ),
           ],
         ),

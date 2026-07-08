@@ -96,13 +96,13 @@ class _ExploreMastersScreenState extends State<ExploreMastersScreen> {
         final visible = q.isEmpty
             ? filtered
             : filtered
-                .where(
-                  (m) =>
-                      m.nickname.toLowerCase().contains(q) ||
-                      m.name.toLowerCase().contains(q) ||
-                      m.masterCode.toLowerCase().contains(q),
-                )
-                .toList();
+                  .where(
+                    (m) =>
+                        m.nickname.toLowerCase().contains(q) ||
+                        m.name.toLowerCase().contains(q) ||
+                        m.masterCode.toLowerCase().contains(q),
+                  )
+                  .toList();
 
         return RefreshIndicator(
           onRefresh: controller.refreshMasters,
@@ -146,22 +146,16 @@ class _MasterCardWrapper extends StatelessWidget {
           item: m,
           onTap: () {
             HapticFeedback.selectionClick();
-            Get.to(
-              () => MasterDetailsScreen(masterCode: m.masterCode),
-            );
+            Get.to(() => MasterDetailsScreen(masterCode: m.masterCode));
           },
           onCopy: () {
             HapticFeedback.selectionClick();
-            Get.to(
-              () => MasterDetailsScreen(masterCode: m.masterCode),
-            );
+            Get.to(() => MasterDetailsScreen(masterCode: m.masterCode));
           },
         ),
       );
     } catch (e, st) {
-      debugPrint(
-        '[ExploreMasters] card render failed for ${m.masterCode}: $e',
-      );
+      debugPrint('[ExploreMasters] card render failed for ${m.masterCode}: $e');
       debugPrintStack(label: 'card render', stackTrace: st);
       return const SizedBox.shrink();
     }
@@ -224,8 +218,7 @@ class _SummaryCards extends StatelessWidget {
               child: _SummaryCard(
                 label: 'Avg Gain (All Time)',
                 value: '${_formatPct(avgGain)}%',
-                valueColor:
-                    avgGain >= 0 ? AppColors.success : AppColors.error,
+                valueColor: avgGain >= 0 ? AppColors.success : AppColors.error,
                 icon: Icons.trending_up,
                 tag: 'Performance',
                 color: AppColors.primary,
@@ -516,10 +509,7 @@ class _FilterChips extends StatelessWidget {
     );
   }
 
-  void _showRiskSheet(
-    BuildContext context,
-    CopyTradingMastersController c,
-  ) {
+  void _showRiskSheet(BuildContext context, CopyTradingMastersController c) {
     _showOptionsSheet(
       context: context,
       title: 'Filter by Risk',
@@ -529,10 +519,7 @@ class _FilterChips extends StatelessWidget {
     );
   }
 
-  void _showTimeSheet(
-    BuildContext context,
-    CopyTradingMastersController c,
-  ) {
+  void _showTimeSheet(BuildContext context, CopyTradingMastersController c) {
     _showOptionsSheet(
       context: context,
       title: 'Filter by Time',
@@ -548,10 +535,7 @@ class _FilterChips extends StatelessWidget {
     );
   }
 
-  void _showSortSheet(
-    BuildContext context,
-    CopyTradingMastersController c,
-  ) {
+  void _showSortSheet(BuildContext context, CopyTradingMastersController c) {
     _showOptionsSheet(
       context: context,
       title: 'Sort Masters',
@@ -561,10 +545,7 @@ class _FilterChips extends StatelessWidget {
     );
   }
 
-  void _showSearchSheet(
-    BuildContext context,
-    CopyTradingMastersController c,
-  ) {
+  void _showSearchSheet(BuildContext context, CopyTradingMastersController c) {
     final ctrl = TextEditingController(text: c.search.value);
     showModalBottomSheet(
       context: context,
@@ -628,10 +609,7 @@ class _FilterChips extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              title,
-              style: AppTextStyles.heading.copyWith(fontSize: 16.sp),
-            ),
+            Text(title, style: AppTextStyles.heading.copyWith(fontSize: 16.sp)),
             SizedBox(height: 8.h),
             for (final o in options)
               ListTile(
@@ -675,19 +653,19 @@ class _MasterCardHorizontal extends StatelessWidget {
     final hasPlan = (item.planCount as int) > 0;
     final serverType =
         (item.serverType is String && (item.serverType as String).isNotEmpty)
-            ? (item.serverType as String)
-            : 'mt5';
+        ? (item.serverType as String)
+        : 'mt5';
     final commissionPct = _safeCommission(item);
-    final displayName =
-        (item.nickname?.toString().isNotEmpty ?? false)
-            ? item.nickname.toString()
-            : item.name.toString();
+    final displayName = (item.nickname?.toString().isNotEmpty ?? false)
+        ? item.nickname.toString()
+        : item.name.toString();
 
     final gainText = '${gain >= 0 ? '+' : ''}${gain.toStringAsFixed(2)}%';
     final drawdownText = '-${drawdown.toStringAsFixed(0)}%';
     final pnlText = _formatPnl(pnl);
-    final minInvestText =
-        minInvest == 0 ? '\$0' : '\$${minInvest.toStringAsFixed(0)}';
+    final minInvestText = minInvest == 0
+        ? '\$0'
+        : '\$${minInvest.toStringAsFixed(0)}';
     final pnlColor = pnl >= 0 ? AppColors.success : AppColors.error;
     final gainColor = gain >= 0 ? AppColors.success : AppColors.error;
 
@@ -825,9 +803,7 @@ class _MasterCardHorizontal extends StatelessWidget {
               SizedBox(height: 6.h),
               Row(
                 children: [
-                  Expanded(
-                    child: _metricCell('TOTAL P&L', pnlText, pnlColor),
-                  ),
+                  Expanded(child: _metricCell('TOTAL P&L', pnlText, pnlColor)),
                   SizedBox(width: 10.w),
                   Expanded(
                     child: _metricCell(
@@ -875,8 +851,9 @@ class _MasterCardHorizontal extends StatelessWidget {
                     onPressed: hasPlan ? onCopy : null,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
-                      disabledBackgroundColor: AppColors.textGrey
-                          .withValues(alpha: 0.20),
+                      disabledBackgroundColor: AppColors.textGrey.withValues(
+                        alpha: 0.20,
+                      ),
                       foregroundColor: AppColors.whiteColor,
                       elevation: 0,
                       padding: EdgeInsets.symmetric(horizontal: 18.w),

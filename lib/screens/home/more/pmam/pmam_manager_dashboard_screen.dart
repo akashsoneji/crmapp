@@ -129,7 +129,7 @@ class _PmamManagerDashboardScreenState extends State<PmamManagerDashboardScreen>
               selectedColor: AppColors.primary,
               backgroundColor: AppColors.card,
               labelStyle: TextStyle(
-                color: isSelected ? AppColors.whiteColor : AppColors.textPrimary,
+                color: isSelected ? AppColors.onColoredBackground : AppColors.textPrimary,
                 fontWeight: FontWeight.w600,
                 fontSize: 12.sp,
               ),
@@ -392,7 +392,7 @@ class _PmamManagerDashboardScreenState extends State<PmamManagerDashboardScreen>
                 return LineTooltipItem(
                   '$val\n',
                   TextStyle(
-                    color: AppColors.whiteColor,
+                    color: AppColors.onColoredBackground,
                     fontWeight: FontWeight.w700,
                     fontSize: 12.sp,
                   ),
@@ -400,7 +400,7 @@ class _PmamManagerDashboardScreenState extends State<PmamManagerDashboardScreen>
                     TextSpan(
                       text: label,
                       style: TextStyle(
-                        color: AppColors.whiteColor.withOpacity(0.7),
+                        color: AppColors.onColoredBackground.withOpacity(0.7),
                         fontWeight: FontWeight.w500,
                         fontSize: 10.sp,
                       ),

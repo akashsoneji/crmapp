@@ -65,7 +65,7 @@ class _PmamCreatePlanScreenState extends State<PmamCreatePlanScreen> {
         'Required',
         'Please select a trading account',
         backgroundColor: AppColors.error,
-        colorText: AppColors.whiteColor,
+        colorText: AppColors.onColoredBackground,
         snackPosition: SnackPosition.TOP,
       );
       return;
@@ -130,7 +130,7 @@ class _PmamCreatePlanScreenState extends State<PmamCreatePlanScreen> {
               Container(
                 padding: EdgeInsets.all(16.w),
                 decoration: BoxDecoration(
-                  color: AppColors.whiteColor,
+                  color: AppColors.card,
                   borderRadius: BorderRadius.circular(14.r),
                   boxShadow: [
                     BoxShadow(
@@ -203,7 +203,7 @@ class _PmamCreatePlanScreenState extends State<PmamCreatePlanScreen> {
               Container(
                 padding: EdgeInsets.all(16.w),
                 decoration: BoxDecoration(
-                  color: AppColors.whiteColor,
+                  color: AppColors.card,
                   borderRadius: BorderRadius.circular(14.r),
                   boxShadow: [
                     BoxShadow(
@@ -353,7 +353,7 @@ class _PmamCreatePlanScreenState extends State<PmamCreatePlanScreen> {
                   child: ElevatedButton(
                     onPressed: _ctrl.isCreatePlanLoading.value ? null : _submit,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
+                      backgroundColor: AppColors.brandPrimary,
                       disabledBackgroundColor: AppColors.primary.withOpacity(
                         0.5,
                       ),
@@ -363,11 +363,11 @@ class _PmamCreatePlanScreenState extends State<PmamCreatePlanScreen> {
                     ),
                     child:
                         _ctrl.isCreatePlanLoading.value
-                            ? CommonLoadingWidget(size: 22, color: AppColors.whiteColor)
+                            ? CommonLoadingWidget(size: 22, color: AppColors.onColoredBackground)
                             : Text(
                               'Submit Plan',
                               style: TextStyle(
-                                color: AppColors.whiteColor,
+                                color: AppColors.onColoredBackground,
                                 fontSize: 15.sp,
                                 fontWeight: FontWeight.w600,
                               ),

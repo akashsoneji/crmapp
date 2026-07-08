@@ -1030,7 +1030,7 @@ class _AdvancedSettingsCard extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
       decoration: BoxDecoration(
-        color: AppColors.whiteColor,
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(14.r),
         border: Border.all(color: AppColors.border.withValues(alpha: 0.15)),
         boxShadow: [
@@ -1369,7 +1369,7 @@ class _SmallChoiceChip extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary : AppColors.whiteColor,
+          color: selected ? AppColors.primary : AppColors.card,
           borderRadius: BorderRadius.circular(10.r),
           border: Border.all(color: selected ? AppColors.primary : AppColors.border.withValues(alpha: 0.18)),
         ),
@@ -1378,7 +1378,7 @@ class _SmallChoiceChip extends StatelessWidget {
           style: TextStyle(
             fontSize: 12.sp,
             fontWeight: FontWeight.w600,
-            color: selected ? AppColors.whiteColor : AppColors.textPrimary,
+            color: selected ? AppColors.onColoredBackground : AppColors.textPrimary,
           ),
         ),
       ),
@@ -1409,7 +1409,7 @@ class _MiniPresetChip extends StatelessWidget {
           style: TextStyle(
             fontSize: 11.sp,
             fontWeight: FontWeight.w700,
-            color: selected ? AppColors.whiteColor : AppColors.textGrey,
+            color: selected ? AppColors.onColoredBackground : AppColors.textGrey,
           ),
         ),
       ),
@@ -1440,7 +1440,7 @@ class _ModeChip extends StatelessWidget {
           style: TextStyle(
             fontSize: 12.sp,
             fontWeight: FontWeight.w800,
-            color: selected ? AppColors.whiteColor : AppColors.textPrimary,
+            color: selected ? AppColors.onColoredBackground : AppColors.textPrimary,
           ),
         ),
       ),
@@ -1465,7 +1465,7 @@ class _SelectTile extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 2.h),
       decoration: BoxDecoration(
-        color: AppColors.whiteColor,
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(12.r),
         border: Border.all(color: AppColors.border.withValues(alpha: 0.15)),
       ),
@@ -1536,7 +1536,7 @@ class _Card extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(14.r),
       decoration: BoxDecoration(
-        color: AppColors.whiteColor,
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(14.r),
         border: Border.all(color: AppColors.border.withValues(alpha: 0.15)),
         boxShadow: [
@@ -1571,7 +1571,7 @@ class _ErrorState extends StatelessWidget {
             SizedBox(height: 12.h),
             ElevatedButton(
               onPressed: onRetry,
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, padding: EdgeInsets.zero),
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.brandPrimary, padding: EdgeInsets.zero),
               child: SizedBox(
                 height: 44.h,
                 child: Center(child: Text('Retry', style: AppTextStyles.button)),
@@ -1594,7 +1594,7 @@ class _PlanInfoCard extends StatelessWidget {
       width: double.infinity,
       padding: EdgeInsets.all(14.r),
       decoration: BoxDecoration(
-        color: AppColors.whiteColor,
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(14.r),
         border: Border.all(color: AppColors.border.withValues(alpha: 0.15)),
       ),
@@ -1641,7 +1641,7 @@ class _PlanDropdown extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 2.h),
       decoration: BoxDecoration(
-        color: AppColors.whiteColor,
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(12.r),
         border: Border.all(color: AppColors.border.withValues(alpha: 0.15)),
       ),
@@ -1699,7 +1699,7 @@ class _AccountListPicker extends StatelessWidget {
         Container(
           width: double.infinity,
           decoration: BoxDecoration(
-            color: AppColors.whiteColor,
+            color: AppColors.card,
             borderRadius: BorderRadius.circular(12.r),
             border: Border.all(color: AppColors.border.withValues(alpha: 0.15)),
           ),
@@ -1847,7 +1847,7 @@ class _BottomBar extends StatelessWidget {
                             }
                           },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
+                      backgroundColor: AppColors.brandPrimary,
                       padding: EdgeInsets.zero,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
                     ),

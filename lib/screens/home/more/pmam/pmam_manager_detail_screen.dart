@@ -77,7 +77,7 @@ class _PmamManagerDetailScreenState extends State<PmamManagerDetailScreen> {
 
               return Container(
                 decoration: BoxDecoration(
-                  color: AppColors.whiteColor,
+                  color: AppColors.card,
                   borderRadius: BorderRadius.vertical(
                     top: Radius.circular(22.r),
                   ),
@@ -307,7 +307,7 @@ class _PmamManagerDetailScreenState extends State<PmamManagerDetailScreen> {
                                   }
                                   : null,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
+                            backgroundColor: AppColors.brandPrimary,
                             disabledBackgroundColor: AppColors.textGrey
                                 .withOpacity(0.3),
                             shape: RoundedRectangleBorder(
@@ -318,7 +318,7 @@ class _PmamManagerDetailScreenState extends State<PmamManagerDetailScreen> {
                           child: Text(
                             'Confirm Invest',
                             style: TextStyle(
-                              color: AppColors.whiteColor,
+                              color: AppColors.onColoredBackground,
                               fontSize: 15.sp,
                               fontWeight: FontWeight.w700,
                             ),
@@ -376,7 +376,7 @@ class _PmamManagerDetailScreenState extends State<PmamManagerDetailScreen> {
             Container(
               padding: EdgeInsets.all(20.w),
               decoration: BoxDecoration(
-                color: AppColors.whiteColor,
+                color: AppColors.card,
                 borderRadius: BorderRadius.circular(16.r),
                 boxShadow: [
                   BoxShadow(
@@ -440,7 +440,7 @@ class _PmamManagerDetailScreenState extends State<PmamManagerDetailScreen> {
                       child: ElevatedButton(
                         onPressed: _showInvestSheet,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
+                          backgroundColor: AppColors.brandPrimary,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12.r),
                           ),
@@ -450,14 +450,14 @@ class _PmamManagerDetailScreenState extends State<PmamManagerDetailScreen> {
                           children: [
                             Icon(
                               Icons.add_rounded,
-                              color: AppColors.whiteColor,
+                              color: AppColors.onColoredBackground,
                               size: 18.sp,
                             ),
                             SizedBox(width: 6.w),
                             Text(
                               'INVEST NOW',
                               style: TextStyle(
-                                color: AppColors.whiteColor,
+                                color: AppColors.onColoredBackground,
                                 fontSize: 14.sp,
                                 fontWeight: FontWeight.w600,
                                 letterSpacing: 0.5,
@@ -564,7 +564,7 @@ class _PmamManagerDetailScreenState extends State<PmamManagerDetailScreen> {
                 width: double.infinity,
                 padding: EdgeInsets.all(16.w),
                 decoration: BoxDecoration(
-                  color: AppColors.whiteColor,
+                  color: AppColors.card,
                   borderRadius: BorderRadius.circular(14.r),
                   boxShadow: [
                     BoxShadow(
@@ -683,7 +683,7 @@ class _DetailStatCard extends StatelessWidget {
       width: 100.w,
       padding: EdgeInsets.all(12.w),
       decoration: BoxDecoration(
-        color: AppColors.whiteColor,
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(12.r),
         boxShadow: [
           BoxShadow(

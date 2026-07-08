@@ -54,9 +54,13 @@ class _PmamExploreManagersScreenState extends State<PmamExploreManagersScreen> {
 
     final q = _searchCtrl.text.trim().toLowerCase();
     if (q.isNotEmpty) {
-      list = list.where((m) =>
-          (m.managerName ?? '').toLowerCase().contains(q) ||
-          m.managerCode.toLowerCase().contains(q)).toList();
+      list = list
+          .where(
+            (m) =>
+                (m.managerName ?? '').toLowerCase().contains(q) ||
+                m.managerCode.toLowerCase().contains(q),
+          )
+          .toList();
     }
 
     switch (_filter) {
@@ -97,7 +101,8 @@ class _PmamExploreManagersScreenState extends State<PmamExploreManagersScreen> {
       final loading = _c.isManagersLoading.value;
       return RefreshIndicator(
         color: AppColors.primary,
-        onRefresh: () => _c.loadManagersDataTable(search: _searchCtrl.text.trim()),
+        onRefresh: () =>
+            _c.loadManagersDataTable(search: _searchCtrl.text.trim()),
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
@@ -113,10 +118,7 @@ class _PmamExploreManagersScreenState extends State<PmamExploreManagersScreen> {
                 ),
               )
             else if (_visible.isEmpty)
-              SliverFillRemaining(
-                hasScrollBody: false,
-                child: _buildEmpty(),
-              )
+              SliverFillRemaining(hasScrollBody: false, child: _buildEmpty())
             else
               _gridView ? _buildGrid() : _buildList(),
             SliverToBoxAdapter(child: SizedBox(height: 24.h)),
@@ -222,10 +224,16 @@ class _PmamExploreManagersScreenState extends State<PmamExploreManagersScreen> {
             width: 38.w,
             height: 38.w,
             decoration: BoxDecoration(
-              color: AppColors.primary,
+              color: AppColors.isDarkMode
+                  ? AppColors.primary.withValues(alpha: 0.2)
+                  : AppColors.primary,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, color: AppColors.whiteColor, size: 20.sp),
+            child: Icon(
+              icon,
+              color: AppColors.onColoredBackground,
+              size: 20.sp,
+            ),
           ),
           SizedBox(width: 10.w),
           Expanded(
@@ -289,7 +297,11 @@ class _PmamExploreManagersScreenState extends State<PmamExploreManagersScreen> {
           isDense: true,
           hintText: 'Search manager name or code…',
           hintStyle: TextStyle(color: AppColors.textGrey, fontSize: 13.sp),
-          prefixIcon: Icon(Icons.search, color: AppColors.textGrey, size: 18.sp),
+          prefixIcon: Icon(
+            Icons.search,
+            color: AppColors.textGrey,
+            size: 18.sp,
+          ),
           filled: true,
           fillColor: AppColors.card,
           contentPadding: EdgeInsets.symmetric(vertical: 12.h),
@@ -315,9 +327,21 @@ class _PmamExploreManagersScreenState extends State<PmamExploreManagersScreen> {
   Widget _buildFilterRow() {
     final filters = [
       ('all', 'All', _c.managersList.length),
-      ('enrolled', 'Enrolled', _c.managersList.where((m) => m.isEnrolled).length),
-      ('low_fee', 'Low Fee', _c.managersList.where((m) => m.avgCommission <= 15).length),
-      ('featured', 'Active', _c.managersList.where((m) => m.totalAum > 0).length),
+      (
+        'enrolled',
+        'Enrolled',
+        _c.managersList.where((m) => m.isEnrolled).length,
+      ),
+      (
+        'low_fee',
+        'Low Fee',
+        _c.managersList.where((m) => m.avgCommission <= 15).length,
+      ),
+      (
+        'featured',
+        'Active',
+        _c.managersList.where((m) => m.totalAum > 0).length,
+      ),
     ];
     return SizedBox(
       height: 38.h,
@@ -335,7 +359,11 @@ class _PmamExploreManagersScreenState extends State<PmamExploreManagersScreen> {
               duration: const Duration(milliseconds: 180),
               padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
               decoration: BoxDecoration(
-                color: selected ? AppColors.primary : AppColors.card,
+                color: selected
+                    ? AppColors.isDarkMode
+                          ? AppColors.primary.withValues(alpha: 0.2)
+                          : AppColors.primary
+                    : AppColors.card,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
                   color: selected ? AppColors.primary : AppColors.border,
@@ -349,12 +377,17 @@ class _PmamExploreManagersScreenState extends State<PmamExploreManagersScreen> {
                     style: TextStyle(
                       fontSize: 12.sp,
                       fontWeight: FontWeight.w600,
-                      color: selected ? AppColors.whiteColor : AppColors.textPrimary,
+                      color: selected
+                          ? AppColors.onColoredBackground
+                          : AppColors.textPrimary,
                     ),
                   ),
                   SizedBox(width: 6.w),
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 1.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 6.w,
+                      vertical: 1.h,
+                    ),
                     decoration: BoxDecoration(
                       color: selected
                           ? AppColors.whiteColor.withOpacity(0.25)
@@ -366,7 +399,9 @@ class _PmamExploreManagersScreenState extends State<PmamExploreManagersScreen> {
                       style: TextStyle(
                         fontSize: 10.sp,
                         fontWeight: FontWeight.w700,
-                        color: selected ? AppColors.whiteColor : AppColors.textGrey,
+                        color: selected
+                            ? AppColors.onColoredBackground
+                            : AppColors.textGrey,
                       ),
                     ),
                   ),
@@ -577,7 +612,8 @@ class _PmamExploreManagersScreenState extends State<PmamExploreManagersScreen> {
       sliver: SliverList.separated(
         itemCount: managers.length,
         separatorBuilder: (_, __) => SizedBox(height: 10.h),
-        itemBuilder: (_, i) => _ManagerCard(manager: managers[i], compact: false),
+        itemBuilder: (_, i) =>
+            _ManagerCard(manager: managers[i], compact: false),
       ),
     );
   }
@@ -614,10 +650,7 @@ class _PmamExploreManagersScreenState extends State<PmamExploreManagersScreen> {
           Text(
             'Try adjusting your filters or search.',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 13.sp,
-              color: AppColors.textGrey,
-            ),
+            style: TextStyle(fontSize: 13.sp, color: AppColors.textGrey),
           ),
         ],
       ),
@@ -646,15 +679,31 @@ class _ManagerCard extends StatelessWidget {
     // Heuristic: commission % as a risk proxy until backend ships risk band.
     final c = manager.avgCommission;
     if (c >= 35) {
-      return (label: 'RISK 4', bg: const Color(0xFFFFEDD5), fg: const Color(0xFFC2410C));
+      return (
+        label: 'RISK 4',
+        bg: const Color(0xFFFFEDD5),
+        fg: const Color(0xFFC2410C),
+      );
     }
     if (c >= 20) {
-      return (label: 'RISK 3', bg: const Color(0xFFFEF9C3), fg: const Color(0xFFA16207));
+      return (
+        label: 'RISK 3',
+        bg: const Color(0xFFFEF9C3),
+        fg: const Color(0xFFA16207),
+      );
     }
     if (c >= 10) {
-      return (label: 'RISK 2', bg: const Color(0xFFDBEAFE), fg: const Color(0xFF1D4ED8));
+      return (
+        label: 'RISK 2',
+        bg: const Color(0xFFDBEAFE),
+        fg: const Color(0xFF1D4ED8),
+      );
     }
-    return (label: 'RISK 1', bg: const Color(0xFFDCFCE7), fg: const Color(0xFF15803D));
+    return (
+      label: 'RISK 1',
+      bg: const Color(0xFFDCFCE7),
+      fg: const Color(0xFF15803D),
+    );
   }
 
   String _activeFor() {
@@ -678,8 +727,8 @@ class _ManagerCard extends StatelessWidget {
     final gainColor = gain > 0
         ? AppColors.green
         : gain < 0
-            ? AppColors.error
-            : AppColors.textPrimary;
+        ? AppColors.error
+        : AppColors.textPrimary;
 
     final hasInvestment = manager.isEnrolled;
     final risk = _risk;
@@ -709,21 +758,20 @@ class _ManagerCard extends StatelessWidget {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                   CircleAvatar(
-                                      radius: 20.r,
-                                      backgroundColor: AppColors.primary
-                                          .withOpacity(0.12),
-                                      child: Text(
-                                        _initials,
-                                        style: TextStyle(
-                                          color: AppColors.primary,
-                                          fontWeight: FontWeight.w700,
-                                          fontSize: 13.sp,
-                                        ),
-                                      ),
-                                    ),
-                                   
-                SizedBox(width: 8.w),
+                  CircleAvatar(
+                    radius: 20.r,
+                    backgroundColor: AppColors.primary.withOpacity(0.12),
+                    child: Text(
+                      _initials,
+                      style: TextStyle(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13.sp,
+                      ),
+                    ),
+                  ),
+
+                  SizedBox(width: 8.w),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -750,7 +798,10 @@ class _ManagerCard extends StatelessWidget {
                     ),
                   ),
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 3.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 6.w,
+                      vertical: 3.h,
+                    ),
                     decoration: BoxDecoration(
                       color: risk.bg,
                       borderRadius: BorderRadius.circular(6),
@@ -819,7 +870,10 @@ class _ManagerCard extends StatelessWidget {
                     children: [
                       Text(
                         'Fee: ',
-                        style: TextStyle(fontSize: 11.sp, color: AppColors.textGrey),
+                        style: TextStyle(
+                          fontSize: 11.sp,
+                          color: AppColors.textGrey,
+                        ),
                       ),
                       Text(
                         '${manager.avgCommission.toStringAsFixed(0)}%',
@@ -864,7 +918,11 @@ class _ManagerCard extends StatelessWidget {
                   width: double.infinity,
                   padding: EdgeInsets.symmetric(vertical: 8.h),
                   decoration: BoxDecoration(
-                    color: hasInvestment ? const Color(0xFF10B981) : AppColors.primary,
+                    color: hasInvestment
+                        ? const Color(0xFF10B981)
+                        : AppColors.isDarkMode
+                        ? AppColors.primary.withValues(alpha: 0.2)
+                        : AppColors.brandPrimary,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   alignment: Alignment.center,
@@ -872,13 +930,17 @@ class _ManagerCard extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       if (hasInvestment) ...[
-                        Icon(Icons.pie_chart_rounded, size: 14.sp, color: AppColors.whiteColor),
+                        Icon(
+                          Icons.pie_chart_rounded,
+                          size: 14.sp,
+                          color: AppColors.onColoredBackground,
+                        ),
                         SizedBox(width: 6.w),
                       ],
                       Text(
                         hasInvestment ? 'My Investment' : 'View Details',
                         style: TextStyle(
-                          color: AppColors.whiteColor,
+                          color: AppColors.onColoredBackground,
                           fontSize: 11.sp,
                           fontWeight: FontWeight.w700,
                         ),
@@ -903,8 +965,12 @@ class _ManagerCard extends StatelessWidget {
     return '\$${min.toStringAsFixed(0)}';
   }
 
-  Widget _metric(String label, String value, Color valueColor,
-      {bool bold = false}) {
+  Widget _metric(
+    String label,
+    String value,
+    Color valueColor, {
+    bool bold = false,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

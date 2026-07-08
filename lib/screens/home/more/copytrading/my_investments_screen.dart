@@ -440,7 +440,7 @@ class _SummarySection extends StatelessWidget {
                 ),
                 borderRadius: BorderRadius.circular(14.r),
                 border: Border.all(
-                  color: AppColors.primary.withValues(alpha: 0.15),
+                  color: AppColors.brandPrimary.withValues(alpha: 0.15),
                 ),
               ),
               child: Column(
@@ -451,7 +451,7 @@ class _SummarySection extends StatelessWidget {
                       Container(
                         padding: EdgeInsets.all(6.r),
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.15),
+                          color: AppColors.brandPrimary.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(8.r),
                         ),
                         child: Icon(
@@ -746,10 +746,7 @@ class _InvestmentRow extends StatelessWidget {
                           gradient: LinearGradient(
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
-                            colors: [
-                              AppColors.primary,
-                              AppColors.primary.withOpacity(0.7),
-                            ],
+                            colors: [AppColors.brandPrimary, AppColors.brandPrimary.withOpacity(0.7)],
                           ),
                           borderRadius: BorderRadius.circular(10.r),
                         ),

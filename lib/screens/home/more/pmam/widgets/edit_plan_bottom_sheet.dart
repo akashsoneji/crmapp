@@ -122,7 +122,7 @@ class _EditPlanBottomSheetState extends State<EditPlanBottomSheet> {
       backgroundColor: result.ok
           ? AppColors.green.withValues(alpha: 0.95)
           : AppColors.error.withValues(alpha: 0.95),
-      colorText: Colors.white,
+      colorText: AppColors.onColoredBackground,
       snackPosition: SnackPosition.BOTTOM,
       margin: EdgeInsets.all(12.w),
       borderRadius: 10,
@@ -250,8 +250,8 @@ class _EditPlanBottomSheetState extends State<EditPlanBottomSheet> {
         ElevatedButton(
           onPressed: _saving ? null : _save,
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            foregroundColor: Colors.white,
+            backgroundColor: AppColors.brandPrimary,
+            foregroundColor: AppColors.onColoredBackground,
             padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 12.h),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8.r),
