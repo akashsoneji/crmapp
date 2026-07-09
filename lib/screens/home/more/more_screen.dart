@@ -294,7 +294,7 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                       ),
                     ),
                     child: Text(
-                      'Add New +',
+                      'Add New Broker +',
                       style: TextStyle(
                         color: AppColors.whiteColor,
                         fontSize: 16.sp,

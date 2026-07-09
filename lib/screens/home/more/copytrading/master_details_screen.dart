@@ -118,7 +118,7 @@ class _MasterHeroCard extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(14.r),
       decoration: BoxDecoration(
-        color: AppColors.whiteColor,
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(14.r),
         border: Border.all(color: AppColors.border),
         boxShadow: [
@@ -256,8 +256,8 @@ class _MasterHeroCard extends StatelessWidget {
                         );
                       },
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: AppColors.whiteColor,
+                backgroundColor: AppColors.brandPrimary,
+                foregroundColor: AppColors.onColoredBackground,
                 padding: EdgeInsets.zero,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
@@ -377,7 +377,7 @@ class _ViewByPlanCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.whiteColor,
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(14.r),
         border: Border.all(color: AppColors.border),
       ),
@@ -444,7 +444,7 @@ class _PlanChip extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary : AppColors.whiteColor,
+          color: selected ? AppColors.primary : AppColors.card,
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
             color: selected ? AppColors.primary : AppColors.border.withValues(alpha: 0.22),
@@ -455,7 +455,7 @@ class _PlanChip extends StatelessWidget {
           style: TextStyle(
             fontSize: 12.sp,
             fontWeight: FontWeight.w600,
-            color: selected ? AppColors.whiteColor : AppColors.textPrimary,
+            color: selected ? AppColors.onColoredBackground : AppColors.textPrimary,
           ),
         ),
       ),
@@ -485,7 +485,7 @@ class _PerformanceCard extends StatelessWidget {
         return Container(
           height: 80.h,
           decoration: BoxDecoration(
-            color: AppColors.whiteColor,
+            color: AppColors.card,
             borderRadius: BorderRadius.circular(14.r),
             border: Border.all(color: AppColors.border),
           ),
@@ -497,7 +497,7 @@ class _PerformanceCard extends StatelessWidget {
       return Container(
         padding: EdgeInsets.all(14.r),
         decoration: BoxDecoration(
-          color: AppColors.whiteColor,
+          color: AppColors.card,
           borderRadius: BorderRadius.circular(14.r),
           border: Border.all(color: AppColors.border),
         ),
@@ -687,7 +687,7 @@ class _TimeChip extends StatelessWidget {
           style: TextStyle(
             fontSize: 11.sp,
             fontWeight: FontWeight.w600,
-            color: selected ? AppColors.whiteColor : AppColors.textPrimary,
+            color: selected ? AppColors.onColoredBackground : AppColors.textPrimary,
           ),
         ),
       ),
@@ -843,7 +843,7 @@ class _PerformanceChart extends StatelessWidget {
                     }
                     return BarTooltipItem(
                       '$t\nTrade: \$${point.profit.toStringAsFixed(2)}\nCumulative: \$${point.cumulativeProfit.toStringAsFixed(2)}',
-                      TextStyle(fontSize: 10.sp, color: AppColors.whiteColor, fontWeight: FontWeight.w600),
+                      TextStyle(fontSize: 10.sp, color: AppColors.onColoredBackground, fontWeight: FontWeight.w600),
                     );
                   },
                 ),
@@ -909,7 +909,7 @@ class _OrdersCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.whiteColor,
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(14.r),
         border: Border.all(color: AppColors.border),
       ),
@@ -1067,7 +1067,7 @@ class _OrderCardState extends State<_OrderCard> {
         curve: Curves.easeInOut,
         padding: EdgeInsets.all(12.r),
         decoration: BoxDecoration(
-          color: AppColors.whiteColor,
+          color: AppColors.card,
           borderRadius: BorderRadius.circular(12.r),
           border: Border.all(color: AppColors.border),
         ),
@@ -1313,7 +1313,7 @@ class _ErrorState extends StatelessWidget {
             ElevatedButton(
               onPressed: onRetry,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
+                backgroundColor: AppColors.brandPrimary,
               ),
               child: const Text('Retry'),
             ),
@@ -1339,7 +1339,7 @@ class _StrategyDisclosureCard extends StatelessWidget {
     return Container(
       padding: EdgeInsets.fromLTRB(14.w, 14.h, 14.w, 16.h),
       decoration: BoxDecoration(
-        color: AppColors.whiteColor,
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(12.r),
         border: Border.all(color: AppColors.border, width: 1),
       ),

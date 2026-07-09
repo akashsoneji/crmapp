@@ -311,7 +311,7 @@ class _PendingReviewScreen extends StatelessWidget {
               ElevatedButton(
                 onPressed: () => Get.back(),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
+                  backgroundColor: AppColors.brandPrimary,
                   foregroundColor:
                       AppColors.primary.computeLuminance() > 0.5
                           ? AppColors.textPrimaryLight
@@ -490,7 +490,7 @@ class _BecomeMasterScreenState extends State<_BecomeMasterScreen> {
                           }
                         : null,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
+                      backgroundColor: AppColors.brandPrimary,
                       foregroundColor: applyBtnFg,
                       disabledBackgroundColor: AppColors.textGrey.withValues(alpha: 0.35),
                       disabledForegroundColor: applyBtnFg.withValues(alpha: 0.45),

@@ -1710,17 +1710,17 @@ BoxDecoration _cardDecoration(BuildContext context) {
     color: theme.cardColor,
     borderRadius: BorderRadius.circular(14),
     border: Border.all(
-      color: Colors.black.withValues(alpha: 0.06),
+      color: AppColors.textPrimary.withValues(alpha: 0.06),
       width: 1,
     ),
     boxShadow: [
       BoxShadow(
-        color: Colors.black.withValues(alpha: 0.08),
+        color: AppColors.textPrimary.withValues(alpha: 0.08),
         blurRadius: 18,
         offset: const Offset(0, 6),
       ),
       BoxShadow(
-        color: Colors.black.withValues(alpha: 0.03),
+        color: AppColors.textPrimary.withValues(alpha: 0.03),
         blurRadius: 3,
         offset: const Offset(0, 1),
       ),

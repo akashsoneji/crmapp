@@ -354,7 +354,7 @@ class _PmamManagerInvestorDetailScreenState
     return Container(
       padding: EdgeInsets.all(14.w),
       decoration: BoxDecoration(
-        color: AppColors.whiteColor,
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(12.r),
         boxShadow: [
           BoxShadow(
@@ -410,7 +410,7 @@ class _PmamManagerInvestorDetailScreenState
     // P&L colors are applied inside cards where needed.
 
     return Scaffold(
-      backgroundColor: AppColors.whiteColor,
+      backgroundColor: AppColors.card,
        appBar:AppBar(
         scrolledUnderElevation: 0,
         backgroundColor: AppColors.tradeBackgroundCenterColor,
@@ -450,8 +450,8 @@ class _PmamManagerInvestorDetailScreenState
                         ElevatedButton(
                           onPressed: _load,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            foregroundColor: AppColors.whiteColor,
+                            backgroundColor: AppColors.brandPrimary,
+                            foregroundColor: AppColors.onColoredBackground,
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10.r),

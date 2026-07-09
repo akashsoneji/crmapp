@@ -68,7 +68,7 @@ class _PmamBecomeManagerScreenState extends State<PmamBecomeManagerScreen> {
         'Incomplete Profile',
         'Please complete all verification steps before applying.',
         backgroundColor: AppColors.error,
-        colorText: AppColors.whiteColor,
+        colorText: AppColors.onColoredBackground,
         snackPosition: SnackPosition.TOP,
       );
       return;
@@ -171,11 +171,11 @@ class _PmamBecomeManagerScreenState extends State<PmamBecomeManagerScreen> {
                       width: 20.w,
                       height: 20.w,
                       child: Checkbox(
-                        checkColor: AppColors.whiteColor,
+                        checkColor: AppColors.onColoredBackground,
                         side: BorderSide(color: AppColors.textGrey, width: 1.5),
                         value: _termsAccepted,
-                        onChanged:
-                            (v) => setState(() => _termsAccepted = v ?? false),
+                        onChanged: (v) =>
+                            setState(() => _termsAccepted = v ?? false),
                         activeColor: AppColors.primary,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(4.r),
@@ -230,13 +230,12 @@ class _PmamBecomeManagerScreenState extends State<PmamBecomeManagerScreen> {
                     width: double.infinity,
                     height: 44.h,
                     child: ElevatedButton(
-                      onPressed:
-                          (_termsAccepted && !_ctrl.isLoading.value)
-                              ? _submit
-                              : null,
+                      onPressed: (_termsAccepted && !_ctrl.isLoading.value)
+                          ? _submit
+                          : null,
                       style: ElevatedButton.styleFrom(
                         padding: EdgeInsets.zero,
-                        backgroundColor: AppColors.primary,
+                        backgroundColor: AppColors.brandPrimary,
                         disabledBackgroundColor: AppColors.primary.withOpacity(
                           0.4,
                         ),
@@ -244,20 +243,19 @@ class _PmamBecomeManagerScreenState extends State<PmamBecomeManagerScreen> {
                           borderRadius: BorderRadius.circular(12.r),
                         ),
                       ),
-                      child:
-                          _ctrl.isLoading.value
-                              ? CommonLoadingWidget(
-                                size: 22,
-                                color: AppColors.whiteColor,
-                              )
-                              : Text(
-                                'Submit Application',
-                                style: TextStyle(
-                                  color: AppColors.whiteColor,
-                                  fontSize: 15.sp,
-                                  fontWeight: FontWeight.w600,
-                                ),
+                      child: _ctrl.isLoading.value
+                          ? CommonLoadingWidget(
+                              size: 22,
+                              color: AppColors.onColoredBackground,
+                            )
+                          : Text(
+                              'Submit Application',
+                              style: TextStyle(
+                                color: AppColors.onColoredBackground,
+                                fontSize: 15.sp,
+                                fontWeight: FontWeight.w600,
                               ),
+                            ),
                     ),
                   ),
                 ),
@@ -291,8 +289,9 @@ class _StepCard extends StatelessWidget {
           width: 1.2,
         ),
         borderRadius: BorderRadius.circular(12.r),
-        color:
-            done ? AppColors.primary.withOpacity(0.05) : AppColors.whiteColor,
+        color: done
+            ? AppColors.primary.withOpacity(0.05)
+            : AppColors.whiteColor,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -304,12 +303,18 @@ class _StepCard extends StatelessWidget {
                 width: 24.w,
                 height: 24.w,
                 decoration: BoxDecoration(
-                  color: done ? AppColors.primary : AppColors.neutralTrackMuted,
+                  color: done
+                      ? AppColors.isDarkMode
+                            ? AppColors.primary.withOpacity(0.5)
+                            : AppColors.primary
+                      : AppColors.neutralTrackMuted,
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   done ? Icons.check_rounded : Icons.notifications_outlined,
-                  color: AppColors.whiteColor,
+                  color: AppColors.isDarkMode
+                      ? AppColors.primary.withOpacity(0.5)
+                      : AppColors.onColoredBackground,
                   size: 14.sp,
                 ),
               ),
@@ -337,7 +342,9 @@ class _StepCard extends StatelessWidget {
                   done ? 'Completed' : (notApplied ? 'Not Applied' : 'Pending'),
                   style: TextStyle(
                     fontSize: 10.sp,
-                    color: AppColors.whiteColor,
+                    color: AppColors.isDarkMode
+                        ? AppColors.pureBlack
+                        : AppColors.onColoredBackground,
                     fontWeight: FontWeight.w600,
                   ),
                 ),

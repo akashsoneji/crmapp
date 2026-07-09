@@ -81,6 +81,7 @@ import '../screens/home/more/pmam/pmam_manager_dashboard_screen.dart';
 import '../screens/home/more/pmam/pmam_manager_portal_screen.dart';
 import '../screens/home/more/pmam/pmam_create_plan_screen.dart';
 import '../screens/home/more/pmam/pmam_investor_portal_screen.dart';
+import '../screens/home/more/pmam/pmam_my_investment_screen.dart';
 import '../screens/home/more/pmam/pmam_manager_detail_screen.dart';
 import '../screens/home/more/pmam/pmam_manager_plan_detail_screen.dart';
 import '../screens/home/more/pmam/pmam_fund_manager_view_screen.dart';
@@ -462,6 +463,7 @@ class AppPages {
     GetPage(name: _Paths.PMAM_MANAGER_PORTAL, page: () => const PmamManagerPortalScreen()),
     GetPage(name: _Paths.PMAM_CREATE_PLAN, page: () => const PmamCreatePlanScreen()),
     GetPage(name: _Paths.PMAM_INVESTOR_PORTAL, page: () => const PmamInvestorPortalScreen()),
+    GetPage(name: _Paths.PMAM_MY_INVESTMENT, page: () => const PmamMyInvestmentScreen()),
     GetPage(name: _Paths.PMAM_MANAGER_DETAIL, page: () => const PmamManagerDetailScreen()),
     GetPage(name: _Paths.PMAM_MANAGER_PLAN_DETAIL, page: () => const PmamManagerPlanDetailScreen()),
     GetPage(name: _Paths.PMAM_FUND_MANAGER_VIEW, page: () => const PmamFundManagerViewScreen()),

@@ -103,13 +103,13 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
               child: Container(
                 padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
                 decoration: BoxDecoration(
-                  color: AppColors.primary,
+                  color: AppColors.brandPrimary,
                   borderRadius: BorderRadius.circular(8.r),
                 ),
                 child: Text(
                   '+ New Plan',
                   style: TextStyle(
-                    color: AppColors.whiteColor,
+                    color: AppColors.onColoredBackground,
                     fontSize: 12.sp,
                     fontWeight: FontWeight.w600,
                   ),
@@ -121,7 +121,7 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
         bottom: PreferredSize(
           preferredSize: Size.fromHeight(46.h),
           child: Container(
-            color: AppColors.whiteColor,
+            color: AppColors.onColoredBackground,
             child: TabBar(
               controller: _tabCtrl,
               labelColor: AppColors.primary,
@@ -179,7 +179,7 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
             margin: EdgeInsets.symmetric(horizontal: 16.w),
             padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
             decoration: BoxDecoration(
-              color: AppColors.whiteColor,
+              color: AppColors.card,
               borderRadius: BorderRadius.circular(12.r),
               boxShadow: [
                 BoxShadow(
@@ -339,7 +339,7 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
                           return Container(
                             padding: EdgeInsets.all(14.w),
                             decoration: BoxDecoration(
-                              color: AppColors.whiteColor,
+                              color: AppColors.card,
                               borderRadius: BorderRadius.circular(12.r),
                               boxShadow: [
                                 BoxShadow(
@@ -556,8 +556,8 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
                                                     }
                                                   },
                                           style: ElevatedButton.styleFrom(
-                                            backgroundColor: AppColors.primary,
-                                            foregroundColor: AppColors.whiteColor,
+                                            backgroundColor: AppColors.brandPrimary,
+                                            foregroundColor: AppColors.onColoredBackground,
                                             elevation: 0,
                                             shape: RoundedRectangleBorder(
                                               borderRadius: BorderRadius.circular(
@@ -575,7 +575,7 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
                                                 width: 16.h,
                                                 child: CircularProgressIndicator(
                                                   strokeWidth: 2,
-                                                  color: AppColors.whiteColor,
+                                                  color: AppColors.onColoredBackground,
                                                 ),
                                               )
                                               : Text(
@@ -681,7 +681,7 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
             return Container(
               padding: EdgeInsets.all(14.w),
               decoration: BoxDecoration(
-                color: AppColors.whiteColor,
+                color: AppColors.card,
                 borderRadius: BorderRadius.circular(12.r),
                 boxShadow: [
                   BoxShadow(
@@ -945,7 +945,7 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
             style: ElevatedButton.styleFrom(
               backgroundColor:
                   isPaused ? AppColors.green : AppColors.warningText,
-              foregroundColor: Colors.white,
+              foregroundColor: AppColors.onColoredBackground,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8.r),
               ),
@@ -969,7 +969,7 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
       backgroundColor: result.ok
           ? AppColors.green.withValues(alpha: 0.95)
           : AppColors.error.withValues(alpha: 0.95),
-      colorText: Colors.white,
+      colorText: AppColors.onColoredBackground,
       snackPosition: SnackPosition.BOTTOM,
       margin: EdgeInsets.all(12.w),
       borderRadius: 10,
@@ -1041,7 +1041,7 @@ class _PortalFilterChip extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 7.h),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary : AppColors.whiteColor,
+          color: selected ? AppColors.primary : AppColors.card,
           borderRadius: BorderRadius.circular(20.r),
           border: Border.all(
             color: selected ? AppColors.primary : AppColors.border,
@@ -1062,7 +1062,7 @@ class _PortalFilterChip extends StatelessWidget {
           style: TextStyle(
             fontSize: 12.sp,
             fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-            color: selected ? AppColors.whiteColor : AppColors.textGrey,
+            color: selected ? AppColors.onColoredBackground : AppColors.textGrey,
           ),
         ),
       ),

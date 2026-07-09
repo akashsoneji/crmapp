@@ -94,7 +94,7 @@ class _PmamManagerPlanDetailScreenState
               padding: EdgeInsets.symmetric(horizontal: 12.w),
               child: Container(
                 decoration: BoxDecoration(
-                  color: AppColors.whiteColor,
+                  color: AppColors.card,
                   borderRadius: BorderRadius.circular(8.r),
                   boxShadow: [
                     BoxShadow(
@@ -194,14 +194,14 @@ class _PmamManagerPlanDetailScreenState
                         vertical: 2.h,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.primary,
+                        color: AppColors.brandPrimary,
                         borderRadius: BorderRadius.circular(10.r),
                       ),
                       child: Text(
                         '$count',
                         style: TextStyle(
                           fontSize: 11.sp,
-                          color: Colors.white,
+                          color: AppColors.onColoredBackground,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -266,7 +266,7 @@ class _PmamManagerPlanDetailScreenState
                           ? AppColors.green
                           : AppColors.error)
                       .withValues(alpha: 0.95),
-                  colorText: Colors.white,
+                  colorText: AppColors.onColoredBackground,
                   snackPosition: SnackPosition.BOTTOM,
                   margin: EdgeInsets.all(12.w),
                   borderRadius: 10,
@@ -284,7 +284,7 @@ class _PmamManagerPlanDetailScreenState
                           ? AppColors.green
                           : AppColors.error)
                       .withValues(alpha: 0.95),
-                  colorText: Colors.white,
+                  colorText: AppColors.onColoredBackground,
                   snackPosition: SnackPosition.BOTTOM,
                   margin: EdgeInsets.all(12.w),
                   borderRadius: 10,
@@ -414,7 +414,7 @@ class _RequestCard extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(12.w),
       decoration: BoxDecoration(
-        color: AppColors.whiteColor,
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(12.r),
         border: Border.all(color: AppColors.border),
       ),
@@ -542,7 +542,7 @@ class _RequestCard extends StatelessWidget {
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.green,
-                      foregroundColor: Colors.white,
+                      foregroundColor: AppColors.onColoredBackground,
                       elevation: 0,
                       padding: EdgeInsets.symmetric(vertical: 10.h),
                       shape: RoundedRectangleBorder(
@@ -565,7 +565,7 @@ class _RequestCard extends StatelessWidget {
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.error,
-                      foregroundColor: Colors.white,
+                      foregroundColor: AppColors.onColoredBackground,
                       elevation: 0,
                       padding: EdgeInsets.symmetric(vertical: 10.h),
                       shape: RoundedRectangleBorder(

@@ -810,7 +810,7 @@ class _KpiHeroCard extends StatelessWidget {
                   color: accent,
                   borderRadius: BorderRadius.circular(7),
                 ),
-                child: Icon(icon, color: Colors.white, size: 15),
+                child: Icon(icon, color: AppColors.onColoredBackground, size: 15),
               ),
               const SizedBox(width: 8),
               Expanded(
