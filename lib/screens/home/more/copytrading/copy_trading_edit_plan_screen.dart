@@ -553,8 +553,8 @@ class _CopyTradingEditPlanScreenState extends State<CopyTradingEditPlanScreen> {
       child: ElevatedButton(
         onPressed: loading ? null : _submit,
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: AppColors.whiteColor,
+          backgroundColor: AppColors.brandPrimary,
+          foregroundColor: AppColors.onColoredBackground,
           disabledBackgroundColor: AppColors.primary.withValues(alpha: 0.5),
           elevation: 0,
           shape: RoundedRectangleBorder(
@@ -562,13 +562,13 @@ class _CopyTradingEditPlanScreenState extends State<CopyTradingEditPlanScreen> {
           ),
         ),
         child: loading
-            ? CommonLoadingWidget(size: 22, color: AppColors.whiteColor)
+            ? CommonLoadingWidget(size: 22, color: AppColors.onColoredBackground)
             : Text(
                 'Save Changes',
                 style: TextStyle(
                   fontSize: 15.sp,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.whiteColor,
+                  color: AppColors.onColoredBackground,
                 ),
               ),
       ),

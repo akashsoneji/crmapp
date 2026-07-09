@@ -38,6 +38,8 @@ import 'services/symbol_selection_service.dart';
 import 'services/single_websocket_service.dart';
 import 'routes/app_pages.dart';
 import 'widgets/exit_confirmation_wrapper.dart';
+import 'widgets/keyboard_dismiss_wrapper.dart';
+import 'utils/keyboard_unfocus_navigator_observer.dart';
 import 'widgets/app_notification_stack.dart';
 import 'controllers/app_notification_controller.dart';
 import 'utils/app_logger.dart';
@@ -449,7 +451,7 @@ class MyGetXApp extends StatelessWidget {
                             textScaleFactor: 1.0,
                             boldText: false,
                           ),
-                          child: child!,
+                          child: KeyboardDismissWrapper(child: child!),
                         ),
                         // Global notification overlay
                         const AppNotificationStack(),
@@ -471,6 +473,7 @@ class MyGetXApp extends StatelessWidget {
                   darkTheme: _buildDarkTheme(),
                   // initialRoute: AppPages.GET_STARTED,
                   getPages: AppPages.routes,
+                  navigatorObservers: [KeyboardUnfocusNavigatorObserver()],
                   home: const AuthCheckScreen(),
                 ),
               ),

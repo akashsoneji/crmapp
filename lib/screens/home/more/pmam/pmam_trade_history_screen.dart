@@ -236,7 +236,7 @@ class _PmamTradeHistoryScreenState extends State<PmamTradeHistoryScreen> {
                           vertical: 10.h,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.whiteColor,
+                          color: AppColors.card,
                           borderRadius: BorderRadius.circular(10.r),
                           border: Border.all(color: AppColors.border),
                         ),
@@ -282,7 +282,7 @@ class _PmamTradeHistoryScreenState extends State<PmamTradeHistoryScreen> {
                           vertical: 10.h,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.whiteColor,
+                          color: AppColors.card,
                           borderRadius: BorderRadius.circular(10.r),
                           border: Border.all(color: AppColors.border),
                         ),
@@ -512,7 +512,7 @@ class _PmamTradeHistoryScreenState extends State<PmamTradeHistoryScreen> {
                       return Container(
                         padding: EdgeInsets.all(12.w),
                         decoration: BoxDecoration(
-                          color: AppColors.whiteColor,
+                          color: AppColors.card,
                           borderRadius: BorderRadius.circular(12.r),
                           border: Border.all(color: AppColors.border),
                           boxShadow: [

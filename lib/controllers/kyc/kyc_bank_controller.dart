@@ -189,9 +189,17 @@ class KycBankController extends GetxController {
                 .where((name) => name.isNotEmpty)
                 .toList(),
           );
+// Prefer 'crypto' as the default selected withdrawal method when available.
           if (selectedAccountType.value.isEmpty ||
               !accountTypes.contains(selectedAccountType.value)) {
-            selectedAccountType.value = accountTypes.first;
+            final cryptoIndex = accountTypes.indexWhere(
+              (m) => m.toLowerCase() == 'crypto',
+            );
+            if (cryptoIndex != -1) {
+              selectedAccountType.value = accountTypes[cryptoIndex];
+            } else if (accountTypes.isNotEmpty) {
+              selectedAccountType.value = accountTypes.first;
+            }
           }
           _applyAccountTypeDefaults();
           print(
@@ -430,10 +438,18 @@ class KycBankController extends GetxController {
                 response.message ?? 'Withdrawal request submitted successfully',
           );
         }
+// Prefer 'crypto' as the default selected withdrawal method when available.
         // Reset form
         clearFormFields();
         if (accountTypes.isNotEmpty) {
-          selectedAccountType.value = accountTypes.first;
+          final cryptoIndex = accountTypes.indexWhere(
+            (m) => m.toLowerCase() == 'crypto',
+          );
+          if (cryptoIndex != -1) {
+            selectedAccountType.value = accountTypes[cryptoIndex];
+          } else {
+            selectedAccountType.value = accountTypes.first;
+          }
         }
         selectedCurrency.value = 'USD';
 
@@ -787,11 +803,19 @@ class KycBankController extends GetxController {
     onNavigationCallback = callback;
   }
 
+// Prefer 'crypto' as the default selected withdrawal method when available.
   // Clear all data
   void clearAllData() {
     clearFormFields();
     if (accountTypes.isNotEmpty) {
-      selectedAccountType.value = accountTypes.first;
+      final cryptoIndex = accountTypes.indexWhere(
+        (m) => m.toLowerCase() == 'crypto',
+      );
+      if (cryptoIndex != -1) {
+        selectedAccountType.value = accountTypes[cryptoIndex];
+      } else {
+        selectedAccountType.value = accountTypes.first;
+      }
     }
     selectedCurrency.value = 'USD';
     currencies.clear();

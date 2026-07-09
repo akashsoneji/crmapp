@@ -140,13 +140,13 @@ class _MyPlansTabState extends State<MyPlansTab> {
                     Icon(
                       Icons.add_rounded,
                       size: 15.sp,
-                      color: AppColors.onColoredBackground,
+                      color: AppColors.isDarkMode ? AppColors.whiteColorDark : AppColors.whiteColorLight,
                     ),
                     SizedBox(width: 4.w),
                     Text(
                       'Create Plan',
                       style: TextStyle(
-                        color: AppColors.onColoredBackground,
+                        color: AppColors.isDarkMode ? AppColors.whiteColorDark : AppColors.whiteColorLight ,
                         fontSize: 12.sp,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 0.2,

@@ -110,7 +110,7 @@ class _MyCopiesScreenState extends State<MyCopiesScreen> {
                         child: Container(
                           height: 38.h,
                           decoration: BoxDecoration(
-                            color: AppColors.whiteColor,
+                            color: AppColors.card,
                             borderRadius: BorderRadius.circular(8.r),
                             border: Border.all(
                               color: AppColors.border.withValues(alpha: 0.12),
@@ -148,7 +148,7 @@ class _MyCopiesScreenState extends State<MyCopiesScreen> {
                           height: 38.h,
                           padding: EdgeInsets.symmetric(horizontal: 10.w),
                           decoration: BoxDecoration(
-                            color: AppColors.whiteColor,
+                            color: AppColors.card,
                             borderRadius: BorderRadius.circular(8.r),
                             border: Border.all(
                               color: AppColors.border.withValues(alpha: 0.12),
@@ -249,11 +249,11 @@ class _MyCopiesScreenState extends State<MyCopiesScreen> {
                               onPressed:
                                   () => controller.load(showLoading: true),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primary,
+                                backgroundColor: AppColors.brandPrimary,
                               ),
                               child: Text(
                                 'Retry',
-                                style: TextStyle(color: AppColors.whiteColor),
+                                style: TextStyle(color: AppColors.onColoredBackground),
                               ),
                             ),
                           ],
@@ -375,7 +375,7 @@ class _MyCopiesScreenState extends State<MyCopiesScreen> {
       width: width,
       padding: EdgeInsets.all(12.r),
       decoration: BoxDecoration(
-        color: AppColors.whiteColor,
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(8.r),
         border: Border.all(color: AppColors.border.withValues(alpha: 0.12)),
         boxShadow: [
@@ -519,7 +519,7 @@ class _MyCopiesScreenState extends State<MyCopiesScreen> {
                 style: TextStyle(
                   fontSize: 9.sp,
                   fontWeight: FontWeight.bold,
-                  color: isSelected ? AppColors.whiteColor : AppColors.textGrey,
+                  color: isSelected ? AppColors.onColoredBackground : AppColors.textGrey,
                 ),
               ),
             ),
@@ -584,7 +584,7 @@ class _CopierCardItem extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.whiteColor,
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(12.r),
         border: Border.all(color: AppColors.border.withValues(alpha: 0.15)),
         boxShadow: [
@@ -770,7 +770,7 @@ class _CopierCardItem extends StatelessWidget {
                     onPressed: () => _stopCopier(context),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.error,
-                      foregroundColor: AppColors.whiteColor,
+                      foregroundColor: AppColors.onColoredBackground,
                       elevation: 0,
                       padding: EdgeInsets.symmetric(
                         horizontal: 14.w,

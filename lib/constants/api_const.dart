@@ -144,6 +144,25 @@ class ApiConstants {
       '${ajax}copytrading/master/status';
   static const String copyTradingMasterDashboardStats =
       '${ajax}copytrading/master/dashboard-stats';
+
+  /// Master dashboard overview (range + hero + main chart + copier_health
+  /// + plans + payouts + recent_trades + alerts).
+  /// Example: copytrading/master/dashboard-overview?range=30d
+  ///
+  /// PREFERRED: use [copyTradingMasterDashboardOverviewPath] and pass the
+  /// `range` via `queryParameters` instead — `ApiService.get` uses
+  /// `Uri.replace(queryParameters: …)` which strips any query string
+  /// already in the endpoint, so inlining `?range=…` here gets silently
+  /// dropped when callers also pass other query params (e.g. cache-buster).
+  static String copyTradingMasterDashboardOverview({String range = '30d'}) =>
+      '$copyTradingMasterDashboardOverviewPath?range=$range';
+
+  /// Path-only form (no query string) of [copyTradingMasterDashboardOverview].
+  /// Combine with `queryParameters: {'range': '7d', ...}` when calling
+  /// `ApiService.get`.
+  static const String copyTradingMasterDashboardOverviewPath =
+      '${ajax}copytrading/master/dashboard-overview';
+
   static const String copyTradingMasterPlans = '${ajax}copytrading/master/plans';
   static String copyTradingMasterOpenPositions(int planId) =>
       '$copyTradingMasterPlans/$planId/open-positions';
@@ -155,6 +174,13 @@ class ApiConstants {
       '${ajax}copytrading/copier/subscriptions?page=$page&per_page=$perPage';
   static String copyTradingMasterCopiers({int page = 1, int perPage = 20}) =>
       '${ajax}copytrading/master/copiers?page=$page&per_page=$perPage';
+
+  /// Master-side view of a single copier's subscription history
+  /// (per-period summary + nested trades). Used by the new
+  /// "subscription history" drill-down from the master copiers list.
+  static String copyTradingMasterCopierSubscriptionHistory(int copierId) =>
+      '${ajax}copytrading/master/copiers/$copierId/subscription-history';
+
   static String copyTradingCopierSubscriptionDetail(int id) =>
       '${ajax}copytrading/copier/subscriptions/$id/detail';
   static String copyTradingCopierSubscriptionTrades(int id, {int page = 1, int limit = 20, int? t}) =>

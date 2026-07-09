@@ -38,6 +38,12 @@ abstract class Routes {
   static const TRADER_DETAILS = _Paths.TRADER_DETAILS;
   static const BONUS = _Paths.BONUS;
   static const DEMO_CONTEST = _Paths.DEMO_CONTEST;
+  static const DEMO_CONTEST_RULES = _Paths.DEMO_CONTEST_RULES;
+  static const DEMO_CONTEST_JOIN = _Paths.DEMO_CONTEST_JOIN;
+  static const DEMO_CONTEST_DETAILS = _Paths.DEMO_CONTEST_DETAILS;
+  static const DEMO_CONTEST_LEADERBOARD = _Paths.DEMO_CONTEST_LEADERBOARD;
+  static const DEMO_CONTEST_HISTORY = _Paths.DEMO_CONTEST_HISTORY;
+  static const DEMO_CONTEST_WINNERS = _Paths.DEMO_CONTEST_WINNERS;
   static const SETTING = _Paths.SETTING;
   static const SUPPORT = _Paths.SUPPORT;
   static const TICKET_LIST = _Paths.TICKET_LIST;
@@ -60,6 +66,7 @@ abstract class Routes {
 
   // ── PMAM Routes ──
   static const PMAM_MAIN = _Paths.PMAM_MAIN;
+  static const PMAM_MY_INVESTMENT = _Paths.PMAM_MY_INVESTMENT;
   static const PMAM_BECOME_MANAGER = _Paths.PMAM_BECOME_MANAGER;
   static const PMAM_MANAGER_DASHBOARD = _Paths.PMAM_MANAGER_DASHBOARD;
   static const PMAM_MANAGER_PORTAL = _Paths.PMAM_MANAGER_PORTAL;
@@ -67,6 +74,7 @@ abstract class Routes {
   static const PMAM_INVESTOR_PORTAL = _Paths.PMAM_INVESTOR_PORTAL;
   static const PMAM_MANAGER_DETAIL = _Paths.PMAM_MANAGER_DETAIL;
   static const PMAM_MANAGER_PLAN_DETAIL = _Paths.PMAM_MANAGER_PLAN_DETAIL;
+  static const PMAM_FUND_MANAGER_VIEW = _Paths.PMAM_FUND_MANAGER_VIEW;
 
   // ── Trade & Win ──
   static const TRADE_WIN_MAIN = _Paths.TRADE_WIN_MAIN;
@@ -122,6 +130,12 @@ abstract class _Paths {
   static const TRADER_DETAILS = '/trader-details';
   static const BONUS = '/bonus';
   static const DEMO_CONTEST = '/demo-contest';
+  static const DEMO_CONTEST_RULES = '/demo-contest/rules';
+  static const DEMO_CONTEST_JOIN = '/demo-contest/join';
+  static const DEMO_CONTEST_DETAILS = '/demo-contest/details';
+  static const DEMO_CONTEST_LEADERBOARD = '/demo-contest/leaderboard';
+  static const DEMO_CONTEST_HISTORY = '/demo-contest/history';
+  static const DEMO_CONTEST_WINNERS = '/demo-contest/winners';
   static const SETTING = '/setting';
   static const SUPPORT = '/support';
   static const TICKET_LIST = '/ticket-list';
@@ -151,6 +165,7 @@ abstract class _Paths {
 
   // ── PMAM Paths ──
   static const PMAM_MAIN = '/pmam-main';
+  static const PMAM_MY_INVESTMENT = '/pmam-my-investment';
   static const PMAM_BECOME_MANAGER = '/pmam-become-manager';
   static const PMAM_MANAGER_DASHBOARD = '/pmam-manager-dashboard';
   static const PMAM_MANAGER_PORTAL = '/pmam-manager-portal';
@@ -158,6 +173,7 @@ abstract class _Paths {
   static const PMAM_INVESTOR_PORTAL = '/pmam-investor-portal';
   static const PMAM_MANAGER_DETAIL = '/pmam-manager-detail';
   static const PMAM_MANAGER_PLAN_DETAIL = '/pmam-manager-plan-detail';
+  static const PMAM_FUND_MANAGER_VIEW = '/pmam-fund-manager-view';
 
   // ── Trade & Win ──
   static const TRADE_WIN_MAIN = '/trade-win-main';

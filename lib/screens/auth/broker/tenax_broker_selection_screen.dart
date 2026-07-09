@@ -133,7 +133,7 @@ class TenaxBrokerSelectionScreen
                       height: 50.h,
                       child: DecoratedBox(
                         decoration: BoxDecoration(
-                          color: AppColors.primary,
+                          color: AppColors.isDarkMode ? Color(0xFFFFFFFF) : Color(0xFF4A0C54),
                           borderRadius: BorderRadius.circular(14.r),
                         ),
                         child: ElevatedButton(

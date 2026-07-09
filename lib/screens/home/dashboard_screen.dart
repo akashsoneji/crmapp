@@ -112,106 +112,120 @@ class DashboardScreen extends StatelessWidget {
                             constraints: BoxConstraints(
                               minHeight: constraints.maxHeight,
                             ),
-                            child: Container(
-                              alignment: Alignment.center,
-                              padding: EdgeInsets.symmetric(horizontal: 22.w),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  FutureBuilder<Widget>(
-                                    future: SvgColorHelper.loadSvgWithColor(
-                                      assetPath:
-                                          'assets/svg/deshboard/no_account.svg',
-                                      targetColor: AppColors.primary,
-                                      colorToReplace:
-                                          '#5F259E', // Replace this color in the SVG
-                                      height: 100.h,
-                                      width: 100.w,
-                                    ),
-                                    builder: (context, snapshot) {
-                                      if (snapshot.hasData)
-                                        return snapshot.data!;
-                                      return SizedBox(
-                                        height: 100.h,
-                                        width: 100.w,
-                                      );
-                                    },
-                                  ),
-                                  SizedBox(height: 14.h),
-                                  Text(
-                                    languageService.tr(
-                                      'dashboard_new_account_title',
-                                    ),
-                                    style: AppTextStyles.heading,
-                                    textAlign: TextAlign.center,
-                                  ),
-                                  SizedBox(height: 14.h),
-                                  Text(
-                                    languageService.tr(
-                                      'dashboard_new_account_description',
-                                    ),
-                                    style: AppTextStyles.grey14400h57,
-                                    textAlign: TextAlign.center,
-                                  ),
-                                  SizedBox(height: 14.h),
-                                  SizedBox(
-                                    height: 44.h,
-                                    width: 333.w,
-                                    child: OutlinedButton(
-                                      style: OutlinedButton.styleFrom(
-                                        side: BorderSide(
-                                          color: AppColors.primary,
+                            child: IntrinsicHeight(
+                              child: Container(
+                                alignment: Alignment.center,
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 22.w,
+                                  vertical: 16.h,
+                                ),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Flexible(
+                                      child: FutureBuilder<Widget>(
+                                        future: SvgColorHelper.loadSvgWithColor(
+                                          assetPath:
+                                              'assets/svg/deshboard/no_account.svg',
+                                          targetColor: AppColors.primary,
+                                          colorToReplace:
+                                              '#5F259E', // Replace this color in the SVG
+                                          height: 100.h,
+                                          width: 100.w,
                                         ),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            12.r,
-                                          ),
-                                        ),
+                                        builder: (context, snapshot) {
+                                          if (snapshot.hasData)
+                                            return snapshot.data!;
+                                          return SizedBox(
+                                            height: 100.h,
+                                            width: 100.w,
+                                          );
+                                        },
                                       ),
-                                      onPressed: () {
-                                        controller.openRealAccount();
-                                      },
+                                    ),
+                                    SizedBox(height: 14.h),
+                                    Flexible(
                                       child: Text(
                                         languageService.tr(
-                                          'dashboard_open_real_account',
+                                          'dashboard_new_account_title',
                                         ),
-                                        style: AppTextStyles.black14600h1_71
-                                            .copyWith(color: AppColors.primary),
+                                        style: AppTextStyles.heading,
+                                        textAlign: TextAlign.center,
                                       ),
                                     ),
-                                  ),
-                                  SizedBox(height: 14.h),
-                                  SizedBox(
-                                    height: 44.h,
-                                    width: 333.w,
-                                    child: OutlinedButton(
-                                      style: OutlinedButton.styleFrom(
-                                        backgroundColor: AppColors.primary,
-                                        side: BorderSide(
-                                          color: AppColors.backgroundLight,
-                                        ),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            12.r,
-                                          ),
-                                        ),
-                                      ),
-                                      onPressed: () {
-                                        controller.openDemoAccount();
-                                      },
+                                    SizedBox(height: 14.h),
+                                    Flexible(
                                       child: Text(
                                         languageService.tr(
-                                          'dashboard_open_demo_account',
+                                          'dashboard_new_account_description',
                                         ),
-                                        style: AppTextStyles.black14600h1_71
-                                            .copyWith(
-                                              color: AppColors.whiteColor,
-                                            ),
+                                        style: AppTextStyles.grey14400h57,
+                                        textAlign: TextAlign.center,
                                       ),
                                     ),
-                                  ),
-                                ],
+                                    SizedBox(height: 14.h),
+                                    SizedBox(
+                                      height: 44.h,
+                                      width: 333.w,
+                                      child: OutlinedButton(
+                                        style: OutlinedButton.styleFrom(
+                                          minimumSize: Size(0, 44.h),
+                                          side: BorderSide(
+                                            color: AppColors.primary,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(12.r),
+                                          ),
+                                        ),
+                                        onPressed: () {
+                                          controller.openRealAccount();
+                                        },
+                                        child: Text(
+                                          languageService.tr(
+                                            'dashboard_open_real_account',
+                                          ),
+                                          style: AppTextStyles.black14600h1_71
+                                              .copyWith(
+                                                color: AppColors.primary,
+                                              ),
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(height: 14.h),
+                                    SizedBox(
+                                      height: 44.h,
+                                      width: 333.w,
+                                      child: OutlinedButton(
+                                        style: OutlinedButton.styleFrom(
+                                          minimumSize: Size(0, 44.h),
+                                          backgroundColor: AppColors.primary,
+                                          side: BorderSide(
+                                            color: AppColors.backgroundLight,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(12.r),
+                                          ),
+                                        ),
+                                        onPressed: () {
+                                          controller.openDemoAccount();
+                                        },
+                                        child: Text(
+                                          languageService.tr(
+                                            'dashboard_open_demo_account',
+                                          ),
+                                          style: AppTextStyles.black14600h1_71
+                                              .copyWith(
+                                                color: AppColors.whiteColor,
+                                              ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),

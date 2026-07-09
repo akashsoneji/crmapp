@@ -55,8 +55,16 @@ class _SearchInstrumentsScreenState extends State<SearchInstrumentsScreen> {
     if (widget.favoritesOnly) {
       _instrumentsController = Get.find<InstrumentsController>();
     } else {
+      // If the controller already exists from a previous open, Get.put returns
+      // the existing instance and onInit() does NOT run again. We must
+      // explicitly refetch so data reflects the current active MT5 account.
+      final alreadyRegistered =
+          Get.isRegistered<SearchInstrumentsController>();
       _searchController2 = Get.put(SearchInstrumentsController());
       _searchController2.filterByCategory('All');
+      if (alreadyRegistered) {
+        _searchController2.fetchInstruments();
+      }
     }
   }
 
@@ -188,7 +196,10 @@ class _SearchInstrumentsScreenState extends State<SearchInstrumentsScreen> {
           child: Row(
             children: [
               AppSvgBackButton(
-                onPressed: () => Get.back(closeOverlays: true),
+                onPressed: () {
+                  FocusManager.instance.primaryFocus?.unfocus();
+                  Get.back(closeOverlays: true);
+                },
                 iconWidth: 30.w,
                 iconHeight: 30.h,
               ),
@@ -372,6 +383,7 @@ class _SearchInstrumentsScreenState extends State<SearchInstrumentsScreen> {
   // ─── Navigation ──────────────────────────────────────────────────────────
 
   void _navigateToChartWithSymbol(String symbol) {
+    FocusManager.instance.primaryFocus?.unfocus();
     _symbolSelectionService.setSymbol(symbol);
     ChartScreen.setSelectedSymbol(symbol);
     if (widget.onNavigateToChart != null) {
@@ -482,6 +494,7 @@ class _SearchInstrumentsScreenState extends State<SearchInstrumentsScreen> {
 
   @override
   void dispose() {
+    FocusManager.instance.primaryFocus?.unfocus();
     _searchController.removeListener(_onSearchTextChanged);
     _searchController.dispose();
     super.dispose();

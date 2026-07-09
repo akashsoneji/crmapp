@@ -41,6 +41,7 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
   DateTime? _lastRefreshTime;
   List<Map<String, dynamic>> _tenaxProfiles = <Map<String, dynamic>>[];
   String? _currentTenaxProfileKey;
+  String? _currentBrokerName;
 
   @override
   void initState() {
@@ -107,6 +108,7 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
         _isTenaxBrokerFlowEnabled = false;
         _tenaxProfiles = <Map<String, dynamic>>[];
         _currentTenaxProfileKey = null;
+        _currentBrokerName = null;
       });
       return;
     }
@@ -115,10 +117,31 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
     final profiles = await SecureStorageService.getTenaxUserBrokerProfiles();
     final current = await SecureStorageService.getTenaxCurrentProfileKey();
     if (!mounted) return;
+
+    String? brokerName;
+    final brokerData = await SecureStorageService.getTenaxBrokerSelection();
+    if (brokerData != null) {
+      final selectedName =
+          (brokerData['selected_name'] ?? '').toString().trim();
+      if (selectedName.isNotEmpty) {
+        brokerName = selectedName;
+      } else {
+        final selectedSlug =
+            (brokerData['selected_slug'] ??
+                    brokerData['slug'] ??
+                    brokerData['broker_list_item']?['slug'] ??
+                    '')
+                .toString();
+        brokerName = selectedSlug.isNotEmpty ? selectedSlug : null;
+      }
+    }
+    brokerName ??= FlavorConfig.instance.appName;
+
     setState(() {
       _isTenaxBrokerFlowEnabled = true;
       _tenaxProfiles = profiles;
       _currentTenaxProfileKey = current;
+      _currentBrokerName = brokerName;
     });
   }
 
@@ -271,7 +294,7 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                       ),
                     ),
                     child: Text(
-                      'Add New +',
+                      'Add New Broker +',
                       style: TextStyle(
                         color: AppColors.whiteColor,
                         fontSize: 16.sp,
@@ -789,6 +812,32 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                               ),
                             );
                           }),
+                          if (_isTenaxBrokerFlowEnabled &&
+                              (_currentBrokerName ?? '').isNotEmpty) ...[
+                            SizedBox(height: 2.h),
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.business_rounded,
+                                  size: 13.sp,
+                                  color: AppColors.textGrey,
+                                ),
+                                SizedBox(width: 4.w),
+                                Flexible(
+                                  child: Text(
+                                    _currentBrokerName!,
+                                    style: TextStyle(
+                                      color: AppColors.textGrey,
+                                      fontSize: 12.sp,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -1008,7 +1057,6 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                   );
                 },
               ),
-
               SizedBox(height: 42.h),
             ],
           ),

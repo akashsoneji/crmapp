@@ -2197,7 +2197,7 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
           ),
           // Value - only this part updates, with fixed width to prevent layout shifts
           SizedBox(
-            width: 100.w, // Fixed width to prevent layout shifts
+            width: 112.w, // Fixed width to prevent layout shifts
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 200),
               transitionBuilder: (Widget child, Animation<double> animation) {
