@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../constants/color.dart';
+import '../flavor_config.dart';
 
 /// Bottom navigation for the PAMM module.
 ///
@@ -23,19 +24,25 @@ class PmamBottomNavigation extends StatelessWidget {
   final ValueChanged<int> onTap;
   final PmamNavMode mode;
 
-  List<_PmamTab> get _tabs => mode == PmamNavMode.manager
-      ? const [
-          _PmamTab('Dashboard', Icons.dashboard_rounded),
-          _PmamTab('Plans', Icons.layers_rounded),
-          _PmamTab('Investors', Icons.group_rounded),
-          _PmamTab('Explore', Icons.travel_explore_rounded),
-          _PmamTab('Invest', Icons.account_balance_wallet_rounded),
-        ]
-      : const [
-          _PmamTab('Become Mgr', Icons.workspace_premium_rounded),
-          _PmamTab('Explore', Icons.travel_explore_rounded),
-          _PmamTab('Invest', Icons.account_balance_wallet_rounded),
-        ];
+  List<_PmamTab> get _tabs {
+    if (mode == PmamNavMode.manager) {
+      return const [
+        _PmamTab('Dashboard', Icons.dashboard_rounded),
+        _PmamTab('Plans', Icons.layers_rounded),
+        _PmamTab('Investors', Icons.group_rounded),
+        _PmamTab('Explore', Icons.travel_explore_rounded),
+        _PmamTab('Invest', Icons.account_balance_wallet_rounded),
+      ];
+    }
+    
+    final isGtxPrime = FlavorConfig.instance.appName == 'GTX Prime';
+    
+    return [
+      if (!isGtxPrime) const _PmamTab('Become Mgr', Icons.workspace_premium_rounded),
+      const _PmamTab('Explore', Icons.travel_explore_rounded),
+      const _PmamTab('Invest', Icons.account_balance_wallet_rounded),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {

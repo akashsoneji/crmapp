@@ -11,6 +11,7 @@ import 'pmam_explore_managers_screen.dart';
 import 'pmam_investor_portal_screen.dart';
 import 'pmam_manager_dashboard_screen.dart';
 import 'pmam_manager_portal_screen.dart';
+import '../../../../flavor_config.dart';
 
 /// Single entry-point for the PAMM module.
 ///
@@ -65,10 +66,11 @@ class _PmamMainScreenState extends State<PmamMainScreen> {
         PmamInvestorPortalScreen(initialTab: 1, embedded: true),
       ];
     }
-    return const [
-      PmamBecomeManagerScreen(),
-      PmamExploreManagersScreen(embedded: true),
-      PmamInvestorPortalScreen(initialTab: 1, embedded: true),
+    final isGtxPrime = FlavorConfig.instance.appName == 'GTX Prime';
+    return [
+      if (!isGtxPrime) const PmamBecomeManagerScreen(),
+      const PmamExploreManagersScreen(embedded: true),
+      const PmamInvestorPortalScreen(initialTab: 1, embedded: true),
     ];
   }
 
@@ -82,11 +84,13 @@ class _PmamMainScreenState extends State<PmamMainScreen> {
         'My Investments',
       ][i];
     }
-    return const [
-      'Become a Manager',
+    final isGtxPrime = FlavorConfig.instance.appName == 'GTX Prime';
+    final titles = [
+      if (!isGtxPrime) 'Become a Manager',
       'Explore Fund Managers',
       'My Investments',
-    ][i];
+    ];
+    return titles[i];
   }
 
   @override
