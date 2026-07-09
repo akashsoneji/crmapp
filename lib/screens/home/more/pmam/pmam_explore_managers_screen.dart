@@ -910,7 +910,10 @@ class _ManagerCard extends StatelessWidget {
                       arguments: {'managerCode': manager.managerCode},
                     );
                   } else {
-                    // Handled by outer card tap for regular view
+                    Get.toNamed(
+                      AppPages.PMAM_FUND_MANAGER_VIEW,
+                      arguments: manager.managerCode,
+                    );
                   }
                 },
                 borderRadius: BorderRadius.circular(8),

@@ -324,7 +324,7 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                               ? SizedBox(
                                   width: 18.sp,
                                   height: 18.sp,
-                                  child: const CircularProgressIndicator(
+                                  child: CircularProgressIndicator(
                                     strokeWidth: 2,
                                     color: AppColors.onColoredBackground,
                                   ),

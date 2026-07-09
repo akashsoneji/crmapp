@@ -731,7 +731,7 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                           bottom: -2,
                           right: -2,
                           child: Container(
-                            decoration: const BoxDecoration(
+                            decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               color: AppColors.onColoredBackground,
                             ),

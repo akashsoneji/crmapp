@@ -1852,7 +1852,7 @@ class _BottomBar extends StatelessWidget {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
                     ),
                     child: loading
-                        ? SizedBox(width: 18.r, height: 18.r, child: const CircularProgressIndicator(strokeWidth: 2, color: AppColors.onColoredBackground))
+                        ? SizedBox(width: 18.r, height: 18.r, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.onColoredBackground))
                         : Text(
                             isEditMode ? 'Save' : (s == 0 ? 'Next' : 'Subscribe'),
                             style: AppTextStyles.button,

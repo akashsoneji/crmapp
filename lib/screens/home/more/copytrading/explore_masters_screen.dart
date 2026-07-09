@@ -48,7 +48,7 @@ class _ExploreMastersScreenState extends State<ExploreMastersScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.whiteColor,
+        backgroundColor: AppColors.card,
         elevation: 0.5,
         scrolledUnderElevation: 0,
         title: Text(
@@ -269,7 +269,7 @@ class _SummaryCard extends StatelessWidget {
       height: 86.h,
       padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
       decoration: BoxDecoration(
-        color: AppColors.whiteColor,
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(12.r),
         border: Border.all(color: AppColors.border, width: 1),
       ),
@@ -287,7 +287,7 @@ class _SummaryCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(6.r),
                 ),
                 alignment: Alignment.center,
-                child: Icon(icon, size: 13.sp, color: AppColors.whiteColor),
+                child: Icon(icon, size: 13.sp, color: AppColors.onColoredBackground),
               ),
               SizedBox(width: 6.w),
               Expanded(
@@ -383,7 +383,7 @@ class _FilterTabs extends StatelessWidget {
         padding: EdgeInsets.symmetric(horizontal: 14.w),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary : AppColors.whiteColor,
+          color: selected ? AppColors.primary : AppColors.card,
           borderRadius: BorderRadius.circular(20.r),
           border: Border.all(
             color: selected ? AppColors.primary : AppColors.border,
@@ -397,7 +397,7 @@ class _FilterTabs extends StatelessWidget {
               style: TextStyle(
                 fontSize: 12.sp,
                 fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                color: selected ? AppColors.whiteColor : AppColors.textPrimary,
+                color: selected ? AppColors.onColoredBackground : AppColors.textPrimary,
               ),
             ),
             SizedBox(width: 6.w),
@@ -414,7 +414,7 @@ class _FilterTabs extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 10.sp,
                   fontWeight: FontWeight.w700,
-                  color: selected ? AppColors.whiteColor : AppColors.textGrey,
+                  color: selected ? AppColors.onColoredBackground : AppColors.textGrey,
                 ),
               ),
             ),
@@ -480,7 +480,7 @@ class _FilterChips extends StatelessWidget {
         padding: EdgeInsets.symmetric(horizontal: 12.w),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: AppColors.whiteColor,
+          color: AppColors.card,
           borderRadius: BorderRadius.circular(20.r),
           border: Border.all(color: AppColors.border),
         ),
@@ -549,7 +549,7 @@ class _FilterChips extends StatelessWidget {
     final ctrl = TextEditingController(text: c.search.value);
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.whiteColor,
+      backgroundColor: AppColors.card,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
       ),
@@ -599,7 +599,7 @@ class _FilterChips extends StatelessWidget {
   }) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.whiteColor,
+      backgroundColor: AppColors.card,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
       ),
@@ -677,7 +677,7 @@ class _MasterCardHorizontal extends StatelessWidget {
         child: Container(
           padding: EdgeInsets.all(12.w),
           decoration: BoxDecoration(
-            color: AppColors.whiteColor,
+            color: AppColors.card,
             borderRadius: BorderRadius.circular(14.r),
             border: Border.all(color: AppColors.border, width: 1),
           ),
@@ -854,7 +854,7 @@ class _MasterCardHorizontal extends StatelessWidget {
                       disabledBackgroundColor: AppColors.textGrey.withValues(
                         alpha: 0.20,
                       ),
-                      foregroundColor: AppColors.whiteColor,
+                      foregroundColor: AppColors.onColoredBackground,
                       elevation: 0,
                       padding: EdgeInsets.symmetric(horizontal: 18.w),
                       shape: RoundedRectangleBorder(
@@ -976,7 +976,7 @@ class _LoadingList extends StatelessWidget {
             height: 200.h,
             margin: EdgeInsets.only(bottom: 12.h),
             decoration: BoxDecoration(
-              color: AppColors.whiteColor,
+              color: AppColors.card,
               borderRadius: BorderRadius.circular(14.r),
               border: Border.all(color: AppColors.border),
             ),
