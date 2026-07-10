@@ -881,9 +881,13 @@ class _CopierHealthCard extends StatelessWidget {
 
   String _avgAgeLabel(int days) {
     if (days <= 0) return '—';
-    if (days < 30) return '${days}d';
+    // Show in days until we have a full 2 months (60d) — otherwise
+    // values like 45d would jump to "2mo" via .round() and disagree
+    // with the web dashboard which keeps them as "d".
+    if (days < 60) return '${days}d';
     if (days < 365) {
-      final m = (days / 30).round();
+      // floor() — so 89d still reads "2mo" instead of jumping to "3mo".
+      final m = (days / 30).floor();
       return '${m}mo';
     }
     final y = (days / 365).toStringAsFixed(1);
@@ -1216,6 +1220,7 @@ class _PlanRow extends StatelessWidget {
             ),
           ),
           Expanded(
+            flex: 2,
             child: Text(
               '${positive ? '+' : ''}${plan.roiPct.toStringAsFixed(2)}%',
               textAlign: TextAlign.right,

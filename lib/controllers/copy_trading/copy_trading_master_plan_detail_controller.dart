@@ -40,7 +40,7 @@ class CopyTradingMasterPlanDetail {
   final bool copyingPaused;
   final String copyingPausedAt;
 
-  final String initialEquitySnapshot;
+  final num initialEquitySnapshot;
   final String initialEquityCapturedAt;
   final String approvedAt;
   final String approvedBy;
@@ -170,7 +170,7 @@ class CopyTradingMasterPlanDetail {
       equityCurve: toMapList(json['equity_curve']).map(CopyTradingPlanEquityCurvePoint.fromJson).toList(),
       activityFeed: toMapList(json['activity_feed']).map(CopyTradingPlanActivityFeedItem.fromJson).toList(),
       timeline: toMapList(json['timeline']).map(CopyTradingPlanTimelineItem.fromJson).toList(),
-      initialEquitySnapshot: (json['initial_equity_snapshot'] ?? '').toString(),
+      initialEquitySnapshot: toNum(json['initial_equity_snapshot']),
       initialEquityCapturedAt: (json['initial_equity_captured_at'] ?? '').toString(),
       approvedAt: (json['approved_at'] ?? '').toString(),
       approvedBy: (json['approved_by'] ?? '').toString(),
