@@ -47,7 +47,8 @@ class ApiConstants {
   static const String depositList = '${ajax}deposit';
   static const String depositRequest = '${ajax}deposit/depositrequest';
   static const String cregisDepositCreate = '${ajax}deposit/cregis';
-  static const String cregisDepositStatus = '${ajax}deposit/by-reference';
+  // NOTE: cregisDepositStatus (deposit/by-reference) was removed in the
+  // 120s-wait refactor — wait screens now poll /transactions instead.
   static const String realPlanDetails = '${ajax}mt5accounts/plandetails';
   static const String getTransactions = '${ajax}transactions';
   static const String depositProofProxy = '${ajax}deposit-proof-proxy/';

@@ -684,6 +684,45 @@ class TransactionHistoryController extends GetxController {
     }
   }
 
+  /// Cregis poll helper: returns the FIRST row whose `referenceNumber` matches
+  /// the Cregis `ref` param AND whose status is one of approved/success/completed.
+  /// Returns `null` row + diagnostic `rawStatus` on no-match / http_error / exception.
+  ///
+  /// Used by the Cregis wait screens (`cregis_success_screen`,
+  /// `cregis_address_screen`) instead of polling the legacy
+  /// `deposit/by-reference` endpoint. The transaction-history list is the
+  /// authoritative source of truth — once the gateway writes the matching row,
+  /// the row will appear here.
+  Future<({Data? row, int totalRows, String rawStatus})>
+      fetchLatestTransactionForRef(String ref, {bool statusFilter = true}) async {
+    try {
+      final token = await SecureStorageService.getAuthToken();
+      final response = await ApiService.get(
+        endpoint: ApiConstants.getTransactions,
+        token: token,
+      );
+      if (!response.success || response.data == null) {
+        return (row: null, totalRows: 0, rawStatus: 'http_error');
+      }
+
+      final parsed = Transaction.fromJson(response.data as Map<String, dynamic>);
+      final rows = parsed.data ?? <Data>[];
+
+      for (final row in rows) {
+        if ((row.referenceNumber ?? '').trim() != ref.trim()) continue;
+        if (statusFilter) {
+          final s = (row.status ?? '').toLowerCase().trim();
+          const allowed = {'approved', 'success', 'completed'};
+          if (!allowed.contains(s)) continue;
+        }
+        return (row: row, totalRows: rows.length, rawStatus: 'match');
+      }
+      return (row: null, totalRows: rows.length, rawStatus: 'no_match');
+    } catch (e) {
+      return (row: null, totalRows: 0, rawStatus: 'exception:$e');
+    }
+  }
+
   void updateDate(DateTime date) {
     selectedDate.value = date;
   }

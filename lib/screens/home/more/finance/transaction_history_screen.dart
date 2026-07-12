@@ -5,7 +5,6 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/utils/trl_helper.dart';
-import 'package:crm_app/utils/navigation_helper.dart';
 import '../../../../constants/text_styles.dart';
 import '../../../../controllers/finance/transaction_history_controller.dart';
 import '../../../../routes/app_pages.dart';
@@ -175,13 +174,24 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     }
   }
 
+  /// Universal back handler — works for every caller:
+  ///   • Normal push (from More / settings, etc.)   → Navigator.canPop() is true → pop the screen.
+  ///   • Stack wiped via offAllNamed (from Cregis) → fall back to TRADING so the
+  ///     user lands on a meaningful screen instead of a black void.
+  void _handleBack() {
+    if (Navigator.of(context).canPop()) {
+      Get.back();
+      return;
+    }
+    Get.offAllNamed(Routes.TRADING);
+  }
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      canPop: false, // Disable device back button completely
+      canPop: false, // we route back manually via _handleBack()
       onPopInvoked: (didPop) {
-        // Do nothing - device back button is disabled
-        // User must use app bar back button instead
+        if (!didPop) _handleBack();
       },
       child: Scaffold(
         backgroundColor: AppColors.background,
@@ -190,17 +200,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
           scrolledUnderElevation: 0,
           elevation: 0,
           leading: AppSvgBackButton(
-            onPressed: () {
-              final fromTab =
-                  Get.arguments != null && Get.arguments['from'] != null
-                      ? Get.arguments['from']
-                      : 'dashboard';
-              if (fromTab == 'finance') {
-                NavigationHelper.safeBack(context: context);
-              } else {
-                Get.offAllNamed(Routes.TRADING);
-              }
-            },
+            onPressed: _handleBack,
             iconWidth: 30.w,
             iconHeight: 30.h,
           ),

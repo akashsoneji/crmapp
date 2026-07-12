@@ -99,8 +99,11 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
   // Get current digits from API
   int _getCurrentDigits() {
     final priceData = chartSocketController.getCurrentPrice();
-    if (priceData != null && priceData.containsKey('digits')) {
-      return int.tryParse(priceData['digits'].toString()) ?? 5;
+    if (priceData != null) {
+      final digitsVal = priceData['digits'] ?? priceData['Digits'];
+      if (digitsVal != null) {
+        return int.tryParse(digitsVal.toString()) ?? 5;
+      }
     }
     return 5; // Default fallback
   }
@@ -160,6 +163,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
       currentPrice,
       isIncrease,
       orderType,
+      decimals: currentDigits,
     );
 
     // Update the price
@@ -226,6 +230,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
       isIncrease,
       orderType,
       entryPrice,
+      decimals: currentDigits,
     );
 
     // Update the SL
@@ -289,6 +294,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
       isIncrease,
       orderType,
       entryPrice,
+      decimals: currentDigits,
     );
 
     // Update the TP
@@ -407,9 +413,11 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
     widget.limitPriceController.addListener(() {
       final text = widget.limitPriceController.text;
       if (text.isNotEmpty) {
-        final newPrice = PrecisionHelper.parseDouble(text);
+        final newPrice = PrecisionHelper.parseDouble(text, decimals: currentDigits);
         if (newPrice > 0) {
-          widget.limitPrice.value = newPrice;
+          if (widget.limitPrice.value != newPrice) {
+            widget.limitPrice.value = newPrice;
+          }
           // Recalculate TP/SL when limit price changes
           _recalculateTPSL();
         }
@@ -550,6 +558,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
 
     final tpPrice = PrecisionHelper.parseDouble(
       widget.takeProfitController.text,
+      decimals: currentDigits,
     );
     if (tpPrice == null || tpPrice <= 0) return null;
 
@@ -604,7 +613,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
       return null;
     }
 
-    final slPrice = PrecisionHelper.parseDouble(widget.stopLossController.text);
+    final slPrice = PrecisionHelper.parseDouble(widget.stopLossController.text, decimals: currentDigits);
     if (slPrice == null || slPrice <= 0) return null;
 
     // Use limit price as entry price for pending orders
@@ -1240,6 +1249,7 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
       currentPrice,
       isIncrease,
       orderType,
+      decimals: currentDigits,
     );
 
     // Update the price
@@ -1332,11 +1342,12 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                           isDense: true,
                         ),
                         onChanged: (value) {
-                          isManuallyEditingPrice =
-                              true; // User is manually editing
-                          final newPrice = PrecisionHelper.parseDouble(value);
+                          isManuallyEditingPrice = true; // User is manually editing
+                          final newPrice = PrecisionHelper.parseDouble(value, decimals: currentDigits);
                           if (newPrice > 0) {
-                            priceNotifier.value = newPrice;
+                            if (priceNotifier.value != newPrice) {
+                              priceNotifier.value = newPrice;
+                            }
                             // Trigger setState to ensure UI rebuilds for real-time validation
                             setState(() {});
                           }
@@ -1550,17 +1561,21 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
 
   // Get price increment based on symbol
   double _getPriceIncrement() {
-    if (widget.selectedSymbol.contains('JPY')) {
-      return 0.01;
-    } else if (widget.selectedSymbol.contains('XAU') ||
-        widget.selectedSymbol.contains('GOLD')) {
-      return 0.01;
-    } else if (widget.selectedSymbol.contains('XAG') ||
-        widget.selectedSymbol.contains('SILVER')) {
-      return 0.001;
-    } else {
-      return 0.0001;
+    final decimals = currentDigits;
+    if (decimals <= 0) return 1.0;
+    if (decimals == 1) return 0.1;
+    if (decimals == 2) return 0.01;
+    if (decimals == 3) return 0.001;
+    if (decimals == 4) return 0.0001;
+    if (decimals == 5) return 0.00001;
+    if (decimals == 6) return 0.000001;
+    if (decimals == 7) return 0.0000001;
+    if (decimals == 8) return 0.00000001;
+    double val = 1.0;
+    for (int i = 0; i < decimals; i++) {
+      val /= 10.0;
     }
+    return val;
   }
 
   String _formatPrice(double value) {

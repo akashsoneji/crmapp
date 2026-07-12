@@ -236,8 +236,8 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
       // Get decimal digits from price data
       final priceData = chartSocketController.getCurrentPrice();
       final decimals =
-          priceData != null && priceData.containsKey('digits')
-              ? (int.tryParse(priceData['digits'].toString()) ?? 5)
+          priceData != null && (priceData.containsKey('digits') || priceData.containsKey('Digits'))
+              ? (int.tryParse((priceData['digits'] ?? priceData['Digits']).toString()) ?? 5)
               : 5;
 
       // Format values properly

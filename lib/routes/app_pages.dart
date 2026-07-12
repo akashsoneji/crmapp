@@ -94,6 +94,7 @@ import '../bindings/auth_binding.dart';
 import '../bindings/account_binding.dart';
 import '../bindings/trading_binding.dart';
 import '../screens/common/webview_screen.dart';
+import '../controllers/finance/transaction_history_controller.dart';
 import '../screens/home/more/finance/cregis_address_screen.dart';
 import '../screens/home/more/finance/cregis_success_screen.dart';
 
@@ -494,6 +495,11 @@ class AppPages {
     ),
     GetPage(
       name: _Paths.CREGIS_ADDRESS,
+      binding: BindingsBuilder(() {
+        if (!Get.isRegistered<TransactionHistoryController>()) {
+          Get.put(TransactionHistoryController());
+        }
+      }),
       page: () {
         final args = Get.arguments as Map<String, dynamic>?;
         return CregisAddressScreen(
@@ -501,17 +507,24 @@ class AppPages {
           referenceNumber: args?['referenceNumber'] ?? '',
           amount: args?['amount'] ?? '',
           networkKey: args?['networkKey'] ?? 'trc20',
+          tapTimeIso: args?['tapTimeIso'] ?? '',
         );
       },
     ),
     GetPage(
       name: _Paths.CREGIS_SUCCESS,
+      binding: BindingsBuilder(() {
+        if (!Get.isRegistered<TransactionHistoryController>()) {
+          Get.put(TransactionHistoryController());
+        }
+      }),
       page: () {
         final args = Get.arguments as Map<String, dynamic>?;
         return CregisSuccessScreen(
           referenceNumber: args?['referenceNumber'] ?? '',
           amount: args?['amount'] ?? '',
           checkoutUrl: args?['checkoutUrl'] ?? '',
+          tapTimeIso: args?['tapTimeIso'] ?? '',
         );
       },
     ),
