@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:crm_app/flavor_config.dart';
 import 'package:crm_app/widgets/brand_logo.dart';
 import 'package:flutter/material.dart';
@@ -10,6 +12,7 @@ import 'package:crm_app/utils/trl_helper.dart';
 import 'package:crm_app/widgets/adaptive/adaptive_app_button.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
 import '../../../controllers/auth_controller.dart';
+import '../../../controllers/tenax_broker_selection_controller.dart';
 import '../../../routes/app_pages.dart';
 import '../../../services/secure_storage_service.dart';
 import '../../../services/biometric_service.dart';
@@ -40,6 +43,160 @@ class _LoginScreenState extends State<LoginScreen> {
   bool isPasswordValid = false;
   bool _enableBiometricAfterLogin = false;
 
+  // ── HOME-RESTORE SUPPORT ────────────────────────────────────────────
+  // When the user is routed to this screen from a logged-in session (e.g.
+  // MoreScreen → Switch Account → Add another account on the same broker),
+  // we show a Home button at the top-left. Tapping it restores the previous
+  // session from the snapshot embedded in route arguments, so the user can
+  // bounce back to TRADING without losing their current login.
+  //
+  // The Home button shows whenever there is an active session: either
+  // explicitly passed in via `cameFromLoggedInSession:true` (from the
+  // broker selection flow with a shadow snapshot) OR detected at
+  // initState time by checking secure storage. This covers both the
+  // multi-account "add new broker" flow and edge cases where the user
+  // lands on this screen directly while a session is alive in storage.
+  bool _cameFromLoggedInSession = false;
+  String? _shadowAuthToken;
+  String? _shadowWsToken;
+  String? _shadowUserDataJson;
+  /// Branding (color, logo, app name, URLs) that was active *before* the
+  /// user opened this screen. Captured in initState so the Home button
+  /// can restore the previous broker's branding when the user changes
+  /// their mind and goes back to the previously-logged-in session.
+  FlavorConfig? _previousBranding;
+
+  @override
+  void initState() {
+    super.initState();
+    // Capture the branding that was active BEFORE this screen mounted.
+    // The new broker's branding has already been applied by the time
+    // we get here, so FlavorConfig.snapshotBranding() would return the
+    // NEW branding (a no-op on restore). Use the snapshot the broker
+    // selection controller captured BEFORE flipping branding — that
+    // holds the OLD broker's branding.
+    _previousBranding =
+        TenaxBrokerSelectionController.pendingBrandingSnapshot ??
+        FlavorConfig.snapshotBranding();
+
+    final args = Get.arguments;
+    if (args is Map) {
+      _cameFromLoggedInSession = args['cameFromLoggedInSession'] == true;
+      _shadowAuthToken = args['shadowAuthToken'] as String?;
+      _shadowWsToken = args['shadowWsToken'] as String?;
+      _shadowUserDataJson = args['shadowUserDataJson'] as String?;
+    }
+    // If we were not explicitly told we came from a logged-in session,
+    // still show the Home button if storage says the user is logged in.
+    // The snapshot fields are populated by `_restoreSessionAndExit` on
+    // demand (it reads storage directly).
+    if (!_cameFromLoggedInSession) {
+      SecureStorageService.isUserLoggedIn().then((loggedIn) {
+        if (!mounted || !loggedIn) return;
+        setState(() {
+          _cameFromLoggedInSession = true;
+        });
+      });
+    }
+    // Do NOT auto-trigger biometric login when the user is intentionally
+    // trying to add a new account from a logged-in session. The old token
+    // is still in storage (we're using a shadow snapshot); biometric would
+    // silently log them back into the previous session and discard the
+    // staged broker.
+    SecureStorageService.isUserLoggedIn().then((loggedIn) {
+      if (!_cameFromLoggedInSession && !loggedIn) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _tryBiometricLogin();
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    // Clear any staged broker so a system-back / cancel from this screen
+    // does NOT leak branding across cold starts.
+    try {
+      TenaxBrokerSelectionController.clearPendingBroker();
+    } catch (_) {}
+    super.dispose();
+  }
+
+  /// Restore the previously-logged-in session (and branding) from the
+  /// in-memory snapshot (preferred) or fallback to secure storage.
+  Future<void> _restoreSessionAndExit() async {
+    try {
+      String? token = _shadowAuthToken;
+      String? wsToken = _shadowWsToken;
+      String? userJson = _shadowUserDataJson;
+      if ((token == null || token.isEmpty) &&
+          (wsToken == null || wsToken.isEmpty) &&
+          (userJson == null || userJson.isEmpty)) {
+        token = await SecureStorageService.getAuthToken();
+        wsToken = await SecureStorageService.getWebsocketToken();
+        userJson = await SecureStorageService.getUserDataRawJson();
+      }
+      if (token == null || token.isEmpty) {
+        Get.offAllNamed(AppPages.GET_STARTED);
+        return;
+      }
+
+      // 1) Restore branding FIRST so any reactive widget reading the old
+      //    color / logo sees the rollback before we navigate.
+      FlavorConfig.restoreBranding(_previousBranding);
+      try {
+        if (Get.isRegistered<LanguageService>()) {
+          Get.find<LanguageService>().brandingUpdateIndex.value++;
+        }
+      } catch (_) {}
+
+      // 2) Restore the previous session into secure storage so TRADING
+      //    boots with the right user.
+      await SecureStorageService.saveAuthToken(token);
+      if (wsToken != null && wsToken.isNotEmpty) {
+        await SecureStorageService.saveWebsocketToken(wsToken);
+      }
+      if (userJson != null && userJson.isNotEmpty) {
+        await SecureStorageService.saveUserData(userJson);
+        try {
+          final decoded = jsonDecode(userJson);
+          if (decoded is Map && decoded['user'] is Map<String, dynamic>) {
+            await Get.find<AuthController>().getUserData();
+          }
+        } catch (_) {}
+      }
+      await SecureStorageService.saveLoginStatus(true);
+
+      // 3) Clear the staged broker so a future broker pick doesn't see
+      //    stale in-memory staging.
+      try {
+        TenaxBrokerSelectionController.clearPendingBroker();
+      } catch (_) {}
+
+      Get.offAllNamed(AppPages.TRADING);
+    } catch (e) {
+      print('LoginScreen: Failed to restore session: $e');
+      Get.offAllNamed(AppPages.GET_STARTED);
+    }
+  }
+
+  /// Forward the snapshot args to the next screen so the Home button stays
+  /// visible when the user taps "Create Account" from here.
+  Map<String, dynamic>? _forwardedShadowArgs() {
+    if (!_cameFromLoggedInSession &&
+        (_shadowAuthToken == null || _shadowAuthToken!.isEmpty) &&
+        (_shadowWsToken == null || _shadowWsToken!.isEmpty) &&
+        (_shadowUserDataJson == null || _shadowUserDataJson!.isEmpty)) {
+      return null;
+    }
+    return <String, dynamic>{
+      'cameFromLoggedInSession': _cameFromLoggedInSession,
+      'shadowAuthToken': _shadowAuthToken,
+      'shadowWsToken': _shadowWsToken,
+      'shadowUserDataJson': _shadowUserDataJson,
+    };
+  }
+
   // Validation methods
   bool _validateEmail(String email) {
     final emailRegex = RegExp(
@@ -61,14 +218,6 @@ class _LoginScreenState extends State<LoginScreen> {
         enableBiometricAfterLogin: _enableBiometricAfterLogin,
       );
     }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _tryBiometricLogin();
-    });
   }
 
   Future<void> _tryBiometricLogin() async {
@@ -199,6 +348,19 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
+      appBar: _cameFromLoggedInSession
+          ? AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              scrolledUnderElevation: 0,
+              leading: IconButton(
+                icon: const Icon(Icons.home_outlined),
+                color: AppColors.textPrimary,
+                tooltip: 'Back to home',
+                onPressed: _restoreSessionAndExit,
+              ),
+            )
+          : null,
       body: SafeArea(
         maintainBottomViewPadding: true,
         child: Stack(
@@ -368,7 +530,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Center(
                     child: TextButton(
                       onPressed: () {
-                        Get.toNamed(AppPages.CREATE_ACCOUNT);
+                        Get.toNamed(
+                          AppPages.CREATE_ACCOUNT,
+                          arguments: _forwardedShadowArgs(),
+                        );
                       },
                       child: Text.rich(
                         TextSpan(

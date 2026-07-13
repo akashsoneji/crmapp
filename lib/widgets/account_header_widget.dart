@@ -50,16 +50,7 @@ class AccountHeaderWidget extends StatelessWidget {
           children: [
             if (showMenuIcon) ...[
               InkWell(
-                onTap:
-                    onMenuTap ??
-                    () {
-                      if (dashboardController != null &&
-                          dashboardController.onNavigateToTab != null) {
-                        dashboardController.onNavigateToTab!(4);
-                      } else {
-                        Scaffold.of(context).openDrawer();
-                      }
-                    },
+                onTap: onMenuTap,
                 child: SvgPicture.asset(
                   "assets/svg/menu.svg",
                   height: 24.h,

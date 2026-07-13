@@ -14,11 +14,14 @@ import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/routes/app_pages.dart';
 import 'package:crm_app/screens/auth/register/legal_documents_screen.dart';
+import 'package:crm_app/flavor_config.dart';
 import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/utils/trl_helper.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
 import '../../../controllers/auth_controller.dart';
+import '../../../controllers/tenax_broker_selection_controller.dart';
+import '../../../services/secure_storage_service.dart';
 import '../../../widgets/otp_modal.dart';
 
 class CreateAccountScreen extends StatefulWidget {
@@ -62,6 +65,20 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
   final AuthController _authController = Get.find<AuthController>();
   final LanguageService _languageService = Get.find<LanguageService>();
 
+  // ── HOME-RESTORE SUPPORT ────────────────────────────────────────────
+  // When this screen is opened from a logged-in session via the broker
+  // selection flow, we show a Home button in the header. Tapping it
+  // restores the snapshot session and bounces the user back to TRADING.
+  bool _cameFromLoggedInSession = false;
+  String? _shadowAuthToken;
+  String? _shadowWsToken;
+  String? _shadowUserDataJson;
+  /// Branding (color, logo, app name, URLs) that was active *before* the
+  /// user opened this screen. Captured in initState so the Home button
+  /// can restore the previous broker's branding when the user changes
+  /// their mind and goes back to the previously-logged-in session.
+  FlavorConfig? _previousBranding;
+
   // ==================== CONSTANTS ====================
   List<String> get _tradingExperienceOptions => [
     _languageService.tr('register_experience_none'),
@@ -73,12 +90,42 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
   @override
   void initState() {
     super.initState();
+    // Capture the branding that was active BEFORE this screen mounted.
+    // The new broker's branding has already been applied by the time
+    // we get here, so FlavorConfig.snapshotBranding() would return the
+    // NEW branding (a no-op on restore). Use the snapshot the broker
+    // selection controller captured BEFORE flipping branding — that
+    // holds the OLD broker's branding.
+    _previousBranding =
+        TenaxBrokerSelectionController.pendingBrandingSnapshot ??
+        FlavorConfig.snapshotBranding();
+
+    final args = Get.arguments;
+    if (args is Map) {
+      _cameFromLoggedInSession = args['cameFromLoggedInSession'] == true;
+      _shadowAuthToken = args['shadowAuthToken'] as String?;
+      _shadowWsToken = args['shadowWsToken'] as String?;
+      _shadowUserDataJson = args['shadowUserDataJson'] as String?;
+    }
+    // If we were not explicitly told we came from a logged-in session,
+    // still show the Home button if storage says the user is logged in.
+    if (!_cameFromLoggedInSession) {
+      SecureStorageService.isUserLoggedIn().then((loggedIn) {
+        if (!mounted || !loggedIn) return;
+        setState(() {
+          _cameFromLoggedInSession = true;
+        });
+      });
+    }
     _addListeners();
     _setDeviceCountry();
   }
 
   @override
   void dispose() {
+    try {
+      TenaxBrokerSelectionController.clearPendingBroker();
+    } catch (_) {}
     _firstNameController.dispose();
     _lastNameController.dispose();
     _cityController.dispose();
@@ -90,6 +137,58 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
     _referrerController.dispose();
     _passwordVisible.dispose();
     super.dispose();
+  }
+
+  /// Restore the previously-logged-in session (and branding) from the
+  /// in-memory snapshot (preferred) or fallback to secure storage.
+  Future<void> _restoreSessionAndExit() async {
+    try {
+      String? token = _shadowAuthToken;
+      String? wsToken = _shadowWsToken;
+      String? userJson = _shadowUserDataJson;
+      if ((token == null || token.isEmpty) &&
+          (wsToken == null || wsToken.isEmpty) &&
+          (userJson == null || userJson.isEmpty)) {
+        token = await SecureStorageService.getAuthToken();
+        wsToken = await SecureStorageService.getWebsocketToken();
+        userJson = await SecureStorageService.getUserDataRawJson();
+      }
+      if (token == null || token.isEmpty) {
+        Get.offAllNamed(AppPages.GET_STARTED);
+        return;
+      }
+
+      // 1) Restore branding FIRST.
+      FlavorConfig.restoreBranding(_previousBranding);
+      try {
+        if (Get.isRegistered<LanguageService>()) {
+          Get.find<LanguageService>().brandingUpdateIndex.value++;
+        }
+      } catch (_) {}
+
+      // 2) Restore the previous session.
+      await SecureStorageService.saveAuthToken(token);
+      if (wsToken != null && wsToken.isNotEmpty) {
+        await SecureStorageService.saveWebsocketToken(wsToken);
+      }
+      if (userJson != null && userJson.isNotEmpty) {
+        await SecureStorageService.saveUserData(userJson);
+        try {
+          await Get.find<AuthController>().getUserData();
+        } catch (_) {}
+      }
+      await SecureStorageService.saveLoginStatus(true);
+
+      // 3) Clear the staged broker.
+      try {
+        TenaxBrokerSelectionController.clearPendingBroker();
+      } catch (_) {}
+
+      Get.offAllNamed(AppPages.TRADING);
+    } catch (e) {
+      print('CreateAccountScreen: Failed to restore session: $e');
+      Get.offAllNamed(AppPages.GET_STARTED);
+    }
   }
 
   // ==================== LISTENERS & VALIDATION ====================
@@ -1050,9 +1149,33 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
       child: RTLHelper.rtlRow(
         children: [
           _buildBackButton(),
+          if (_cameFromLoggedInSession) ...[
+            SizedBox(width: 12.w),
+            _buildHomeButton(),
+          ],
           SizedBox(width: 16.w),
           Expanded(child: _buildProgressBar()),
         ],
+      ),
+    );
+  }
+
+  Widget _buildHomeButton() {
+    return Container(
+      height: 40.h,
+      width: 40.w,
+      decoration: BoxDecoration(
+        color: AppColors.cardBackground,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: IconButton(
+        onPressed: _restoreSessionAndExit,
+        icon: const Icon(Icons.home_outlined),
+        color: AppColors.textPrimary,
+        iconSize: 20.h,
+        padding: EdgeInsets.zero,
+        tooltip: 'Back to home',
       ),
     );
   }

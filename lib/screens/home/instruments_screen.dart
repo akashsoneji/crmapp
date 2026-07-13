@@ -24,8 +24,13 @@ import 'package:crm_app/services/market_watch_v2_service.dart';
 
 class InstrumentsScreen extends StatefulWidget {
   final Function(String)? onNavigateToChart;
+  final Function(int)? onNavigateToTab; // Bottom navigation index (0..4)
 
-  const InstrumentsScreen({super.key, this.onNavigateToChart});
+  const InstrumentsScreen({
+    super.key,
+    this.onNavigateToChart,
+    this.onNavigateToTab,
+  });
 
   @override
   State<InstrumentsScreen> createState() => _InstrumentsScreenState();
@@ -185,6 +190,9 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
       final double? floatingProfit = tradingController.accountInfo?.profit;
 
       return AccountHeaderWidget(
+        onMenuTap: widget.onNavigateToTab != null
+            ? () => widget.onNavigateToTab!(4)
+            : null,
         onSearchTap: () {
           showModalBottomSheet(
             context: context,

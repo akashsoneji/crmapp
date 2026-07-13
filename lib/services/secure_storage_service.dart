@@ -226,6 +226,43 @@ class SecureStorageService {
     }
   }
 
+  /// Returns the raw JSON string previously written to the user-data key.
+  /// Used for session snapshotting before clearing storage, so callers
+  /// (e.g. routes that need to restore the previous logged-in user via a
+  /// Home button) can hand the exact bytes back to a destination screen.
+  static Future<String?> getUserDataRawJson() async {
+    try {
+      return await _storage.read(key: _userDataKey);
+    } catch (e) {
+      print('SecureStorage: Error reading raw user data json: $e');
+      return null;
+    }
+  }
+
+  /// Snapshot of the currently active session (token + ws token + raw
+  /// user-data JSON). Returns null when there is no active session.
+  static Future<({String? token, String? wsToken, String? userJson})?>
+      snapshotCurrentSession() async {
+    try {
+      final token = await _storage.read(key: _authTokenKey);
+      final wsToken = await _storage.read(key: _websocketTokenKey);
+      final userJson = await _storage.read(key: _userDataKey);
+      if ((token == null || token.isEmpty) &&
+          (wsToken == null || wsToken.isEmpty) &&
+          (userJson == null || userJson.isEmpty)) {
+        return null;
+      }
+      return (
+        token: token ?? '',
+        wsToken: wsToken ?? '',
+        userJson: userJson ?? '',
+      );
+    } catch (e) {
+      print('SecureStorage: Error snapshotting current session: $e');
+      return null;
+    }
+  }
+
   // Save login status
   static Future<void> saveLoginStatus(bool isLoggedIn) async {
     try {

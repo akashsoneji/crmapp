@@ -3,6 +3,7 @@ import 'package:crm_app/constants/api_const.dart';
 import 'package:crm_app/services/api_service.dart';
 import 'package:crm_app/services/secure_storage_service.dart';
 import 'package:crm_app/controllers/auth_controller.dart';
+import 'package:crm_app/controllers/tenax_broker_selection_controller.dart';
 // To parse this JSON data, do
 //
 //     final dashboardModel = dashboardModelFromJson(jsonString);
@@ -783,7 +784,25 @@ class MoreController extends GetxController {
     }
   }
 
+  /// Returns true when a deferred broker switch is in flight — i.e. the
+  /// user is still holding an old session's token in storage but the
+  /// active FlavorConfig already points at a different broker's URL.
+  /// Hitting the API in that window sends the old broker's token to the
+  /// new broker's host, which the new broker rejects with 401 and the
+  /// app treats as "session expired" — wiping the active session.
+  /// The dashboard should therefore be skipped until the staged broker
+  /// either commits (successful login/register) or is cleared (Home
+  /// button, back-out, or screen dispose).
+  bool get _isBrokerSwitchInFlight =>
+      TenaxBrokerSelectionController.hasPendingBroker;
+
   Future<void> loadMoreScreenData() async {
+    if (_isBrokerSwitchInFlight) {
+      print(
+        'MoreController: Broker switch in flight, skipping loadMoreScreenData',
+      );
+      return;
+    }
     final token = await SecureStorageService.getAuthToken();
     dashboardModel.value = null;
     try {

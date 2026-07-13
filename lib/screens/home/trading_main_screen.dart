@@ -106,23 +106,33 @@ class _TradingMainScreenState extends State<TradingMainScreen> {
 
     _pageController = PageController(initialPage: _currentIndex);
 
+    // ✅ FIX: Reusable callback so each child screen's AccountHeaderWidget
+    // can request a tab switch (e.g. menu icon → last tab index 4).
+    final void Function(int) navigateToTab = _onTabChanged;
+
     _screens = [
       // Pass the callback to InstrumentsScreen
-      KeepAliveWrapper(child: InstrumentsScreen(onNavigateToChart: _switchToChartTab)),
+      KeepAliveWrapper(
+        child: InstrumentsScreen(
+          onNavigateToChart: _switchToChartTab,
+          onNavigateToTab: navigateToTab,
+        ),
+      ),
       KeepAliveWrapper(
         child: ChartScreen(
           onNavigateToTrade: _switchToTradeTab,
-          onNavigateToTab: (index) {
-            _onTabChanged(index);
-          },
+          onNavigateToTab: navigateToTab,
         ),
       ),
-      KeepAliveWrapper(child: TradeScreen(onNavigateToChart: _switchToChartTab)),
+      KeepAliveWrapper(
+        child: TradeScreen(
+          onNavigateToChart: _switchToChartTab,
+          onNavigateToTab: navigateToTab,
+        ),
+      ),
       KeepAliveWrapper(
         child: DashboardScreen(
-          onNavigateToTab: (index) {
-            _onTabChanged(index);
-          },
+          onNavigateToTab: navigateToTab,
         ),
       ),
       const KeepAliveWrapper(child: MoreScreen()),

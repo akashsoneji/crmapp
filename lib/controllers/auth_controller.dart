@@ -29,6 +29,7 @@ import 'package:crm_app/services/biometric_service.dart';
 import 'package:crm_app/services/app_lock_service.dart';
 import 'package:crm_app/services/enabled_modules_service.dart';
 import 'package:crm_app/services/google_otp_service.dart';
+import 'package:crm_app/controllers/tenax_broker_selection_controller.dart';
 
 class AuthController extends GetxController {
   final AuthService _authService = Get.find<AuthService>();
@@ -102,6 +103,36 @@ class AuthController extends GetxController {
     final user = await getUserData();
     print("userEmail getUserEmail : ${user?.firstName} ${user?.lastName}");
     return '${user?.firstName} ${user?.lastName}';
+  }
+
+  // ── DEFERRED-COMMIT BRANDING ──────────────────────────────────────
+  // Branding is applied IMMEDIATELY at the point the user taps a broker
+  // tile (see TenaxBrokerSelectionController.selectBroker, Branch A). By
+  // the time the user reaches LoginScreen / GetStartedScreen /
+  // CreateAccountScreen and types credentials, the LOGIN screen already
+  // shows the new broker's logo + colors. This method's only job now is
+  // to make that choice persistent in secure storage so app restarts land
+  // on the right broker.
+
+  /// Persist the staged broker selection to secure storage. Branding is
+  /// already applied (see TenaxBrokerSelectionController). Safe to call
+  /// multiple times — it only acts when there is a payload.
+  Future<bool> _commitPendingBrokerIfAny() async {
+    if (!FlavorConfig.isMultiBrokerEnabled) return true;
+    if (!FlavorConfig.isTenax()) return true;
+    if (!TenaxBrokerSelectionController.hasPendingBroker) return true;
+
+    final payload = TenaxBrokerSelectionController.pendingBrokerPayload!;
+    final model = TenaxBrokerSelectionController.pendingBrokerModel!;
+
+    try {
+      await SecureStorageService.saveTenaxBrokerSelection(payload);
+      print('AuthController: Persisted staged Tenax broker: ${model.slug}');
+      return true;
+    } catch (e) {
+      print('AuthController: Failed to persist staged broker: $e');
+      return false;
+    }
   }
 
   // Refresh user data (useful for profile updates)
@@ -266,6 +297,15 @@ class AuthController extends GetxController {
 
         _loginResponse.value = response;
         _userData.value = response.data.user;
+
+        // Apply staged Tenax broker branding (if any) BEFORE the controller
+        // re-init / persistTenaxUserBrokerProfile so the new (email, broker)
+        // record picks up the right broker.
+        try {
+          await _commitPendingBrokerIfAny();
+        } catch (e) {
+          print('AuthController: commitPendingBroker failed: $e');
+        }
 
         if (enableBiometricAfterLogin) {
           try {
@@ -459,6 +499,11 @@ class AuthController extends GetxController {
           });
         });
 
+        // Always clear any staged broker on successful login.
+        try {
+          TenaxBrokerSelectionController.clearPendingBroker();
+        } catch (_) {}
+
         Get.offAllNamed(AppPages.TRADING);
   }
 
@@ -538,7 +583,20 @@ class AuthController extends GetxController {
           // Set user data in controller
           _userData.value = response.data!.data.user;
           _isAuthenticated.value = true;
+
+          // Apply staged Tenax broker branding (if any) BEFORE we persist
+          // the user-broker profile so the new (email, broker) record picks
+          // up the right broker.
+          try {
+            await _commitPendingBrokerIfAny();
+          } catch (e) {
+            print('AuthController: commitPendingBroker failed: $e');
+          }
           await _persistTenaxUserBrokerProfile();
+          // Always clear staged state after registration completes.
+          try {
+            TenaxBrokerSelectionController.clearPendingBroker();
+          } catch (_) {}
 
           // Enable one-click trading by default after registration
           OneClickTradingService.instance.setOneClickTradingEnabled(true);

@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import 'package:crm_app/constants/api_const.dart';
+import 'package:crm_app/controllers/tenax_broker_selection_controller.dart';
 import 'package:crm_app/models/enabled_modules_model.dart';
 import 'package:crm_app/services/api_service.dart';
 import 'package:crm_app/utils/app_logger.dart';
@@ -21,6 +22,19 @@ class EnabledModulesService extends GetxService {
 
   Future<EnabledModulesModel?> fetchEnabledModules({bool force = false}) async {
     if (!force && modules.value != null) {
+      return modules.value;
+    }
+
+    // While a deferred broker switch is staged the active FlavorConfig
+    // already points at the new broker, but the stored token still
+    // belongs to the previous broker's session. Hitting the modules API
+    // in that window would send the old token to the new host. Skip the
+    // call — the user is on their way to login/register, where a
+    // successful commit will fetch modules against the new broker.
+    if (TenaxBrokerSelectionController.hasPendingBroker) {
+      AppLogger.debug(
+        'EnabledModulesService: Broker switch in flight, skipping fetchEnabledModules',
+      );
       return modules.value;
     }
 

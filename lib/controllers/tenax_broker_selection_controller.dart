@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:crm_app/constants/color.dart';
 import 'package:flutter/material.dart';
@@ -24,6 +23,37 @@ class TenaxBrokerSelectionController extends GetxController {
   final RxString searchQuery = ''.obs;
 
   Timer? _searchDebounce;
+
+  // ── DEFERRED COMMIT ────────────────────────────────────────────────
+  // When a broker tile is tapped while a user is already logged in (or from
+  // the MoreScreen "Add another account" path), we do NOT immediately save
+  // branding / clear auth. Instead, we stage the selection in these static
+  // fields and route to LOGIN / GET_STARTED. Branding only gets applied once
+  // login OR registration successfully completes (see AuthController).
+  // Branding snapshot: before we apply the new broker's branding, we capture
+  // the current FlavorConfig reference here so the Home button on the
+  // LOGIN/GET_STARTED/CREATE_ACCOUNT screens can roll it back if the user
+  // changes their mind and hits Home.
+  static Map<String, dynamic>? pendingBrokerPayload;
+  static TenaxBrokerModel? pendingBrokerModel;
+  static FlavorConfig? pendingBrandingSnapshot;
+  /// True when the caller wants the broker selection to be applied even
+  /// without logging in (e.g. demo mode or a fresh-install tenant re-tap).
+  static bool _forceCommitPendingBroker = false;
+
+  static bool get hasPendingBroker =>
+      pendingBrokerPayload != null && pendingBrokerModel != null;
+
+  static void clearPendingBroker() {
+    pendingBrokerPayload = null;
+    pendingBrokerModel = null;
+    // NOTE: do NOT clear pendingBrandingSnapshot here. The LOGIN/GET_STARTED
+    // /CREATE_ACCOUNT screens hold their own per-screen snapshot of the
+    // previous branding (captured in initState). Clearing this would erase
+    // the snapshot the *previous* session captured. Each screen manages
+    // its own snapshot lifecycle.
+    _forceCommitPendingBroker = false;
+  }
 
   bool get isDemoMode => FlavorConfig.isTenaxBrokerDemoEnabled;
 
@@ -102,7 +132,10 @@ class TenaxBrokerSelectionController extends GetxController {
     }
   }
 
-  Future<void> selectBroker(TenaxBrokerModel broker) async {
+  Future<void> selectBroker(
+    TenaxBrokerModel broker, {
+    bool preserveBroker = false,
+  }) async {
     if (!FlavorConfig.isMultiBrokerEnabled) return;
     if (isSaving.value) {
       return;
@@ -140,81 +173,106 @@ class TenaxBrokerSelectionController extends GetxController {
         'broker_runtime_config': decryptedConfig,
       };
 
-      // ── PROFILE & SESSION MANAGEMENT ──────────────────────────────────
-      // Check if we have an existing profile for this broker to restore session
-      final profiles = await SecureStorageService.getTenaxUserBrokerProfiles();
-      final existingProfile = profiles.firstWhereOrNull((p) {
-        final topLevelSlug =
-            (p['broker_slug'] ?? p['selected_slug'] ?? p['slug'] ?? '')
-                .toString();
-        if (topLevelSlug == broker.slug) return true;
+      // ── BRANCH RESOLUTION ──────────────────────────────────────────
+      // (A) Default path: route to login / register. The new broker is
+      //     STAGED in memory (pendingBrokerPayload / pendingBrokerModel);
+      //     branding only commits on successful login or registration.
+      //     - Logged-out users: branding IS committed eagerly so the
+      //       login screens look correct.
+      //     - Logged-in users: branding is NOT committed so the active
+      //       session's visuals stay stable until the new account logs in.
+      // (C) preserveBroker == true: caller wants to keep the current
+      //     broker's branding (e.g. "log in with another account" on
+      //     this same broker). Commit branding immediately and clear auth.
+      //
+      // Branch B has been intentionally removed. There is no auto-login
+      // path from broker selection any more — see the long-form comment
+      // at the start of the file.
+      final isLoggedIn = await SecureStorageService.isUserLoggedIn();
 
-        final brokerData =
-            p['broker_data'] is Map<String, dynamic>
-                ? p['broker_data'] as Map<String, dynamic>
-                : null;
-        final nestedSlug =
-            (brokerData?['selected_slug'] ??
-                    brokerData?['slug'] ??
-                    brokerData?['broker_list_item']?['slug'] ??
-                    '')
-                .toString();
-        return nestedSlug == broker.slug;
-      });
-      if (existingProfile != null) {
-        // Restore session for this broker
-        final loginData = existingProfile['login_data'];
-        if (loginData is Map<String, dynamic>) {
-          final token = (loginData['token'] ?? '').toString();
-          final wsToken = (loginData['websocket_token'] ?? '').toString();
-          final userData = loginData['user'];
-          if (token.isNotEmpty) {
-            await SecureStorageService.saveAuthToken(token);
-            await SecureStorageService.saveWebsocketToken(wsToken);
-            if (userData is Map<String, dynamic>) {
-              await SecureStorageService.saveUserData(
-                jsonEncode({
-                  'token': token,
-                  'websocket_token': wsToken,
-                  'user': userData,
-                  'is_logged_in': true,
-                }),
-              );
-            }
-            await SecureStorageService.saveLoginStatus(true);
-          }
-        }
-        await SecureStorageService.setTenaxCurrentProfileKey(
-          (existingProfile['profile_key'] ?? '').toString(),
+      // Branch C: preserveBroker path - same broker as current session,
+      // user wants to log in with another account on this broker.
+      if (preserveBroker) {
+        await SecureStorageService.saveTenaxBrokerSelection(payload);
+        FlavorConfig.applyTenaxBrokerRuntimeConfig(
+          config: decryptedConfig,
+          brokerName: broker.displayName,
+          brokerLogoUrl: localLogoPath ?? logoFromPayload,
+          brokerData: payload,
         );
-      } else {
-        // New broker: Clear current session to force fresh login for this broker
         await SecureStorageService.clearAuthData();
         await SecureStorageService.saveLoginStatus(false);
+        Get.find<LanguageService>().brandingUpdateIndex.value++;
+        Get.offAllNamed(
+          FlavorConfig.isTenaxBrokerDemoEnabled
+              ? AppPages.LOGIN
+              : AppPages.GET_STARTED,
+        );
+        return;
       }
 
-      await SecureStorageService.saveTenaxBrokerSelection(payload);
+      // Branch A: stage the broker AND apply branding immediately so the
+      // LOGIN/REGISTER screens reflect what the user just picked. The
+      // OLD branding is snapshotted into [pendingBrandingSnapshot] so the
+      // Home button can roll it back if the user changes their mind.
+      //
+      // For Brand-new / logged-out users we additionally persist the
+      // broker selection to secure storage (no active session to corrupt).
+      // For logged-in users we DO NOT save to storage yet and DO NOT clear
+      // the active session — that's the deferred-commit boundary.
+      // [AuthController._commitPendingBrokerIfAny] will persist on
+      // successful login/register.
+      pendingBrokerPayload = payload;
+      pendingBrokerModel = broker;
+      pendingBrandingSnapshot = FlavorConfig.snapshotBranding();
+      _forceCommitPendingBroker = FlavorConfig.isTenaxBrokerDemoEnabled;
+
       FlavorConfig.applyTenaxBrokerRuntimeConfig(
         config: decryptedConfig,
         brokerName: broker.displayName,
         brokerLogoUrl: localLogoPath ?? logoFromPayload,
         brokerData: payload,
       );
+      try {
+        if (Get.isRegistered<LanguageService>()) {
+          Get.find<LanguageService>().brandingUpdateIndex.value++;
+        }
+      } catch (_) {}
 
-      // Trigger UI refresh
-      Get.find<LanguageService>().brandingUpdateIndex.value++;
-
-      if (existingProfile != null) {
-        Get.offAllNamed(AppPages.SPLASH);
-      } else {
-        Get.offAllNamed(
-          FlavorConfig.isTenaxBrokerDemoEnabled
-              ? AppPages.LOGIN
-              : AppPages.GET_STARTED,
-        );
+      if (!isLoggedIn) {
+        await SecureStorageService.saveTenaxBrokerSelection(payload);
       }
+
+      // Forward any snapshot/route args from the calling screen (e.g.
+      // MoreScreen → TENAX_BROKER_SELECTION → LOGIN/GET_STARTED chain)
+      // so the destination screens can restore the previous session.
+      final incomingArgs = Get.arguments;
+      final Map<String, dynamic> forwarded = <String, dynamic>{
+        'pendingBroker': true,
+        'forceAuth': true,
+        'cameFromLoggedInSession': isLoggedIn,
+        'preserveBroker': false,
+      };
+      if (incomingArgs is Map) {
+        for (final entry in incomingArgs.entries) {
+          final key = entry.key.toString();
+          if (key == 'allowBack' || key == 'nextRoute') continue;
+          forwarded[key] = entry.value;
+        }
+      }
+
+      Get.offAllNamed(
+        FlavorConfig.isTenaxBrokerDemoEnabled
+            ? AppPages.LOGIN
+            : AppPages.GET_STARTED,
+        arguments: forwarded,
+      );
     } finally {
       isSaving.value = false;
     }
   }
+
+  /// Whether the staged broker should be committed eagerly (e.g. demo mode).
+  /// Called by AuthController after successful login/register.
+  static bool get forceCommitPendingBroker => _forceCommitPendingBroker;
 }

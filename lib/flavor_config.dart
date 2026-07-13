@@ -101,6 +101,26 @@ class FlavorConfig {
     _selectedFlavor = null;
   }
 
+  /// Capture the current branding-affecting config so it can be restored
+  /// later (e.g. when a user taps Home on a LOGIN screen after picking
+  /// a different broker in the broker selection flow).
+  ///
+  /// The returned reference points at the *currently active* config. As
+  /// long as the caller captures it BEFORE a new
+  /// [applyTenaxBrokerRuntimeConfig] call replaces [_instance], restoring
+  /// it later will rewrite _instance back to this exact snapshot.
+  static FlavorConfig? snapshotBranding() {
+    return _instance;
+  }
+
+  /// Restore a previously snapshotted FlavorConfig. Safe to call with null
+  /// (no-op). Callers should also bump `LanguageService.brandingUpdateIndex`
+  /// after restoring so any reactive widgets rebuild.
+  static void restoreBranding(FlavorConfig? snapshot) {
+    if (snapshot == null) return;
+    _instance = snapshot;
+  }
+
   FlavorConfig._internal({
     required this.flavor,
     required String title,

@@ -25,6 +25,7 @@ import 'package:crm_app/services/secure_storage_service.dart';
 import 'package:crm_app/services/app_lock_service.dart';
 import 'package:crm_app/services/biometric_service.dart';
 import 'package:crm_app/services/enabled_modules_service.dart';
+import 'package:crm_app/controllers/tenax_broker_selection_controller.dart';
 
 class MoreScreen extends StatefulWidget {
   const MoreScreen({super.key});
@@ -49,7 +50,13 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
     moreController = Get.put(MoreController());
     WidgetsBinding.instance.addObserver(this);
     _hasLoadedInitialData = false;
-    moreController.loadMoreScreenData();
+    // Don't fire API calls while a deferred broker switch is in flight —
+    // the stored token belongs to the previous broker while FlavorConfig
+    // already points at the new broker's URL. Hitting the dashboard now
+    // would send the old token to the new host and trip a 401.
+    if (!TenaxBrokerSelectionController.hasPendingBroker) {
+      moreController.loadMoreScreenData();
+    }
     _loadTenaxProfiles();
     _hasLoadedInitialData = true;
     _lastRefreshTime = DateTime.now();
@@ -92,9 +99,20 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
   void _refreshDataIfNeeded() {
     if (mounted) {
       _lastRefreshTime = DateTime.now();
-      moreController.loadMoreScreenData();
+      // Skip API calls while a deferred broker switch is staged. The
+      // stored token belongs to the previous broker's session but
+      // FlavorConfig currently points at the new broker's host, so any
+      // call here would send the old token to the new host and surface
+      // as a 401 (which the app interprets as session expiry and
+      // wipes the active session).
+      final isBrokerSwitchInFlight =
+          TenaxBrokerSelectionController.hasPendingBroker;
+      if (!isBrokerSwitchInFlight) {
+        moreController.loadMoreScreenData();
+      }
       _loadTenaxProfiles();
-      if (Get.isRegistered<EnabledModulesService>()) {
+      if (!isBrokerSwitchInFlight &&
+          Get.isRegistered<EnabledModulesService>()) {
         Get.find<EnabledModulesService>().fetchEnabledModules(force: true);
       }
     }
@@ -234,153 +252,499 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
         tween: Tween(begin: 0.95, end: 1),
         builder: (context, value, child) =>
             Transform.scale(scale: value, child: child),
-        child: Container(
-          margin: EdgeInsets.symmetric(horizontal: 14.w, vertical: 16.h),
-          padding: EdgeInsets.fromLTRB(18.w, 16.h, 18.w, 18.h),
-          decoration: BoxDecoration(
-            color: AppColors.whiteColor,
-            borderRadius: BorderRadius.circular(18.r),
+        child: _buildSwitchAccountSheet(),
+      ),
+    );
+  }
+
+  Widget _buildSwitchAccountSheet() {
+    // Pin the currently-selected profile at the top of the list.
+    final profiles = [..._tenaxProfiles];
+    String? currentKey = _currentTenaxProfileKey;
+    Map<String, dynamic>? active;
+    final others = <Map<String, dynamic>>[];
+    if (currentKey != null) {
+      for (final p in profiles) {
+        if ((p['profile_key'] ?? '').toString() == currentKey) {
+          active = p;
+        } else {
+          others.add(p);
+        }
+      }
+    } else {
+      others.addAll(profiles);
+    }
+
+    // Max-height when scrollable: ~3.4 tiles. Below that, expand naturally.
+    final scrollable = profiles.length > 3;
+    final maxListHeight = 3.4 * 78.h;
+
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 14.w, vertical: 16.h),
+      decoration: BoxDecoration(
+        color: AppColors.whiteColor,
+        borderRadius: BorderRadius.circular(22.r),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.12),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text('Switch Account', style: AppTextStyles.heading),
-                  ),
-                  InkWell(
-                    onTap: () => Navigator.pop(context),
-                    child: Container(
-                      width: 28.w,
-                      height: 28.w,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: AppColors.border,
-                      ),
-                      child: const Icon(Icons.close, size: 18),
-                    ),
-                  ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Gradient header strip
+          Container(
+            padding: EdgeInsets.fromLTRB(18.w, 14.h, 12.w, 16.h),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  AppColors.primary.withValues(alpha: 0.10),
+                  AppColors.primary.withValues(alpha: 0.02),
                 ],
               ),
-              Divider(height: 20.h, color: AppColors.border),
-              if (_tenaxProfiles.isEmpty)
-                Padding(
-                  padding: EdgeInsets.symmetric(vertical: 20.h),
-                  child: Text(
-                    'No accounts yet',
-                    style: TextStyle(
-                      color: AppColors.textGrey,
-                      fontSize: 14.sp,
+              borderRadius:
+                  BorderRadius.vertical(top: Radius.circular(22.r)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 36.w,
+                      height: 36.w,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.14),
+                        borderRadius: BorderRadius.circular(10.r),
+                      ),
+                      child: Icon(
+                        Icons.swap_horiz_rounded,
+                        color: AppColors.primary,
+                        size: 20.sp,
+                      ),
                     ),
+                    SizedBox(width: 12.w),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Switch Account',
+                            style: AppTextStyles.heading,
+                          ),
+                          SizedBox(height: 2.h),
+                          Text(
+                            profiles.isEmpty
+                                ? 'No accounts yet'
+                                : '${profiles.length} account${profiles.length == 1 ? '' : 's'} linked',
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              color: AppColors.textGrey,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    InkWell(
+                      borderRadius: BorderRadius.circular(20.r),
+                      onTap: () => Navigator.pop(context),
+                      child: Container(
+                        width: 32.w,
+                        height: 32.w,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppColors.whiteColor,
+                          border: Border.all(color: AppColors.border),
+                        ),
+                        child: Icon(
+                          Icons.close_rounded,
+                          size: 18.sp,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          // Account list
+          Flexible(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxHeight: maxListHeight),
+              child: _tenaxProfiles.isEmpty
+                  ? Padding(
+                      padding: EdgeInsets.symmetric(
+                        vertical: 28.h,
+                        horizontal: 18.w,
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.account_circle_outlined,
+                            size: 44.sp,
+                            color:
+                                AppColors.textGrey.withValues(alpha: 0.6),
+                          ),
+                          SizedBox(height: 10.h),
+                          Text(
+                            'No accounts yet',
+                            style: TextStyle(
+                              color: AppColors.textGrey,
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          SizedBox(height: 4.h),
+                          Text(
+                            'Tap "Add New Broker" to link your first account.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color:
+                                  AppColors.textGrey.withValues(alpha: 0.85),
+                              fontSize: 12.sp,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : ShaderMask(
+                      shaderCallback: (rect) {
+                        // Top + bottom fade hints at scrollability.
+                        return const LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.transparent,
+                            Colors.black,
+                            Colors.black,
+                            Colors.transparent,
+                          ],
+                          stops: [0.0, 0.04, 0.96, 1.0],
+                        ).createShader(rect);
+                      },
+                      blendMode: BlendMode.dstIn,
+                      child: ListView(
+                        shrinkWrap: !scrollable,
+                        physics: scrollable
+                            ? const BouncingScrollPhysics()
+                            : const NeverScrollableScrollPhysics(),
+                        padding: EdgeInsets.fromLTRB(14.w, 10.h, 14.w, 8.h),
+                        children: [
+                          if (active != null)
+                            _buildAccountTile(active, isPrimary: true),
+                          ...others.map(
+                            (p) => _buildAccountTile(p, isPrimary: false),
+                          ),
+                        ],
+                      ),
+                    ),
+            ),
+          ),
+          // Sticky CTA
+          Container(
+            padding: EdgeInsets.fromLTRB(18.w, 8.h, 18.w, 16.h),
+            decoration: BoxDecoration(
+              color: AppColors.whiteColor,
+              borderRadius: BorderRadius.vertical(
+                bottom: Radius.circular(22.r),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 8,
+                  offset: const Offset(0, -2),
+                ),
+              ],
+            ),
+            child: SafeArea(
+              top: false,
+              child: SizedBox(
+                width: double.infinity,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                      colors: [
+                        AppColors.primary,
+                        AppColors.primary.withValues(alpha: 0.85),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(14.r),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withValues(alpha: 0.30),
+                        blurRadius: 14,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
                   ),
-                )
-              else
-                ..._tenaxProfiles.map(_buildAccountTile),
-              SizedBox(height: 12.h),
-              SafeArea(
-                child: SizedBox(
-                  width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () {
                       Navigator.pop(context);
-                      _showAddAccountBottomSheet();
+                      // Direct navigate to broker selection - no extra sheet.
+                      _openBrokerSelection();
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      padding: EdgeInsets.symmetric(vertical: 8.h),
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      padding: EdgeInsets.symmetric(vertical: 12.h),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12.r),
+                        borderRadius: BorderRadius.circular(14.r),
                       ),
                     ),
-                    child: Text(
-                      'Add New Broker +',
-                      style: TextStyle(
-                        color: AppColors.whiteColor,
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.add_rounded,
+                          color: AppColors.whiteColor,
+                          size: 20.sp,
+                        ),
+                        SizedBox(width: 6.w),
+                        Text(
+                          'Add New Broker',
+                          style: TextStyle(
+                            color: AppColors.whiteColor,
+                            fontSize: 15.sp,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.2,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
               ),
-            ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAccountTile(
+    Map<String, dynamic> profile, {
+    bool isPrimary = false,
+  }) {
+    final isSelected =
+        (profile['profile_key'] ?? '').toString() == _currentTenaxProfileKey;
+    final name = (profile['user_name'] ?? '').toString();
+    final email = (profile['user_email'] ?? '').toString();
+    final broker = (profile['broker_name'] ?? '').toString();
+    final initials = _initialsFor(name.isNotEmpty ? name : email);
+
+    final borderColor = isSelected
+        ? AppColors.primary.withValues(alpha: 0.55)
+        : AppColors.border;
+    final bgColor = isSelected
+        ? AppColors.primary.withValues(alpha: 0.06)
+        : AppColors.whiteColor;
+
+    return Padding(
+      padding: EdgeInsets.only(bottom: 8.h),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14.r),
+          onTap: () async {
+            Navigator.pop(context);
+            await Future.delayed(const Duration(milliseconds: 120));
+            await _selectTenaxProfile(profile);
+          },
+          child: Container(
+            padding: EdgeInsets.fromLTRB(10.w, 10.h, 12.w, 10.h),
+            decoration: BoxDecoration(
+              color: bgColor,
+              borderRadius: BorderRadius.circular(14.r),
+              border:
+                  Border.all(color: borderColor, width: isSelected ? 1.4 : 1),
+              boxShadow: isSelected
+                  ? [
+                      BoxShadow(
+                        color: AppColors.primary.withValues(alpha: 0.10),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ]
+                  : null,
+            ),
+            child: Row(
+              children: [
+                // Gradient avatar with initials
+                Container(
+                  width: 42.w,
+                  height: 42.w,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        AppColors.primary,
+                        AppColors.primary.withValues(alpha: 0.65),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    initials,
+                    style: TextStyle(
+                      color: AppColors.whiteColor,
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+                SizedBox(width: 12.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              name.isNotEmpty ? name : email,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 15.sp,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                          ),
+                          if (isPrimary) ...[
+                            SizedBox(width: 6.w),
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 6.w,
+                                vertical: 2.h,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary,
+                                borderRadius: BorderRadius.circular(6.r),
+                              ),
+                              child: Text(
+                                'ACTIVE',
+                                style: TextStyle(
+                                  color: AppColors.whiteColor,
+                                  fontSize: 9.sp,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.6,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      SizedBox(height: 3.h),
+                      Text(
+                        email,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          color: AppColors.textGrey,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                      SizedBox(height: 4.h),
+                      // Broker chip
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 8.w,
+                          vertical: 3.h,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.10),
+                          borderRadius: BorderRadius.circular(6.r),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.account_balance_rounded,
+                              size: 11.sp,
+                              color: AppColors.primary,
+                            ),
+                            SizedBox(width: 4.w),
+                            Flexible(
+                              child: Text(
+                                broker,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 11.sp,
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(width: 8.w),
+                // Custom radio
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  curve: Curves.easeOut,
+                  width: 24.w,
+                  height: 24.w,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isSelected
+                          ? AppColors.primary
+                          : AppColors.textGrey.withValues(alpha: 0.5),
+                      width: 2,
+                    ),
+                    color: isSelected ? AppColors.primary : Colors.transparent,
+                  ),
+                  alignment: Alignment.center,
+                  child: isSelected
+                      ? Icon(
+                          Icons.check_rounded,
+                          color: AppColors.whiteColor,
+                          size: 14.sp,
+                        )
+                      : null,
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildAccountTile(Map<String, dynamic> profile) {
-    final isSelected =
-        (profile['profile_key'] ?? '').toString() == _currentTenaxProfileKey;
-    return InkWell(
-      onTap: () async {
-        Navigator.pop(context);
-        await Future.delayed(const Duration(milliseconds: 120));
-        await _selectTenaxProfile(profile);
-      },
-      child: Container(
-        padding: EdgeInsets.symmetric(vertical: 10.h),
-        decoration: BoxDecoration(
-          border: Border(bottom: BorderSide(color: AppColors.border)),
-        ),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 18.r,
-              backgroundColor: AppColors.primary.withValues(alpha: 0.12),
-              child: Icon(Icons.person, size: 18.r, color: AppColors.primary),
-            ),
-            SizedBox(width: 12.w),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    (profile['user_name'] ?? '').toString(),
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  SizedBox(height: 2.h),
-                  Text(
-                    (profile['user_email'] ?? '').toString(),
-                    style: TextStyle(
-                      fontSize: 13.sp,
-                      color: AppColors.textGrey,
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                  SizedBox(height: 1.h),
-                  Text(
-                    'Broker: ${(profile['broker_name'] ?? '').toString()}',
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      color: AppColors.textGrey.withValues(alpha: 0.9),
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              width: 22.w,
-              height: 22.w,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: isSelected ? AppColors.primary : AppColors.textGrey,
-              ),
-              child: isSelected
-                  ? Icon(Icons.check, color: AppColors.whiteColor, size: 14.sp)
-                  : null,
-            ),
-          ],
-        ),
-      ),
-    );
+  String _initialsFor(String input) {
+    final cleaned = input.trim();
+    if (cleaned.isEmpty) return '?';
+    final parts =
+        cleaned.split(RegExp(r'\s+|@')).where((p) => p.isNotEmpty).toList();
+    if (parts.isEmpty) return cleaned.substring(0, 1).toUpperCase();
+    if (parts.length == 1) {
+      final p = parts.first;
+      return p.length == 1
+          ? p.toUpperCase()
+          : p.substring(0, 2).toUpperCase();
+    }
+    return (parts.first.substring(0, 1) + parts.last.substring(0, 1))
+        .toUpperCase();
   }
 
   Future<void> _selectTenaxProfile(Map<String, dynamic> profile) async {
@@ -450,78 +814,24 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
     Get.offAllNamed(AppPages.TRADING, arguments: 3);
   }
 
-  void _showAddAccountBottomSheet() {
-    final selectedBrokerName = FlavorConfig.instance.appName;
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) => TweenAnimationBuilder<double>(
-        duration: const Duration(milliseconds: 260),
-        curve: Curves.easeOutCubic,
-        tween: Tween(begin: 0.96, end: 1),
-        builder: (context, value, child) => Transform.translate(
-          offset: Offset(0, (1 - value) * 20),
-          child: child,
-        ),
-        child: Container(
-          margin: EdgeInsets.symmetric(horizontal: 14.w, vertical: 16.h),
-          padding: EdgeInsets.fromLTRB(18.w, 16.h, 18.w, 18.h),
-          decoration: BoxDecoration(
-            color: AppColors.whiteColor,
-            borderRadius: BorderRadius.circular(18.r),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Add Account', style: AppTextStyles.heading),
-              SizedBox(height: 12.h),
-              Text(
-                'Current broker: $selectedBrokerName',
-                style: TextStyle(
-                  fontSize: 15.sp,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.textGrey,
-                ),
-              ),
-              SizedBox(height: 14.h),
-              SafeArea(
-                child: SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      Get.toNamed(
-                        AppPages.TENAX_BROKER_SELECTION,
-                        arguments: {
-                          'nextRoute': AppPages.LOGIN,
-                          'allowBack': true,
-                        },
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      padding: EdgeInsets.symmetric(vertical: 12.h),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12.r),
-                      ),
-                    ),
-                    child: Text(
-                      'Choose Broker',
-                      style: TextStyle(
-                        color: AppColors.whiteColor,
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+  /// Direct navigation to the multi-broker selection screen.
+  /// Snapshots the active session so the user can return via the Home
+  /// button on the broker selection / login / register screens.
+  Future<void> _openBrokerSelection() async {
+    final snapshot = await SecureStorageService.snapshotCurrentSession();
+    Get.toNamed(
+      AppPages.TENAX_BROKER_SELECTION,
+      arguments: {
+        'nextRoute': AppPages.LOGIN,
+        'allowBack': true,
+        'cameFromLoggedInSession': true,
+        'pendingBroker': true,
+        'forceAuth': true,
+        'preserveBroker': false,
+        'shadowAuthToken': snapshot?.token,
+        'shadowWsToken': snapshot?.wsToken,
+        'shadowUserDataJson': snapshot?.userJson,
+      },
     );
   }
 

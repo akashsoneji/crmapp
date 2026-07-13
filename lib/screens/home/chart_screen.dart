@@ -1702,6 +1702,9 @@ Placing Order:
       final double? floatingProfit = tradingController.accountInfo?.profit;
 
       return AccountHeaderWidget(
+        onMenuTap: widget.onNavigateToTab != null
+            ? () => widget.onNavigateToTab!(4)
+            : null,
         showSearchIcon: false,
         rightWidget: symbolSelector,
         floatingProfit: floatingProfit, // ✅ ADD: Show floating P&L

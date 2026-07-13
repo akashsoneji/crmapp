@@ -75,8 +75,13 @@ class TabMetricConfig {
 
 class TradeScreen extends StatefulWidget {
   final Function(String)? onNavigateToChart;
+  final Function(int)? onNavigateToTab; // Bottom navigation index (0..4)
 
-  const TradeScreen({super.key, this.onNavigateToChart});
+  const TradeScreen({
+    super.key,
+    this.onNavigateToChart,
+    this.onNavigateToTab,
+  });
 
   @override
   State<TradeScreen> createState() => _TradeScreenState();
@@ -564,7 +569,11 @@ class _TradeScreenState extends State<TradeScreen> {
                 ? accountInfo.profit
                 : null;
 
+        final navigateToTab = widget.onNavigateToTab;
         return AccountHeaderWidget(
+          onMenuTap: navigateToTab == null
+              ? null
+              : () => navigateToTab(4),
           showSearchIcon: false,
           rightWidget: closeAllButton,
           floatingProfit: floatingProfit,
