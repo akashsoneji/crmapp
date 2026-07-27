@@ -39,6 +39,13 @@ class IBController extends GetxController {
   // IB Dashboard Data (extracted for easier access)
   final Rx<UserIBDetails?> ibDashboardData = Rxn<UserIBDetails>();
 
+  // IB Progressive Stats Data
+  final Rx<IbProgressiveStatsData?> progressiveStatsData = Rxn<IbProgressiveStatsData?>();
+
+  // Active Banners
+  final RxList<BannerItem> banners = <BannerItem>[].obs;
+  final RxBool isBannersLoading = false.obs;
+
   // IB Clients
   final RxList<IBClient> ibClients = <IBClient>[].obs;
 
@@ -677,7 +684,7 @@ class IBController extends GetxController {
     }
   }
 
-  /// Load all Dashboard data (dashboard, stats)
+  /// Load all Dashboard data (dashboard, stats, banners)
   Future<void> loadDashboardData() async {
     try {
       isLoading.value = true;
@@ -687,12 +694,67 @@ class IBController extends GetxController {
       await Future.wait([
         getIBDashboard(showLoading: false),
         getIBStats(showLoading: false),
+        loadProgressiveStats(showLoading: false),
+        getBanners(showLoading: false),
       ]);
     } catch (e) {
       errorMessage.value = 'Error loading Dashboard data: $e';
     } finally {
       isLoading.value = false;
       update();
+    }
+  }
+
+  /// Load Progressive Stats
+  Future<void> loadProgressiveStats({bool showLoading = true}) async {
+    try {
+      if (showLoading) isLoading.value = true;
+      errorMessage.value = '';
+
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final response = await ApiService.get(
+        endpoint: 'user/ib/progressive-stats',
+        queryParameters: {'_t': timestamp.toString()},
+      );
+
+      if (response.success && response.data != null) {
+        final statsResponse = IbProgressiveStatsResponse.fromJson(response.data!);
+        progressiveStatsData.value = statsResponse.data;
+        update(['ib_dashboard']);
+      } else {
+        errorMessage.value = response.message ?? 'Failed to get progressive stats';
+        progressiveStatsData.value = null;
+        update(['ib_dashboard']);
+      }
+    } catch (e) {
+      errorMessage.value = 'Error getting progressive stats: $e';
+      progressiveStatsData.value = null;
+    } finally {
+      if (showLoading) isLoading.value = false;
+    }
+  }
+
+  /// Get Active Banners
+  Future<void> getBanners({bool showLoading = true}) async {
+    try {
+      if (showLoading) isBannersLoading.value = true;
+      final response = await ApiService.get(
+        endpoint: 'user/banners',
+        queryParameters: {'page': 'dashboard'},
+      );
+
+      if (response.success && response.data != null) {
+        final bannerResponse = BannerResponse.fromJson(response.data!);
+        banners.assignAll(bannerResponse.data?.banners ?? []);
+        update(['ib_dashboard']);
+      } else {
+        banners.clear();
+        update(['ib_dashboard']);
+      }
+    } catch (e) {
+      banners.clear();
+    } finally {
+      if (showLoading) isBannersLoading.value = false;
     }
   }
 

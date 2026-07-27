@@ -53,8 +53,12 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
     _selectedSubIB = null;
     _searchFocusNode.addListener(_onSearchFocusChanged);
     _tradeHistorySearchFocusNode.addListener(_onSearchFocusChanged);
-    // Load all data on screen load
-    _loadMyClientsData();
+    // Load all data on screen load after the first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _loadMyClientsData();
+      }
+    });
   }
 
   void _onSearchFocusChanged() {
@@ -453,14 +457,17 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
         scrolledUnderElevation: 0,
         backgroundColor: AppColors.backgroundLight,
         elevation: 0,
-        title: Text(
-          'My Client',
-          style: TextStyle(
-            fontSize: 18.sp,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
-          ),
-        ),
+        title: Obx(() {
+          final ibType = ibController.ibStatusResponse.value?.data?.ibType ?? 'dynamic';
+          return Text(
+            ibType == 'traditional' ? 'My Network' : 'My Client',
+            style: TextStyle(
+              fontSize: 18.sp,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+          );
+        }),
         leading: IconButton(
           icon: SvgPicture.asset(
             "assets/svg/ib_dashboard/home.svg",

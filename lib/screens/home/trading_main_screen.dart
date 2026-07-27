@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io' show Platform;
 
 import 'package:adaptive_platform_ui/adaptive_platform_ui.dart' as adaptive;
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
@@ -388,32 +389,62 @@ class _TradingMainScreenState extends State<TradingMainScreen> {
         unselectedItemColor: AppColors.textGreyLight,
         items: [
           adaptive.AdaptiveNavigationDestination(
-            icon: _currentIndex == 0
+            icon: adaptive.PlatformInfo.isIOS26OrHigher()
+                ? (_currentIndex == 0
+                    ? 'arrow.up.forward.app.fill'
+                    : 'arrow.up.forward.app')
+                : (_currentIndex == 0
+                    ? CupertinoIcons.arrow_up_right_square_fill
+                    : CupertinoIcons.arrow_up_right_square),
+            selectedIcon: adaptive.PlatformInfo.isIOS26OrHigher()
                 ? 'arrow.up.forward.app.fill'
-                : 'arrow.up.forward.app',
-            selectedIcon: 'arrow.up.forward.app.fill',
+                : CupertinoIcons.arrow_up_right_square_fill,
             label: TranslationUtils.tr('quote_title'),
           ),
           adaptive.AdaptiveNavigationDestination(
-            icon: _currentIndex == 1 ? 'chart.bar.fill' : 'chart.bar',
-            selectedIcon: 'chart.bar.fill',
+            icon: adaptive.PlatformInfo.isIOS26OrHigher()
+                ? (_currentIndex == 1 ? 'chart.bar.fill' : 'chart.bar')
+                : (_currentIndex == 1
+                    ? CupertinoIcons.chart_bar_fill
+                    : CupertinoIcons.chart_bar),
+            selectedIcon: adaptive.PlatformInfo.isIOS26OrHigher()
+                ? 'chart.bar.fill'
+                : CupertinoIcons.chart_bar_fill,
             label: TranslationUtils.tr('chart_title'),
           ),
           adaptive.AdaptiveNavigationDestination(
-            icon: _currentIndex == 2
+            icon: adaptive.PlatformInfo.isIOS26OrHigher()
+                ? (_currentIndex == 2
+                    ? 'arrow.up.arrow.down.square.fill'
+                    : 'arrow.up.arrow.down.square')
+                : (_currentIndex == 2
+                    ? CupertinoIcons.arrow_up_down_square_fill
+                    : CupertinoIcons.arrow_up_down_square),
+            selectedIcon: adaptive.PlatformInfo.isIOS26OrHigher()
                 ? 'arrow.up.arrow.down.square.fill'
-                : 'arrow.up.arrow.down.square',
-            selectedIcon: 'arrow.up.arrow.down.square.fill',
+                : CupertinoIcons.arrow_up_down_square_fill,
             label: TranslationUtils.tr('trade_title'),
           ),
           adaptive.AdaptiveNavigationDestination(
-            icon: _currentIndex == 3 ? 'wallet.bifold.fill' : 'wallet.bifold',
-            selectedIcon: 'wallet.bifold.fill',
+            icon: adaptive.PlatformInfo.isIOS26OrHigher()
+                ? (_currentIndex == 3 ? 'wallet.bifold.fill' : 'wallet.bifold')
+                : (_currentIndex == 3
+                    ? CupertinoIcons.creditcard_fill
+                    : CupertinoIcons.creditcard),
+            selectedIcon: adaptive.PlatformInfo.isIOS26OrHigher()
+                ? 'wallet.bifold.fill'
+                : CupertinoIcons.creditcard_fill,
             label: TranslationUtils.tr('dashboard_title'),
           ),
           adaptive.AdaptiveNavigationDestination(
-            icon: _currentIndex == 4 ? 'gearshape.fill' : 'gearshape',
-            selectedIcon: 'gearshape.fill',
+            icon: adaptive.PlatformInfo.isIOS26OrHigher()
+                ? (_currentIndex == 4 ? 'gearshape.fill' : 'gearshape')
+                : (_currentIndex == 4
+                    ? CupertinoIcons.settings_solid
+                    : CupertinoIcons.settings),
+            selectedIcon: adaptive.PlatformInfo.isIOS26OrHigher()
+                ? 'gearshape.fill'
+                : CupertinoIcons.settings_solid,
             label: TranslationUtils.tr('more_title'),
           ),
         ],

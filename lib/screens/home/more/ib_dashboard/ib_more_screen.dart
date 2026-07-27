@@ -21,8 +21,14 @@ class _IBMoreScreenState extends State<IBMoreScreen> {
   @override
   void initState() {
     super.initState();
-    ibController = Get.find<IBController>();
-    _loadMoreData();
+    if (Get.isRegistered<IBController>()) {
+      ibController = Get.find<IBController>();
+    } else {
+      ibController = Get.put(IBController());
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadMoreData();
+    });
   }
 
   Future<void> _loadMoreData() async {

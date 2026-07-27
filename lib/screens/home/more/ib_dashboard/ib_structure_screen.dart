@@ -29,7 +29,9 @@ class _IBStructureScreenState extends State<IBStructureScreen> {
     } else {
       ibController = Get.put(IBController());
     }
-    _loadData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadData();
+    });
   }
 
   Future<void> _loadData() async {

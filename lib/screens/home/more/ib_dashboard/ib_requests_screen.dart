@@ -24,10 +24,16 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
   @override
   void initState() {
     super.initState();
-    ibController = Get.find<IBController>();
+    if (Get.isRegistered<IBController>()) {
+      ibController = Get.find<IBController>();
+    } else {
+      ibController = Get.put(IBController());
+    }
     // Reset filter when screen initializes
     _selectedStatus = 'All';
-    _loadApprovalRequests();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadApprovalRequests();
+    });
   }
 
   Future<void> _loadApprovalRequests() async {
