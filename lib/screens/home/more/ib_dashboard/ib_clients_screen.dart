@@ -158,10 +158,10 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
         title: Text(
           'My Clients',
           style: TextStyle(
-            fontSize: 18.sp,
-            fontWeight: FontWeight.w600,
+            fontSize: 20.sp,
+            fontWeight: FontWeight.w400,
             color: AppColors.textPrimary,
-          ),
+          fontFamily: 'SF UI'),
         ),
         centerTitle: true,
       ),
@@ -290,10 +290,10 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
                               ? 'Back to Sub IB'
                               : 'Back to Master IB',
                           style: TextStyle(
-                            fontSize: 12.sp,
-                            fontWeight: FontWeight.w600,
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w400,
                             color: AppColors.primary,
-                          ),
+                          fontFamily: 'SF UI'),
                         ),
                       ],
                     ),
@@ -338,10 +338,10 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
             child: Text(
               label,
               style: TextStyle(
-                fontSize: 11.sp,
-                fontWeight: FontWeight.w600,
+                fontSize: 13.sp,
+                fontWeight: FontWeight.w400,
                 color: isActive ? AppColors.whiteColor : AppColors.primary,
-              ),
+              fontFamily: 'SF UI'),
               overflow: TextOverflow.ellipsis,
             ),
           ),
@@ -439,10 +439,10 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
               Text(
                 value,
                 style: TextStyle(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 18.sp,
+                  fontWeight: FontWeight.w400,
                   color: AppColors.textPrimary,
-                ),
+                fontFamily: 'SF UI'),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -679,10 +679,10 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
           Text(
             message,
             style: TextStyle(
-              fontSize: 16.sp,
-              fontWeight: FontWeight.w600,
+              fontSize: 18.sp,
+              fontWeight: FontWeight.w400,
               color: AppColors.textGrey,
-            ),
+            fontFamily: 'SF UI'),
           ),
         ],
       ),
@@ -734,10 +734,10 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
                       child: Text(
                         _getInitials(client.name),
                         style: TextStyle(
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.w700,
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.w400,
                           color: AppColors.whiteColor,
-                        ),
+                        fontFamily: 'SF UI'),
                       ),
                     ),
                   ),
@@ -754,10 +754,10 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
                               child: Text(
                                 client.name ?? 'N/A',
                                 style: TextStyle(
-                                  fontSize: 15.sp,
-                                  fontWeight: FontWeight.w600,
+                                  fontSize: 17.sp,
+                                  fontWeight: FontWeight.w400,
                                   color: AppColors.textPrimary,
-                                ),
+                                fontFamily: 'SF UI'),
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
@@ -775,10 +775,10 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
                                 child: Text(
                                   'Sub-IB',
                                   style: TextStyle(
-                                    fontSize: 9.sp,
-                                    fontWeight: FontWeight.w600,
+                                    fontSize: 11.sp,
+                                    fontWeight: FontWeight.w400,
                                     color: AppColors.primary,
-                                  ),
+                                  fontFamily: 'SF UI'),
                                 ),
                               ),
                             ],
@@ -917,10 +917,10 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
                           child: Text(
                             _getInitials(subIB.name),
                             style: TextStyle(
-                              fontSize: 16.sp,
-                              fontWeight: FontWeight.w700,
+                              fontSize: 18.sp,
+                              fontWeight: FontWeight.w400,
                               color: AppColors.whiteColor,
-                            ),
+                            fontFamily: 'SF UI'),
                           ),
                         ),
                       ),
@@ -953,10 +953,10 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
                         Text(
                           subIB.name ?? 'N/A',
                           style: TextStyle(
-                            fontSize: 15.sp,
-                            fontWeight: FontWeight.w600,
+                            fontSize: 17.sp,
+                            fontWeight: FontWeight.w400,
                             color: AppColors.textPrimary,
-                          ),
+                          fontFamily: 'SF UI'),
                           overflow: TextOverflow.ellipsis,
                         ),
                         SizedBox(height: 4.h),
@@ -1099,10 +1099,10 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
                       child: Text(
                         _getInitials(trade.clientName),
                         style: TextStyle(
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.w700,
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.w400,
                           color: isProfit ? AppColors.green : AppColors.error,
-                        ),
+                        fontFamily: 'SF UI'),
                       ),
                     ),
                   ),
@@ -1116,10 +1116,10 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
                         Text(
                           trade.clientName ?? 'N/A',
                           style: TextStyle(
-                            fontSize: 15.sp,
-                            fontWeight: FontWeight.w600,
+                            fontSize: 17.sp,
+                            fontWeight: FontWeight.w400,
                             color: AppColors.textPrimary,
-                          ),
+                          fontFamily: 'SF UI'),
                           overflow: TextOverflow.ellipsis,
                         ),
                         SizedBox(height: 4.h),
@@ -1142,10 +1142,10 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
                       Text(
                         '\$${trade.profit?.toStringAsFixed(2) ?? '0.00'}',
                         style: TextStyle(
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.w700,
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.w400,
                           color: isProfit ? AppColors.green : AppColors.error,
-                        ),
+                        fontFamily: 'SF UI'),
                       ),
                       SizedBox(height: 4.h),
                       Icon(
@@ -1205,10 +1205,10 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
           Text(
             value,
             style: TextStyle(
-              fontSize: 12.sp,
-              fontWeight: FontWeight.w600,
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w400,
               color: AppColors.textPrimary,
-            ),
+            fontFamily: 'SF UI'),
           ),
         ],
       ),

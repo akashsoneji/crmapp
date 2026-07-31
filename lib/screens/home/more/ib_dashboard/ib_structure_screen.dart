@@ -9,9 +9,12 @@ import 'package:crm_app/models/ib_models.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
 import 'package:intl/intl.dart';
 import 'commission_group_form_screen.dart';
+import 'package:crm_app/constants/text_styles.dart';
+import 'package:crm_app/routes/app_pages.dart';
 
 class IBStructureScreen extends StatefulWidget {
-  const IBStructureScreen({super.key});
+  final bool isEmbedded;
+  const IBStructureScreen({super.key, this.isEmbedded = false});
 
   @override
   State<IBStructureScreen> createState() => _IBStructureScreenState();
@@ -59,7 +62,7 @@ class _IBStructureScreenState extends State<IBStructureScreen> {
       AlertDialog(
         title: Text(
           'Delete Group',
-          style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w600),
+          style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.w400, fontFamily: 'SF UI'),
         ),
         content: Text(
           'Are you sure you want to delete "${group.groupName}"?',
@@ -104,24 +107,26 @@ class _IBStructureScreenState extends State<IBStructureScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.tradeBackgroundCenterColor,
-      appBar: AppBar(
-        scrolledUnderElevation: 0,
-        backgroundColor: AppColors.tradeBackgroundCenterColor,
-        elevation: 0,
-        leading: IconButton(
-          icon: SvgPicture.asset("assets/svg/ib_dashboard/home.svg", colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn)),
-          onPressed: () => Get.offAll(() => const TradingMainScreen()),
-        ),
-        title: Text(
-          'IB Structure',
-          style: TextStyle(
-            fontSize: 18.sp,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        centerTitle: true,
-      ),
+      appBar: widget.isEmbedded
+          ? null
+          : AppBar(
+              scrolledUnderElevation: 0,
+              backgroundColor: AppColors.tradeBackgroundCenterColor,
+              elevation: 0,
+              leading: IconButton(
+                icon: SvgPicture.asset("assets/svg/ib_dashboard/home.svg", colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn)),
+                onPressed: () => Get.offAllNamed(AppPages.TRADING),
+              ),
+              title: Text(
+                'IB Structure',
+                style: AppTextStyles.bodyText.copyWith(
+                  fontSize: 18.sp,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              centerTitle: true,
+            ),
       body: RefreshIndicator(
         onRefresh: _onRefresh,
         backgroundColor: AppColors.whiteColor,
@@ -157,10 +162,10 @@ class _IBStructureScreenState extends State<IBStructureScreen> {
                         child: Text(
                           'Commission Groups',
                           style: TextStyle(
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.w600,
+                            fontSize: 18.sp,
+                            fontWeight: FontWeight.w400,
                             color: AppColors.textPrimary,
-                          ),
+                          fontFamily: 'SF UI'),
                         ),
                       ),
                       SizedBox(width: 8.w),
@@ -183,10 +188,10 @@ class _IBStructureScreenState extends State<IBStructureScreen> {
                               Text(
                                 'Add Group',
                                 style: TextStyle(
-                                  fontSize: 12.sp,
-                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.w400,
                                   color: AppColors.whiteColor,
-                                ),
+                                fontFamily: 'SF UI'),
                               ),
                             ],
                           ),
@@ -272,10 +277,10 @@ class _IBStructureScreenState extends State<IBStructureScreen> {
                     child: Text(
                       '#',
                       style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w400,
                         color: AppColors.textPrimary,
-                      ),
+                      fontFamily: 'SF UI'),
                     ),
                   ),
                   Expanded(
@@ -283,10 +288,10 @@ class _IBStructureScreenState extends State<IBStructureScreen> {
                     child: Text(
                       'Group Name',
                       style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w400,
                         color: AppColors.textPrimary,
-                      ),
+                      fontFamily: 'SF UI'),
                     ),
                   ),
                   Expanded(
@@ -294,10 +299,10 @@ class _IBStructureScreenState extends State<IBStructureScreen> {
                     child: Text(
                       'Created Date',
                       style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w400,
                         color: AppColors.textPrimary,
-                      ),
+                      fontFamily: 'SF UI'),
                     ),
                   ),
                   Expanded(
@@ -306,10 +311,10 @@ class _IBStructureScreenState extends State<IBStructureScreen> {
                       'Actions',
                       textAlign: TextAlign.right,
                       style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w400,
                         color: AppColors.textPrimary,
-                      ),
+                      fontFamily: 'SF UI'),
                     ),
                   ),
                 ],
@@ -346,10 +351,10 @@ class _IBStructureScreenState extends State<IBStructureScreen> {
                       child: Text(
                         group.groupName ?? 'N/A',
                         style: TextStyle(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w600,
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w400,
                           color: AppColors.textPrimary,
-                        ),
+                        fontFamily: 'SF UI'),
                       ),
                     ),
                     Expanded(

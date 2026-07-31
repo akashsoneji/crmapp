@@ -22,10 +22,10 @@ class _CommissionHistoryScreenState extends State<CommissionHistoryScreen> {
         title: Text(
           'Commission Tracking',
           style: TextStyle(
-            fontSize: 18.sp,
-            fontWeight: FontWeight.w600,
+            fontSize: 20.sp,
+            fontWeight: FontWeight.w400,
             color: AppColors.textPrimary,
-          ),
+          fontFamily: 'SF UI'),
         ),
         centerTitle: true,
         leading: IconButton(
@@ -105,10 +105,10 @@ class _CommissionHistoryScreenState extends State<CommissionHistoryScreen> {
                               Text(
                                 '\$30',
                                 style: TextStyle(
-                                  fontSize: 20.sp,
-                                  fontWeight: FontWeight.w700,
+                                  fontSize: 22.sp,
+                                  fontWeight: FontWeight.w400,
                                   color: AppColors.primary,
-                                ),
+                                fontFamily: 'SF UI'),
                               ),
                               SizedBox(height: 4.h),
                               Text(
@@ -133,10 +133,10 @@ class _CommissionHistoryScreenState extends State<CommissionHistoryScreen> {
                           child: Text(
                             'Withdraw',
                             style: TextStyle(
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.w600,
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w400,
                               color: AppColors.whiteColor,
-                            ),
+                            fontFamily: 'SF UI'),
                           ),
                         ),
                       ],
@@ -168,10 +168,10 @@ class _CommissionHistoryScreenState extends State<CommissionHistoryScreen> {
                               Text(
                                 '3',
                                 style: TextStyle(
-                                  fontSize: 20.sp,
-                                  fontWeight: FontWeight.w700,
+                                  fontSize: 22.sp,
+                                  fontWeight: FontWeight.w400,
                                   color: AppColors.primary,
-                                ),
+                                fontFamily: 'SF UI'),
                               ),
                               SizedBox(height: 4.h),
                               Text(
@@ -191,10 +191,10 @@ class _CommissionHistoryScreenState extends State<CommissionHistoryScreen> {
                               Text(
                                 '\$70',
                                 style: TextStyle(
-                                  fontSize: 20.sp,
-                                  fontWeight: FontWeight.w700,
+                                  fontSize: 22.sp,
+                                  fontWeight: FontWeight.w400,
                                   color: AppColors.primary,
-                                ),
+                                fontFamily: 'SF UI'),
                               ),
                               SizedBox(height: 4.h),
                               Text(
@@ -225,10 +225,10 @@ class _CommissionHistoryScreenState extends State<CommissionHistoryScreen> {
                   Text(
                     'Request Payout History',
                     style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.w400,
                       color: AppColors.textPrimary,
-                    ),
+                    fontFamily: 'SF UI'),
                   ),
                   SizedBox(height: 12.h),
                   ...List.generate(3, (index) {
@@ -252,10 +252,10 @@ class _CommissionHistoryScreenState extends State<CommissionHistoryScreen> {
                             child: Text(
                               'IB Rebet',
                               style: TextStyle(
-                                fontSize: 14.sp,
-                                fontWeight: FontWeight.w500,
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.w400,
                                 color: AppColors.textPrimary,
-                              ),
+                              fontFamily: 'SF UI'),
                             ),
                           ),
                           Icon(
@@ -298,10 +298,10 @@ class _CommissionHistoryScreenState extends State<CommissionHistoryScreen> {
           Text(
             value,
             style: TextStyle(
-              fontSize: 16.sp,
-              fontWeight: FontWeight.w700,
+              fontSize: 18.sp,
+              fontWeight: FontWeight.w400,
               color: AppColors.primary,
-            ),
+            fontFamily: 'SF UI'),
           ),
           SizedBox(height: 4.h),
           Text(

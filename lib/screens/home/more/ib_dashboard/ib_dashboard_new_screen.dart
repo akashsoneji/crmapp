@@ -107,10 +107,10 @@ class _IbDashboardNewScreenState extends State<IbDashboardNewScreen> {
         title: Text(
           'IB Dashboard',
           style: TextStyle(
-            fontSize: 18.sp,
-            fontWeight: FontWeight.w600,
+            fontSize: 20.sp,
+            fontWeight: FontWeight.w400,
             color: AppColors.textPrimary,
-          ),
+          fontFamily: 'SF UI'),
         ),
         centerTitle: true,
         leadingWidth: 75.w,
@@ -213,10 +213,10 @@ class _IbDashboardNewScreenState extends State<IbDashboardNewScreen> {
           child: Text(
             title,
             style: TextStyle(
-              fontSize: 17.sp,
-              fontWeight: FontWeight.w700,
+              fontSize: 19.sp,
+              fontWeight: FontWeight.w400,
               color: AppColors.textPrimary,
-            ),
+            fontFamily: 'SF UI'),
           ),
         ),
         if (trailing != null) trailing,
@@ -252,18 +252,18 @@ class _IbDashboardNewScreenState extends State<IbDashboardNewScreen> {
               Text(
                 'My Reference Links',
                 style: TextStyle(
-                  fontSize: 12.sp,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w400,
                   color: AppColors.textGrey,
-                ),
+                fontFamily: 'SF UI'),
               ),
               Text(
                 count.toString(),
                 style: TextStyle(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w800,
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w400,
                   color: AppColors.primary,
-                ),
+                fontFamily: 'SF UI'),
               ),
             ],
           ),
@@ -317,10 +317,10 @@ class _IbDashboardNewScreenState extends State<IbDashboardNewScreen> {
                             Text(
                               'Share Link',
                               style: TextStyle(
-                                fontSize: 11.sp,
-                                fontWeight: FontWeight.w600,
+                                fontSize: 13.sp,
+                                fontWeight: FontWeight.w400,
                                 color: AppColors.whiteColor,
-                              ),
+                              fontFamily: 'SF UI'),
                             ),
                           ],
                         ),
@@ -359,10 +359,10 @@ class _IbDashboardNewScreenState extends State<IbDashboardNewScreen> {
                   child: Text(
                     _getPeriodLabel(period),
                     style: TextStyle(
-                      fontSize: 13.sp,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 15.sp,
+                      fontWeight: FontWeight.w400,
                       color: AppColors.primary,
-                    ),
+                    fontFamily: 'SF UI'),
                   ),
                 );
               }).toList(),
@@ -424,20 +424,20 @@ class _IbDashboardNewScreenState extends State<IbDashboardNewScreen> {
                 Text(
                   label,
                   style: TextStyle(
-                    fontSize: 11.sp,
-                    fontWeight: FontWeight.w500,
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w400,
                     color: AppColors.textGrey,
-                  ),
+                  fontFamily: 'SF UI'),
                 ),
                 SizedBox(height: 6.h),
                 Text(
                   '\$${amount.toStringAsFixed(2)}',
                   style: TextStyle(
-                    fontSize: 18.sp,
-                    fontWeight: FontWeight.w800,
+                    fontSize: 20.sp,
+                    fontWeight: FontWeight.w400,
                     color: AppColors.primary,
                     height: 1.1,
-                  ),
+                  fontFamily: 'SF UI'),
                 ),
               ],
             ),
@@ -545,11 +545,11 @@ class _IbDashboardNewScreenState extends State<IbDashboardNewScreen> {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 10.sp,
-                    fontWeight: FontWeight.w500,
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w400,
                     color: AppColors.textGrey,
                     height: 1.15,
-                  ),
+                  fontFamily: 'SF UI'),
                 ),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.end,
@@ -560,11 +560,11 @@ class _IbDashboardNewScreenState extends State<IbDashboardNewScreen> {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.w800,
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w400,
                           color: AppColors.primary,
                           height: 1.1,
-                        ),
+                        fontFamily: 'SF UI'),
                       ),
                     ),
                     if (onTap != null)

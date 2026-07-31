@@ -2068,7 +2068,7 @@ class TradingController extends GetxController {
       // Build query parameters matching the API format:
       // ?page=1&per_page=10&mt5_account=2000000&from=YYYY-MM-DD&to=YYYY-MM-DD
       final now = DateTime.now().toUtc();
-      final defaultStartDate = now.subtract(const Duration(days: 7));
+      final defaultStartDate = now; // Default: today (matches web dashboard & UI default preset)
       final defaultFromStr =
           '${defaultStartDate.year}-${defaultStartDate.month.toString().padLeft(2, '0')}-${defaultStartDate.day.toString().padLeft(2, '0')}';
       final defaultToStr =

@@ -9,7 +9,8 @@ import 'package:crm_app/controllers/ib_controller.dart';
 import 'package:crm_app/models/ib_models.dart';
 
 class MyStructureScreen extends StatefulWidget {
-  const MyStructureScreen({super.key});
+  final bool isEmbedded;
+  const MyStructureScreen({super.key, this.isEmbedded = false});
 
   @override
   State<MyStructureScreen> createState() => _MyStructureScreenState();
@@ -52,30 +53,32 @@ class _MyStructureScreenState extends State<MyStructureScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.tradeBackgroundCenterColor,
-      appBar: AppBar(
-        scrolledUnderElevation: 0,
-        backgroundColor: AppColors.tradeBackgroundCenterColor,
-        elevation: 0,
-        leading: IconButton(
-          icon: SvgPicture.asset(
-            "assets/svg/ib_dashboard/home.svg",
-            colorFilter: ColorFilter.mode(
-              AppColors.textPrimary,
-              BlendMode.srcIn,
+      appBar: widget.isEmbedded
+          ? null
+          : AppBar(
+              scrolledUnderElevation: 0,
+              backgroundColor: AppColors.tradeBackgroundCenterColor,
+              elevation: 0,
+              leading: IconButton(
+                icon: SvgPicture.asset(
+                  "assets/svg/ib_dashboard/home.svg",
+                  colorFilter: ColorFilter.mode(
+                    AppColors.textPrimary,
+                    BlendMode.srcIn,
+                  ),
+                ),
+                onPressed: () => Get.offAll(() => const TradingMainScreen()),
+              ),
+              title: Text(
+                'My Structure',
+                style: TextStyle(
+                  fontSize: 20.sp,
+                  fontWeight: FontWeight.w400,
+                  color: AppColors.textPrimary,
+                fontFamily: 'SF UI'),
+              ),
+              centerTitle: true,
             ),
-          ),
-          onPressed: () => Get.offAll(() => const TradingMainScreen()),
-        ),
-        title: Text(
-          'My Structure',
-          style: TextStyle(
-            fontSize: 18.sp,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        centerTitle: true,
-      ),
       body: Obx(() {
         if (ibController.isLoading.value) {
           return Center(
@@ -140,10 +143,10 @@ class _MyStructureScreenState extends State<MyStructureScreen> {
         Text(
           'Performance Dashboard',
           style: TextStyle(
-            fontSize: 18.sp,
-            fontWeight: FontWeight.w700,
+            fontSize: 20.sp,
+            fontWeight: FontWeight.w400,
             color: AppColors.textPrimary,
-          ),
+          fontFamily: 'SF UI'),
         ),
         SizedBox(height: 2.h),
         Text(
@@ -224,11 +227,11 @@ class _MyStructureScreenState extends State<MyStructureScreen> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 8.5.sp,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 10.5.sp,
+                    fontWeight: FontWeight.w400,
                     color: AppColors.textGrey,
                     letterSpacing: 0.3,
-                  ),
+                  fontFamily: 'SF UI'),
                 ),
                 SizedBox(height: 3.h),
                 Text(
@@ -236,10 +239,10 @@ class _MyStructureScreenState extends State<MyStructureScreen> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 13.5.sp,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 15.5.sp,
+                    fontWeight: FontWeight.w400,
                     color: AppColors.textPrimary,
-                  ),
+                  fontFamily: 'SF UI'),
                 ),
               ],
             ),
@@ -293,10 +296,10 @@ class _MyStructureScreenState extends State<MyStructureScreen> {
                       Text(
                         'Unlock ${nextTier?.name ?? "Next Tier"}',
                         style: TextStyle(
-                          fontSize: 15.sp,
-                          fontWeight: FontWeight.w700,
+                          fontSize: 17.sp,
+                          fontWeight: FontWeight.w400,
                           color: AppColors.textPrimary,
-                        ),
+                        fontFamily: 'SF UI'),
                       ),
                       SizedBox(height: 2.h),
                       Text(
@@ -356,7 +359,7 @@ class _MyStructureScreenState extends State<MyStructureScreen> {
                 SizedBox(width: 6.w),
                 Text(
                   title,
-                  style: TextStyle(fontSize: 11.5.sp, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                  style: TextStyle(fontSize: 13.5.sp, fontWeight: FontWeight.w400, color: AppColors.textPrimary, fontFamily: 'SF UI'),
                 ),
               ],
             ),
@@ -364,11 +367,11 @@ class _MyStructureScreenState extends State<MyStructureScreen> {
               children: [
                 Text(
                   current,
-                  style: TextStyle(fontSize: 12.5.sp, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                  style: TextStyle(fontSize: 14.5.sp, fontWeight: FontWeight.w400, color: AppColors.textPrimary, fontFamily: 'SF UI'),
                 ),
                 Text(
                   ' / $target',
-                  style: TextStyle(fontSize: 11.5.sp, fontWeight: FontWeight.w500, color: AppColors.textGrey),
+                  style: TextStyle(fontSize: 13.5.sp, fontWeight: FontWeight.w400, color: AppColors.textGrey, fontFamily: 'SF UI'),
                 ),
               ],
             ),
@@ -410,7 +413,7 @@ class _MyStructureScreenState extends State<MyStructureScreen> {
             padding: EdgeInsets.all(14.w),
             child: Text(
               'Active Rebates (Per Lot)',
-              style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+              style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w400, color: AppColors.textPrimary, fontFamily: 'SF UI'),
             ),
           ),
           Container(
@@ -418,8 +421,8 @@ class _MyStructureScreenState extends State<MyStructureScreen> {
             color: AppColors.tradeBackgroundCenterColor.withValues(alpha: 0.5),
             child: Row(
               children: [
-                Expanded(flex: 2, child: Text('CATEGORY', style: TextStyle(fontSize: 9.5.sp, fontWeight: FontWeight.w600, color: AppColors.textGrey, letterSpacing: 0.5))),
-                Expanded(flex: 5, child: Text('PAYOUT RATES', style: TextStyle(fontSize: 9.5.sp, fontWeight: FontWeight.w600, color: AppColors.textGrey, letterSpacing: 0.5))),
+                Expanded(flex: 2, child: Text('CATEGORY', style: TextStyle(fontSize: 11.5.sp, fontWeight: FontWeight.w400, color: AppColors.textGrey, letterSpacing: 0.5, fontFamily: 'SF UI'))),
+                Expanded(flex: 5, child: Text('PAYOUT RATES', style: TextStyle(fontSize: 11.5.sp, fontWeight: FontWeight.w400, color: AppColors.textGrey, letterSpacing: 0.5, fontFamily: 'SF UI'))),
               ],
             ),
           ),
@@ -444,7 +447,7 @@ class _MyStructureScreenState extends State<MyStructureScreen> {
                           Expanded(
                             child: Text(
                               rebate.categoryName ?? '',
-                              style: TextStyle(fontSize: 11.5.sp, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                              style: TextStyle(fontSize: 13.5.sp, fontWeight: FontWeight.w400, color: AppColors.textPrimary, fontFamily: 'SF UI'),
                             ),
                           ),
                         ],
@@ -465,9 +468,9 @@ class _MyStructureScreenState extends State<MyStructureScreen> {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Text('L${level.level}', style: TextStyle(fontSize: 9.5.sp, fontWeight: FontWeight.w600, color: AppColors.textGrey)),
+                                Text('L${level.level}', style: TextStyle(fontSize: 11.5.sp, fontWeight: FontWeight.w400, color: AppColors.textGrey, fontFamily: 'SF UI')),
                                 SizedBox(width: 6.w),
-                                Text('\$${level.rate?.toStringAsFixed(2)}', style: TextStyle(fontSize: 10.5.sp, fontWeight: FontWeight.w700, color: Colors.green)),
+                                Text('\$${level.rate?.toStringAsFixed(2)}', style: TextStyle(fontSize: 12.5.sp, fontWeight: FontWeight.w400, color: Colors.green, fontFamily: 'SF UI')),
                               ],
                             ),
                           );
@@ -535,10 +538,10 @@ class _MyStructureScreenState extends State<MyStructureScreen> {
           child: Text(
             'Standard Groups',
             style: TextStyle(
-              fontSize: 15.sp,
-              fontWeight: FontWeight.w700,
+              fontSize: 17.sp,
+              fontWeight: FontWeight.w400,
               color: AppColors.textPrimary,
-            ),
+            fontFamily: 'SF UI'),
           ),
         ),
         SizedBox(height: 16.h),
@@ -622,10 +625,10 @@ class _MyStructureScreenState extends State<MyStructureScreen> {
                 Text(
                   title,
                   style: TextStyle(
-                    fontSize: 13.5.sp,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 15.5.sp,
+                    fontWeight: FontWeight.w400,
                     color: AppColors.textPrimary,
-                  ),
+                  fontFamily: 'SF UI'),
                 ),
                 SizedBox(height: 4.h),
                 Text(
@@ -674,11 +677,11 @@ class _MyStructureScreenState extends State<MyStructureScreen> {
             child: Text(
               (group.groupName ?? group.planTitle ?? 'GROUP').toUpperCase(),
               style: TextStyle(
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w800,
+                fontSize: 16.sp,
+                fontWeight: FontWeight.w400,
                 color: AppColors.onColoredBackground,
                 letterSpacing: 1.0,
-              ),
+              fontFamily: 'SF UI'),
             ),
           ),
           Expanded(
@@ -698,10 +701,10 @@ class _MyStructureScreenState extends State<MyStructureScreen> {
                         Text(
                           catName,
                           style: TextStyle(
-                            fontSize: 11.5.sp,
-                            fontWeight: FontWeight.w600,
+                            fontSize: 13.5.sp,
+                            fontWeight: FontWeight.w400,
                             color: AppColors.textPrimary,
-                          ),
+                          fontFamily: 'SF UI'),
                         ),
                         SizedBox(height: 6.h),
                         Container(
@@ -720,10 +723,10 @@ class _MyStructureScreenState extends State<MyStructureScreen> {
                           child: Text(
                             '\$  $rate',
                             style: TextStyle(
-                              fontSize: 12.5.sp,
-                              fontWeight: FontWeight.w600,
+                              fontSize: 14.5.sp,
+                              fontWeight: FontWeight.w400,
                               color: AppColors.textPrimary,
-                            ),
+                            fontFamily: 'SF UI'),
                           ),
                         ),
                       ],

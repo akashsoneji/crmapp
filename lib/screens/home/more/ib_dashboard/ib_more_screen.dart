@@ -58,10 +58,10 @@ class _IBMoreScreenState extends State<IBMoreScreen> {
         title: Text(
           'More',
           style: TextStyle(
-            fontSize: 18.sp,
-            fontWeight: FontWeight.w600,
+            fontSize: 20.sp,
+            fontWeight: FontWeight.w400,
             color: AppColors.textPrimary,
-          ),
+          fontFamily: 'SF UI'),
         ),
         centerTitle: true,
       ),

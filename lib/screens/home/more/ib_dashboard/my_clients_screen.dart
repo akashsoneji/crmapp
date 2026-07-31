@@ -462,10 +462,10 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
           return Text(
             ibType == 'traditional' ? 'My Network' : 'My Client',
             style: TextStyle(
-              fontSize: 18.sp,
-              fontWeight: FontWeight.w600,
+              fontSize: 20.sp,
+              fontWeight: FontWeight.w400,
               color: AppColors.textPrimary,
-            ),
+            fontFamily: 'SF UI'),
           );
         }),
         leading: IconButton(
@@ -532,10 +532,10 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
                       Text(
                         'No Data Found',
                         style: TextStyle(
-                          fontSize: 20.sp,
-                          fontWeight: FontWeight.w700,
+                          fontSize: 22.sp,
+                          fontWeight: FontWeight.w400,
                           color: AppColors.textPrimary,
-                        ),
+                        fontFamily: 'SF UI'),
                       ),
                       SizedBox(height: 8.h),
                       Text(
@@ -820,10 +820,10 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
                 Text(
                   'Select Client',
                   style: TextStyle(
-                    fontSize: 13.sp,
+                    fontSize: 15.sp,
                     color: AppColors.primary,
-                    fontWeight: FontWeight.w600,
-                  ),
+                    fontWeight: FontWeight.w400,
+                  fontFamily: 'SF UI'),
                 ),
               ],
             ),
@@ -838,10 +838,10 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
             child: Text(
               controller.selectedClientName.value ?? 'Client',
               style: TextStyle(
-                fontSize: 11.sp,
+                fontSize: 13.sp,
                 color: AppColors.primary,
-                fontWeight: FontWeight.w600,
-              ),
+                fontWeight: FontWeight.w400,
+              fontFamily: 'SF UI'),
             ),
           ),
         ],
@@ -885,11 +885,11 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
                   child: Text(
                     bannerTitle,
                     style: TextStyle(
-                      fontSize: 15.sp,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 17.sp,
+                      fontWeight: FontWeight.w400,
                       color: AppColors.whiteColor,
                       letterSpacing: 0.2,
-                    ),
+                    fontFamily: 'SF UI'),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -931,10 +931,10 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
                                 ? 'Back to Sub IB'
                                 : 'Back to Master IB',
                             style: TextStyle(
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.w600,
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w400,
                               color: AppColors.primary,
-                            ),
+                            fontFamily: 'SF UI'),
                           ),
                         ],
                       ),
@@ -996,10 +996,10 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
                             Text(
                               'Show More',
                               style: TextStyle(
-                                fontSize: 14.sp,
-                                fontWeight: FontWeight.w600,
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.w400,
                                 color: AppColors.textPrimary,
-                              ),
+                              fontFamily: 'SF UI'),
                             ),
                             SizedBox(height: 2.h),
                             Text(
@@ -1093,10 +1093,10 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
               child: Text(
                 text,
                 style: TextStyle(
-                  fontSize: 12.sp,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w400,
                   color: isSelected ? AppColors.whiteColor : AppColors.primary,
-                ),
+                fontFamily: 'SF UI'),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
@@ -1359,11 +1359,11 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
               Text(
                 value,
                 style: TextStyle(
-                  fontSize: 12.sp,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w400,
                   color:
                       isHighlighted ? AppColors.green : AppColors.textPrimary,
-                ),
+                fontFamily: 'SF UI'),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
@@ -1428,10 +1428,10 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
                       child: Text(
                         _getInitials(client.name),
                         style: TextStyle(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w600,
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w400,
                           color: AppColors.primary,
-                        ),
+                        fontFamily: 'SF UI'),
                       ),
                     ),
                   ),
@@ -1444,10 +1444,10 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
                         Text(
                           client.name ?? 'N/A',
                           style: TextStyle(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w600,
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w400,
                             color: AppColors.textPrimary,
-                          ),
+                          fontFamily: 'SF UI'),
                         ),
                         SizedBox(height: 2.h),
                         Text(
@@ -1623,10 +1623,10 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
           Text(
             value,
             style: TextStyle(
-              fontSize: 12.sp,
-              fontWeight: FontWeight.w600,
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w400,
               color: AppColors.textPrimary,
-            ),
+            fontFamily: 'SF UI'),
           ),
         ],
       ),
@@ -1688,10 +1688,10 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
                       child: Text(
                         _getInitials(subIB.name),
                         style: TextStyle(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w600,
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w400,
                           color: AppColors.primary,
-                        ),
+                        fontFamily: 'SF UI'),
                       ),
                     ),
                   ),
@@ -1704,10 +1704,10 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
                         Text(
                           subIB.name ?? 'N/A',
                           style: TextStyle(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w600,
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w400,
                             color: AppColors.textPrimary,
-                          ),
+                          fontFamily: 'SF UI'),
                         ),
                         SizedBox(height: 2.h),
                         Text(
@@ -1914,10 +1914,10 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
                   child: Text(
                     'Search',
                     style: TextStyle(
-                      fontSize: 13.sp,
+                      fontSize: 15.sp,
                       color: AppColors.whiteColor,
-                      fontWeight: FontWeight.w600,
-                    ),
+                      fontWeight: FontWeight.w400,
+                    fontFamily: 'SF UI'),
                   ),
                 ),
               ),
@@ -2051,10 +2051,10 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
               : Text(
                   'Load More',
                   style: TextStyle(
-                    fontSize: 13.sp,
+                    fontSize: 15.sp,
                     color: AppColors.primary,
-                    fontWeight: FontWeight.w600,
-                  ),
+                    fontWeight: FontWeight.w400,
+                  fontFamily: 'SF UI'),
                 ),
         ),
       ),
@@ -2099,10 +2099,10 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
                   child: Text(
                     _getInitials(client.name),
                     style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w700,
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.w400,
                       color: AppColors.primary,
-                    ),
+                    fontFamily: 'SF UI'),
                   ),
                 ),
               ),
@@ -2114,10 +2114,10 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
                     Text(
                       client.name ?? 'N/A',
                       style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w400,
                         color: AppColors.textPrimary,
-                      ),
+                      fontFamily: 'SF UI'),
                     ),
                     SizedBox(height: 2.h),
                     Text(
@@ -2162,10 +2162,10 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
       child: Text(
         text,
         style: TextStyle(
-          fontSize: 10.sp,
-          fontWeight: FontWeight.w600,
+          fontSize: 12.sp,
+          fontWeight: FontWeight.w400,
           color: color,
-        ),
+        fontFamily: 'SF UI'),
       ),
     );
   }
@@ -2218,10 +2218,10 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
                             ? trade.symbol!.substring(0, 3)
                             : (trade.symbol ?? '--'),
                         style: TextStyle(
-                          fontSize: 10.sp,
-                          fontWeight: FontWeight.w700,
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w400,
                           color: isBuy ? AppColors.success : AppColors.error,
-                        ),
+                        fontFamily: 'SF UI'),
                       ),
                     ),
                   ),
@@ -2236,10 +2236,10 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
                             Text(
                               trade.symbol ?? 'N/A',
                               style: TextStyle(
-                                fontSize: 13.sp,
-                                fontWeight: FontWeight.w700,
+                                fontSize: 15.sp,
+                                fontWeight: FontWeight.w400,
                                 color: AppColors.textPrimary,
-                              ),
+                              fontFamily: 'SF UI'),
                             ),
                             SizedBox(width: 6.w),
                             Container(
@@ -2253,10 +2253,10 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
                               child: Text(
                                 trade.type?.toUpperCase() ?? '--',
                                 style: TextStyle(
-                                  fontSize: 10.sp,
-                                  fontWeight: FontWeight.w700,
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.w400,
                                   color: isBuy ? AppColors.success : AppColors.error,
-                                ),
+                                fontFamily: 'SF UI'),
                               ),
                             ),
                           ],
@@ -2279,10 +2279,10 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
                       Text(
                         '${isProfit ? '+' : ''}\$${trade.profit?.toStringAsFixed(2) ?? '0.00'}',
                         style: TextStyle(
-                          fontSize: 13.sp,
-                          fontWeight: FontWeight.w700,
+                          fontSize: 15.sp,
+                          fontWeight: FontWeight.w400,
                           color: isProfit ? AppColors.success : AppColors.error,
-                        ),
+                        fontFamily: 'SF UI'),
                       ),
                       SizedBox(height: 2.h),
                       Text(

@@ -103,10 +103,10 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
         title: Text(
           'IB Requests',
           style: TextStyle(
-            fontSize: 18.sp,
-            fontWeight: FontWeight.w600,
+            fontSize: 20.sp,
+            fontWeight: FontWeight.w400,
             color: AppColors.textPrimary,
-          ),
+          fontFamily: 'SF UI'),
         ),
         leading: IconButton(
           icon: SvgPicture.asset("assets/svg/ib_dashboard/home.svg", colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn)),
@@ -236,10 +236,10 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
               Text(
                 'No requests found',
                 style: TextStyle(
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 20.sp,
+                  fontWeight: FontWeight.w400,
                   color: AppColors.textPrimary,
-                ),
+                fontFamily: 'SF UI'),
               ),
               SizedBox(height: 8.h),
               Text(
@@ -329,10 +329,10 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
                     child: Text(
                       name.isNotEmpty ? name[0].toUpperCase() : 'N',
                       style: TextStyle(
-                        fontSize: 18.sp,
-                        fontWeight: FontWeight.w700,
+                        fontSize: 20.sp,
+                        fontWeight: FontWeight.w400,
                         color: AppColors.whiteColor,
-                      ),
+                      fontFamily: 'SF UI'),
                     ),
                   ),
                 ),
@@ -344,10 +344,10 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
                       Text(
                         name,
                         style: TextStyle(
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.w700,
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.w400,
                           color: AppColors.textPrimary,
-                        ),
+                        fontFamily: 'SF UI'),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -382,10 +382,10 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
                   child: Text(
                     _getStatusLabel(request.status),
                     style: TextStyle(
-                      fontSize: 11.sp,
-                      fontWeight: FontWeight.w700,
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w400,
                       color: statusColor,
-                    ),
+                    fontFamily: 'SF UI'),
                   ),
                 ),
               ],
@@ -432,10 +432,10 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
                 label: Text(
                   'Change Plan',
                   style: TextStyle(
-                    fontSize: 13.sp,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.w400,
                     color: AppColors.whiteColor,
-                  ),
+                  fontFamily: 'SF UI'),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
@@ -496,10 +496,10 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
               Text(
                 value,
                 style: TextStyle(
-                  fontSize: 13.sp,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 15.sp,
+                  fontWeight: FontWeight.w400,
                   color: valueColor ?? AppColors.textPrimary,
-                ),
+                fontFamily: 'SF UI'),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -540,10 +540,10 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
                         Text(
                           'Assign Plan',
                           style: TextStyle(
-                            fontSize: 18.sp,
-                            fontWeight: FontWeight.w700,
+                            fontSize: 20.sp,
+                            fontWeight: FontWeight.w400,
                             color: AppColors.textPrimary,
-                          ),
+                          fontFamily: 'SF UI'),
                         ),
                         IconButton(
                           onPressed: Get.back,
@@ -571,9 +571,9 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
                         'Standard Group',
                         style: TextStyle(
                           color: AppColors.whiteColor,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14.sp,
-                        ),
+                          fontWeight: FontWeight.w400,
+                          fontSize: 16.sp,
+                        fontFamily: 'SF UI'),
                       ),
                     ),
 
@@ -704,10 +704,10 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
       text: TextSpan(
         text: '$text ',
         style: TextStyle(
-          fontSize: 13.sp,
-          fontWeight: FontWeight.w600,
+          fontSize: 15.sp,
+          fontWeight: FontWeight.w400,
           color: AppColors.textPrimary,
-        ),
+        fontFamily: 'SF UI'),
         children: const [
           TextSpan(text: '*', style: TextStyle(color: AppColors.error)),
         ],

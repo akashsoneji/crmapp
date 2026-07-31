@@ -66,10 +66,10 @@ class UserMT5Account {
   factory UserMT5Account.fromJson(Map<String, dynamic> json) {
     return UserMT5Account(
       id: json['id'] ?? 0,
-      metaAccountNumber: json['meta_account_number'] ?? '',
-      metaAccountName: json['meta_account_name'] ?? '',
-      masterGroupId: json['master_group_id'] ?? '',
-      balance: json['balance'] ?? '0.0',
+      metaAccountNumber: json['meta_account_number']?.toString() ?? '',
+      metaAccountName: json['meta_account_name']?.toString() ?? '',
+      masterGroupId: json['master_group_id']?.toString() ?? '',
+      balance: json['balance']?.toString() ?? '0.0',
     );
   }
 }
@@ -90,9 +90,9 @@ class Wallet {
   factory Wallet.fromJson(Map<String, dynamic> json) {
     return Wallet(
       id: json['id'] ?? 0,
-      walletId: json['wallet_id'] ?? '',
-      walletStatus: json['wallet_status'] ?? '',
-      walletBalance: json['wallet_balance'] ?? '0.0',
+      walletId: json['wallet_id']?.toString() ?? '',
+      walletStatus: json['wallet_status']?.toString() ?? '',
+      walletBalance: json['wallet_balance']?.toString() ?? '0.0',
     );
   }
 }
@@ -113,10 +113,84 @@ class IbAccount {
   factory IbAccount.fromJson(Map<String, dynamic> json) {
     return IbAccount(
       id: json['id'] ?? 0,
-      promotionTool: json['promotion_tool'] ?? '',
-      status: json['status'] ?? '',
-      referenceLinkId: json['reference_link_id'] ?? '',
+      promotionTool: json['promotion_tool']?.toString() ?? '',
+      status: json['status']?.toString() ?? '',
+      referenceLinkId: json['reference_link_id']?.toString() ?? '',
     );
+  }
+}
+
+// Transaction list models
+class Data {
+  String? id;
+  int? userId;
+  String? mt5AccountId;
+  String? referenceNumber;
+  String? amount;
+  String? transactionId;
+  String? status;
+  String? paymentMethod;
+  String? proof;
+  String? proofUrl;
+  String? paymentDetails;
+  String? createdAt;
+  String? transactionType;
+  String? type;
+
+  Data({
+    this.id,
+    this.userId,
+    this.mt5AccountId,
+    this.referenceNumber,
+    this.amount,
+    this.transactionId,
+    this.status,
+    this.paymentMethod,
+    this.proof,
+    this.proofUrl,
+    this.paymentDetails,
+    this.createdAt,
+    this.transactionType,
+    this.type,
+  });
+
+  Data.fromJson(Map<String, dynamic> json) {
+    id = json['id']?.toString();
+    userId =
+        json['user_id'] is int
+            ? json['user_id']
+            : int.tryParse(json['user_id']?.toString() ?? '');
+    mt5AccountId = json['mt5_account_id']?.toString();
+    referenceNumber = json['reference_number']?.toString();
+    amount = json['amount']?.toString();
+    transactionId = json['transaction_id']?.toString();
+    status = json['status']?.toString();
+    paymentMethod = json['paymentMethod']?.toString();
+    proof = json['proof']?.toString();
+    proofUrl = json['proof_url']?.toString();
+    paymentDetails = json['payment_details']?.toString();
+    createdAt = json['created_at_iso']?.toString() ?? json['created_at']?.toString();
+    transactionType = json['transaction_type']?.toString();
+    type = json['type']?.toString();
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['id'] = id;
+    data['user_id'] = userId;
+    data['mt5_account_id'] = mt5AccountId;
+    data['reference_number'] = referenceNumber;
+    data['amount'] = amount;
+    data['transaction_id'] = transactionId;
+    data['status'] = status;
+    data['paymentMethod'] = paymentMethod;
+    data['proof'] = proof;
+    data['proof_url'] = proofUrl;
+    data['payment_details'] = paymentDetails;
+    data['created_at'] = createdAt;
+    data['transaction_type'] = transactionType;
+    data['type'] = type;
+    return data;
   }
 }
 
@@ -145,11 +219,24 @@ class WalletController extends GetxController {
   var wallet = Rxn<Wallet>();
   var ibAccount = Rxn<IbAccount>();
 
+  // History & pagination state
+  var isLoadingMore = false.obs;
+  var hasMore = true.obs;
+  var currentPage = 1.obs;
+  var lastPage = 1.obs;
+  var totalItems = 0.obs;
+  var historyTransactions = <Data>[].obs;
+  var isHistoryLoading = false.obs;
+
+  var filterType = 'All Types'.obs;
+  var filterStatus = 'All Status'.obs;
+  var filterDateFrom = ''.obs;
+  var filterDateTo = ''.obs;
+
   final transferFromController = TextEditingController();
   final transferToController = TextEditingController();
   final amountController = TextEditingController(text: '0.00');
 
-  // Sample account options for dropdown
   final List<String> accountOptions = [
     'MT5 Account Number',
     'MT4 Account Number',
@@ -161,19 +248,13 @@ class WalletController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    // Set default values
-    // transferFromAccount.value = accountOptions[0];
-    // transferFromController.text = accountOptions[0];
-    // transferToController.text = accountOptions[0];
-    // amountController.text = '\$500.00';
-    // amount.value = '\$500.00';
   }
 
   @override
   void onReady() {
     super.onReady();
-    // Fetch after first frame so Obx widgets are not updated during build.
     fetchWalletData();
+    fetchWalletHistory(page: 1);
   }
 
   void selectTransferFromAccount(String account) {
@@ -210,7 +291,6 @@ class WalletController extends GetxController {
       return;
     }
 
-    // Clean currency symbols and commas
     final cleanedText = rawText.replaceAll(RegExp(r'[^0-9.]'), '');
 
     final parsedAmount = PrecisionHelper.parseDouble(cleanedText);
@@ -223,9 +303,6 @@ class WalletController extends GetxController {
 
     try {
       isLoading.value = true;
-
-      // await Future.delayed(const Duration(seconds: 3));
-
       Get.to(() => DepositScreen(accountNumber: ''));
     } catch (e) {
       if (Get.isRegistered<AppNotificationController>()) {
@@ -239,7 +316,6 @@ class WalletController extends GetxController {
     }
   }
 
-  // Check balance before transfer
   Future<bool> checkBalance(String accountNumber, double amount) async {
     try {
       final token = await SecureStorageService.getAuthToken();
@@ -250,8 +326,6 @@ class WalletController extends GetxController {
       );
 
       if (response.success && response.data != null) {
-        // API response structure: {"status": true, "message": "", "data": {"valid": true}}
-        // So we need to access response.data['data']['valid']
         final responseData = response.data as Map<String, dynamic>?;
         final nestedData = responseData?['data'] as Map<String, dynamic>?;
         final isValid = nestedData?['valid'] ?? false;
@@ -276,14 +350,12 @@ class WalletController extends GetxController {
     }
   }
 
-  // Send OTP for internal transfer
   Future<bool> sendOTP(String accountNumber) async {
     try {
       isOtpLoading.value = true;
       otpMessage.value = '';
 
       final token = await SecureStorageService.getAuthToken();
-      // Add timestamp parameter
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final response = await ApiService.get(
         endpoint: ApiConstants.withdrawalSendOTPRequest,
@@ -316,7 +388,6 @@ class WalletController extends GetxController {
     }
   }
 
-  // Submit internal transfer with OTP
   Future<bool> submitInternalTransfer(
     String otp,
     String comment,
@@ -366,12 +437,8 @@ class WalletController extends GetxController {
           message: 'Transfer completed successfully',
         );
 
-        // Refresh wallet data to get updated balances
         await fetchWalletData();
-
-        // Reset form and clean all values
         _resetTransferForm();
-
         return true;
       } else {
         CustomToastService.showError(
@@ -389,7 +456,6 @@ class WalletController extends GetxController {
     }
   }
 
-  // Reset transfer form
   void _resetTransferForm() {
     selectedFromAccount.value = null;
     selectedFromAccountType.value = null;
@@ -402,9 +468,7 @@ class WalletController extends GetxController {
     otpMessage.value = '';
   }
 
-  // Validate required fields - Dynamic validation based on account type
   bool _validateRequiredFields() {
-    // Common validation
     if (transferFromAccount.value.isEmpty) {
       CustomToastService.showError(
         message: 'Please select Transfer From',
@@ -422,13 +486,9 @@ class WalletController extends GetxController {
     return true;
   }
 
-  // Send OTP
   Future<void> sendOtp() async {
     try {
       isLoading.value = true;
-      // errorMessage.value = '';
-
-      // Validate required fields based on account type
       if (!_validateRequiredFields()) {
         return;
       }
@@ -437,23 +497,19 @@ class WalletController extends GetxController {
       final response = await ApiService.get(
         endpoint: ApiConstants.withdrawalSendOTPRequest,
         token: token,
-        // data: _buildOtpRequestParams(),
       );
 
       if (response.success) {
         print('✅ OTP sent successfully');
         isOtpSent.value = true;
-        // successMessage.value = 'OTP sent successfully';
         CustomToastService.showSuccess(message: 'OTP sent');
       } else {
-        // errorMessage.value = response.message ?? 'Failed to send OTP';
         print('❌ Failed to send OTP: ${response.message}');
         CustomToastService.showError(
           message: response.message ?? 'Failed to send OTP',
         );
       }
     } catch (e) {
-      // err.value = 'Error sending OTP: $e';
       print('❌ Error sending OTP: $e');
       CustomToastService.showError(
         message: 'Error sending OTP: $e',
@@ -476,28 +532,49 @@ class WalletController extends GetxController {
       isLoading.value = true;
 
       final token = await SecureStorageService.getAuthToken();
-      // Add timestamp parameter as required by API
       final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final response = await ApiService.get(
+
+      // 1. Fetch legacy wallet data (to get mt5Accounts and ibAccount for transfer screen)
+      final legacyResponse = await ApiService.get(
         endpoint: ApiConstants.getWalletData,
         queryParameters: {'_t': timestamp.toString()},
         token: token,
       );
 
-      if (response.success && response.data != null) {
-        final parsed = WalletResponse.fromJson(response.data);
-        print(
-          "Wallet API Parsed Response: ${parsed.message},=======,${parsed.wallet.walletId}",
-        );
+      if (legacyResponse.success && legacyResponse.data != null) {
+        final parsed = WalletResponse.fromJson(legacyResponse.data);
         mt5Accounts.assignAll(parsed.userMT5Accounts);
-        wallet.value = parsed.wallet;
         ibAccount.value = parsed.ibAccount;
+        // Fallback wallet & balance
+        wallet.value = parsed.wallet;
         balance.value = parsed.wallet.walletBalance;
+      }
+
+      // 2. Fetch fresh wallet details from the new api/user/wallet endpoint
+      final freshResponse = await ApiService.get(
+        endpoint: ApiConstants.getWalletDetailsNew,
+        queryParameters: {'_t': timestamp.toString()},
+        token: token,
+      );
+
+      if (freshResponse.success && freshResponse.data != null) {
+        final freshData = freshResponse.data;
+        if (freshData['data'] != null) {
+          final walletMap = freshData['data'] as Map<String, dynamic>;
+          final walletIdStr = walletMap['wallet_id']?.toString() ?? '';
+          final balanceStr = walletMap['balance']?.toString() ?? '0.0';
+
+          wallet.value = Wallet(
+            id: wallet.value?.id ?? 0,
+            walletId: walletIdStr,
+            walletStatus: wallet.value?.walletStatus ?? 'active',
+            walletBalance: balanceStr,
+          );
+          balance.value = balanceStr;
+          print("Fetched wallet Details: ID = $walletIdStr, Balance = $balanceStr");
+        }
       } else {
-        print("Failed to fetch wallet data: ${response.message}");
-        CustomToastService.showError(
-          message: response.message ?? "Something went wrong",
-        );
+        print("Failed to fetch fresh wallet details: ${freshResponse.message}");
       }
     } catch (e) {
       print("Error fetching wallet data: $e");
@@ -509,33 +586,127 @@ class WalletController extends GetxController {
     }
   }
 
-  /// Clear all wallet data (called on logout)
+  Future<void> fetchWalletHistory({int page = 1}) async {
+    try {
+      print('DEBUG: fetchWalletHistory page = $page');
+      if (page == 1) {
+        isHistoryLoading.value = true;
+        hasMore.value = true;
+        historyTransactions.clear();
+      } else {
+        isLoadingMore.value = true;
+      }
+
+      final token = await SecureStorageService.getAuthToken();
+      
+      final typeQuery = filterType.value != 'All Types' ? filterType.value : '';
+      final statusQuery = filterStatus.value != 'All Status' ? filterStatus.value : '';
+      final fromQuery = filterDateFrom.value;
+      final toQuery = filterDateTo.value;
+
+      print('DEBUG: calling getTransactions with type: $typeQuery, status: $statusQuery');
+      final Map<String, dynamic> queryParams = {
+        'page': page.toString(),
+        'perPage': '10',
+        'transactionType': typeQuery,
+        'dateFrom': fromQuery,
+        'dateTo': toQuery,
+        'type': typeQuery,
+        'status': statusQuery,
+        '_t': DateTime.now().millisecondsSinceEpoch.toString(),
+      };
+
+      final response = await ApiService.get(
+        endpoint: ApiConstants.getTransactions,
+        queryParameters: queryParams,
+        token: token,
+      );
+
+      print('DEBUG: getTransactions response success = ${response.success}');
+      if (response.success && response.data != null) {
+        final data = response.data;
+        print('DEBUG: getTransactions data keys = ${data is Map ? data.keys : "Not a Map"}');
+        List<Data> newItems = [];
+        if (data['data'] != null) {
+          final List transactionsList = data['data'];
+          print('DEBUG: transactionsList length = ${transactionsList.length}');
+          newItems = transactionsList.map((e) => Data.fromJson(e)).toList();
+        }
+
+        if (data['pagination'] != null) {
+          currentPage.value = data['pagination']['current_page'] ?? page;
+          lastPage.value = data['pagination']['last_page'] ?? 1;
+          totalItems.value = data['pagination']['total'] ?? 0;
+          print('DEBUG: pagination: current = ${currentPage.value}, last = ${lastPage.value}');
+        }
+
+        if (page == 1) {
+          historyTransactions.assignAll(newItems);
+        } else {
+          historyTransactions.addAll(newItems);
+        }
+
+        if (newItems.isEmpty || currentPage.value >= lastPage.value) {
+          hasMore.value = false;
+        }
+      } else {
+        print('DEBUG: getTransactions failed with message: ${response.message}');
+        if (page == 1) {
+          hasMore.value = false;
+        }
+      }
+    } catch (e, stack) {
+      print("Error fetching wallet history: $e");
+      print(stack);
+      if (page == 1) {
+        hasMore.value = false;
+      }
+    } finally {
+      isHistoryLoading.value = false;
+      isLoadingMore.value = false;
+    }
+  }
+
+  void loadMoreTransactions() {
+    if (isHistoryLoading.value || isLoadingMore.value || !hasMore.value) {
+      return;
+    }
+    fetchWalletHistory(page: currentPage.value + 1);
+  }
+
+  void applyFilters() {
+    fetchWalletHistory(page: 1);
+  }
+
+  void clearFilters() {
+    filterType.value = 'All Types';
+    filterStatus.value = 'All Status';
+    filterDateFrom.value = '';
+    filterDateTo.value = '';
+    fetchWalletHistory(page: 1);
+  }
+
   void clearAllWalletData() {
     print('WalletController: Clearing all wallet data...');
 
-    // Clear all wallet data
     mt5Accounts.clear();
     wallet.value = null;
     ibAccount.value = null;
     balance.value = '';
 
-    // Clear transfer form data
     selectedFromAccount.value = null;
     transferFromAccount.value = '';
     transferToAccount.value = '';
     amount.value = '';
     amountController.clear();
 
-    // Clear OTP data
     isOtpSent.value = false;
     isOtpLoading.value = false;
     isTransferLoading.value = false;
     otpMessage.value = '';
 
-    // Clear dropdown state
     showTransferFromDropdown.value = false;
 
-    // Force UI refresh
     mt5Accounts.refresh();
     wallet.refresh();
     ibAccount.refresh();

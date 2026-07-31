@@ -58,7 +58,7 @@ class _CommissionGroupsScreenState extends State<CommissionGroupsScreen> {
       AlertDialog(
         title: Text(
           'Delete Group',
-          style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w600),
+          style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.w400, fontFamily: 'SF UI'),
         ),
         content: Text(
           'Are you sure you want to delete "${group.groupName}"?',
@@ -107,10 +107,10 @@ class _CommissionGroupsScreenState extends State<CommissionGroupsScreen> {
         title: Text(
           'Commission Groups',
           style: TextStyle(
-            fontSize: 18.sp,
-            fontWeight: FontWeight.w600,
+            fontSize: 20.sp,
+            fontWeight: FontWeight.w400,
             color: AppColors.textPrimary,
-          ),
+          fontFamily: 'SF UI'),
         ),
         centerTitle: true,
       ),
@@ -180,10 +180,10 @@ class _CommissionGroupsScreenState extends State<CommissionGroupsScreen> {
                             child: Text(
                               'Standard Groups',
                               style: TextStyle(
-                                fontSize: 16.sp,
-                                fontWeight: FontWeight.w600,
+                                fontSize: 18.sp,
+                                fontWeight: FontWeight.w400,
                                 color: AppColors.primary,
-                              ),
+                               fontFamily: 'SF UI'),
                             ),
                           ),
                         ],
@@ -199,10 +199,10 @@ class _CommissionGroupsScreenState extends State<CommissionGroupsScreen> {
                           child: Text(
                             'Existing Standard Groups',
                             style: TextStyle(
-                              fontSize: 16.sp,
-                              fontWeight: FontWeight.w600,
+                              fontSize: 18.sp,
+                              fontWeight: FontWeight.w400,
                               color: AppColors.primary,
-                            ),
+                            fontFamily: 'SF UI'),
                           ),
                         ),
                         SizedBox(width: 8.w),
@@ -224,10 +224,10 @@ class _CommissionGroupsScreenState extends State<CommissionGroupsScreen> {
                               child: Text(
                                 'Add New Standard Group',
                                 style: TextStyle(
-                                  fontSize: 12.sp,
-                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.w400,
                                   color: AppColors.whiteColor,
-                                ),
+                                 fontFamily: 'SF UI'),
                               ),
                             ),
                           ),
@@ -304,10 +304,10 @@ class _CommissionGroupsScreenState extends State<CommissionGroupsScreen> {
                           child: Text(
                             'Standard Groups',
                             style: TextStyle(
-                              fontSize: 16.sp,
-                              fontWeight: FontWeight.w600,
+                              fontSize: 18.sp,
+                              fontWeight: FontWeight.w400,
                               color: AppColors.primary,
-                            ),
+                             fontFamily: 'SF UI'),
                           ),
                         ),
                       ],
@@ -324,10 +324,10 @@ class _CommissionGroupsScreenState extends State<CommissionGroupsScreen> {
                         child: Text(
                           'Existing Standard Groups',
                           style: TextStyle(
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.w600,
+                            fontSize: 18.sp,
+                            fontWeight: FontWeight.w400,
                             color: AppColors.primary,
-                          ),
+                           fontFamily: 'SF UI'),
                         ),
                       ),
                       SizedBox(width: 8.w),
@@ -349,10 +349,10 @@ class _CommissionGroupsScreenState extends State<CommissionGroupsScreen> {
                             child: Text(
                               'Add New Standard Group',
                               style: TextStyle(
-                                fontSize: 12.sp,
-                                fontWeight: FontWeight.w600,
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.w400,
                                 color: AppColors.whiteColor,
-                              ),
+                               fontFamily: 'SF UI'),
                             ),
                           ),
                         ),
@@ -425,10 +425,10 @@ class _CommissionGroupsScreenState extends State<CommissionGroupsScreen> {
                 Text(
                   title,
                   style: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w400,
                     color: AppColors.textPrimary,
-                  ),
+                   fontFamily: 'SF UI'),
                 ),
                 SizedBox(height: 8.h),
                 Text(
@@ -484,10 +484,10 @@ class _CommissionGroupsScreenState extends State<CommissionGroupsScreen> {
                     child: Text(
                       '#',
                       style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w400,
                         color: AppColors.textPrimary,
-                      ),
+                      fontFamily: 'SF UI'),
                     ),
                   ),
                   Expanded(
@@ -495,10 +495,10 @@ class _CommissionGroupsScreenState extends State<CommissionGroupsScreen> {
                     child: Text(
                       'Group Name',
                       style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w400,
                         color: AppColors.textPrimary,
-                      ),
+                      fontFamily: 'SF UI'),
                     ),
                   ),
                   Expanded(
@@ -506,10 +506,10 @@ class _CommissionGroupsScreenState extends State<CommissionGroupsScreen> {
                     child: Text(
                       'Created Date',
                       style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w400,
                         color: AppColors.textPrimary,
-                      ),
+                       fontFamily: 'SF UI'),
                     ),
                   ),
                   Expanded(
@@ -518,10 +518,10 @@ class _CommissionGroupsScreenState extends State<CommissionGroupsScreen> {
                       'Actions',
                       textAlign: TextAlign.right,
                       style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w400,
                         color: AppColors.textPrimary,
-                      ),
+                       fontFamily: 'SF UI'),
                     ),
                   ),
                 ],

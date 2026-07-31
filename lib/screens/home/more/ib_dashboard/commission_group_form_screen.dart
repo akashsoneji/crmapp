@@ -229,10 +229,10 @@ class _CommissionGroupFormScreenState extends State<CommissionGroupFormScreen> {
         title: Text(
           widget.group != null ? 'Edit Commission Group' : 'Add Commission Group',
           style: TextStyle(
-            fontSize: 18.sp,
-            fontWeight: FontWeight.w600,
+            fontSize: 20.sp,
+            fontWeight: FontWeight.w400,
             color: AppColors.textPrimary,
-          ),
+          fontFamily: 'SF UI'),
         ),
         centerTitle: true,
       ),
@@ -279,10 +279,10 @@ class _CommissionGroupFormScreenState extends State<CommissionGroupFormScreen> {
                         Text(
                           'Standard Group Structure',
                           style: TextStyle(
-                            fontSize: 18.sp,
-                            fontWeight: FontWeight.w600,
+                            fontSize: 20.sp,
+                            fontWeight: FontWeight.w400,
                             color: AppColors.textPrimary,
-                          ),
+                           fontFamily: 'SF UI'),
                         ),
                         SizedBox(height: 8.h),
                         Text(
@@ -309,10 +309,10 @@ class _CommissionGroupFormScreenState extends State<CommissionGroupFormScreen> {
                         Text(
                           'Group Name',
                           style: TextStyle(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w600,
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w400,
                             color: AppColors.textPrimary,
-                          ),
+                           fontFamily: 'SF UI'),
                         ),
                         SizedBox(height: 12.h),
                         TextField(
@@ -362,10 +362,10 @@ class _CommissionGroupFormScreenState extends State<CommissionGroupFormScreen> {
                         Text(
                           'Set Commission Rates (Category-wise)',
                           style: TextStyle(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w600,
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w400,
                             color: AppColors.textPrimary,
-                          ),
+                           fontFamily: 'SF UI'),
                         ),
                         SizedBox(height: 16.h),
                         _buildCommissionList(
@@ -410,10 +410,10 @@ style: OutlinedButton.styleFrom(
                   child: Text(
                     'Cancel',
                     style: TextStyle(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w400,
                       color: AppColors.textPrimary,
-                    ),
+                     fontFamily: 'SF UI'),
                   ),
                 ),
               ),
@@ -444,10 +444,10 @@ style: OutlinedButton.styleFrom(
                           : Text(
                             'Save Commission Group',
                             style: TextStyle(
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.w600,
+                              fontSize: 16.sp,
+                              fontWeight: FontWeight.w400,
                               color: AppColors.whiteColor,
-                            ),
+                             fontFamily: 'SF UI'),
                           ),
                 ),
               ),
@@ -497,10 +497,10 @@ style: OutlinedButton.styleFrom(
                 child: Text(
                   'Retry',
                   style: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w400,
                     color: AppColors.whiteColor,
-                  ),
+                   fontFamily: 'SF UI'),
                 ),
               ),
             ),
@@ -576,12 +576,12 @@ style: OutlinedButton.styleFrom(
                   Text(
                     groupName.toUpperCase(),
                     style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w500,
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.w400,
                       color:
                           isExpanded ? AppColors.primary : AppColors.whiteColor,
                       letterSpacing: 0.5,
-                    ),
+                     fontFamily: 'SF UI'),
                   ),
                   // Animated triangle icon (caret)
                   AnimatedRotation(
@@ -667,10 +667,10 @@ style: OutlinedButton.styleFrom(
               child: Text(
                 category.categoryName ?? 'N/A',
                 style: TextStyle(
-                  fontSize: 15.sp,
-                  fontWeight: FontWeight.w500,
+                  fontSize: 17.sp,
+                  fontWeight: FontWeight.w400,
                   color: AppColors.textPrimary,
-                ),
+                 fontFamily: 'SF UI'),
               ),
             ),
             SizedBox(width: 12.w),
@@ -687,8 +687,8 @@ style: OutlinedButton.styleFrom(
                   _MaxValueInputFormatter(maxValue),
                 ],
                 style: TextStyle(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w400,
                   color:
                       (maxValue != null && maxValue == 0)
                           ? AppColors.textGrey
