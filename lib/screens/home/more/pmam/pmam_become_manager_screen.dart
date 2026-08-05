@@ -34,7 +34,7 @@ class _PmamBecomeManagerScreenState extends State<PmamBecomeManagerScreen> {
   bool get _emailVerified {
     try {
       final model = Get.find<MoreController>().dashboardModel.value;
-      return model?.data?.stageCompletion?.emailVerified != null;
+      return model?.data?.stageCompletion?.emailVerified == true;
     } catch (_) {
       return false;
     }
@@ -43,7 +43,7 @@ class _PmamBecomeManagerScreenState extends State<PmamBecomeManagerScreen> {
   bool get _mobileVerified {
     try {
       final model = Get.find<MoreController>().dashboardModel.value;
-      return model?.data?.stageCompletion?.mobileVerified != null;
+      return model?.data?.stageCompletion?.mobileVerified == true;
     } catch (_) {
       return false;
     }

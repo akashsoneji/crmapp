@@ -19,12 +19,12 @@ class KycIntroScreen extends StatelessWidget {
     int completion = 0;
 
     // Step 1: Check mobile verification
-    if (stageCompletion!.mobileVerified != null) {
+    if (stageCompletion!.mobileVerified == true) {
       completion += 20;
     }
 
     // Step 2: Check email verification
-    if (stageCompletion!.emailVerified != null) {
+    if (stageCompletion!.emailVerified == true) {
       completion += 20;
     }
 
@@ -106,28 +106,28 @@ class KycIntroScreen extends StatelessWidget {
                       stepNumber: 1,
                       title: languageService.tr('kyc_intro_personal_details'),
                       status:
-                          stageCompletion?.mobileVerified != null &&
-                                  stageCompletion?.emailVerified != null &&
+                          stageCompletion?.mobileVerified == true &&
+                                  stageCompletion?.emailVerified == true &&
                                   stageCompletion?.personalDetails == true
                               ? 'Completed'
                               : 'Incomplete',
                       backgroundColor:
-                          stageCompletion?.mobileVerified != null &&
-                                  stageCompletion?.emailVerified != null &&
+                          stageCompletion?.mobileVerified == true &&
+                                  stageCompletion?.emailVerified == true &&
                                   stageCompletion?.personalDetails == true
                               ? AppColors.successBg
                               : AppColors.primary.withOpacity(
                                 0.1,
                               ), // Light purple
                       iconColor:
-                          stageCompletion?.mobileVerified != null &&
-                                  stageCompletion?.emailVerified != null &&
+                          stageCompletion?.mobileVerified == true &&
+                                  stageCompletion?.emailVerified == true &&
                                   stageCompletion?.personalDetails == true
                               ? AppColors.green
                               : AppColors.primary,
                       textColor:
-                          stageCompletion?.mobileVerified != null &&
-                                  stageCompletion?.emailVerified != null &&
+                          stageCompletion?.mobileVerified == true &&
+                                  stageCompletion?.emailVerified == true &&
                                   stageCompletion?.personalDetails == true
                               ? AppColors.green
                               : AppColors.primary,
@@ -137,8 +137,8 @@ class KycIntroScreen extends StatelessWidget {
                         'Live & demo trading',
                       ],
                       isActive:
-                          stageCompletion?.mobileVerified != null &&
-                                  stageCompletion?.emailVerified != null &&
+                          stageCompletion?.mobileVerified == true &&
+                                  stageCompletion?.emailVerified == true &&
                                   stageCompletion?.personalDetails == true
                               ? false
                               : true,
@@ -159,8 +159,8 @@ class KycIntroScreen extends StatelessWidget {
                           stageCompletion?.identityVerified == true &&
                                   stageCompletion?.addressProofVerified == true
                               ? AppColors.successBg
-                              : (stageCompletion?.mobileVerified != null &&
-                                  stageCompletion?.emailVerified != null &&
+                              : (stageCompletion?.mobileVerified == true &&
+                                  stageCompletion?.emailVerified == true &&
                                   stageCompletion?.personalDetails == true)
                               ? AppColors.primary.withAlpha(20)
                               : AppColors.whiteColor,
@@ -173,8 +173,8 @@ class KycIntroScreen extends StatelessWidget {
                           stageCompletion?.identityVerified == true &&
                                   stageCompletion?.addressProofVerified == true
                               ? AppColors.green
-                              : (stageCompletion?.mobileVerified != null &&
-                                  stageCompletion?.emailVerified != null &&
+                              : (stageCompletion?.mobileVerified == true &&
+                                  stageCompletion?.emailVerified == true &&
                                   stageCompletion?.personalDetails == true)
                               ? AppColors.primary.withAlpha(1000)
                               : AppColors.textGrey!,

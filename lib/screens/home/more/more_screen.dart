@@ -934,16 +934,12 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
 
     int completion = 0;
 
-    // Step 1: Check mobile verification - if mobileVerified is not null (has valid DateTime)
-    if (stage.mobileVerified != null) {
+    if (stage.mobileVerified == true) {
       completion += 20;
-      // //print('Step 1 - Mobile Verified: +20% = $completion%');
-    } else {
-      // //print('Step 1 - Mobile Not Verified: 0%');
     }
 
     // Step 2: Check email verification - if emailVerified is not null (has valid DateTime)
-    if (stage.emailVerified != null) {
+    if (stage.emailVerified == true) {
       completion += 20;
       // print('Step 2 - Email Verified: +20% = $completion%');
     } else {
@@ -1001,8 +997,8 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
             final stage = model?.data?.stageCompletion;
             // Check if KYC verification is completed (all required fields verified)
             final isProfileVerified =
-                (stage?.emailVerified != null) &&
-                (stage?.mobileVerified != null) &&
+                (stage?.emailVerified == true) &&
+                (stage?.mobileVerified == true) &&
                 (stage?.personalDetails == true);
 
             return IconButton(
@@ -2322,20 +2318,12 @@ class VerifyAccountCard extends StatelessWidget {
 
     int completion = 0;
 
-    // Step 1: Check mobile verification - if mobileVerified is not null (has valid DateTime)
-    if (stage.mobileVerified != null) {
+    if (stage.mobileVerified == true) {
       completion += 20;
-      // print('Step 1 - Mobile Verified: +20% = $completion%');
-    } else {
-      // print('Step 1 - Mobile Not Verified: 0%');
     }
 
-    // Step 2: Check email verification - if emailVerified is not null (has valid DateTime)
-    if (stage.emailVerified != null) {
+    if (stage.emailVerified == true) {
       completion += 20;
-      //print('Step 2 - Email Verified: +20% = $completion%');
-    } else {
-      //print('Step 2 - Email Not Verified: $completion%');
     }
 
     // Step 3: Check personal details - if personalDetails is true

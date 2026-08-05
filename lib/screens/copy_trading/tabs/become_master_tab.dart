@@ -92,8 +92,8 @@ class _BecomeMasterTabState extends State<BecomeMasterTab> {
 
           final stage =
               moreController?.dashboardModel.value?.data?.stageCompletion;
-          final isEmailVerified = stage?.emailVerified != null;
-          final isMobileVerified = stage?.mobileVerified != null;
+          final isEmailVerified = stage?.emailVerified == true;
+          final isMobileVerified = stage?.mobileVerified == true;
           final isPersonalInfoVerified = stage?.personalDetails == true;
           final isKycCompleted =
               isEmailVerified && isMobileVerified && isPersonalInfoVerified;

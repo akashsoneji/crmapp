@@ -73,8 +73,8 @@ class _PartnershipProgramScreenState extends State<PartnershipProgramScreen> {
     dynamic stageCompletion,
   ) {
     // Check verification status from API data
-    final isEmailVerified = stageCompletion?.emailVerified != null;
-    final isMobileVerified = stageCompletion?.mobileVerified != null;
+    final isEmailVerified = stageCompletion?.emailVerified == true;
+    final isMobileVerified = stageCompletion?.mobileVerified == true;
     final isPersonalInfoVerified = stageCompletion?.personalDetails == true;
     final isIbRequestCompleted =
         stageCompletion?.identityVerified == true &&
@@ -250,8 +250,8 @@ class _PartnershipProgramScreenState extends State<PartnershipProgramScreen> {
     dynamic stageCompletion,
   ) {
     // Check if all verifications are completed
-    final isEmailVerified = stageCompletion?.emailVerified != null;
-    final isMobileVerified = stageCompletion?.mobileVerified != null;
+    final isEmailVerified = stageCompletion?.emailVerified == true;
+    final isMobileVerified = stageCompletion?.mobileVerified == true;
     final isPersonalInfoVerified = stageCompletion?.personalDetails == true;
 
     final canSubmit =

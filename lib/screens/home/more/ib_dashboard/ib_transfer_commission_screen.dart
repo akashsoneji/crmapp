@@ -1,10 +1,7 @@
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
-import 'package:crm_app/screens/home/more/ib_dashboard/ib_transfer_create_screen.dart';
 import 'package:crm_app/controllers/ib_transfer_controller.dart';
-import 'package:crm_app/widgets/app_svg_back_button.dart';
 import 'package:crm_app/models/ib_transfer_models.dart';
-import 'package:crm_app/widgets/common_loading_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -56,22 +53,12 @@ class _IbTransferCommissionScreenState extends State<IbTransferCommissionScreen>
         scrolledUnderElevation: 0,
         backgroundColor: AppColors.background,
         elevation: 0,
-        leading: Padding(
-          padding: EdgeInsets.only(left: 10.w),
-          child: AppSvgBackButton(onPressed: () => Get.back()),
-        ),
+        leading: const SizedBox.shrink(),
         title: Text(
           'Transfer Commission',
           style: AppTextStyles.screenTitle,
         ),
         centerTitle: true,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.add, color: AppColors.textPrimary, size: 28.sp),
-            onPressed: () => Get.to(() => const IbTransferCreateScreen()),
-          ),
-          SizedBox(width: 10.w),
-        ],
       ),
       body: Stack(
         children: [
