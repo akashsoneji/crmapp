@@ -10,12 +10,14 @@ import 'package:crm_app/constants/text_styles.dart';
 
 import 'package:crm_app/controllers/instruments_controller.dart';
 import 'package:crm_app/controllers/trading_controller.dart'; // ✅ ADD: For floating P&L
+import 'package:crm_app/controllers/ib_controller.dart';
 
 import 'package:crm_app/models/socket_response.dart';
 import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/utils/precision_helper.dart';
 import 'package:crm_app/utils/svg_color_helper.dart';
 import '../../widgets/account_header_widget.dart';
+import '../../widgets/banner_carousel.dart';
 import '../../widgets/common_loading_widget.dart';
 import 'chart_screen.dart';
 import 'search_instruments_screen.dart';
@@ -43,6 +45,9 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
   final LanguageService languageService = Get.find<LanguageService>();
   final SymbolSelectionService _symbolSelectionService =
       Get.find<SymbolSelectionService>();
+  late final IBController _ibController = Get.isRegistered<IBController>()
+      ? Get.find<IBController>()
+      : Get.put(IBController());
 
   late final Future<Widget> _swipeDeleteIconFuture;
 
@@ -62,6 +67,7 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
     // Explicit `marketwatchv2` WS: this tab opens the session (auth + subscribe when favorites exist).
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _ensureMarketWatchV2ForTab();
+      _ibController.getBanners(showLoading: false);
     });
 
     // NOTE: Unified legacy market-watch WS lifecycle is still managed by AccountController.
@@ -99,6 +105,13 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
         child: Column(
           children: [
             _buildHeader(),
+            Obx(() {
+              if (_ibController.banners.isEmpty) return const SizedBox.shrink();
+              return Padding(
+                padding: EdgeInsets.fromLTRB(12.w, 8.h, 12.w, 0),
+                child: BannerCarousel(banners: _ibController.banners),
+              );
+            }),
             _buildSearchAndFilters(),
             Expanded(
               child: Obx(() {
