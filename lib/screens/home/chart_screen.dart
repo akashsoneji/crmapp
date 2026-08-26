@@ -1854,11 +1854,9 @@ Placing Order:
             ? _datafeedSymbolForSelected
             : displaySymbol;
 
-    // Include symbol in URL so the server loads the correct chart immediately.
-    // Symbol is also passed as a prop so JS updateSymbol() can handle fast
-    // in-session symbol switches without a full reload (via didUpdateWidget).
+    // Use stable URL and stable webViewKey to prevent full page reloads on symbol change
     final chartUrl =
-        '${FlavorConfig.instance.chartBaseUrl}/mobile-chart?symbol=$effectiveDatafeedSymbol&theme=${AppColors.chartTheme}';
+        '${FlavorConfig.instance.chartBaseUrl}/mobile-chart?theme=${AppColors.chartTheme}';
 
     return Container(
       width: double.infinity,
@@ -1868,7 +1866,7 @@ Placing Order:
       child: ChartInAppWebView(
         key: _webViewKey,
         symbol: effectiveDatafeedSymbol, // JS-updated for fast in-session switches
-        url: chartUrl,                   // includes symbol for correct initial server load
+        url: chartUrl,                   // stable URL triggers fast JS updates under didUpdateWidget
       ),
     );
   }

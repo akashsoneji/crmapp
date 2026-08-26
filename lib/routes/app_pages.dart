@@ -14,6 +14,7 @@ import 'package:crm_app/screens/home/more/demo_contest/demo_contest_screen.dart'
 import 'package:crm_app/screens/home/more/demo_contest/join_contest_screen.dart';
 import 'package:crm_app/screens/home/more/demo_contest/leaderboard_screen.dart';
 import 'package:crm_app/screens/home/more/demo_contest/my_contest_history_screen.dart';
+import 'package:crm_app/screens/demo_contest/presentation/pages/demo_contest_my_stats_screen.dart';
 import 'package:crm_app/screens/home/more/demo_contest/winners_screen.dart';
 import 'package:crm_app/screens/home/more/finance/finance_screen.dart';
 import 'package:crm_app/screens/home/more/finance/payment_methods_screen.dart';
@@ -97,6 +98,8 @@ import '../screens/common/webview_screen.dart';
 import '../controllers/finance/transaction_history_controller.dart';
 import '../screens/home/more/finance/cregis_address_screen.dart';
 import '../screens/home/more/finance/cregis_success_screen.dart';
+import '../screens/notifications/presentation/pages/notifications_screen.dart';
+import '../screens/notifications/bindings/notification_binding.dart';
 
 part 'app_routes.dart';
 
@@ -147,6 +150,7 @@ class AppPages {
   static const DEMO_CONTEST_LEADERBOARD = _Paths.DEMO_CONTEST_LEADERBOARD;
   static const DEMO_CONTEST_HISTORY = _Paths.DEMO_CONTEST_HISTORY;
   static const DEMO_CONTEST_WINNERS = _Paths.DEMO_CONTEST_WINNERS;
+  static const DEMO_CONTEST_MY_STATS = _Paths.DEMO_CONTEST_MY_STATS;
   static const SETTING = _Paths.SETTING;
   static const SUPPORT = _Paths.SUPPORT;
   static const TICKET_LIST = _Paths.TICKET_LIST;
@@ -172,6 +176,7 @@ class AppPages {
   static const COPY_TRADING_INVITE_FRIEND = _Paths.COPY_TRADING_INVITE_FRIEND;
   static const COPY_TRADING_INTERNAL_TRANSFER =
       _Paths.COPY_TRADING_INTERNAL_TRANSFER;
+  static const NOTIFICATIONS = _Paths.NOTIFICATIONS;
 
   // ── PMAM ──
   static const PMAM_MAIN = _Paths.PMAM_MAIN;
@@ -387,6 +392,14 @@ class AppPages {
       },
       binding: DemoContestBinding(),
     ),
+    GetPage(
+      name: _Paths.DEMO_CONTEST_MY_STATS,
+      page: () {
+        final id = (Get.arguments as String?) ?? '';
+        return DemoContestMyStatsScreen(contestId: id);
+      },
+      binding: DemoContestBinding(),
+    ),
     GetPage(name: _Paths.SETTING, page: () => const SettingScreen()),
     GetPage(name: _Paths.SUPPORT, page: () => const SupportScreen()),
     GetPage(
@@ -456,6 +469,11 @@ class AppPages {
     GetPage(
       name: _Paths.COPY_TRADING_INTERNAL_TRANSFER,
       page: () => const CopyTradingInternalTransferScreen(),
+    ),
+    GetPage(
+      name: _Paths.NOTIFICATIONS,
+      page: () => const NotificationsScreen(),
+      binding: NotificationBinding(),
     ),
     // ── PMAM ──
     GetPage(name: _Paths.PMAM_MAIN, page: () => const PmamMainScreen()),

@@ -28,6 +28,7 @@ class ApiConstants {
   static const String registerFcmToken = '${ajax}register-fcm-token';
   static const String dashboard = '${ajax}dashboard';
   static const String priceAlerts = '${ajax}price-alerts';
+  static const String getNotifications = '${ajax}notifications';
   static const String profile = '${ajax}settings/profile';
   static const String getMT5Accounts = '${ajax}mt5accounts/get';
   static const String createMT5Account = '${ajax}mt5accounts/create';
@@ -230,6 +231,10 @@ class ApiConstants {
   // // Profile APIs
   // static const String profileUpdate = '${ajax}profile_update.php';
   // static const String getProfile = '${ajax}profile';
+
+  // ── Demo Contest ──
+  static const String demoContestContests = '${ajax}demo-contest/contests';
+  static const String demoContestMyStats = '${ajax}demo-contest/my-stats';
 }
 
 // struct APIConstant {

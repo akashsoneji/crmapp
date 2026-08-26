@@ -54,6 +54,7 @@ class UserMT5Account {
   final String metaAccountName;
   final String masterGroupId;
   final String balance;
+  final double? availableForTransfer;
 
   UserMT5Account({
     required this.id,
@@ -61,15 +62,20 @@ class UserMT5Account {
     required this.metaAccountName,
     required this.masterGroupId,
     required this.balance,
+    this.availableForTransfer,
   });
 
   factory UserMT5Account.fromJson(Map<String, dynamic> json) {
+    final raw = json['available_for_transfer'];
     return UserMT5Account(
       id: json['id'] ?? 0,
       metaAccountNumber: json['meta_account_number']?.toString() ?? '',
       metaAccountName: json['meta_account_name']?.toString() ?? '',
       masterGroupId: json['master_group_id']?.toString() ?? '',
       balance: json['balance']?.toString() ?? '0.0',
+      availableForTransfer: raw is num
+          ? raw.toDouble()
+          : (raw is String ? double.tryParse(raw) : null),
     );
   }
 }

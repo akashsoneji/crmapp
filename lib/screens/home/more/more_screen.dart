@@ -1289,6 +1289,24 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                     ),
                   );
                 }
+                items.add(
+                  _MenuItem(
+                    icon: 'notification',
+                    label: languageService.trf(
+                      'general_notifications',
+                      'Notifications',
+                    ),
+                    onTap: () => Get.toNamed(AppPages.NOTIFICATIONS),
+                  ),
+                );
+
+                items.add(
+                  _MenuItem(
+                    icon: 'democontest-icon',
+                    label: languageService.tr('more_demo_contest'),
+                    onTap: () => Get.toNamed(AppPages.DEMO_CONTEST),
+                  ),
+                );
 
                 return _CardGroup(children: items);
               }),

@@ -8,6 +8,8 @@ import 'package:get/get.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:crm_app/constants/color.dart';
+import 'package:crm_app/screens/home/trade_screen.dart';
+import 'package:crm_app/services/chart_webview_prewarmer.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/flavor_config.dart';
 import 'package:crm_app/services/language_service.dart';
@@ -93,6 +95,11 @@ class _TradingMainScreenState extends State<TradingMainScreen> {
   @override
   void initState() {
     super.initState();
+
+    // ✅ PERFORMANCE OPTIMIZATION: Pre-warm the chart WebView in background
+    
+    ChartWebViewPrewarmer.instance.prewarm(symbol: 'XAUUSD');
+    
 
     // ✅ FIX: Check for initial tab index from navigation arguments
     // This allows navigating directly to a specific tab (e.g., dashboard at index 3)

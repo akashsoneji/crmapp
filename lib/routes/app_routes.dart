@@ -63,6 +63,7 @@ abstract class Routes {
   static const COPY_TRADING_INVITE_FRIEND = _Paths.COPY_TRADING_INVITE_FRIEND;
   static const COPY_TRADING_INTERNAL_TRANSFER =
       _Paths.COPY_TRADING_INTERNAL_TRANSFER;
+  static const NOTIFICATIONS = _Paths.NOTIFICATIONS;
 
   // ── PMAM Routes ──
   static const PMAM_MAIN = _Paths.PMAM_MAIN;
@@ -136,6 +137,7 @@ abstract class _Paths {
   static const DEMO_CONTEST_LEADERBOARD = '/demo-contest/leaderboard';
   static const DEMO_CONTEST_HISTORY = '/demo-contest/history';
   static const DEMO_CONTEST_WINNERS = '/demo-contest/winners';
+  static const DEMO_CONTEST_MY_STATS = '/demo-contest/my-stats';
   static const SETTING = '/setting';
   static const SUPPORT = '/support';
   static const TICKET_LIST = '/ticket-list';
@@ -162,6 +164,7 @@ abstract class _Paths {
   static const COPY_TRADING_INVITE_FRIEND = '/copy-trading-invite-friend';
   static const COPY_TRADING_INTERNAL_TRANSFER =
       '/copy-trading-internal-transfer';
+  static const NOTIFICATIONS = '/notifications';
 
   // ── PMAM Paths ──
   static const PMAM_MAIN = '/pmam-main';
