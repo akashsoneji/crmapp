@@ -20,6 +20,8 @@ import 'package:crm_app/screens/home/more/finance/finance_screen.dart';
 import 'package:crm_app/screens/home/more/finance/payment_methods_screen.dart';
 import 'package:crm_app/screens/home/more/ib_dashboard/ib_dashboard_screen.dart';
 import 'package:crm_app/screens/home/more/ib_dashboard/ib_main_screen.dart';
+import 'package:crm_app/screens/ibm/presentation/pages/ibm_main_shell.dart';
+import 'package:crm_app/screens/ibm/presentation/pages/ibm_application_screen.dart';
 import 'package:crm_app/screens/home/more/setting/setting_screen.dart';
 import 'package:crm_app/screens/home/more/support/support_screen.dart';
 import 'package:crm_app/screens/home/more/ticket/create_ticket_screen.dart';
@@ -198,6 +200,10 @@ class AppPages {
   static const CREGIS_CHECKOUT = _Paths.CREGIS_CHECKOUT;
   static const CREGIS_ADDRESS = _Paths.CREGIS_ADDRESS;
   static const CREGIS_SUCCESS = _Paths.CREGIS_SUCCESS;
+
+  // ── IBM (Manager Portal) ──
+  static const IBM_MANAGER_PORTAL = _Paths.IBM_MANAGER_PORTAL;
+  static const IBM_APPLICATION = _Paths.IBM_APPLICATION;
 
   static final routes = [
     GetPage(
@@ -545,6 +551,14 @@ class AppPages {
           tapTimeIso: args?['tapTimeIso'] ?? '',
         );
       },
+    ),
+    GetPage(
+      name: _Paths.IBM_MANAGER_PORTAL,
+      page: () => const IbmMainShell(),
+    ),
+    GetPage(
+      name: _Paths.IBM_APPLICATION,
+      page: () => const IbmApplicationScreen(),
     ),
   ];
 }

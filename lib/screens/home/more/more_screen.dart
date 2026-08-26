@@ -14,11 +14,9 @@ import 'package:crm_app/flavor_config.dart';
 import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/controllers/auth_controller.dart';
 import 'package:crm_app/routes/app_pages.dart';
-import 'package:crm_app/widgets/common_loading_widget.dart';
 import 'package:crm_app/services/one_click_trading_service.dart';
 import 'package:crm_app/screens/home/more/one_click_trading_disclaimer_screen.dart';
-import 'package:crm_app/controllers/ib_controller.dart';
-import 'package:crm_app/widgets/custom_toast.dart';
+import 'package:crm_app/screens/ibm/view_models/ibm_controller.dart';
 import 'package:crm_app/widgets/brand_logo.dart';
 import 'package:crm_app/widgets/theme_bottom_sheet.dart';
 import 'package:crm_app/services/secure_storage_service.dart';
@@ -836,87 +834,10 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
   }
 
   Future<void> _handleSwitchToIB() async {
-    try {
-      // Get or create IBController
-      IBController ibController;
-      if (Get.isRegistered<IBController>()) {
-        ibController = Get.find<IBController>();
-      } else {
-        ibController = Get.put(IBController());
-      }
-
-      // Show loading
-      Get.dialog(
-        Center(
-          child: CommonLoadingWidget(
-            // message: 'Checking IB status...',
-            size: 50.0,
-            color: AppColors.primary,
-          ),
-        ),
-        barrierDismissible: false,
-      );
-
-      // Call IB Status API
-      final ibStatusResponse = await ibController.getIBStatus();
-
-      // Close loading dialog
-      Get.back(closeOverlays: true);
-
-      if (ibStatusResponse != null && ibStatusResponse.status == true) {
-        final ibStatus = ibStatusResponse.data?.ibStatus;
-        final isApproved = ibStatusResponse.data?.isApproved ?? false;
-        final profileCompletion = ibStatusResponse.data?.profileCompletion ?? 0;
-
-        // If IB status is rejected, show toast message
-        if (ibStatus == 'rejected') {
-          CustomToastService.showError(
-            message:
-                'Your IB application has been rejected. Please contact support for more information.',
-          );
-          return;
-        }
-        // If IB status is rejected, show toast message
-        if (ibStatus == 'not_applied') {
-          Get.toNamed(AppPages.PARTNERSHIP_PROGRAM);
-        }
-        // If IB is approved, navigate to IB Main
-        else if (ibStatus == 'approved' && isApproved == true) {
-          if (!mounted) return;
-          Navigator.of(context).pushReplacementNamed('/ib-main');
-        }
-        // If profile is 100% complete but IB not approved, go to Partnership Program
-        else if (profileCompletion == 100) {
-          Get.toNamed(AppPages.PARTNERSHIP_PROGRAM);
-        }
-        // If profile is not complete, show error message
-        else {
-          CustomToastService.showError(
-            duration: Duration(seconds: 2),
-            message:
-                ibStatusResponse.message ??
-                'Profile is not complete. Please complete your profile first.',
-          );
-        }
-      } else {
-        // Handle error response (status: false)
-        String errorMsg;
-        if (ibStatusResponse?.message != null) {
-          errorMsg = ibStatusResponse!.message!;
-        } else if (ibController.errorMessage.value.isNotEmpty) {
-          errorMsg = ibController.errorMessage.value;
-        } else {
-          errorMsg = 'Failed to check IB status. Please try again.';
-        }
-        CustomToastService.showError(message: errorMsg);
-      }
-    } catch (e) {
-      // Close loading dialog if still open
-      if (Get.isDialogOpen ?? false) {
-        Get.back(closeOverlays: true);
-      }
-      CustomToastService.showError(message: 'Error checking IB status: $e');
-    }
+    final ibmController = Get.isRegistered<IbmController>()
+        ? Get.find<IbmController>()
+        : Get.put(IbmController());
+    await ibmController.checkSystemAndNavigate();
   }
 
   int _calculateCompletion(StageCompletion? stage) {
@@ -1291,7 +1212,7 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                 }
                 items.add(
                   _MenuItem(
-                    icon: 'notification',
+                    icon: 'setting/notifications',
                     label: languageService.trf(
                       'general_notifications',
                       'Notifications',

@@ -12,6 +12,8 @@ class TradeWinController extends GetxController {
   final RxBool moduleEnabled = true.obs;
   final RxString errorMessage = ''.obs;
   final RxString selectedCategory = 'all'.obs;
+  final RxString selectedAvailability = 'all'.obs;
+  final RxBool isProductsFiltering = false.obs;
   final RxInt mainTabIndex = 0.obs;
 
   final RxList<TradeWinProductModel> products = <TradeWinProductModel>[].obs;
@@ -64,12 +66,22 @@ class TradeWinController extends GetxController {
   Future<void> fetchProducts({
     bool showLoader = true,
     bool loadMore = false,
+    String? category,
+    String? audience,
+    String? availability,
   }) async {
+    if (category != null) selectedCategory.value = category.toLowerCase();
+    if (availability != null) {
+      selectedAvailability.value = availability.toLowerCase();
+    }
+    final audienceValue = audience?.toLowerCase() ?? 'ib';
+
     if (loadMore) {
       if (isLoadingMoreProducts.value || !productsHasMore) return;
       isLoadingMoreProducts.value = true;
     } else {
       if (showLoader) isLoading.value = true;
+      isProductsFiltering.value = true;
     }
 
     errorMessage.value = '';
@@ -81,7 +93,9 @@ class TradeWinController extends GetxController {
         endpoint: ApiConstants.tradeWinProducts,
         queryParameters: {
           'page': '$page',
-          'category': 'all',
+          'category': selectedCategory.value,
+          'audience': audienceValue,
+          'availability': selectedAvailability.value,
           '_t': DateTime.now().millisecondsSinceEpoch.toString(),
         },
       );
@@ -137,6 +151,7 @@ class TradeWinController extends GetxController {
     } finally {
       if (showLoader) isLoading.value = false;
       isLoadingMoreProducts.value = false;
+      isProductsFiltering.value = false;
     }
   }
 

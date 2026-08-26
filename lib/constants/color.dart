@@ -200,6 +200,9 @@ class AppColors {
 
   static Color get border => isDarkMode ? borderDark : borderLight;
 
+  /// Alias for [border] — the ported IBM module refers to a `divider` color.
+  static Color get divider => border;
+
   static Color get hint => isDarkMode ? hintDark : hintLight;
 
   static Color get dashLineColor =>

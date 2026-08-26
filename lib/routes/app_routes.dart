@@ -86,6 +86,10 @@ abstract class Routes {
   static const CREGIS_CHECKOUT = _Paths.CREGIS_CHECKOUT;
   static const CREGIS_ADDRESS = _Paths.CREGIS_ADDRESS;
   static const CREGIS_SUCCESS = _Paths.CREGIS_SUCCESS;
+
+  // ── IBM (Manager Portal) ──
+  static const IBM_MANAGER_PORTAL = _Paths.IBM_MANAGER_PORTAL;
+  static const IBM_APPLICATION = _Paths.IBM_APPLICATION;
 }
 
 abstract class _Paths {
@@ -187,4 +191,8 @@ abstract class _Paths {
   static const CREGIS_CHECKOUT = '/cregis-checkout';
   static const CREGIS_ADDRESS = '/cregis-address';
   static const CREGIS_SUCCESS = '/cregis-success';
+
+  // ── IBM (Manager Portal) ──
+  static const IBM_MANAGER_PORTAL = '/ibm-manager-portal';
+  static const IBM_APPLICATION = '/ibm-application';
 }
