@@ -912,44 +912,15 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
         ),
         centerTitle: true,
         actions: [
-          Obx(() {
-            // Access stage data reactively inside Obx
-            final model = moreController.dashboardModel.value;
-            final stage = model?.data?.stageCompletion;
-            // Check if KYC verification is completed (all required fields verified)
-            final isProfileVerified =
-                (stage?.emailVerified == true) &&
-                (stage?.mobileVerified == true) &&
-                (stage?.personalDetails == true);
-
-            return IconButton(
-              icon: isProfileVerified
-                  ? Icon(
-                      Icons.remove_red_eye_outlined,
-                      size: 24.sp,
-                      color: AppColors.primary,
-                    )
-                  : SvgPicture.asset(
-                      'assets/svg/edit_profile.svg',
-                      height: 24.h,
-                      width: 24.w,
-                      color: AppColors.primary,
-                    ),
-              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
-              onPressed: () {
-                if (isProfileVerified) {
-                  // All required fields verified → show read-only view profile
-                  Get.toNamed(AppPages.VIEW_PROFILE);
-                } else {
-                  // Existing edit profile flow
-                  Get.toNamed(
-                    AppPages.EDIT_PROFILE,
-                    arguments: isProfileVerified,
-                  );
-                }
-              },
-            );
-          }),
+          IconButton(
+            icon: Icon(
+              Icons.notifications_none_rounded,
+              size: 24.sp,
+              color: AppColors.primary,
+            ),
+            padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
+            onPressed: () => Get.toNamed(AppPages.NOTIFICATIONS),
+          ),
         ],
       ),
       body: SingleChildScrollView(
@@ -995,17 +966,22 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                         children: [
                           Row(
                             children: [
-                              Obx(() {
-                                final name = authController.userFullName ?? '';
-                                return Text(
-                                  name,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 18.sp,
-                                    color: AppColors.textPrimary,
-                                  ),
-                                );
-                              }),
+                              Flexible(
+                                child: Obx(() {
+                                  final name =
+                                      authController.userFullName ?? '';
+                                  return Text(
+                                    name,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 18.sp,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  );
+                                }),
+                              ),
                               SizedBox(width: 6.w),
                               GetBuilder<MoreController>(
                                 builder: (controller) {
@@ -1068,30 +1044,79 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                         ],
                       ),
                     ),
-                    if (_isTenaxBrokerFlowEnabled)
-                      InkWell(
-                        onTap: _onTapAccountDropdown,
-                        borderRadius: BorderRadius.circular(20.r),
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 8.w,
-                            vertical: 4.h,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary.withValues(alpha: 0.08),
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Obx(() {
+                          final model = moreController.dashboardModel.value;
+                          final stage = model?.data?.stageCompletion;
+                          final isProfileVerified =
+                              (stage?.emailVerified == true) &&
+                              (stage?.mobileVerified == true) &&
+                              (stage?.personalDetails == true);
+                          return Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(20.r),
+                              onTap: () {
+                                if (isProfileVerified) {
+                                  Get.toNamed(AppPages.VIEW_PROFILE);
+                                } else {
+                                  Get.toNamed(
+                                    AppPages.EDIT_PROFILE,
+                                    arguments: isProfileVerified,
+                                  );
+                                }
+                              },
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                horizontal: 8.w,
+                                vertical: 4.h,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withValues(alpha: 0.08),
+                                borderRadius: BorderRadius.circular(20.r),
+                              ),
+                                child: isProfileVerified
+                                    ? Icon(
+                                        Icons.remove_red_eye_outlined,
+                                        size: 18.sp,
+                                        color: AppColors.primary,
+                                      )
+                                    : SvgPicture.asset(
+                                        'assets/svg/edit_profile.svg',
+                                        height: 18.h,
+                                        width: 18.w,
+                                        color: AppColors.primary,
+                                      ),
+                              ),
+                            ),
+                          );
+                        }),
+                        if (_isTenaxBrokerFlowEnabled) ...[
+                          SizedBox(height: 6.h),
+                          InkWell(
+                            onTap: _onTapAccountDropdown,
                             borderRadius: BorderRadius.circular(20.r),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
+                            child: Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 8.w,
+                                vertical: 4.h,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withValues(alpha: 0.08),
+                                borderRadius: BorderRadius.circular(20.r),
+                              ),
+                              child: Icon(
                                 Icons.keyboard_arrow_down_rounded,
                                 color: AppColors.primary,
                                 size: 20.sp,
                               ),
-                            ],
+                            ),
                           ),
-                        ),
-                      ),
+                        ],
+                      ],
+                    ),
                   ],
                 ),
               ),
