@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
+import 'package:crm_app/widgets/app_back_button.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/trade_win/trade_win_controller.dart';
@@ -22,16 +22,7 @@ class TradeWinProfileTab extends StatelessWidget {
           padding: EdgeInsets.fromLTRB(8.w, 8.h, 16.w, 0),
           child: Row(
             children: [
-              IconButton(
-                onPressed: () => Get.back(),
-                icon: SvgPicture.asset(
-                  'assets/svg/trade/arro_back.svg',
-                  colorFilter: ColorFilter.mode(
-                    AppColors.textPrimary,
-                    BlendMode.srcIn,
-                  ),
-                ),
-              ),
+              const AppBackButton(),
               Expanded(
                 child: Text(
                   languageService.tr('tw_nav_profile'),
@@ -39,7 +30,7 @@ class TradeWinProfileTab extends StatelessWidget {
                   style: AppTextStyles.heading,
                 ),
               ),
-              SizedBox(width: 48.w),
+              SizedBox(width: AppBackButton.leadingSlotSize.w),
             ],
           ),
         ),

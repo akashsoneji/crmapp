@@ -1,4 +1,4 @@
-import 'package:crm_app/widgets/app_svg_back_button.dart';
+import 'package:crm_app/widgets/app_back_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -49,7 +49,8 @@ class TradeWinHomeTab extends StatelessWidget {
         },
         child: RefreshIndicator(
           color: AppColors.primary,
-          onRefresh: () => controller.fetchProducts(showLoader: false),
+          onRefresh: () =>
+              controller.fetchProducts(showLoader: false, audience: 'client'),
           child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
@@ -58,11 +59,7 @@ class TradeWinHomeTab extends StatelessWidget {
                   padding: EdgeInsets.fromLTRB(0.w, 0.h, 0.w, 0),
                   child: Row(
                     children: [
-                      AppSvgBackButton(
-                        onPressed: () => Get.back(closeOverlays: true),
-                        iconWidth: 30.w,
-                        iconHeight: 30.h,
-                      ),
+                      const AppBackButton(closeOverlays: true),
                       Expanded(
                         child: Text(
                           languageService.tr('tw_title'),
@@ -70,7 +67,7 @@ class TradeWinHomeTab extends StatelessWidget {
                           style: AppTextStyles.heading,
                         ),
                       ),
-                      SizedBox(width: 48.w),
+                      SizedBox(width: AppBackButton.leadingSlotSize.w),
                     ],
                   ),
                 ),
@@ -137,16 +134,22 @@ class TradeWinHomeTab extends StatelessWidget {
                     ),
                   );
                 }
-                return SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) => Padding(
-                      padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 0),
-                      child: _ProductCatalogCard(
+                return SliverPadding(
+                  padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 0),
+                  sliver: SliverGrid(
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 12.h,
+                      crossAxisSpacing: 12.w,
+                      childAspectRatio: 0.46, // reduced to give more height and prevent overflow
+                    ),
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) => _ProductCatalogCard(
                         product: items[index],
                         languageService: languageService,
                       ),
+                      childCount: items.length,
                     ),
-                    childCount: items.length,
                   ),
                 );
               }),
@@ -337,14 +340,7 @@ class _OverviewCompactRow extends StatelessWidget {
               color: AppColors.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(6.r),
             ),
-            child: Icon(
-              data.icon,
-              color:
-                  AppColors.isDarkMode
-                      ? AppColors.onColoredBackground
-                      : AppColors.primary,
-              size: 16.sp,
-            ),
+            child: Icon(data.icon, color: AppColors.primary, size: 16.sp),
           ),
           SizedBox(width: 8.w),
           Expanded(
@@ -415,7 +411,7 @@ class _OverviewFooterText extends StatelessWidget {
           TextSpan(text: line.prefix),
           TextSpan(
             text: ' ${line.value}',
-            style: TextStyle(
+            style: AppTextStyles.bodyText.copyWith(
               fontSize: 11.sp,
               fontWeight: FontWeight.w600,
               color: AppColors.primary,
@@ -443,6 +439,7 @@ class _CatalogInfoChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      width: double.infinity,
       padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 5.h),
       decoration: BoxDecoration(
         color: bg,
@@ -454,10 +451,10 @@ class _CatalogInfoChip extends StatelessWidget {
         children: [
           Text(
             label.toUpperCase(),
-            style: TextStyle(
+            style: AppTextStyles.bodyText.copyWith(
               fontSize: 7.sp,
               fontWeight: FontWeight.w700,
-              color: AppColors.primary,
+              color: labelColor,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -493,7 +490,7 @@ class _ProductCatalogCard extends StatelessWidget {
     final percent = (progress * 100).round();
 
     return Container(
-      padding: EdgeInsets.all(14.w),
+      padding: EdgeInsets.all(12.w),
       decoration: BoxDecoration(
         color: AppColors.card,
         borderRadius: BorderRadius.circular(16.r),
@@ -502,82 +499,48 @@ class _ProductCatalogCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              TradeWinProductImage(
-                imagePath: product.imagePath,
-                width: 80.w,
-                height: 80.w,
-              ),
-              SizedBox(width: 12.w),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            product.name,
-                            style: AppTextStyles.headingblack,
-                          ),
-                        ),
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 8.w,
-                            vertical: 3.h,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.green.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(6.r),
-                          ),
-                          child: Text(
-                            TradeWinFormat.categoryTag(product.category),
-                            style: TextStyle(
-                              fontSize: 9.sp,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.green,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 6.h),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _CatalogInfoChip(
-                            label: languageService.tr('tw_point_cost'),
-                            value: TradeWinFormat.points(
-                              product.requiredPoints,
-                            ),
-                            bg: AppColors.warningBg,
-                            labelColor: AppColors.warningText,
-                          ),
-                        ),
-                        SizedBox(width: 6.w),
-                        Expanded(
-                          child: _CatalogInfoChip(
-                            label: languageService.tr('tw_lot_required'),
-                            value: languageService.tr('tw_lot_required_chip', {
-                              'lots': TradeWinFormat.lots(product.requiredLots),
-                            }),
-                            bg:
-                                AppColors.isDarkMode
-                                    ? AppColors.primary.withValues(alpha: 0.2)
-                                    : AppColors.primary.withValues(alpha: 0.1),
-                            labelColor: AppColors.primary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
+          Center(
+            child: TradeWinProductImage(
+              imagePath: product.imagePath,
+              width: 130.w,
+              height: 130.w,
+            ),
           ),
           SizedBox(height: 12.h),
+          Text(
+            product.name,
+            style: AppTextStyles.headingblack.copyWith(fontSize: 14.sp),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          SizedBox(height: 6.h),
+          Container(
+            width: double.infinity,
+            padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+            decoration: BoxDecoration(
+              color: AppColors.green.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(6.r),
+            ),
+            child: Text(
+              TradeWinFormat.categoryTag(product.category),
+              style: AppTextStyles.bodyText.copyWith(
+                fontSize: 9.sp,
+                fontWeight: FontWeight.w700,
+                color: AppColors.green,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          SizedBox(height: 8.h),
+          _CatalogInfoChip(
+            label: languageService.tr('tw_lot_required'),
+            value: languageService.tr('tw_lot_required_chip', {
+              'lots': TradeWinFormat.lots(product.requiredLots),
+            }),
+            bg: AppColors.primary.withValues(alpha: 0.1),
+            labelColor: AppColors.primary,
+          ),
+          const Spacer(),
           ClipRRect(
             borderRadius: BorderRadius.circular(4.r),
             child: LinearProgressIndicator(
@@ -588,41 +551,49 @@ class _ProductCatalogCard extends StatelessWidget {
             ),
           ),
           SizedBox(height: 6.h),
-          Text(
-            languageService.tr('tw_progress_lots', {
-              'current': TradeWinFormat.lots(product.availableLots),
-              'required': TradeWinFormat.lots(product.requiredLots),
-              'percent': '$percent',
-            }),
-            style: AppTextStyles.subheading.copyWith(fontSize: 12.sp),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              languageService.tr('tw_progress_lots', {
+                'current': TradeWinFormat.lots(product.availableLots),
+                'required': TradeWinFormat.lots(product.requiredLots),
+                'percent': '$percent',
+              }),
+              style: AppTextStyles.subheading.copyWith(fontSize: 11.sp),
+            ),
           ),
-          SizedBox(height: 12.h),
+          SizedBox(height: 10.h),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
               onPressed: () => _onRedeem(context),
               style: ElevatedButton.styleFrom(
-                backgroundColor:
-                    AppColors.isDarkMode
-                        ? AppColors.primary.withValues(alpha: 0.1)
-                        : AppColors.primary,
-                foregroundColor: AppColors.onColoredBackground,
-                padding: EdgeInsets.symmetric(vertical: 12.h),
+                backgroundColor: AppColors.primary,
+                foregroundColor:
+                    ThemeData.estimateBrightnessForColor(AppColors.primary) ==
+                            Brightness.light
+                        ? Colors.black
+                        : Colors.white,
+                padding: EdgeInsets.symmetric(vertical: 8.h),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12.r),
-                  side:
-                      AppColors.isDarkMode
-                          ? BorderSide(color: AppColors.border)
-                          : BorderSide.none,
+                  borderRadius: BorderRadius.circular(10.r),
+                  side: BorderSide.none,
                 ),
               ),
               child: Text(
                 languageService.tr('tw_redeem_now'),
-                style: TextStyle(
+                style: AppTextStyles.bodyText.copyWith(
                   fontWeight: FontWeight.w700,
-                  fontSize: 15.sp,
-                  color: AppColors.onColoredBackground,
+                  fontSize: 13.sp,
+                  color:
+                      ThemeData.estimateBrightnessForColor(AppColors.primary) ==
+                              Brightness.light
+                          ? Colors.black
+                          : Colors.white,
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ),
@@ -680,13 +651,8 @@ class _CatalogFilterChip extends StatelessWidget {
           ),
           child: Text(
             label,
-            style: TextStyle(
-              color:
-                  selected
-                      ? AppColors.isDarkMode
-                          ? AppColors.onColoredBackground
-                          : AppColors.primary
-                      : AppColors.textPrimary,
+            style: AppTextStyles.bodyText.copyWith(
+              color: selected ? AppColors.primary : AppColors.textPrimary,
               fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
               fontSize: 13.sp,
             ),

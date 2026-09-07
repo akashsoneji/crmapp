@@ -68,6 +68,23 @@ class IbmController extends GetxController {
     return <String, dynamic>{};
   }
 
+  /// Extracts the balance from the wallet API response.
+  String get walletBalance {
+    if (walletData['wallets'] is List && (walletData['wallets'] as List).isNotEmpty) {
+      final first = (walletData['wallets'] as List).first;
+      if (first is Map) {
+        final double b = double.tryParse(first['balance']?.toString() ?? '0') ?? 0.0;
+        return b.toStringAsFixed(2);
+      }
+    }
+    // Fallback for flat structure just in case
+    if (walletData['balance'] != null) {
+      final double b = double.tryParse(walletData['balance']?.toString() ?? '0') ?? 0.0;
+      return b.toStringAsFixed(2);
+    }
+    return '0.00';
+  }
+
   /// Check system status and navigate to the appropriate screen
   Future<void> checkSystemAndNavigate() async {
     try {
@@ -107,7 +124,7 @@ class IbmController extends GetxController {
         // Logic based on system mode
         if (systemMode.value == 'ibm') {
           if (isPartner.value) {
-            Get.toNamed(AppPages.IBM_MANAGER_PORTAL);
+            Get.toNamed(Routes.IBM_MANAGER_PORTAL);
           } else {
             if (partnerRequest.isNotEmpty) {
               final status = partnerRequest['status'];
@@ -120,7 +137,7 @@ class IbmController extends GetxController {
               }
             }
             // If not partner and not rejected, go to application form
-            Get.toNamed(AppPages.IBM_APPLICATION);
+            Get.toNamed(Routes.IBM_APPLICATION);
           }
         } else {
           // legacy mode handles all states (partner, not applied, rejected)
@@ -205,6 +222,7 @@ class IbmController extends GetxController {
   void changeTab(int index) {
     currentTabIndex.value = index;
     update(['ibm_shell']); // Used for GetBuilder
+    fetchWallet();
 
     switch (index) {
       case 0:

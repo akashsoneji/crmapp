@@ -5,6 +5,9 @@ import 'flavor_config.dart';
 /// This class provides easy methods to switch between different brands
 /// and get their configurations.
 class BrandSwitcher {
+  /// Chart base URL of the active brand.
+  static String get currentChartBaseUrl => FlavorConfig.instance.chartBaseUrl;
+
   /// Switch to app brand (Purple theme)
   static void switchToPipze() {
     FlavorConfig.pipze;

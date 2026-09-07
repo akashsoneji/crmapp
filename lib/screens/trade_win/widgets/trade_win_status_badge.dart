@@ -15,16 +15,14 @@ class TradeWinStatusBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.cardBackGround,
         borderRadius: BorderRadius.circular(20.r),
-        border:
-            AppColors.isDarkMode ? Border.all(color: AppColors.border) : null,
+        border: null,
       ),
       child: Text(
         status.toUpperCase(),
         style: AppTextStyles.subheading.copyWith(
           fontSize: 10.sp,
           fontWeight: FontWeight.w700,
-          color:
-              AppColors.isDarkMode ? AppColors.textPrimary : AppColors.primary,
+          color: AppColors.primary,
           letterSpacing: 0.5,
         ),
       ),

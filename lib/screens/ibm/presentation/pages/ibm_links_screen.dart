@@ -1,3 +1,4 @@
+import 'package:crm_app/flavor_config.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -400,7 +401,7 @@ class _IbmLinksScreenState extends State<IbmLinksScreen> {
         visits > 0 ? ((signups / visits) * 100).toStringAsFixed(0) : '0';
 
     // Full URL
-    final url = 'https://dev.tenaxcodecrm.com/register?ref=$code';
+    final url = '${FlavorConfig.instance.chartBaseUrl}/register?ref=$code';
 
     return Container(
       margin: EdgeInsets.only(bottom: 12.h),
@@ -664,7 +665,8 @@ class _IbmLinksScreenState extends State<IbmLinksScreen> {
   void _confirmDeleteLink(BuildContext context, int linkId, String label) {
     Get.dialog(
       AlertDialog(
-        backgroundColor: AppColors.isDarkMode ? AppColors.card : AppColors.card,
+        backgroundColor: AppColors.card,
+        surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(14.r),
         ),
@@ -680,21 +682,43 @@ class _IbmLinksScreenState extends State<IbmLinksScreen> {
           'Are you sure you want to delete "$label"? Referred clients will no longer be able to use this code.',
           style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey),
         ),
+        actionsPadding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 16.h),
         actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: Text('Cancel', style: TextStyle(color: AppColors.textGrey)),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Get.back();
-              await controller.deleteReferralLink(linkId);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent,
-              foregroundColor: AppColors.whiteColor,
-            ),
-            child: const Text('Delete'),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Get.back(),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.textPrimary,
+                    side: BorderSide(color: AppColors.border),
+                    padding: EdgeInsets.symmetric(vertical: 12.h),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10.r),
+                    ),
+                  ),
+                  child: const Text('Cancel'),
+                ),
+              ),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () async {
+                    Get.back();
+                    await controller.deleteReferralLink(linkId);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: AppColors.whiteColor,
+                    padding: EdgeInsets.symmetric(vertical: 12.h),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10.r),
+                    ),
+                  ),
+                  child: const Text('Delete'),
+                ),
+              ),
+            ],
           ),
         ],
       ),

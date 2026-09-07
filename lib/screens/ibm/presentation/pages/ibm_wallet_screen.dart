@@ -73,11 +73,7 @@ class _IbmWalletScreenState extends State<IbmWalletScreen>
         ),
         actions: [
           Obx(() {
-            final wallet = controller.walletData;
-            final balanceStr = IbmCurrency.format(
-              (wallet['balance'] ?? wallet['unpaid_balance']),
-              currencyCode: wallet['currency']?.toString(),
-            );
+            final balanceStr = '\$${controller.walletBalance}';
             return Padding(
               padding: EdgeInsets.only(right: 16.w),
               child: Container(
@@ -206,7 +202,15 @@ class _MyCommissionTabState extends State<MyCommissionTab> {
 
   /// Smallest allowed payout — dynamic from wallet, default 50.
   double _minPayout() {
-    final n = _asNum(_ibmController.walletData['minimum_payout']);
+    final block = _wallet0();
+    // Prefer wallets[0].minimum_payout, then minimum_payout_by_currency[cur],
+    // then flat root, defaulting to 50.
+    double n = _asNum(block['minimum_payout']);
+    if (n <= 0) {
+      final byCur = _ibmController.walletData['minimum_payout_by_currency'];
+      if (byCur is Map) n = _asNum(byCur[_currency()]);
+    }
+    if (n <= 0) n = _asNum(_ibmController.walletData['minimum_payout']);
     return n > 0 ? n : 50;
   }
 
@@ -371,8 +375,11 @@ class _MyCommissionTabState extends State<MyCommissionTab> {
     return Obx(() {
       final wallet = _ibmController.walletData;
       final w0 = _wallet0(wallet);
-      final availableBalance =
-          w0['available'] ?? wallet['unpaid_balance'] ?? wallet['balance'];
+      final availableBalance = w0['balance'] ??
+          w0['available'] ??
+          wallet['unpaid_balance'] ??
+          wallet['balance'] ??
+          0;
       final pendingPayout =
           w0['pending_payout'] ?? wallet['pending_payout'] ?? wallet['locked'] ?? 0;
       final earnedAllTime =
@@ -473,10 +480,15 @@ class _MyCommissionTabState extends State<MyCommissionTab> {
                     // Doc §7: can_withdraw && !is_frozen && !open_payout_status
                     // && balance >= minimum_payout. can_withdraw defaults true
                     // when the server omits it.
-                    final canWithdrawFlag = w['can_withdraw'] != false;
-                    final hasOpenPayout =
-                        w['open_payout_status'] != null &&
-                        w['open_payout_status'].toString().isNotEmpty;
+                    // Read the flags from the wallets[0] block first, falling
+                    // back to the flat root when the server returns figures
+                    // top-level. can_withdraw defaults true when omitted.
+                    final canWithdrawFlag =
+                        (block['can_withdraw'] ?? w['can_withdraw']) != false;
+                    final openPayoutStatus =
+                        block['open_payout_status'] ?? w['open_payout_status'];
+                    final hasOpenPayout = openPayoutStatus != null &&
+                        openPayoutStatus.toString().isNotEmpty;
                     final canRequest = canWithdrawFlag &&
                         !isFrozen &&
                         !hasOpenPayout &&
@@ -1421,6 +1433,13 @@ class _CommissionPlansTabState extends State<CommissionPlansTab> {
                             plan['partners_using']?.toString() ?? '0',
                           ) ??
                           0;
+              // A plan is locked (read-only) once it is assigned to a sub-IB.
+              // The list endpoint may omit is_locked, so fall back to
+              // partners_using as the "locked once assigned" signal.
+              final bool isLocked =
+                  plan['is_locked'] == true ||
+                  plan['is_locked'] == 1 ||
+                  partnersUsing > 0;
 
               return Padding(
                 padding: EdgeInsets.only(bottom: 12.h),
@@ -1435,88 +1454,44 @@ class _CommissionPlansTabState extends State<CommissionPlansTab> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
-                            children: [
-                              Text(
-                                name,
+                          Expanded(
+                            child: Text(
+                              name,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15.sp,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                          ),
+                          if (isActive) ...[
+                            SizedBox(width: 8.w),
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 8.w,
+                                vertical: 4.h,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.green.withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(12.r),
+                              ),
+                              child: Text(
+                                'Active',
                                 style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 15.sp,
-                                  color: AppColors.textPrimary,
+                                  color: Colors.green,
+                                  fontSize: 10.sp,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
-                              SizedBox(width: 8.w),
-                              if (isActive)
-                                Container(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 8.w,
-                                    vertical: 4.h,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.green.withOpacity(0.15),
-                                    borderRadius: BorderRadius.circular(12.r),
-                                  ),
-                                  child: Text(
-                                    'Active',
-                                    style: TextStyle(
-                                      color: Colors.green,
-                                      fontSize: 10.sp,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
-                          Row(
-                            children: [
-                              GestureDetector(
-                                onTap: () async {
-                                  final result = await Get.to(
-                                    () => CreateEditPlanScreen(
-                                      planId: plan['plan_id'],
-                                    ),
-                                  );
-                                  if (result == true) {
-                                    _fetchPlans();
-                                  }
-                                },
-                                child: _buildActionIcon(
-                                  Icons.edit,
-                                  'Edit',
-                                  AppColors.textPrimary,
-                                ),
-                              ),
-                              SizedBox(width: 12.w),
-                              GestureDetector(
-                                onTap:
-                                    () => _showAssignBottomSheet(
-                                      plan['plan_id'] ?? 0,
-                                      name,
-                                    ),
-                                child: _buildActionIcon(
-                                  Icons.person_add,
-                                  'Assign',
-                                  AppColors.textPrimary,
-                                ),
-                              ),
-                              SizedBox(width: 12.w),
-                              GestureDetector(
-                                onTap:
-                                    () =>
-                                        _deletePlan(plan['plan_id'] ?? 0, name),
-                                child: Icon(
-                                  Icons.delete_outline,
-                                  size: 18.w,
-                                  color: Colors.red,
-                                ),
-                              ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ],
                       ),
-                      SizedBox(height: 16.h),
+                      SizedBox(height: 10.h),
                       Row(
                         children: [
                           Icon(
@@ -1532,15 +1507,93 @@ class _CommissionPlansTabState extends State<CommissionPlansTab> {
                               color: AppColors.textSecondary,
                             ),
                           ),
-                          SizedBox(width: 12.w),
-                          Expanded(
-                            child: Text(
-                              description,
+                          if (isLocked) ...[
+                            SizedBox(width: 12.w),
+                            Icon(
+                              Icons.lock_outline,
+                              size: 14.w,
+                              color: AppColors.textSecondary,
+                            ),
+                            SizedBox(width: 4.w),
+                            Text(
+                              'Locked once assigned',
                               style: TextStyle(
                                 fontSize: 12.sp,
                                 color: AppColors.textSecondary,
                               ),
-                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ],
+                      ),
+                      if (description.isNotEmpty) ...[
+                        SizedBox(height: 6.h),
+                        Text(
+                          description,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                      SizedBox(height: 12.h),
+                      Divider(height: 1, color: AppColors.divider),
+                      SizedBox(height: 8.h),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () async {
+                                final result = await Get.to(
+                                  () => CreateEditPlanScreen(
+                                    planId: plan['plan_id'],
+                                    readOnly: isLocked,
+                                  ),
+                                );
+                                if (result == true) {
+                                  _fetchPlans();
+                                }
+                              },
+                              child: _buildActionIcon(
+                                isLocked ? Icons.visibility : Icons.edit,
+                                isLocked ? 'View' : 'Edit',
+                                AppColors.textPrimary,
+                              ),
+                            ),
+                          ),
+                          Container(
+                            width: 1,
+                            height: 18.h,
+                            color: AppColors.divider,
+                          ),
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () => _showAssignBottomSheet(
+                                plan['plan_id'] ?? 0,
+                                name,
+                              ),
+                              child: _buildActionIcon(
+                                Icons.person_add,
+                                'Assign',
+                                AppColors.textPrimary,
+                              ),
+                            ),
+                          ),
+                          Container(
+                            width: 1,
+                            height: 18.h,
+                            color: AppColors.divider,
+                          ),
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () =>
+                                  _deletePlan(plan['plan_id'] ?? 0, name),
+                              child: _buildActionIcon(
+                                Icons.delete_outline,
+                                'Delete',
+                                Colors.red,
+                              ),
                             ),
                           ),
                         ],
@@ -1557,6 +1610,7 @@ class _CommissionPlansTabState extends State<CommissionPlansTab> {
 
   Widget _buildActionIcon(IconData icon, String label, Color color) {
     return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Icon(icon, size: 16.w, color: color),
         SizedBox(width: 4.w),

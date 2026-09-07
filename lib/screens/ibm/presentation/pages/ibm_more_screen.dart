@@ -52,7 +52,7 @@ class IbmMoreScreen extends StatelessWidget {
           ),
           actions: [
             Obx(() {
-              final balance = controller.walletData['balance'] ?? '0.00';
+              final balance = controller.walletBalance;
               return Padding(
                 padding: EdgeInsets.only(right: 16.w),
                 child: Container(

@@ -1,4 +1,3 @@
-import 'package:crm_app/widgets/app_svg_back_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -12,6 +11,7 @@ import 'package:crm_app/utils/trade_win_format.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
 import 'package:crm_app/screens/trade_win/widgets/trade_win_product_image.dart';
 import 'package:crm_app/screens/trade_win/widgets/trade_win_status_badge.dart';
+import 'package:crm_app/widgets/app_back_button.dart';
 
 class TradeWinMyWinsTab extends StatelessWidget {
   const TradeWinMyWinsTab({super.key});
@@ -27,11 +27,7 @@ class TradeWinMyWinsTab extends StatelessWidget {
           padding: EdgeInsets.fromLTRB(0.w, 0.h, 0.w, 0),
           child: Row(
             children: [
-              AppSvgBackButton(
-                onPressed: () => Get.back(closeOverlays: true),
-                iconWidth: 30.w,
-                iconHeight: 30.h,
-              ),
+              const AppBackButton(closeOverlays: true),
               Expanded(
                 child: Text(
                   languageService.tr('tw_my_past_wins'),
@@ -39,7 +35,7 @@ class TradeWinMyWinsTab extends StatelessWidget {
                   style: AppTextStyles.heading,
                 ),
               ),
-              SizedBox(width: 48.w),
+              SizedBox(width: AppBackButton.leadingSlotSize.w),
             ],
           ),
         ),

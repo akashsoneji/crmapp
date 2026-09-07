@@ -30,16 +30,19 @@ class _IbmClientProfileScreenState extends State<IbmClientProfileScreen>
   late TabController _tabController;
   List<String> _tabNames = const ['Overview'];
 
-  final List<String> _dateFilters = [
-    'Today',
-    '7D',
-    '30D',
-    'MTD',
-    'All',
-  ];
+  final List<String> _dateFilters = ['Today', '7D', '30D', 'MTD', 'All'];
   String _selectedDateFilter = 'MTD';
   DateTime? _customStartDate;
   DateTime? _customEndDate;
+
+  // Recursive network-tree state: each person card on the Network tab can
+  // expand to show their own downline. Mirror the main tree's lazy-load
+  // pattern so deep branches don't fetch until the user opens them.
+  final Set<int> _expandedPersonIds = <int>{};
+  final Map<int, List<Map<String, dynamic>>> _personChildrenCache =
+      <int, List<Map<String, dynamic>>>{};
+  final Set<int> _loadingPersonIds = <int>{};
+  int _personDeepLevel = 4; // visual depth cap (avoid runaway nesting)
 
   // Tab set is resolved from the API, not hardcoded. On load we call
   // /portal/clients/{id} (isClient) and /portal/network/{id} (isIb) in
@@ -249,7 +252,7 @@ class _IbmClientProfileScreenState extends State<IbmClientProfileScreen>
         ),
         actions: [
           Obx(() {
-            final balance = controller.walletData['balance'] ?? '0.00';
+            final balance = controller.walletBalance;
             return Padding(
               padding: EdgeInsets.only(right: 16.w),
               child: Container(
@@ -325,12 +328,13 @@ class _IbmClientProfileScreenState extends State<IbmClientProfileScreen>
                           fontSize: 12.sp,
                           fontWeight: FontWeight.w500,
                         ),
-                        tabs: _tabNames
-                            .map((name) => Tab(
-                                  height: 32.h,
-                                  child: Text(name),
-                                ))
-                            .toList(),
+                        tabs:
+                            _tabNames
+                                .map(
+                                  (name) =>
+                                      Tab(height: 32.h, child: Text(name)),
+                                )
+                                .toList(),
                       ),
                     ),
                   ),
@@ -357,9 +361,8 @@ class _IbmClientProfileScreenState extends State<IbmClientProfileScreen>
         // or both.
         return TabBarView(
           controller: _tabController,
-          children: _tabNames
-              .map<Widget>((name) => _buildTabBody(name))
-              .toList(),
+          children:
+              _tabNames.map<Widget>((name) => _buildTabBody(name)).toList(),
         );
       }),
     );
@@ -441,9 +444,10 @@ class _IbmClientProfileScreenState extends State<IbmClientProfileScreen>
                             child: Text(
                               _isIb ? 'Sub-IB' : 'Client',
                               style: TextStyle(
-                                color: _isIb
-                                    ? AppColors.primary
-                                    : const Color(0xFF00C48C),
+                                color:
+                                    _isIb
+                                        ? AppColors.primary
+                                        : const Color(0xFF00C48C),
                                 fontSize: 9.sp,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -457,7 +461,7 @@ class _IbmClientProfileScreenState extends State<IbmClientProfileScreen>
                       final client =
                           data['client'] is Map ? data['client'] as Map : {};
                       final email = client['email']?.toString() ?? '';
-                      
+
                       return Text(
                         '$email',
                         style: TextStyle(
@@ -467,11 +471,11 @@ class _IbmClientProfileScreenState extends State<IbmClientProfileScreen>
                         overflow: TextOverflow.ellipsis,
                       );
                     }),
-                     Obx(() {
+                    Obx(() {
                       final data = controller.currentClientOverview;
                       final client =
                           data['client'] is Map ? data['client'] as Map : {};
-                      
+
                       final joined =
                           client['joined_at']?.toString() ??
                           client['created_at']?.toString() ??
@@ -504,9 +508,10 @@ class _IbmClientProfileScreenState extends State<IbmClientProfileScreen>
       width: double.infinity,
       padding: EdgeInsets.all(3.w),
       decoration: BoxDecoration(
-        color: AppColors.isDarkMode
-            ? const Color(0xFF1E1E1E)
-            : const Color(0xFFF1EEF8),
+        color:
+            AppColors.isDarkMode
+                ? const Color(0xFF1E1E1E)
+                : const Color(0xFFF1EEF8),
         borderRadius: BorderRadius.circular(20.r),
       ),
       child: Row(
@@ -522,20 +527,22 @@ class _IbmClientProfileScreenState extends State<IbmClientProfileScreen>
                   final DateTime? start = await showDatePicker(
                     context: context,
                     helpText: 'Select start date',
-                    initialDate: _customStartDate ??
+                    initialDate:
+                        _customStartDate ??
                         now.subtract(const Duration(days: 30)),
                     firstDate: DateTime(2000),
                     lastDate: now,
-                    builder: (context, child) => Theme(
-                      data: Theme.of(context).copyWith(
-                        colorScheme: ColorScheme.light(
-                          primary: AppColors.primary,
-                          onPrimary: Colors.white,
-                          onSurface: Colors.black,
+                    builder:
+                        (context, child) => Theme(
+                          data: Theme.of(context).copyWith(
+                            colorScheme: ColorScheme.light(
+                              primary: AppColors.primary,
+                              onPrimary: Colors.white,
+                              onSurface: Colors.black,
+                            ),
+                          ),
+                          child: child!,
                         ),
-                      ),
-                      child: child!,
-                    ),
                   );
                   if (start == null) return;
                   final DateTime? end = await showDatePicker(
@@ -544,16 +551,17 @@ class _IbmClientProfileScreenState extends State<IbmClientProfileScreen>
                     initialDate: start,
                     firstDate: start,
                     lastDate: now,
-                    builder: (context, child) => Theme(
-                      data: Theme.of(context).copyWith(
-                        colorScheme: ColorScheme.light(
-                          primary: AppColors.primary,
-                          onPrimary: Colors.white,
-                          onSurface: Colors.black,
+                    builder:
+                        (context, child) => Theme(
+                          data: Theme.of(context).copyWith(
+                            colorScheme: ColorScheme.light(
+                              primary: AppColors.primary,
+                              onPrimary: Colors.white,
+                              onSurface: Colors.black,
+                            ),
+                          ),
+                          child: child!,
                         ),
-                      ),
-                      child: child!,
-                    ),
                   );
                   if (end == null) return;
                   setState(() {
@@ -580,11 +588,12 @@ class _IbmClientProfileScreenState extends State<IbmClientProfileScreen>
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: isSelected
-                        ? AppColors.whiteColor
-                        : (AppColors.isDarkMode
-                            ? Colors.white70
-                            : AppColors.textSecondary),
+                    color:
+                        isSelected
+                            ? AppColors.whiteColor
+                            : (AppColors.isDarkMode
+                                ? Colors.white70
+                                : AppColors.textSecondary),
                     fontSize: 11.sp,
                     fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                   ),
@@ -596,7 +605,6 @@ class _IbmClientProfileScreenState extends State<IbmClientProfileScreen>
       ),
     );
   }
-
 
   // ==========================
   // TAB 1: OVERVIEW
@@ -626,15 +634,22 @@ class _IbmClientProfileScreenState extends State<IbmClientProfileScreen>
       final int clientsOwn = _parseInt(clientsBlock['own']);
       final int clientsTotal = _parseInt(clientsBlock['branch']);
       final int subIbs = _countSubPartners(partnerBlock['sub_partners']);
-      final double deposits = _parseDouble(branch['deposits']);
-      final double withdrawals = _parseDouble(branch['withdrawals']);
-      final double netFunding = _parseDouble(branch['net_funding']);
-      final double equity = _parseDouble(branch['equity']);
-      final double lots = _parseDouble(branch['lots']);
-      final double youEarned = _parseDouble(branch['commission']);
+
+      // ---- CLIENT TOTALS ----
+      final List<dynamic> clientTotalsList =
+          client['totals'] is List ? client['totals'] as List : const [];
+
+      final double branchDeposits = _parseDouble(branch['deposits']);
+      final double branchWithdrawals = _parseDouble(branch['withdrawals']);
+      final double branchNetFunding = _parseDouble(branch['net_funding']);
+      final double branchEquity = _parseDouble(branch['equity']);
+      final double branchLots = _parseDouble(branch['lots']);
+      final double branchYouEarned = _parseDouble(branch['commission']);
 
       // ---- THEIR WALLET — GET /portal/network/{id}/wallet ----
-      final Map wallet = _firstCurrency(controller.currentPartnerWallet['wallets']);
+      final Map wallet = _firstCurrency(
+        controller.currentPartnerWallet['wallets'],
+      );
 
       // ---- THEIR REFERRAL LINKS — GET /portal/network/{id}/links ----
       final List<dynamic> links =
@@ -642,8 +657,7 @@ class _IbmClientProfileScreenState extends State<IbmClientProfileScreen>
               ? controller.currentPartnerLinks['links'] as List
               : const [];
 
-      // ---- THEIR OWN TRADING + accounts + history — GET /portal/clients/{id} ----
-      final Map ownTrading = _firstCurrency(client['totals']);
+      // ---- accounts + history — GET /portal/clients/{id} ----
       final List<dynamic> accounts =
           client['accounts'] is List ? client['accounts'] as List : const [];
       // client detail exposes the timeline as `events`, not `history`.
@@ -655,18 +669,19 @@ class _IbmClientProfileScreenState extends State<IbmClientProfileScreen>
                   : const []);
 
       return _buildOverviewBody(
+        isIb: _isIb,
         clientsOwn: clientsOwn,
         clientsTotal: clientsTotal,
         subIbs: subIbs,
-        deposits: deposits,
-        withdrawals: withdrawals,
-        netFunding: netFunding,
-        equity: equity,
-        lots: lots,
-        youEarned: youEarned,
+        branchDeposits: branchDeposits,
+        branchWithdrawals: branchWithdrawals,
+        branchNetFunding: branchNetFunding,
+        branchEquity: branchEquity,
+        branchLots: branchLots,
+        branchYouEarned: branchYouEarned,
+        clientTotals: clientTotalsList,
         wallet: wallet,
         links: links,
-        ownTrading: ownTrading,
         accounts: accounts,
         history: history,
       );
@@ -699,324 +714,359 @@ class _IbmClientProfileScreenState extends State<IbmClientProfileScreen>
   }
 
   Widget _buildOverviewBody({
+    required bool isIb,
     required int clientsOwn,
     required int clientsTotal,
     required int subIbs,
-    required double deposits,
-    required double withdrawals,
-    required double netFunding,
-    required double equity,
-    required double lots,
-    required double youEarned,
+    required double branchDeposits,
+    required double branchWithdrawals,
+    required double branchNetFunding,
+    required double branchEquity,
+    required double branchLots,
+    required double branchYouEarned,
+    required List<dynamic> clientTotals,
     required Map wallet,
     required List<dynamic> links,
-    required Map ownTrading,
     required List<dynamic> accounts,
     required List<dynamic> history,
   }) {
-
     return RefreshIndicator(
       onRefresh: () async => _fetchDataForTab(0),
       child: ListView(
         padding: EdgeInsets.fromLTRB(16.w, 16, 16.w, 16.w),
         children: [
-          Text(
-            'THEIR DOWNLINE',
-            style: TextStyle(
-              color: AppColors.textGrey,
-              fontSize: 10.sp,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1.2,
+          if (isIb) ...[
+            Text(
+              'THEIR DOWNLINE',
+              style: TextStyle(
+                color: AppColors.textGrey,
+                fontSize: 10.sp,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.2,
+              ),
             ),
-          ),
-          SizedBox(height: 8.h),
-          Column(
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildMetricCard(
-                      title: 'Clients',
-                      value: '$clientsOwn / $clientsTotal',
-                      subtitle: 'own / whole branch',
-                      icon: Icons.group,
+            SizedBox(height: 8.h),
+            Column(
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildMetricCard(
+                        title: 'Clients',
+                        value: '$clientsOwn / $clientsTotal',
+                        subtitle: 'own / whole branch',
+                        icon: Icons.group,
+                      ),
                     ),
-                  ),
-                  SizedBox(width: 10.w),
-                  Expanded(
-                    child: _buildMetricCard(
-                      title: 'Sub-IBs',
-                      value: '$subIbs',
-                      subtitle: 'working under them',
-                      icon: Icons.account_tree,
+                    SizedBox(width: 10.w),
+                    Expanded(
+                      child: _buildMetricCard(
+                        title: 'Sub-IBs',
+                        value: '$subIbs',
+                        subtitle: 'working under them',
+                        icon: Icons.account_tree,
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 10.h),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildMetricCard(
-                      title: 'Deposits',
-                      value: '\$${deposits.toStringAsFixed(2)}',
-                      subtitle: 'branch, this period',
-                      icon: Icons.arrow_downward,
-                      color: Colors.green,
+                  ],
+                ),
+                SizedBox(height: 10.h),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildMetricCard(
+                        title: 'Deposits',
+                        value: '\$${branchDeposits.toStringAsFixed(2)}',
+                        subtitle: 'branch, this period',
+                        icon: Icons.arrow_downward,
+                        color: Colors.green,
+                      ),
                     ),
-                  ),
-                  SizedBox(width: 10.w),
-                  Expanded(
-                    child: _buildMetricCard(
-                      title: 'Withdrawals',
-                      value: '\$${withdrawals.toStringAsFixed(2)}',
-                      subtitle: 'branch, this period',
-                      icon: Icons.arrow_upward,
-                      color: Colors.red,
+                    SizedBox(width: 10.w),
+                    Expanded(
+                      child: _buildMetricCard(
+                        title: 'Withdrawals',
+                        value: '\$${branchWithdrawals.toStringAsFixed(2)}',
+                        subtitle: 'branch, this period',
+                        icon: Icons.arrow_upward,
+                        color: Colors.red,
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 10.h),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildMetricCard(
-                      title: 'Net funding',
-                      value: '\$${netFunding.toStringAsFixed(2)}',
-                      subtitle: 'deposits - withdrawals',
-                      icon: Icons.account_balance,
+                  ],
+                ),
+                SizedBox(height: 10.h),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildMetricCard(
+                        title: 'Net funding',
+                        value: '\$${branchNetFunding.toStringAsFixed(2)}',
+                        subtitle: 'deposits - withdrawals',
+                        icon: Icons.account_balance,
+                      ),
                     ),
-                  ),
-                  SizedBox(width: 10.w),
-                  Expanded(
-                    child: _buildMetricCard(
-                      title: 'Equity',
-                      value: '\$${equity.toStringAsFixed(2)}',
-                      subtitle: 'right now, not the period',
-                      icon: Icons.account_balance_wallet,
+                    SizedBox(width: 10.w),
+                    Expanded(
+                      child: _buildMetricCard(
+                        title: 'Equity',
+                        value: '\$${branchEquity.toStringAsFixed(2)}',
+                        subtitle: 'right now, not the period',
+                        icon: Icons.account_balance_wallet,
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 10.h),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildMetricCard(
-                      title: 'Lots',
-                      value: lots.toStringAsFixed(2),
-                      subtitle: 'branch, this period',
-                      icon: Icons.bar_chart,
+                  ],
+                ),
+                SizedBox(height: 10.h),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildMetricCard(
+                        title: 'Lots',
+                        value: branchLots.toStringAsFixed(2),
+                        subtitle: 'branch, this period',
+                        icon: Icons.bar_chart,
+                      ),
                     ),
-                  ),
-                  SizedBox(width: 10.w),
-                  Expanded(
-                    child: _buildMetricCard(
-                      title: 'You earned',
-                      value: '\$${youEarned.toStringAsFixed(2)}',
-                      subtitle: 'your share from them',
-                      icon: Icons.monetization_on,
-                      color: AppColors.primary,
+                    SizedBox(width: 10.w),
+                    Expanded(
+                      child: _buildMetricCard(
+                        title: 'You earned',
+                        value: '\$${branchYouEarned.toStringAsFixed(2)}',
+                        subtitle: 'your share from them',
+                        icon: Icons.monetization_on,
+                        color: AppColors.primary,
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ],
-          ),
+                  ],
+                ),
+              ],
+            ),
 
-          SizedBox(height: 24.h),
-          Text(
-            'THEIR REFERRAL LINKS',
-            style: TextStyle(
-              color: AppColors.textGrey,
-              fontSize: 10.sp,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1.2,
+            SizedBox(height: 24.h),
+            Text(
+              'THEIR REFERRAL LINKS',
+              style: TextStyle(
+                color: AppColors.textGrey,
+                fontSize: 10.sp,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.2,
+              ),
             ),
-          ),
+            SizedBox(height: 8.h),
+            if (links.isEmpty)
+              Container(
+                padding: EdgeInsets.all(12.w),
+                decoration: BoxDecoration(
+                  color: AppColors.card,
+                  borderRadius: BorderRadius.circular(12.r),
+                  border: Border.all(color: AppColors.divider),
+                ),
+                child: Text(
+                  'No referral links created by partner yet.',
+                  style: TextStyle(color: AppColors.textGrey, fontSize: 11.sp),
+                ),
+              )
+            else
+              ...links.map((l) {
+                final linkMap = l is Map ? l : {};
+                return Padding(
+                  padding: EdgeInsets.only(bottom: 8.h),
+                  child: _buildLinkRow(
+                    linkMap['label']?.toString() ?? 'Default Link',
+                    linkMap['code']?.toString() ?? '--',
+                    '${linkMap['signups'] ?? linkMap['visits'] ?? 0}',
+                    '${linkMap['funded'] ?? 0}',
+                  ),
+                );
+              }).toList(),
+
+            SizedBox(height: 24.h),
+            Text(
+              'THEIR WALLET',
+              style: TextStyle(
+                color: AppColors.textGrey,
+                fontSize: 10.sp,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.2,
+              ),
+            ),
+            SizedBox(height: 8.h),
+            Column(
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildMetricCard(
+                        title: 'Available',
+                        value:
+                            '\$${_parseDouble(wallet['available'] ?? wallet['balance']).toStringAsFixed(2)}',
+                        subtitle: 'they can request this',
+                        icon: Icons.payments,
+                      ),
+                    ),
+                    SizedBox(width: 10.w),
+                    Expanded(
+                      child: _buildMetricCard(
+                        title: 'Pending payout',
+                        value:
+                            '\$${_parseDouble(wallet['pending'] ?? wallet['pending_payout']).toStringAsFixed(2)}',
+                        subtitle: 'locked in an open request',
+                        icon: Icons.hourglass_bottom,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 10.h),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildMetricCard(
+                        title: 'Earned all time',
+                        value:
+                            '\$${_parseDouble(wallet['earned_all_time'] ?? wallet['lifetime_earned']).toStringAsFixed(2)}',
+                        subtitle: 'their own share',
+                        icon: Icons.account_balance_wallet_outlined,
+                      ),
+                    ),
+                    SizedBox(width: 10.w),
+                    Expanded(
+                      child: _buildMetricCard(
+                        title: 'Paid out',
+                        value:
+                            '\$${_parseDouble(wallet['paid_out'] ?? wallet['lifetime_paid']).toStringAsFixed(2)}',
+                        subtitle: 'settled',
+                        icon: Icons.check_circle,
+                        color: Colors.green,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+
+            SizedBox(height: 24.h),
+            Text(
+              'THEIR OWN TRADING',
+              style: TextStyle(
+                color: AppColors.textGrey,
+                fontSize: 10.sp,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.2,
+              ),
+            ),
+          ] else ...[
+            Text(
+              'OVERVIEW',
+              style: TextStyle(
+                color: AppColors.textGrey,
+                fontSize: 10.sp,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.2,
+              ),
+            ),
+          ],
           SizedBox(height: 8.h),
-          if (links.isEmpty)
+
+          ...clientTotals.map((cTotal) {
+            final Map cMap = cTotal is Map ? cTotal : {};
+            final curr = cMap['currency']?.toString() ?? 'USD';
+            final dep = _parseDouble(cMap['deposits']);
+            final withdr = _parseDouble(cMap['withdrawals']);
+            final net = _parseDouble(cMap['net_funding']);
+            final eq = _parseDouble(cMap['equity']);
+            final lots = _parseDouble(cMap['lots']);
+            final comm = _parseDouble(cMap['commission']);
+
+            return Padding(
+              padding: EdgeInsets.only(bottom: 16.h),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildMetricCard(
+                          title: 'Deposits',
+                          value: '$curr ${dep.toStringAsFixed(2)}',
+                          subtitle: 'this period',
+                          icon: Icons.arrow_downward,
+                          color: Colors.green,
+                        ),
+                      ),
+                      SizedBox(width: 10.w),
+                      Expanded(
+                        child: _buildMetricCard(
+                          title: 'Withdrawals',
+                          value: '$curr ${withdr.toStringAsFixed(2)}',
+                          subtitle: 'this period',
+                          icon: Icons.arrow_upward,
+                          color: Colors.red,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 10.h),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildMetricCard(
+                          title: 'Net funding',
+                          value: '$curr ${net.toStringAsFixed(2)}',
+                          subtitle: 'deposits - withdrawals',
+                          icon: Icons.account_balance,
+                        ),
+                      ),
+                      SizedBox(width: 10.w),
+                      Expanded(
+                        child: _buildMetricCard(
+                          title: 'Equity',
+                          value: '$curr ${eq.toStringAsFixed(2)}',
+                          subtitle: 'right now, not the period',
+                          icon: Icons.account_balance_wallet,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 10.h),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildMetricCard(
+                          title: 'Lots',
+                          value: lots.toStringAsFixed(2),
+                          subtitle: 'this period',
+                          icon: Icons.bar_chart,
+                        ),
+                      ),
+                      SizedBox(width: 10.w),
+                      Expanded(
+                        child: _buildMetricCard(
+                          title: 'You earned',
+                          value: '$curr ${comm.toStringAsFixed(2)}',
+                          subtitle: 'your share',
+                          icon: Icons.monetization_on,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+
+          if (clientTotals.isEmpty)
             Container(
               padding: EdgeInsets.all(12.w),
+              margin: EdgeInsets.only(bottom: 16.h),
               decoration: BoxDecoration(
                 color: AppColors.card,
                 borderRadius: BorderRadius.circular(12.r),
                 border: Border.all(color: AppColors.divider),
               ),
               child: Text(
-                'No referral links created by partner yet.',
+                'No trading data available.',
                 style: TextStyle(color: AppColors.textGrey, fontSize: 11.sp),
               ),
-            )
-          else
-            ...links.map((l) {
-              final linkMap = l is Map ? l : {};
-              return Padding(
-                padding: EdgeInsets.only(bottom: 8.h),
-                child: _buildLinkRow(
-                  linkMap['label']?.toString() ?? 'Default Link',
-                  linkMap['code']?.toString() ?? '--',
-                  '${linkMap['signups'] ?? linkMap['visits'] ?? 0}',
-                  '${linkMap['funded'] ?? 0}',
-                ),
-              );
-            }).toList(),
-
-          SizedBox(height: 24.h),
-          Text(
-            'THEIR WALLET',
-            style: TextStyle(
-              color: AppColors.textGrey,
-              fontSize: 10.sp,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1.2,
             ),
-          ),
-          SizedBox(height: 8.h),
-          Column(
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildMetricCard(
-                      title: 'Available',
-                      value:
-                          '\$${_parseDouble(wallet['available'] ?? wallet['balance']).toStringAsFixed(2)}',
-                      subtitle: 'they can request this',
-                      icon: Icons.payments,
-                    ),
-                  ),
-                  SizedBox(width: 10.w),
-                  Expanded(
-                    child: _buildMetricCard(
-                      title: 'Pending payout',
-                      value:
-                          '\$${_parseDouble(wallet['pending'] ?? wallet['pending_payout']).toStringAsFixed(2)}',
-                      subtitle: 'locked in an open request',
-                      icon: Icons.hourglass_bottom,
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 10.h),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildMetricCard(
-                      title: 'Earned all time',
-                      value:
-                          '\$${_parseDouble(wallet['earned_all_time'] ?? wallet['lifetime_earned']).toStringAsFixed(2)}',
-                      subtitle: 'their own share',
-                      icon: Icons.account_balance_wallet_outlined,
-                    ),
-                  ),
-                  SizedBox(width: 10.w),
-                  Expanded(
-                    child: _buildMetricCard(
-                      title: 'Paid out',
-                      value:
-                          '\$${_parseDouble(wallet['paid_out'] ?? wallet['lifetime_paid']).toStringAsFixed(2)}',
-                      subtitle: 'settled',
-                      icon: Icons.check_circle,
-                      color: Colors.green,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-
-          SizedBox(height: 24.h),
-          Text(
-            'THEIR OWN TRADING',
-            style: TextStyle(
-              color: AppColors.textGrey,
-              fontSize: 10.sp,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1.2,
-            ),
-          ),
-          SizedBox(height: 8.h),
-          Column(
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildMetricCard(
-                      title: 'Deposits',
-                      value:
-                          '\$${_parseDouble(ownTrading['deposits']).toStringAsFixed(2)}',
-                      subtitle: 'this period',
-                      icon: Icons.arrow_downward,
-                      color: Colors.green,
-                    ),
-                  ),
-                  SizedBox(width: 10.w),
-                  Expanded(
-                    child: _buildMetricCard(
-                      title: 'Withdrawals',
-                      value:
-                          '\$${_parseDouble(ownTrading['withdrawals']).toStringAsFixed(2)}',
-                      subtitle: 'this period',
-                      icon: Icons.arrow_upward,
-                      color: Colors.red,
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 10.h),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildMetricCard(
-                      title: 'Net funding',
-                      value:
-                          '\$${_parseDouble(ownTrading['net_funding'] ?? ownTrading['net']).toStringAsFixed(2)}',
-                      subtitle: 'deposits - withdrawals',
-                      icon: Icons.account_balance,
-                    ),
-                  ),
-                  SizedBox(width: 10.w),
-                  Expanded(
-                    child: _buildMetricCard(
-                      title: 'Equity',
-                      value:
-                          '\$${_parseDouble(ownTrading['equity']).toStringAsFixed(2)}',
-                      subtitle: 'right now, not the period',
-                      icon: Icons.account_balance_wallet,
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 10.h),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildMetricCard(
-                      title: 'Lots',
-                      value: _parseDouble(
-                        ownTrading['lots'],
-                      ).toStringAsFixed(2),
-                      subtitle: 'this period',
-                      icon: Icons.bar_chart,
-                    ),
-                  ),
-                  SizedBox(width: 10.w),
-                  Expanded(
-                    child: _buildMetricCard(
-                      title: 'You earned',
-                      value:
-                          '\$${_parseDouble(ownTrading['you_earned'] ?? ownTrading['commission']).toStringAsFixed(2)}',
-                      subtitle: 'your share',
-                      icon: Icons.monetization_on,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
 
           if (accounts.isNotEmpty) ...[
             SizedBox(height: 24.h),
@@ -1195,10 +1245,10 @@ class _IbmClientProfileScreenState extends State<IbmClientProfileScreen>
   }) {
     final c = color ?? AppColors.primary;
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 12.h),
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
       decoration: BoxDecoration(
         color: AppColors.card,
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(14.r),
         border:
             AppColors.isDarkMode ? Border.all(color: AppColors.divider) : null,
         boxShadow:
@@ -1212,50 +1262,50 @@ class _IbmClientProfileScreenState extends State<IbmClientProfileScreen>
                   ),
                 ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
+      child: Row(
         children: [
-          Row(
-            children: [
-              Container(
-                padding: EdgeInsets.all(6.w),
-                decoration: BoxDecoration(
-                  color: c.withOpacity(0.1),
-                  shape: BoxShape.circle,
+          Container(
+            padding: EdgeInsets.all(6.w),
+            decoration: BoxDecoration(
+              color: c.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(7.r),
+            ),
+            child: Icon(icon, color: c, size: 14.w),
+          ),
+          SizedBox(width: 10.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  value,
+                  style: AppTextStyles.heading.copyWith(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                child: Icon(icon, color: c, size: 14.w),
-              ),
-              SizedBox(width: 8.w),
-              Expanded(
-                child: Text(
+                Text(
                   title,
                   style: TextStyle(
-                    color: AppColors.textGrey,
-                    fontSize: 11.sp,
+                    color: AppColors.textSecondary,
+                    fontSize: 10.sp,
                     fontWeight: FontWeight.w600,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-              ),
-            ],
-          ),
-          SizedBox(height: 10.h),
-          Text(
-            value,
-            style: AppTextStyles.heading.copyWith(
-              fontSize: 16.sp,
-              fontWeight: FontWeight.bold,
-              height: 1.0,
+                Text(
+                  subtitle,
+                  style: TextStyle(color: AppColors.textGrey, fontSize: 9.sp),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
-          ),
-          SizedBox(height: 4.h),
-          Text(
-            subtitle,
-            style: TextStyle(color: AppColors.textGrey, fontSize: 9.sp),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
@@ -1625,7 +1675,11 @@ class _IbmClientProfileScreenState extends State<IbmClientProfileScreen>
   // ==========================
   Widget _buildNetworkTab() {
     final data = controller.currentNetworkNode;
-    final people = data['people'] as List? ?? data['sub_ibs'] as List? ?? data['clients'] as List? ?? [];
+    final people =
+        data['people'] as List? ??
+        data['sub_ibs'] as List? ??
+        data['clients'] as List? ??
+        [];
 
     if (people.isEmpty) {
       return Center(
@@ -1634,7 +1688,11 @@ class _IbmClientProfileScreenState extends State<IbmClientProfileScreen>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.account_tree_outlined, size: 48.w, color: AppColors.textGrey),
+              Icon(
+                Icons.account_tree_outlined,
+                size: 48.w,
+                color: AppColors.textGrey,
+              ),
               SizedBox(height: 12.h),
               Text(
                 'No network data found',
@@ -1652,40 +1710,57 @@ class _IbmClientProfileScreenState extends State<IbmClientProfileScreen>
 
     return RefreshIndicator(
       onRefresh: () async => _fetchDataForTab(2),
-      child: ListView.builder(
+      child: ListView(
         padding: EdgeInsets.all(16.w),
-        itemCount: people.length,
-        itemBuilder: (context, index) {
-          final person = people[index];
-          return _buildNetworkNodeCard(person);
-        },
+        children:
+            people
+                .map<Widget>(
+                  (person) => _buildNetworkNodeCard(person, level: 1),
+                )
+                .toList(),
       ),
     );
   }
 
-  Widget _buildNetworkNodeCard(dynamic person) {
+  Widget _buildNetworkNodeCard(dynamic person, {required int level}) {
     final p = person is Map ? person : {};
-    final name = (p['name'] ?? p['partner_name'] ?? p['username'] ?? 'Unknown').toString();
+    final name =
+        (p['name'] ?? p['partner_name'] ?? p['username'] ?? 'Unknown')
+            .toString();
     final email = (p['email'] ?? '').toString();
-    final account = (p['first_account'] ?? p['account_number'] ?? '').toString();
+    final account =
+        (p['first_account'] ?? p['account_number'] ?? '').toString();
     final isIb = p['is_ib'] == true;
     final isDirect = p['is_direct'] == true;
-    final level = p['level'] ?? 1;
+    final apiLevel = p['level'] ?? level;
     final plan = (p['plan_name'] ?? p['plan'] ?? 'Sub 7').toString();
     final via = (p['via_link'] ?? p['via'] ?? '').toString();
     final clientsTree = p['clients_tree'] ?? p['clients_count'] ?? 0;
     final subIbs = p['sub_ibs'] ?? 0;
-    final partnerId = int.tryParse((p['user_id'] ?? p['partner_user_id'] ?? p['id'] ?? 0).toString()) ?? 0;
+    final partnerId =
+        int.tryParse(
+          (p['user_id'] ?? p['partner_user_id'] ?? p['id'] ?? 0).toString(),
+        ) ??
+        0;
 
     final branchList = p['branch'] as List? ?? [];
-    final branch = branchList.isNotEmpty ? branchList[0] as Map : (p['branch'] is Map ? p['branch'] as Map : {});
+    final branch =
+        branchList.isNotEmpty
+            ? branchList[0] as Map
+            : (p['branch'] is Map ? p['branch'] as Map : {});
     final ownList = p['own'] as List? ?? [];
     final own = ownList.isNotEmpty ? ownList[0] as Map : {};
 
-    final deposits = _parseDouble(branch['deposits'] ?? own['deposits'] ?? p['deposits']);
-    final net = _parseDouble(branch['net'] ?? own['net'] ?? p['net']);
-    final lots = _parseDouble(branch['lots'] ?? own['lots'] ?? p['lots']);
-    final earned = _parseDouble(branch['commission'] ?? own['commission'] ?? p['commission'] ?? p['you_earned']);
+    final deposits = _parseDouble(own['deposits'] ?? p['deposits']);
+    final net = _parseDouble(own['net'] ?? own['net_funding'] ?? p['net']);
+    final lots = _parseDouble(own['lots'] ?? p['lots']);
+    final earned = _parseDouble(
+      own['commission'] ?? p['you_earned'] ?? p['commission'],
+    );
+    final branchEarned = _parseDouble(
+      p['branch_earned'] ?? branch['commission'] ?? branch['you_earned'],
+    );
+    final showBranchEarned = branchEarned > 0;
 
     final subtitleParts = <String>[];
     if (account.isNotEmpty) subtitleParts.add('#$account');
@@ -1693,154 +1768,314 @@ class _IbmClientProfileScreenState extends State<IbmClientProfileScreen>
     if (plan.isNotEmpty) subtitleParts.add(plan);
     if (via.isNotEmpty) subtitleParts.add('via $via');
 
-    return Container(
-      margin: EdgeInsets.only(bottom: 12.h),
-      decoration: BoxDecoration(
-        color: AppColors.card,
-        borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: AppColors.divider),
-      ),
-      clipBehavior: Clip.hardEdge,
-      child: IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Container(
-              width: 4.w,
-              color: isIb ? AppColors.primary : const Color(0xFF00C48C),
-            ),
-            Expanded(
-              child: Padding(
-                padding: EdgeInsets.all(14.w),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    final canOpen = partnerId > 0 && partnerId != widget.clientId;
+    final canExpand =
+        level < _personDeepLevel && (subIbs > 0 || clientsTree > 0);
+    final isExpanded = canExpand && _expandedPersonIds.contains(partnerId);
+    final isLoadingChildren = _loadingPersonIds.contains(partnerId);
+    final children = _personChildrenCache[partnerId];
+
+    final card = GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap:
+          canOpen
+              ? () {
+                Get.to(
+                  () => IbmClientProfileScreen(
+                    clientId: partnerId,
+                    clientName: name,
+                  ),
+                );
+              }
+              : null,
+      child: Container(
+        margin: EdgeInsets.only(bottom: 12.h),
+        decoration: BoxDecoration(
+          color: AppColors.card,
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(color: AppColors.divider),
+        ),
+        clipBehavior: Clip.hardEdge,
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Expanded(
-                child: Wrap(
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  spacing: 6.w,
-                  runSpacing: 4.h,
-                  children: [
-                    Text(
-                      name,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14.sp,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    if (isIb)
-                      Container(
-                        padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(4.r),
-                        ),
-                        child: Text(
-                          'Sub-IB · L$level',
-                          style: TextStyle(
-                            color: AppColors.primary,
-                            fontSize: 9.sp,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    if (isDirect)
-                      Container(
-                        padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF00C48C).withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(4.r),
-                        ),
-                        child: const Text(
-                          'Direct client',
-                          style: TextStyle(
-                            color: Color(0xFF00C48C),
-                            fontSize: 9,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
+              Container(
+                width: 4.w,
+                color: isIb ? AppColors.primary : const Color(0xFFF2994A),
               ),
-              if (partnerId > 0 && partnerId != widget.clientId) ...[
-                SizedBox(width: 8.w),
-                GestureDetector(
-                  onTap: () {
-                    Get.to(
-                      () => IbmClientProfileScreen(
-                        clientId: partnerId,
-                        clientName: name,
-                      ),
-                    );
-                  },
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.all(14.w),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Open',
-                        style: TextStyle(
-                          fontSize: 11.sp,
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Wrap(
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              spacing: 6.w,
+                              runSpacing: 4.h,
+                              children: [
+                                if (canExpand)
+                                  GestureDetector(
+                                    onTap:
+                                        () => _togglePersonExpansion(partnerId),
+                                    behavior: HitTestBehavior.opaque,
+                                    child: Padding(
+                                      padding: EdgeInsets.only(right: 2.w),
+                                      child: Icon(
+                                        isExpanded
+                                            ? Icons.expand_more
+                                            : Icons.chevron_right,
+                                        size: 18.w,
+                                        color: AppColors.textGrey,
+                                      ),
+                                    ),
+                                  ),
+                                Text(
+                                  name,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14.sp,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                                if (isIb)
+                                  Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 6.w,
+                                      vertical: 2.h,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primary.withOpacity(
+                                        0.12,
+                                      ),
+                                      borderRadius: BorderRadius.circular(4.r),
+                                    ),
+                                    child: Text(
+                                      'Sub-IB · L$apiLevel',
+                                      style: TextStyle(
+                                        color: AppColors.primary,
+                                        fontSize: 9.sp,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                if (isDirect)
+                                  Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 6.w,
+                                      vertical: 2.h,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: const Color(
+                                        0xFF00C48C,
+                                      ).withOpacity(0.12),
+                                      borderRadius: BorderRadius.circular(4.r),
+                                    ),
+                                    child: const Text(
+                                      'Direct client',
+                                      style: TextStyle(
+                                        color: Color(0xFF00C48C),
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                          if (canOpen) ...[
+                            GestureDetector(
+                              onTap: () {
+                                Get.to(
+                                  () => IbmClientProfileScreen(
+                                    clientId: partnerId,
+                                    clientName: name,
+                                  ),
+                                );
+                              },
+                              child: Icon(
+                                Icons.arrow_forward,
+                                size: 18.w,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
-                      Icon(
-                        Icons.arrow_forward,
-                        size: 13.w,
-                        color: AppColors.primary,
+                      if (subtitleParts.isNotEmpty) ...[
+                        SizedBox(height: 4.h),
+                        Text(
+                          subtitleParts.join(' · '),
+                          style: TextStyle(
+                            color: AppColors.textGrey,
+                            fontSize: 10.sp,
+                          ),
+                        ),
+                      ],
+                      SizedBox(height: 10.h),
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 10.w,
+                          vertical: 8.h,
+                        ),
+                        decoration: BoxDecoration(
+                          color:
+                              AppColors.isDarkMode
+                                  ? AppColors.surface
+                                  : const Color(0xFFF8F9FA),
+                          borderRadius: BorderRadius.circular(8.r),
+                        ),
+                        child: Wrap(
+                          spacing: 14.w,
+                          runSpacing: 6.h,
+                          children: [
+                            _buildMiniMetric(
+                              'DEPOSITS',
+                              '\$${deposits.toStringAsFixed(2)}',
+                              const Color(0xFF00C48C),
+                            ),
+                            _buildMiniMetric(
+                              'NET',
+                              '\$${net.toStringAsFixed(2)}',
+                              AppColors.textPrimary,
+                            ),
+                            _buildMiniMetric(
+                              'LOTS',
+                              lots.toStringAsFixed(2),
+                              AppColors.textPrimary,
+                            ),
+                            _buildMiniMetric(
+                              'YOU EARNED',
+                              '\$${earned.toStringAsFixed(2)}',
+                              const Color(0xFF00C48C),
+                            ),
+                            if (subIbs > 0 || clientsTree > 0)
+                              _buildMiniMetric(
+                                'DOWNLINE',
+                                '$subIbs sub · $clientsTree clients',
+                                AppColors.textPrimary,
+                              ),
+                            if (showBranchEarned)
+                              _buildMiniMetric(
+                                'BRANCH EARNED',
+                                '\$${branchEarned.toStringAsFixed(2)}',
+                                const Color(0xFF00C48C),
+                              ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
                 ),
-              ],
+              ),
             ],
           ),
-          if (subtitleParts.isNotEmpty) ...[
-            SizedBox(height: 4.h),
+        ),
+      ),
+    );
+
+    if (!canExpand) {
+      return Padding(
+        padding: EdgeInsets.only(left: (level - 1) * 12.w),
+        child: card,
+      );
+    }
+
+    Widget expandArea;
+    if (isLoadingChildren) {
+      expandArea = Padding(
+        padding: EdgeInsets.only(left: (level) * 12.w, top: 4.h, bottom: 8.h),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 14.w,
+              height: 14.w,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: AppColors.primary,
+              ),
+            ),
+            SizedBox(width: 8.w),
             Text(
-              subtitleParts.join(' · '),
-              style: TextStyle(color: AppColors.textGrey, fontSize: 10.sp),
+              'Loading…',
+              style: TextStyle(color: AppColors.textGrey, fontSize: 12.sp),
             ),
           ],
-          SizedBox(height: 10.h),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
-            decoration: BoxDecoration(
-              color: AppColors.isDarkMode ? AppColors.surface : const Color(0xFFF8F9FA),
-              borderRadius: BorderRadius.circular(8.r),
-            ),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  _buildMiniMetric('DEPOSITS', '\$${deposits.toStringAsFixed(2)}', const Color(0xFF00C48C)),
-                  SizedBox(width: 14.w),
-                  _buildMiniMetric('NET', '\$${net.toStringAsFixed(2)}', AppColors.textPrimary),
-                  SizedBox(width: 14.w),
-                  _buildMiniMetric('LOTS', lots.toStringAsFixed(2), AppColors.textPrimary),
-                  SizedBox(width: 14.w),
-                  _buildMiniMetric('YOU EARNED', '\$${earned.toStringAsFixed(2)}', const Color(0xFF00C48C)),
-                  if (subIbs > 0 || clientsTree > 0) ...[
-                    SizedBox(width: 14.w),
-                    _buildMiniMetric('DOWNLINE', '$subIbs sub · $clientsTree clients', AppColors.textPrimary),
-                  ],
-                ],
-              ),
-            ),
-          ),
-                ],
-              ),
-            ),
+        ),
+      );
+    } else if (children == null) {
+      expandArea = const SizedBox.shrink();
+    } else if (children.isEmpty) {
+      expandArea = Padding(
+        padding: EdgeInsets.only(left: (level) * 12.w, top: 4.h, bottom: 8.h),
+        child: Text(
+          'No downline',
+          style: TextStyle(color: AppColors.textGrey, fontSize: 12.sp),
+        ),
+      );
+    } else if (isExpanded) {
+      expandArea = Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children:
+            children
+                .map<Widget>(
+                  (child) => _buildNetworkNodeCard(child, level: level + 1),
+                )
+                .toList(),
+      );
+    } else {
+      expandArea = const SizedBox.shrink();
+    }
+
+    return Padding(
+      padding: EdgeInsets.only(left: (level - 1) * 12.w),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          card,
+          AnimatedSize(
+            duration: const Duration(milliseconds: 180),
+            curve: Curves.easeOut,
+            child: expandArea,
           ),
         ],
       ),
-    ),
-  );
+    );
+  }
+
+  Future<void> _togglePersonExpansion(int personId) async {
+    if (personId <= 0) return;
+    final wasExpanded = _expandedPersonIds.contains(personId);
+    setState(() {
+      if (wasExpanded) {
+        _expandedPersonIds.remove(personId);
+      } else {
+        _expandedPersonIds.add(personId);
+      }
+    });
+    if (wasExpanded) return;
+    if (_personChildrenCache.containsKey(personId)) return;
+    setState(() => _loadingPersonIds.add(personId));
+    try {
+      final period = _mapFilterToApi(_selectedDateFilter);
+      final fetched = await controller.getNetworkNodeChildren(
+        personId,
+        period: period,
+      );
+      if (!mounted) return;
+      setState(() {
+        _personChildrenCache[personId] = fetched;
+        _loadingPersonIds.remove(personId);
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _loadingPersonIds.remove(personId));
+    }
   }
 
   Widget _buildMiniMetric(String label, String value, Color valueColor) {
@@ -2108,159 +2343,159 @@ class _IbmClientProfileScreenState extends State<IbmClientProfileScreen>
 
       final planName = plan['plan_name'] ?? plan['name'] ?? 'Unknown Plan';
 
-    return RefreshIndicator(
-      onRefresh: () async => _fetchDataForTab(4),
-      child: ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: EdgeInsets.all(16.w),
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Row(
-                  children: [
-                    Icon(Icons.layers, color: AppColors.primary, size: 24.w),
-                    SizedBox(width: 8.w),
-                    Expanded(
-                      child: Text(
-                        planName,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTextStyles.heading.copyWith(
-                          fontSize: 18.sp,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(width: 8.w),
-              InkWell(
-                onTap: _showChangePlanBottomSheet,
-                borderRadius: BorderRadius.circular(8.r),
-                child: Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 12.w,
-                    vertical: 8.h,
-                  ),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8.r),
-                    
-                  ),
+      return RefreshIndicator(
+        onRefresh: () async => _fetchDataForTab(4),
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: EdgeInsets.all(16.w),
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
                   child: Row(
-                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(
-                        Icons.swap_horiz,
-                        size: 16.w,
-                        color: AppColors.primary,
-                      ),
-                      SizedBox(width: 6.w),
-                      Text(
-                        'Change plan',
-                        style: TextStyle(
-                          color: AppColors.primary,
-                          fontSize: 13.sp,
-                          fontWeight: FontWeight.w600,
+                      Icon(Icons.layers, color: AppColors.primary, size: 24.w),
+                      SizedBox(width: 8.w),
+                      Expanded(
+                        child: Text(
+                          planName,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTextStyles.heading.copyWith(
+                            fontSize: 18.sp,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ),
-              ),
-            ],
-          ),
-          SizedBox(height: 16.h),
-
-          ...groups.whereType<Map>().map((group) {
-            final groupName = group['name'] ?? 'Standard';
-            final rates = group['rates'] is List ? group['rates'] as List : [];
-            return Container(
-              margin: EdgeInsets.only(bottom: 16.h),
-              decoration: BoxDecoration(
-                color: AppColors.card,
-                borderRadius: BorderRadius.circular(12.r),
-                border: BoxBorder.all(color: AppColors.card),
-              ),
-              child: ExpansionTile(
-                title: Text(
-                  groupName,
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14.sp,
-                    color: AppColors.textPrimary
-                  ),
-                ),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      '${rates.length} rates',
-                      style: TextStyle(color: Colors.green, fontSize: 12.sp),
+                SizedBox(width: 8.w),
+                InkWell(
+                  onTap: _showChangePlanBottomSheet,
+                  borderRadius: BorderRadius.circular(8.r),
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 12.w,
+                      vertical: 8.h,
                     ),
-                    Icon(Icons.expand_more),
-                  ],
-                ),
-                initiallyExpanded: true,
-                shape: const Border(),
-                collapsedShape: const Border(),
-                children: [
-                  Container(
-                    width: double.infinity,
-                    padding: EdgeInsets.all(12.w),
-                    color:
-                        AppColors.isDarkMode
-                            ? const Color(0xFF1E1E1E)
-                            : const Color(0xFFF9F9F9),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8.r),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
+                        Icon(
+                          Icons.swap_horiz,
+                          size: 16.w,
+                          color: AppColors.primary,
+                        ),
+                        SizedBox(width: 6.w),
                         Text(
-                          'REBATE BY INSTRUMENT TYPE',
+                          'Change plan',
                           style: TextStyle(
-                            fontSize: 10.sp,
-                            color: AppColors.textGrey,
-                            fontWeight: FontWeight.bold,
+                            color: AppColors.primary,
+                            fontSize: 13.sp,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
-                        SizedBox(height: 8.h),
-                        ...rates
-                            .map(
-                              (r) => _buildRateRow(
-                                r['category'] ?? 'Unknown',
-                                _parseDouble(r['rate_per_lot']),
-                              ),
-                            )
-                            .toList(),
-                        if (rates.isEmpty)
-                          Text(
-                            'No rates set for this group.',
-                            style: TextStyle(
-                              fontSize: 12.sp,
-                              color: AppColors.textGrey,
-                            ),
-                          ),
                       ],
                     ),
                   ),
-                ],
-              ),
-            );
-          }).toList(),
-
-          if (groups.isEmpty)
-            Padding(
-              padding: EdgeInsets.only(top: 24.h),
-              child: Text(
-                'No rate groups configured for this plan.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 13.sp, color: AppColors.textGrey),
-              ),
+                ),
+              ],
             ),
-        ],
-      ),
-    );
+            SizedBox(height: 16.h),
+
+            ...groups.whereType<Map>().map((group) {
+              final groupName = group['name'] ?? 'Standard';
+              final rates =
+                  group['rates'] is List ? group['rates'] as List : [];
+              return Container(
+                margin: EdgeInsets.only(bottom: 16.h),
+                decoration: BoxDecoration(
+                  color: AppColors.card,
+                  borderRadius: BorderRadius.circular(12.r),
+                  border: BoxBorder.all(color: AppColors.card),
+                ),
+                child: ExpansionTile(
+                  title: Text(
+                    groupName,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14.sp,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '${rates.length} rates',
+                        style: TextStyle(color: Colors.green, fontSize: 12.sp),
+                      ),
+                      Icon(Icons.expand_more),
+                    ],
+                  ),
+                  initiallyExpanded: true,
+                  shape: const Border(),
+                  collapsedShape: const Border(),
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.all(12.w),
+                      color:
+                          AppColors.isDarkMode
+                              ? const Color(0xFF1E1E1E)
+                              : const Color(0xFFF9F9F9),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'REBATE BY INSTRUMENT TYPE',
+                            style: TextStyle(
+                              fontSize: 10.sp,
+                              color: AppColors.textGrey,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(height: 8.h),
+                          ...rates
+                              .map(
+                                (r) => _buildRateRow(
+                                  r['category'] ?? 'Unknown',
+                                  _parseDouble(r['rate_per_lot']),
+                                ),
+                              )
+                              .toList(),
+                          if (rates.isEmpty)
+                            Text(
+                              'No rates set for this group.',
+                              style: TextStyle(
+                                fontSize: 12.sp,
+                                color: AppColors.textGrey,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+
+            if (groups.isEmpty)
+              Padding(
+                padding: EdgeInsets.only(top: 24.h),
+                child: Text(
+                  'No rate groups configured for this plan.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 13.sp, color: AppColors.textGrey),
+                ),
+              ),
+          ],
+        ),
+      );
     });
   }
 
@@ -2286,9 +2521,10 @@ class _IbmClientProfileScreenState extends State<IbmClientProfileScreen>
 
   void _showChangePlanBottomSheet() {
     final data = controller.currentNetworkPlan;
-    final int? currentPlanId = data['plan_id'] is int
-        ? data['plan_id'] as int
-        : int.tryParse(data['plan_id']?.toString() ?? '');
+    final int? currentPlanId =
+        data['plan_id'] is int
+            ? data['plan_id'] as int
+            : int.tryParse(data['plan_id']?.toString() ?? '');
 
     Get.bottomSheet(
       ChangePlanBottomSheet(

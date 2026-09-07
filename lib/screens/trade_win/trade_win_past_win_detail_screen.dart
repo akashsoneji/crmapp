@@ -1,7 +1,5 @@
-import 'package:crm_app/widgets/app_svg_back_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
@@ -11,6 +9,7 @@ import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/utils/trade_win_format.dart';
 import 'package:crm_app/screens/trade_win/widgets/trade_win_product_image.dart';
 import 'package:crm_app/screens/trade_win/widgets/trade_win_status_badge.dart';
+import 'package:crm_app/widgets/app_back_button.dart';
 
 class TradeWinPastWinDetailScreen extends StatelessWidget {
   const TradeWinPastWinDetailScreen({super.key});
@@ -28,21 +27,17 @@ class TradeWinPastWinDetailScreen extends StatelessWidget {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.tradeBackgroundCenterColor,
+      backgroundColor: AppColors.tradeWinScaffoldBackground,
       appBar: AppBar(
         scrolledUnderElevation: 0,
-        backgroundColor: AppColors.tradeBackgroundCenterColor,
+        backgroundColor: AppColors.tradeWinScaffoldBackground,
         elevation: 0,
         centerTitle: true,
         title: Text(
           languageService.tr('tw_win_details'),
           style: AppTextStyles.heading,
         ),
-        leading: AppSvgBackButton(
-          onPressed: () => Get.back(closeOverlays: true),
-          iconWidth: 30.w,
-          iconHeight: 30.h,
-        ),
+        leading: const AppBackButton(closeOverlays: true),
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 24.h),

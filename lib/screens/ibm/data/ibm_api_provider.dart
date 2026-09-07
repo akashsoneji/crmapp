@@ -539,6 +539,7 @@ class IbmApiProvider {
   Future<ApiResponse> cancelPayout(int payoutId, {String? reason}) async {
     return await ApiService.delete(
       endpoint: 'ibm/portal/wallet/payout/$payoutId',
+      data: (reason != null && reason.isNotEmpty) ? {'reason': reason} : null,
     );
   }
 

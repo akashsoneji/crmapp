@@ -134,6 +134,24 @@ class AppColors {
   static Color get surface =>
       isDarkMode ? surfaceDarkTheme : surfaceLightTheme;
 
+  // ── Icon Background ────────────────────────────────────────────────────────
+  static Color get iconBgSurface => surface;
+  static Color get iconBgPrimary => primary.withValues(alpha: 0.12);
+
+  // ── Trade & Win ────────────────────────────────────────────────────────────
+  static const Color gold = Color(0xFFF2B92C);
+  static const Color silver = Color(0xFFB87333);
+
+  static Color get tradeBackground =>
+      isDarkMode ? const Color(0xFF000000) : const Color(0xFFF7F7F7);
+
+  static Color get tradeWinScaffoldBackground => tradeBackground;
+
+  static Color get accentHighlightBg =>
+      accent.withValues(alpha: isDarkMode ? 0.22 : 0.38);
+  static Color get accentHighlightText =>
+      isDarkMode ? accent : const Color(0xFF6B4E00);
+
   static Color get cardBackground =>
       isDarkMode ? cardDarkTheme : cardLightTheme;
 

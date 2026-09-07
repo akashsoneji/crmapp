@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
@@ -11,6 +10,7 @@ import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/utils/trade_win_format.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
 import 'package:crm_app/screens/trade_win/widgets/trade_win_product_image.dart';
+import 'package:crm_app/widgets/app_back_button.dart';
 
 class TradeWinProductDetailScreen extends StatefulWidget {
   const TradeWinProductDetailScreen({super.key});
@@ -82,16 +82,7 @@ class _TradeWinProductDetailScreenState
     if (product == null) {
       return Scaffold(
         appBar: AppBar(
-          leading: IconButton(
-            onPressed: () => Get.back(),
-            icon: SvgPicture.asset(
-              'assets/svg/trade/arro_back.svg',
-              colorFilter: ColorFilter.mode(
-                AppColors.textPrimary,
-                BlendMode.srcIn,
-              ),
-            ),
-          ),
+          leading: const AppBackButton(),
         ),
         body: Center(child: Text(languageService.tr('tw_product_not_found'))),
       );
@@ -102,26 +93,17 @@ class _TradeWinProductDetailScreenState
     final maxQty = _maxQty;
 
     return Scaffold(
-      backgroundColor: AppColors.tradeBackgroundCenterColor,
+      backgroundColor: AppColors.tradeWinScaffoldBackground,
       appBar: AppBar(
         scrolledUnderElevation: 0,
-        backgroundColor: AppColors.tradeBackgroundCenterColor,
+        backgroundColor: AppColors.tradeWinScaffoldBackground,
         elevation: 0,
         centerTitle: true,
         title: Text(
           languageService.tr('tw_product_detail'),
           style: AppTextStyles.heading,
         ),
-        leading: IconButton(
-          onPressed: () => Get.back(),
-          icon: SvgPicture.asset(
-            'assets/svg/trade/arro_back.svg',
-            colorFilter: ColorFilter.mode(
-              AppColors.textPrimary,
-              BlendMode.srcIn,
-            ),
-          ),
-        ),
+        leading: const AppBackButton(),
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 24.h),
@@ -170,7 +152,7 @@ class _TradeWinProductDetailScreenState
                   ),
                   child: Text(
                     TradeWinFormat.categoryTag(product.category),
-                    style: TextStyle(
+                    style: AppTextStyles.bodyText.copyWith(
                       fontSize: 9.sp,
                       fontWeight: FontWeight.w700,
                       color: AppColors.green,
@@ -184,10 +166,7 @@ class _TradeWinProductDetailScreenState
               width: double.infinity,
               padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
               decoration: BoxDecoration(
-                color:
-                    AppColors.isDarkMode
-                        ? AppColors.primary.withValues(alpha: 0.12)
-                        : AppColors.primary.withValues(alpha: 0.06),
+                color: AppColors.primary.withValues(alpha: 0.06),
                 borderRadius: BorderRadius.circular(10.r),
                 border: Border.all(
                   color: AppColors.primary.withValues(alpha: 0.25),
@@ -318,11 +297,14 @@ class _TradeWinProductDetailScreenState
                 style: ElevatedButton.styleFrom(
                   backgroundColor:
                       _canRedeem
-                          ? AppColors.isDarkMode
-                              ? AppColors.primary.withValues(alpha: 0.1)
-                              : AppColors.primary
+                          ? AppColors.primary
                           : AppColors.icongrey.withValues(alpha: 0.35),
-                  foregroundColor: AppColors.primary,
+                  foregroundColor:
+                      _canRedeem
+                          ? (ThemeData.estimateBrightnessForColor(AppColors.primary) == Brightness.light
+                              ? Colors.black
+                              : Colors.white)
+                          : AppColors.textGrey,
                   disabledBackgroundColor: AppColors.icongrey.withValues(
                     alpha: 0.35,
                   ),
@@ -334,10 +316,9 @@ class _TradeWinProductDetailScreenState
                 ),
                 child: Text(
                   _redeemButtonLabel(languageService),
-                  style: TextStyle(
+                  style: AppTextStyles.bodyText.copyWith(
                     fontWeight: FontWeight.w700,
                     fontSize: 14.sp,
-                    color: AppColors.textPrimaryDark,
                   ),
                 ),
               ),
@@ -433,7 +414,7 @@ class _MetaLine extends StatelessWidget {
           TextSpan(text: label),
           TextSpan(
             text: ' $value',
-            style: TextStyle(
+            style: AppTextStyles.bodyText.copyWith(
               fontSize: 12.sp,
               fontWeight: FontWeight.w700,
               color: valueColor ?? AppColors.textPrimary,

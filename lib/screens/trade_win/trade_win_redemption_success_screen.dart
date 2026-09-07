@@ -17,7 +17,7 @@ class TradeWinRedemptionSuccessScreen extends StatelessWidget {
     final reference = args['reference']?.toString() ?? '';
 
     return Scaffold(
-      backgroundColor: AppColors.tradeBackgroundCenterColor,
+      backgroundColor: AppColors.tradeWinScaffoldBackground,
       body: SafeArea(
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 24.w),
@@ -92,32 +92,36 @@ class TradeWinRedemptionSuccessScreen extends StatelessWidget {
               const Spacer(),
               SizedBox(
                 width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Get.until(
-                      (route) => route.settings.name == AppPages.TRADE_WIN_MAIN,
+                child: Builder(
+                  builder: (context) {
+                    final btnTextColor = ThemeData.estimateBrightnessForColor(AppColors.primary) == Brightness.light
+                        ? Colors.black
+                        : Colors.white;
+                    return ElevatedButton(
+                      onPressed: () {
+                        Get.until(
+                          (route) => route.settings.name == AppPages.TRADE_WIN_MAIN,
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: btnTextColor,
+                        padding: EdgeInsets.symmetric(vertical: 14.h),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.r),
+                          side: BorderSide.none,
+                        ),
+                      ),
+                      child: Text(
+                        languageService.tr('tw_done'),
+                        style: AppTextStyles.bodyText.copyWith(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16.sp,
+                          color: btnTextColor,
+                        ),
+                      ),
                     );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-                    foregroundColor: AppColors.onColoredBackground,
-                    padding: EdgeInsets.symmetric(vertical: 14.h),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.r),
-                      side:
-                          AppColors.isDarkMode
-                              ? BorderSide(color: AppColors.border)
-                              : BorderSide.none,
-                    ),
-                  ),
-                  child: Text(
-                    languageService.tr('tw_done'),
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 16.sp,
-                      color: AppColors.onColoredBackground,
-                    ),
-                  ),
+                  }
                 ),
               ),
               SizedBox(height: 24.h),

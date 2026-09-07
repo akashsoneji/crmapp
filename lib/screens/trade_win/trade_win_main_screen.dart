@@ -52,7 +52,7 @@ class _TradeWinMainScreenState extends State<TradeWinMainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.tradeBackgroundCenterColor,
+      backgroundColor: AppColors.tradeWinScaffoldBackground,
       body: SafeArea(
         child: PageView(
           controller: _pageController,

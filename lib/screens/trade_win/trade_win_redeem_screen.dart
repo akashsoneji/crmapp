@@ -10,10 +10,12 @@ import 'package:crm_app/models/trade_win/trade_win_shipping_details_model.dart';
 import 'package:crm_app/services/api_service.dart';
 import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/utils/trade_win_format.dart';
+import 'package:crm_app/widgets/app_back_button.dart';
 import 'package:crm_app/widgets/app_select_field.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
 import 'package:crm_app/screens/trade_win/widgets/trade_win_product_image.dart';
 import 'package:crm_app/screens/trade_win/widgets/trade_win_redeem_stepper.dart';
+import 'package:crm_app/controllers/trade_win/trade_win_controller.dart';
 
 class TradeWinRedeemScreen extends StatefulWidget {
   const TradeWinRedeemScreen({super.key});
@@ -39,8 +41,16 @@ class _TradeWinRedeemScreenState extends State<TradeWinRedeemScreen> {
   void initState() {
     super.initState();
     final args = Get.arguments as Map<String, dynamic>?;
-    final product = args?['product'] as TradeWinProductModel?;
+    var product = args?['product'] as TradeWinProductModel?;
     final quantity = args?['quantity'] as int? ?? 1;
+
+    if (product == null && args?['productId'] != null) {
+      if (Get.isRegistered<TradeWinController>()) {
+        final twc = Get.find<TradeWinController>();
+        final id = args!['productId'];
+        product = twc.products.firstWhereOrNull((p) => p.id == id);
+      }
+    }
 
     if (product == null) {
       _initialized = false;
@@ -138,12 +148,7 @@ class _TradeWinRedeemScreenState extends State<TradeWinRedeemScreen> {
     final controller = _controller;
     if (!_initialized || controller == null) {
       return Scaffold(
-        appBar: AppBar(
-          leading: IconButton(
-            onPressed: () => Get.back(),
-            icon: Icon(Icons.arrow_back, color: AppColors.textPrimary),
-          ),
-        ),
+        appBar: AppBar(leading: const AppBackButton()),
         body: Center(
           child: Text(Get.find<LanguageService>().tr('tw_product_not_found')),
         ),
@@ -153,10 +158,10 @@ class _TradeWinRedeemScreenState extends State<TradeWinRedeemScreen> {
     final languageService = Get.find<LanguageService>();
 
     return Scaffold(
-      backgroundColor: AppColors.tradeBackgroundCenterColor,
+      backgroundColor: AppColors.tradeWinScaffoldBackground,
       appBar: AppBar(
         scrolledUnderElevation: 0,
-        backgroundColor: AppColors.tradeBackgroundCenterColor,
+        backgroundColor: AppColors.tradeWinScaffoldBackground,
         elevation: 0,
         centerTitle: true,
         title: const SizedBox.shrink(),
@@ -166,15 +171,11 @@ class _TradeWinRedeemScreenState extends State<TradeWinRedeemScreen> {
             return SizedBox(width: 48.w);
           }
           if (step > 1) {
-            return IconButton(
+            return AppBackButton(
               onPressed: () => controller.goToStep(step - 1),
-              icon: Icon(Icons.arrow_back, color: AppColors.textPrimary),
             );
           }
-          return IconButton(
-            onPressed: () => Get.back(),
-            icon: Icon(Icons.arrow_back, color: AppColors.textPrimary),
-          );
+          return const AppBackButton();
         }),
         actions: [
           Obx(() {
@@ -405,10 +406,7 @@ class _StepSuccess extends StatelessWidget {
                 Text(
                   reference.isNotEmpty ? reference : '—',
                   style: AppTextStyles.centerbodyHeading.copyWith(
-                    color:
-                        AppColors.isDarkMode
-                            ? AppColors.primary.withValues(alpha: 0.1)
-                            : AppColors.primary,
+                    color: AppColors.primary,
                     fontSize: 22.sp,
                   ),
                   textAlign: TextAlign.center,
@@ -518,7 +516,7 @@ class _StepConfirm extends StatelessWidget {
         Container(
           padding: EdgeInsets.all(10.w),
           decoration: BoxDecoration(
-            color: AppColors.warningBg,
+            color: AppColors.accentHighlightBg,
             borderRadius: BorderRadius.circular(10.r),
           ),
           child: Row(
@@ -526,7 +524,7 @@ class _StepConfirm extends StatelessWidget {
             children: [
               Icon(
                 Icons.warning_amber_rounded,
-                color: AppColors.warningText,
+                color: AppColors.accentHighlightText,
                 size: 20.sp,
               ),
               SizedBox(width: 8.w),
@@ -534,7 +532,7 @@ class _StepConfirm extends StatelessWidget {
                 child: Text(
                   languageService.tr('tw_points_deduct_warning'),
                   style: AppTextStyles.subheading.copyWith(
-                    color: AppColors.warningText,
+                    color: AppColors.accentHighlightText,
                     fontSize: 13.sp,
                   ),
                 ),
@@ -806,6 +804,12 @@ class _BottomActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final btnTextColor =
+        ThemeData.estimateBrightnessForColor(AppColors.primary) ==
+                Brightness.light
+            ? Colors.black
+            : Colors.white;
+
     return Obx(() {
       final step = controller.currentStep.value;
       final submitting = controller.isSubmitting.value;
@@ -822,11 +826,8 @@ class _BottomActions extends StatelessWidget {
                   child: ElevatedButton(
                     onPressed: onDone,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          AppColors.isDarkMode
-                              ? AppColors.primary.withValues(alpha: 0.1)
-                              : AppColors.primary,
-                      foregroundColor: AppColors.onColoredBackground,
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: btnTextColor,
                       padding: EdgeInsets.symmetric(vertical: 14.h),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12.r),
@@ -834,10 +835,10 @@ class _BottomActions extends StatelessWidget {
                     ),
                     child: Text(
                       languageService.tr('tw_done'),
-                      style: TextStyle(
+                      style: AppTextStyles.bodyText.copyWith(
                         fontWeight: FontWeight.w700,
                         fontSize: 16.sp,
-                        color: AppColors.onColoredBackground,
+                        color: btnTextColor,
                       ),
                     ),
                   ),
@@ -848,11 +849,8 @@ class _BottomActions extends StatelessWidget {
                   child: ElevatedButton(
                     onPressed: () => controller.goToStep(2),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          AppColors.isDarkMode
-                              ? AppColors.primary.withValues(alpha: 0.1)
-                              : AppColors.primary,
-                      foregroundColor: AppColors.onColoredBackground,
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: btnTextColor,
                       padding: EdgeInsets.symmetric(vertical: 12.h),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10.r),
@@ -860,7 +858,9 @@ class _BottomActions extends StatelessWidget {
                     ),
                     child: Text(
                       languageService.tr('tw_continue'),
-                      style: TextStyle(color: AppColors.onColoredBackground),
+                      style: AppTextStyles.bodyText.copyWith(
+                        color: btnTextColor,
+                      ),
                     ),
                   ),
                 ),
@@ -886,11 +886,8 @@ class _BottomActions extends StatelessWidget {
                   child: ElevatedButton(
                     onPressed: submitting ? null : onSubmit,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          AppColors.isDarkMode
-                              ? AppColors.primary.withValues(alpha: 0.1)
-                              : AppColors.primary,
-                      foregroundColor: AppColors.onColoredBackground,
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: btnTextColor,
                       padding: EdgeInsets.symmetric(vertical: 12.h),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10.r),
@@ -903,13 +900,13 @@ class _BottomActions extends StatelessWidget {
                               width: 20.w,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                color: AppColors.onColoredBackground,
+                                color: btnTextColor,
                               ),
                             )
                             : Text(
                               languageService.tr('tw_submit_redemption'),
-                              style: TextStyle(
-                                color: AppColors.onColoredBackground,
+                              style: AppTextStyles.bodyText.copyWith(
+                                color: btnTextColor,
                               ),
                             ),
                   ),

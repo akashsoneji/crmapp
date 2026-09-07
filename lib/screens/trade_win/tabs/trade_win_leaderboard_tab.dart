@@ -1,4 +1,3 @@
-import 'package:crm_app/widgets/app_svg_back_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -9,6 +8,8 @@ import 'package:crm_app/controllers/trade_win/trade_win_controller.dart';
 import 'package:crm_app/models/trade_win/trade_win_leaderboard_entry_model.dart';
 import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/utils/trade_win_format.dart';
+import 'package:crm_app/widgets/app_back_button.dart';
+
 
 class TradeWinLeaderboardTab extends StatefulWidget {
   const TradeWinLeaderboardTab({super.key});
@@ -29,11 +30,7 @@ class _TradeWinLeaderboardTabState extends State<TradeWinLeaderboardTab> {
           padding: EdgeInsets.fromLTRB(0.w, 0.h, 0.w, 0),
           child: Row(
             children: [
-              AppSvgBackButton(
-                onPressed: () => Get.back(closeOverlays: true),
-                iconWidth: 30.w,
-                iconHeight: 30.h,
-              ),
+              const AppBackButton(closeOverlays: true),
               Expanded(
                 child: Text(
                   languageService.tr('tw_leaderboard'),
@@ -41,7 +38,7 @@ class _TradeWinLeaderboardTabState extends State<TradeWinLeaderboardTab> {
                   style: AppTextStyles.heading,
                 ),
               ),
-              SizedBox(width: 48.w),
+              SizedBox(width: AppBackButton.leadingSlotSize.w),
             ],
           ),
         ),
@@ -129,7 +126,7 @@ class _Podium extends StatelessWidget {
               entry: first,
               height: 96.h,
               medalAsset: 'assets/svg/more/gold.svg',
-              podiumTint: const Color(0xFFF2B92C).withValues(alpha: 0.15),
+              podiumTint: AppColors.gold.withValues(alpha: 0.15),
               rank: 1,
               lotsLabel: lotsLabel,
             ),
@@ -139,7 +136,7 @@ class _Podium extends StatelessWidget {
               entry: third,
               height: 56.h,
               medalAsset: 'assets/svg/more/copper.svg',
-              podiumTint: const Color(0xFFB87333).withValues(alpha: 0.15),
+              podiumTint: AppColors.silver.withValues(alpha: 0.15),
               rank: 3,
               lotsLabel: lotsLabel,
             ),
@@ -195,10 +192,7 @@ class _PodiumColumn extends StatelessWidget {
             TradeWinFormat.lotsWithUnit(entry!.lots, lotsLabel),
             style: AppTextStyles.headingblack.copyWith(
               fontSize: 12.sp,
-              color:
-                  AppColors.isDarkMode
-                      ? AppColors.textPrimary
-                      : AppColors.primary,
+              color: AppColors.primary,
             ),
             textAlign: TextAlign.center,
           ),
@@ -254,7 +248,7 @@ class _LeaderboardRow extends StatelessWidget {
             ),
             child: Text(
               initial,
-              style: TextStyle(
+              style: AppTextStyles.bodyText.copyWith(
                 color: AppColors.primary,
                 fontWeight: FontWeight.w700,
                 fontSize: 16.sp,
