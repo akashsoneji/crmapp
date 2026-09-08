@@ -1050,9 +1050,12 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                         Obx(() {
                           final model = moreController.dashboardModel.value;
                           final stage = model?.data?.stageCompletion;
+                          // mobileVerified/emailVerified are DateTime? (server
+                          // sends a timestamp), so check for non-null instead of
+                          // == true which would always be false for a DateTime.
                           final isProfileVerified =
-                              (stage?.emailVerified == true) &&
-                              (stage?.mobileVerified == true) &&
+                              (stage?.emailVerified != null) &&
+                              (stage?.mobileVerified != null) &&
                               (stage?.personalDetails == true);
                           return Material(
                             color: Colors.transparent,

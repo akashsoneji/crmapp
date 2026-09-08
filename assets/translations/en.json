@@ -749,6 +749,7 @@
   "delete_account_password_hint": "Enter your password",
   "delete_account_reason_no_longer_needed": "No longer need the service",
   "edit_profile_postcode": "Postcode",
+  "edit_profile_please_enter_postcode": "Please enter postcode",
   "app_text_field_hint": "Enter text here",
   "app_text_field_error": "This field is required",
   "global_drawer_profile": "Profile",

@@ -197,7 +197,17 @@ class EditProfileController extends GetxController {
 
         return true;
       } else {
-        errorMessage.value = response.message ?? 'Failed to update profile';
+        // Backend returns success:false with "Profile already updated" when the
+        // profile is already saved/verified. Treat it as success so the screen
+        // still navigates back instead of dead-ending on the edit form.
+        final message = response.message ?? '';
+        if (message.toLowerCase().contains('already updated')) {
+          CustomToastService.showSuccess(message: message);
+          await authController.refreshUserData();
+          return true;
+        }
+        errorMessage.value =
+            message.isNotEmpty ? message : 'Failed to update profile';
         return false;
       }
     } catch (e) {

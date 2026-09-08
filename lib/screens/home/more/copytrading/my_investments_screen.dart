@@ -96,44 +96,44 @@ class _MyInvestmentsScreenState extends State<MyInvestmentsScreen>
         centerTitle: true,
         title: Text('My Investments', style: AppTextStyles.screenTitle),
         automaticallyImplyLeading: false,
-        actions: [
-          Padding(
-            padding: EdgeInsets.only(right: 12.w),
-            child: TextButton.icon(
-              onPressed: () {
-                if (Get.isRegistered<CopyTradingHubController>()) {
-                  final hub = Get.find<CopyTradingHubController>();
-                  final isApprovedMaster =
-                      hub.masterStatus.value ==
-                      CopyTradingMasterApplicationStatus.approved;
-                  hub.currentTabIndex.value = isApprovedMaster ? 3 : 1;
-                } else {
-                  Get.back();
-                }
-              },
-              icon: Icon(
-                Icons.explore_outlined,
-                size: 16.r,
-                color: AppColors.primary,
-              ),
-              label: Text(
-                'Explore Masters',
-                style: TextStyle(
-                  fontSize: 12.sp,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.primary,
-                ),
-              ),
-              style: TextButton.styleFrom(
-                backgroundColor: AppColors.primary.withOpacity(0.1),
-                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20.r),
-                ),
-              ),
-            ),
-          ),
-        ],
+        // actions: [
+        //   Padding(
+        //     padding: EdgeInsets.only(right: 12.w),
+        //     child: TextButton.icon(
+        //       onPressed: () {
+        //         if (Get.isRegistered<CopyTradingHubController>()) {
+        //           final hub = Get.find<CopyTradingHubController>();
+        //           final isApprovedMaster =
+        //               hub.masterStatus.value ==
+        //               CopyTradingMasterApplicationStatus.approved;
+        //           hub.currentTabIndex.value = isApprovedMaster ? 3 : 1;
+        //         } else {
+        //           Get.back();
+        //         }
+        //       },
+        //       icon: Icon(
+        //         Icons.explore_outlined,
+        //         size: 16.r,
+        //         color: AppColors.primary,
+        //       ),
+        //       label: Text(
+        //         'Explore Masters',
+        //         style: TextStyle(
+        //           fontSize: 12.sp,
+        //           fontWeight: FontWeight.w600,
+        //           color: AppColors.primary,
+        //         ),
+        //       ),
+        //       style: TextButton.styleFrom(
+        //         backgroundColor: AppColors.primary.withOpacity(0.1),
+        //         padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+        //         shape: RoundedRectangleBorder(
+        //           borderRadius: BorderRadius.circular(20.r),
+        //         ),
+        //       ),
+        //     ),
+        //   ),
+        // ],
       ),
       body: Obx(() {
         final loading = controller.isLoading.value;
