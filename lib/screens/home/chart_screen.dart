@@ -1574,12 +1574,24 @@ Placing Order:
     final isSmallScreen = screenWidth < 400;
     final isLargeScreen = screenWidth > 600;
 
-    // Calculate navigation bar height dynamically
-    final navBarHeight =
-        45.h + // Item height
-        16.h + // Internal vertical padding (8.h * 2)
-        8.h + // Outer bottom padding
-        MediaQuery.of(context).padding.bottom; // Safe area
+    // Bottom spacing so the trade controls clear the app's bottom navigation.
+    //
+    // Both platforms draw the nav bar as a FLOATING bar on top of the page body
+    // (Android: floatingActionButton; iOS: AdaptiveScaffold's native floating tab
+    // bar with blur). The body extends behind it, so we must reserve its height
+    // here or the "Pending order" row hides behind the tab bar.
+    //
+    // The surrounding SafeArea already reserves the bottom inset (home indicator),
+    // so on iOS we only add the visible tab-bar height — NOT the safe area again,
+    // which previously produced a large empty gap.
+    final bool isIOS = Theme.of(context).platform == TargetPlatform.iOS;
+    final double navBarHeight =
+        isIOS
+            ? 56.h // iOS native floating tab-bar height (safe area handled by SafeArea)
+            : 45.h + // Item height
+                16.h + // Internal vertical padding (8.h * 2)
+                8.h + // Outer bottom padding
+                MediaQuery.of(context).padding.bottom; // Safe area
 
     return Scaffold(
       // Resize so the on-screen keyboard (e.g. TradingView text/annotation
