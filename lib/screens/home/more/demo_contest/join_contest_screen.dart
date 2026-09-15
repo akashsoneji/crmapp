@@ -24,8 +24,10 @@ class JoinContestScreen extends StatefulWidget {
 
 class _JoinContestScreenState extends State<JoinContestScreen>
     with SingleTickerProviderStateMixin {
-  late final TabController _tabController =
-      TabController(length: 3, vsync: this);
+  late final TabController _tabController = TabController(
+    length: 3,
+    vsync: this,
+  );
 
   @override
   void dispose() {
@@ -56,10 +58,7 @@ class _JoinContestScreenState extends State<JoinContestScreen>
           unselectedLabelColor: AppColors.textGrey,
           indicatorColor: AppColors.primary,
           indicatorWeight: 3,
-          labelStyle: TextStyle(
-            fontWeight: FontWeight.w700,
-            fontSize: 13.sp,
-          ),
+          labelStyle: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.sp),
           tabs: [
             Tab(text: languageService.tr('dc_tab_live')),
             Tab(text: languageService.tr('dc_tab_upcoming')),
@@ -144,19 +143,13 @@ class _ContestList extends StatelessWidget {
             joined: controller.isJoined(c.id),
             onTap: () {
               if (controller.isJoined(c.id)) {
-                Get.toNamed(
-                  AppPages.DEMO_CONTEST_DETAILS,
-                  arguments: c.id,
-                );
+                Get.toNamed(AppPages.DEMO_CONTEST_DETAILS, arguments: c.id);
               } else if (!c.acceptingEntries) {
                 CustomToastService.showInfo(
-                  message: 'This contest has ended.',
+                  message: TranslationUtils.tr('dc_contest_ended'),
                 );
               } else {
-                Get.toNamed(
-                  AppPages.DEMO_CONTEST_DETAILS,
-                  arguments: c.id,
-                );
+                Get.toNamed(AppPages.DEMO_CONTEST_DETAILS, arguments: c.id);
               }
             },
           );

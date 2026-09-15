@@ -21,7 +21,8 @@ class LeaderboardRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isCurrent = entry.isCurrentUser ||
+    final isCurrent =
+        entry.isCurrentUser ||
         (highlightRank != null && entry.rank == highlightRank);
     final medal = _medalFor(entry.rank);
     final pnlColor = entry.pnl >= 0 ? AppColors.success : AppColors.error;
@@ -47,7 +48,8 @@ class LeaderboardRow extends StatelessWidget {
               SizedBox(
                 width: 36.w,
                 child: Center(
-                  child: medal ??
+                  child:
+                      medal ??
                       Text(
                         '${entry.rank}',
                         style: AppTextStyles.bodyText.copyWith(
@@ -185,7 +187,10 @@ class _Medal extends StatelessWidget {
         border: Border.all(color: color, width: 1.5),
       ),
       alignment: Alignment.center,
-      child: Text(emoji, style: AppTextStyles.bodyText.copyWith(fontSize: 14.sp)),
+      child: Text(
+        emoji,
+        style: AppTextStyles.bodyText.copyWith(fontSize: 14.sp),
+      ),
     );
   }
 }

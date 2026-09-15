@@ -36,7 +36,8 @@ class IbmController extends GetxController {
   final RxMap<String, dynamic> clientsData = <String, dynamic>{}.obs;
   final RxMap<String, dynamic> clientsNetworkTreeData = <String, dynamic>{}.obs;
   final RxMap<String, dynamic> currentClientAccounts = <String, dynamic>{}.obs;
-  final RxMap<String, dynamic> currentClientAccountTrades = <String, dynamic>{}.obs;
+  final RxMap<String, dynamic> currentClientAccountTrades =
+      <String, dynamic>{}.obs;
   final RxString clientPeriod = 'this_month'.obs;
   final RxString clientScope = 'direct'.obs;
 
@@ -70,16 +71,19 @@ class IbmController extends GetxController {
 
   /// Extracts the balance from the wallet API response.
   String get walletBalance {
-    if (walletData['wallets'] is List && (walletData['wallets'] as List).isNotEmpty) {
+    if (walletData['wallets'] is List &&
+        (walletData['wallets'] as List).isNotEmpty) {
       final first = (walletData['wallets'] as List).first;
       if (first is Map) {
-        final double b = double.tryParse(first['balance']?.toString() ?? '0') ?? 0.0;
+        final double b =
+            double.tryParse(first['balance']?.toString() ?? '0') ?? 0.0;
         return b.toStringAsFixed(2);
       }
     }
     // Fallback for flat structure just in case
     if (walletData['balance'] != null) {
-      final double b = double.tryParse(walletData['balance']?.toString() ?? '0') ?? 0.0;
+      final double b =
+          double.tryParse(walletData['balance']?.toString() ?? '0') ?? 0.0;
       return b.toStringAsFixed(2);
     }
     return '0.00';
@@ -101,20 +105,21 @@ class IbmController extends GetxController {
 
       if (response.success && response.data != null) {
         final Map<String, dynamic> root = _toMap(response.data);
-        final Map<String, dynamic> data =
-            root['data'] is Map ? _toMap(root['data']) : root;
+        final Map<String, dynamic> data = root['data'] is Map
+            ? _toMap(root['data'])
+            : root;
 
         systemMode.value = data['system']?.toString() ?? 'none';
         isPartner.value =
             (data['is_partner'] == true ||
-                data['is_partner'] == 1 ||
-                data['is_partner'] == '1' ||
-                data['is_partner'] == 'true');
+            data['is_partner'] == 1 ||
+            data['is_partner'] == '1' ||
+            data['is_partner'] == 'true');
         canApply.value =
             (data['can_apply'] == true ||
-                data['can_apply'] == 1 ||
-                data['can_apply'] == '1' ||
-                data['can_apply'] == 'true');
+            data['can_apply'] == 1 ||
+            data['can_apply'] == '1' ||
+            data['can_apply'] == 'true');
         if (data['partner_request'] != null && data['partner_request'] is Map) {
           partnerRequest.value = _toMap(data['partner_request']);
         } else {
@@ -271,8 +276,9 @@ class IbmController extends GetxController {
       );
       if (response.success && response.data != null) {
         final Map<String, dynamic> root = _toMap(response.data);
-        final Map<String, dynamic> data =
-            root['data'] is Map ? _toMap(root['data']) : root;
+        final Map<String, dynamic> data = root['data'] is Map
+            ? _toMap(root['data'])
+            : root;
         dashboardData.assignAll(data);
       }
 
@@ -281,8 +287,9 @@ class IbmController extends GetxController {
       );
       if (activityResponse.success && activityResponse.data != null) {
         final Map<String, dynamic> root = _toMap(activityResponse.data);
-        final Map<String, dynamic> actData =
-            root['data'] is Map ? _toMap(root['data']) : root;
+        final Map<String, dynamic> actData = root['data'] is Map
+            ? _toMap(root['data'])
+            : root;
         dashboardActivityData.assignAll(actData);
       }
 
@@ -305,8 +312,9 @@ class IbmController extends GetxController {
       );
       if (response.success && response.data != null) {
         final Map<String, dynamic> root = _toMap(response.data);
-        final Map<String, dynamic> data =
-            root['data'] is Map ? _toMap(root['data']) : root;
+        final Map<String, dynamic> data = root['data'] is Map
+            ? _toMap(root['data'])
+            : root;
         networkData.assignAll(data);
       }
     } catch (e) {
@@ -341,8 +349,9 @@ class IbmController extends GetxController {
       );
       if (response.success && response.data != null) {
         final Map<String, dynamic> root = _toMap(response.data);
-        final Map<String, dynamic> data =
-            root['data'] is Map ? _toMap(root['data']) : root;
+        final Map<String, dynamic> data = root['data'] is Map
+            ? _toMap(root['data'])
+            : root;
         clientsData.assignAll(data);
         update(['ibm_clients']);
       }
@@ -363,8 +372,9 @@ class IbmController extends GetxController {
       );
       if (response.success && response.data != null) {
         final Map<String, dynamic> root = _toMap(response.data);
-        final Map<String, dynamic> data =
-            root['data'] is Map ? _toMap(root['data']) : root;
+        final Map<String, dynamic> data = root['data'] is Map
+            ? _toMap(root['data'])
+            : root;
         requestsData.assignAll(data);
         update(['ibm_requests']);
       }
@@ -449,8 +459,9 @@ class IbmController extends GetxController {
       final response = await _apiProvider.getPortalWallet();
       if (response.success && response.data != null) {
         final Map<String, dynamic> root = _toMap(response.data);
-        final Map<String, dynamic> data =
-            root['data'] is Map ? _toMap(root['data']) : root;
+        final Map<String, dynamic> data = root['data'] is Map
+            ? _toMap(root['data'])
+            : root;
         walletData.assignAll(data);
         update(['ibm_wallet']);
       }
@@ -470,8 +481,9 @@ class IbmController extends GetxController {
       );
       if (response.success && response.data != null) {
         final Map<String, dynamic> root = _toMap(response.data);
-        final Map<String, dynamic> data =
-            root['data'] is Map ? _toMap(root['data']) : root;
+        final Map<String, dynamic> data = root['data'] is Map
+            ? _toMap(root['data'])
+            : root;
         final list = data['rows'] ?? data['data'] ?? [];
         if (list is List) {
           transactionsList.assignAll(list);
@@ -491,8 +503,9 @@ class IbmController extends GetxController {
       final response = await _apiProvider.getPartnerPlans();
       if (response.success && response.data != null) {
         final Map<String, dynamic> root = _toMap(response.data);
-        final Map<String, dynamic> data =
-            root['data'] is Map ? _toMap(root['data']) : root;
+        final Map<String, dynamic> data = root['data'] is Map
+            ? _toMap(root['data'])
+            : root;
         final list = data['plans'] ?? data['data'] ?? [];
         if (list is List) {
           plansList.assignAll(list);
@@ -520,8 +533,9 @@ class IbmController extends GetxController {
       final response = await _apiProvider.getReferralLinks();
       if (response.success && response.data != null) {
         final Map<String, dynamic> root = _toMap(response.data);
-        final Map<String, dynamic> data =
-            root['data'] is Map ? _toMap(root['data']) : root;
+        final Map<String, dynamic> data = root['data'] is Map
+            ? _toMap(root['data'])
+            : root;
 
         dynamic list = data['links'] ?? data['data'] ?? data['rows'];
         if (list == null && root['data'] is List) {
@@ -534,7 +548,9 @@ class IbmController extends GetxController {
           linksList.assignAll(list);
         }
         update(['ibm_links']);
-      } else if (!response.success && response.message != null && response.message!.isNotEmpty) {
+      } else if (!response.success &&
+          response.message != null &&
+          response.message!.isNotEmpty) {
         errorMessage.value = response.message!;
       }
     } catch (e) {
@@ -549,8 +565,9 @@ class IbmController extends GetxController {
       final response = await _apiProvider.getPortalPlanGroups();
       if (response.success && response.data != null) {
         final Map<String, dynamic> root = _toMap(response.data);
-        final Map<String, dynamic> data =
-            root['data'] is Map ? _toMap(root['data']) : root;
+        final Map<String, dynamic> data = root['data'] is Map
+            ? _toMap(root['data'])
+            : root;
         final list = data['groups'] ?? data['data'] ?? [];
         if (list is List) {
           planGroupsList.assignAll(list);
@@ -772,8 +789,9 @@ class IbmController extends GetxController {
       );
       if (response.success && response.data != null) {
         final Map<String, dynamic> root = _toMap(response.data);
-        final Map<String, dynamic> data =
-            root['data'] is Map ? _toMap(root['data']) : root;
+        final Map<String, dynamic> data = root['data'] is Map
+            ? _toMap(root['data'])
+            : root;
         currentClientOverview.assignAll(data);
       } else {
         profileErrorMessage.value =
@@ -808,8 +826,9 @@ class IbmController extends GetxController {
       );
       if (response.success && response.data != null) {
         final Map<String, dynamic> root = _toMap(response.data);
-        final Map<String, dynamic> data =
-            root['data'] is Map ? _toMap(root['data']) : root;
+        final Map<String, dynamic> data = root['data'] is Map
+            ? _toMap(root['data'])
+            : root;
         currentClientTrades.assignAll(data);
       }
     } catch (e) {
@@ -835,8 +854,9 @@ class IbmController extends GetxController {
       );
       if (response.success && response.data != null) {
         final Map<String, dynamic> root = _toMap(response.data);
-        final Map<String, dynamic> data =
-            root['data'] is Map ? _toMap(root['data']) : root;
+        final Map<String, dynamic> data = root['data'] is Map
+            ? _toMap(root['data'])
+            : root;
         currentNetworkNode.assignAll(data);
       }
     } catch (e) {
@@ -861,9 +881,14 @@ class IbmController extends GetxController {
       );
       if (response.success && response.data != null) {
         final Map<String, dynamic> root = _toMap(response.data);
-        final Map<String, dynamic> data =
-            root['data'] is Map ? _toMap(root['data']) : root;
-        final people = data['people'] as List? ?? data['sub_ibs'] as List? ?? data['clients'] as List? ?? [];
+        final Map<String, dynamic> data = root['data'] is Map
+            ? _toMap(root['data'])
+            : root;
+        final people =
+            data['people'] as List? ??
+            data['sub_ibs'] as List? ??
+            data['clients'] as List? ??
+            [];
         return people.map((e) => _toMap(e)).toList();
       }
     } catch (e) {
@@ -888,8 +913,9 @@ class IbmController extends GetxController {
       );
       if (response.success && response.data != null) {
         final Map<String, dynamic> root = _toMap(response.data);
-        final Map<String, dynamic> data =
-            root['data'] is Map ? _toMap(root['data']) : root;
+        final Map<String, dynamic> data = root['data'] is Map
+            ? _toMap(root['data'])
+            : root;
         currentNetworkSymbols.assignAll(data);
       }
     } catch (e) {
@@ -905,8 +931,9 @@ class IbmController extends GetxController {
       final response = await _apiProvider.getNetworkPlan(id);
       if (response.success && response.data != null) {
         final Map<String, dynamic> root = _toMap(response.data);
-        final Map<String, dynamic> data =
-            root['data'] is Map ? _toMap(root['data']) : root;
+        final Map<String, dynamic> data = root['data'] is Map
+            ? _toMap(root['data'])
+            : root;
         currentNetworkPlan.assignAll(data);
       }
     } catch (e) {
@@ -938,8 +965,9 @@ class IbmController extends GetxController {
 
       if (response.success && response.data != null) {
         final Map<String, dynamic> root = _toMap(response.data);
-        final Map<String, dynamic> data =
-            root['data'] is Map ? _toMap(root['data']) : root;
+        final Map<String, dynamic> data = root['data'] is Map
+            ? _toMap(root['data'])
+            : root;
 
         final mats = data['materials'] ?? data['data'] ?? [];
         if (mats is List) {
@@ -973,8 +1001,9 @@ class IbmController extends GetxController {
       final response = await _apiProvider.getClientVisibility();
       if (response.success && response.data != null) {
         final Map<String, dynamic> root = _toMap(response.data);
-        final Map<String, dynamic> data =
-            root['data'] is Map ? _toMap(root['data']) : root;
+        final Map<String, dynamic> data = root['data'] is Map
+            ? _toMap(root['data'])
+            : root;
 
         final groups = data['groups'] ?? [];
         if (groups is List) {
@@ -1094,8 +1123,9 @@ class IbmController extends GetxController {
       final response = await _apiProvider.getLinkStats(linkId, period: period);
       if (response.success && response.data != null) {
         final Map<String, dynamic> root = _toMap(response.data);
-        final Map<String, dynamic> data =
-            root['data'] is Map ? _toMap(root['data']) : root;
+        final Map<String, dynamic> data = root['data'] is Map
+            ? _toMap(root['data'])
+            : root;
         currentLinkStats.assignAll(data);
       }
     } catch (e) {
@@ -1105,11 +1135,15 @@ class IbmController extends GetxController {
 
   Future<void> fetchLinkClients(int linkId, {String period = 'all'}) async {
     try {
-      final response = await _apiProvider.getLinkClients(linkId, period: period);
+      final response = await _apiProvider.getLinkClients(
+        linkId,
+        period: period,
+      );
       if (response.success && response.data != null) {
         final Map<String, dynamic> root = _toMap(response.data);
-        final Map<String, dynamic> data =
-            root['data'] is Map ? _toMap(root['data']) : root;
+        final Map<String, dynamic> data = root['data'] is Map
+            ? _toMap(root['data'])
+            : root;
         currentLinkClients.assignAll(data);
       }
     } catch (e) {
@@ -1122,11 +1156,14 @@ class IbmController extends GetxController {
   // ==========================================
   Future<void> fetchNetworkSummary({String period = 'this_month'}) async {
     try {
-      final response = await _apiProvider.getPortalNetworkSummary(period: period);
+      final response = await _apiProvider.getPortalNetworkSummary(
+        period: period,
+      );
       if (response.success && response.data != null) {
         final Map<String, dynamic> root = _toMap(response.data);
-        final Map<String, dynamic> data =
-            root['data'] is Map ? _toMap(root['data']) : root;
+        final Map<String, dynamic> data = root['data'] is Map
+            ? _toMap(root['data'])
+            : root;
         networkSummaryData.assignAll(data);
       }
     } catch (e) {
@@ -1141,8 +1178,9 @@ class IbmController extends GetxController {
       );
       if (response.success && response.data != null) {
         final Map<String, dynamic> root = _toMap(response.data);
-        final Map<String, dynamic> data =
-            root['data'] is Map ? _toMap(root['data']) : root;
+        final Map<String, dynamic> data = root['data'] is Map
+            ? _toMap(root['data'])
+            : root;
         networkTreeSummaryData.assignAll(data);
       }
     } catch (e) {
@@ -1173,8 +1211,9 @@ class IbmController extends GetxController {
       );
       if (response.success && response.data != null) {
         final Map<String, dynamic> root = _toMap(response.data);
-        final Map<String, dynamic> data =
-            root['data'] is Map ? _toMap(root['data']) : root;
+        final Map<String, dynamic> data = root['data'] is Map
+            ? _toMap(root['data'])
+            : root;
         networkPerformanceData.assignAll(data);
       }
     } catch (e) {
@@ -1185,11 +1224,15 @@ class IbmController extends GetxController {
   Future<void> fetchPartnerDetail(int partnerUserId, {String? period}) async {
     try {
       isProfileLoading.value = true;
-      final response = await _apiProvider.getPartnerDetail(partnerUserId, period: period);
+      final response = await _apiProvider.getPartnerDetail(
+        partnerUserId,
+        period: period,
+      );
       if (response.success && response.data != null) {
         final Map<String, dynamic> root = _toMap(response.data);
-        final Map<String, dynamic> data =
-            root['data'] is Map ? _toMap(root['data']) : root;
+        final Map<String, dynamic> data = root['data'] is Map
+            ? _toMap(root['data'])
+            : root;
         currentPartnerDetail.assignAll(data);
       }
     } catch (e) {
@@ -1207,8 +1250,9 @@ class IbmController extends GetxController {
       );
       if (response.success && response.data != null) {
         final Map<String, dynamic> root = _toMap(response.data);
-        final Map<String, dynamic> data =
-            root['data'] is Map ? _toMap(root['data']) : root;
+        final Map<String, dynamic> data = root['data'] is Map
+            ? _toMap(root['data'])
+            : root;
         currentPartnerWallet.assignAll(data);
       }
     } catch (e) {
@@ -1221,8 +1265,9 @@ class IbmController extends GetxController {
       final response = await _apiProvider.getPartnerLinks(partnerUserId);
       if (response.success && response.data != null) {
         final Map<String, dynamic> root = _toMap(response.data);
-        final Map<String, dynamic> data =
-            root['data'] is Map ? _toMap(root['data']) : root;
+        final Map<String, dynamic> data = root['data'] is Map
+            ? _toMap(root['data'])
+            : root;
         currentPartnerLinks.assignAll(data);
       }
     } catch (e) {
@@ -1246,8 +1291,9 @@ class IbmController extends GetxController {
       );
       if (response.success && response.data != null) {
         final Map<String, dynamic> root = _toMap(response.data);
-        final Map<String, dynamic> data =
-            root['data'] is Map ? _toMap(root['data']) : root;
+        final Map<String, dynamic> data = root['data'] is Map
+            ? _toMap(root['data'])
+            : root;
         clientsNetworkTreeData.assignAll(data);
       }
     } catch (e) {
@@ -1260,8 +1306,9 @@ class IbmController extends GetxController {
       final response = await _apiProvider.getClientAccounts(clientId);
       if (response.success && response.data != null) {
         final Map<String, dynamic> root = _toMap(response.data);
-        final Map<String, dynamic> data =
-            root['data'] is Map ? _toMap(root['data']) : root;
+        final Map<String, dynamic> data = root['data'] is Map
+            ? _toMap(root['data'])
+            : root;
         currentClientAccounts.assignAll(data);
       }
     } catch (e) {
@@ -1284,8 +1331,9 @@ class IbmController extends GetxController {
       );
       if (response.success && response.data != null) {
         final Map<String, dynamic> root = _toMap(response.data);
-        final Map<String, dynamic> data =
-            root['data'] is Map ? _toMap(root['data']) : root;
+        final Map<String, dynamic> data = root['data'] is Map
+            ? _toMap(root['data'])
+            : root;
         currentClientAccountTrades.assignAll(data);
       }
     } catch (e) {
@@ -1296,17 +1344,23 @@ class IbmController extends GetxController {
   Future<bool> moveClient(int clientId, int targetIbId) async {
     try {
       Get.dialog(
-        Center(child: CommonLoadingWidget(size: 50.0, color: AppColors.primary)),
+        Center(
+          child: CommonLoadingWidget(size: 50.0, color: AppColors.primary),
+        ),
         barrierDismissible: false,
       );
       final response = await _apiProvider.moveClient(clientId, targetIbId);
       Get.back(closeOverlays: true);
       if (response.success) {
-        CustomToastService.showSuccess(message: 'Client reassigned successfully.');
+        CustomToastService.showSuccess(
+          message: 'Client reassigned successfully.',
+        );
         fetchClients();
         return true;
       } else {
-        CustomToastService.showError(message: response.message ?? 'Failed to move client.');
+        CustomToastService.showError(
+          message: response.message ?? 'Failed to move client.',
+        );
         return false;
       }
     } catch (e) {
@@ -1324,8 +1378,9 @@ class IbmController extends GetxController {
       final response = await _apiProvider.getMyPlan();
       if (response.success && response.data != null) {
         final Map<String, dynamic> root = _toMap(response.data);
-        final Map<String, dynamic> data =
-            root['data'] is Map ? _toMap(root['data']) : root;
+        final Map<String, dynamic> data = root['data'] is Map
+            ? _toMap(root['data'])
+            : root;
         myPlanData.assignAll(data);
       }
     } catch (e) {
@@ -1336,18 +1391,27 @@ class IbmController extends GetxController {
   Future<bool> cancelPayout(int payoutId, {String? reason}) async {
     try {
       Get.dialog(
-        Center(child: CommonLoadingWidget(size: 50.0, color: AppColors.primary)),
+        Center(
+          child: CommonLoadingWidget(size: 50.0, color: AppColors.primary),
+        ),
         barrierDismissible: false,
       );
-      final response = await _apiProvider.cancelPayout(payoutId, reason: reason);
+      final response = await _apiProvider.cancelPayout(
+        payoutId,
+        reason: reason,
+      );
       Get.back(closeOverlays: true);
       if (response.success) {
-        CustomToastService.showSuccess(message: 'Payout request cancelled successfully.');
+        CustomToastService.showSuccess(
+          message: 'Payout request cancelled successfully.',
+        );
         fetchWallet();
         fetchTransactions();
         return true;
       } else {
-        CustomToastService.showError(message: response.message ?? 'Failed to cancel payout.');
+        CustomToastService.showError(
+          message: response.message ?? 'Failed to cancel payout.',
+        );
         return false;
       }
     } catch (e) {

@@ -11,6 +11,7 @@ import 'package:crm_app/screens/ibm/data/ibm_api_provider.dart';
 import 'package:crm_app/screens/ibm/utils/ibm_currency.dart';
 import 'package:crm_app/screens/ibm/view_models/ibm_controller.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
+import 'package:crm_app/services/language_service.dart' show TranslationUtils;
 
 class IbmWalletScreen extends StatefulWidget {
   const IbmWalletScreen({super.key});
@@ -44,23 +45,23 @@ class _IbmWalletScreenState extends State<IbmWalletScreen>
     return Scaffold(
       backgroundColor: AppColors.tradeBackgroundCenterColor,
       appBar: AppBar(
-        backgroundColor:
-            AppColors.isDarkMode ? AppColors.pureBlack : AppColors.whiteColor,
+        backgroundColor: AppColors.isDarkMode
+            ? AppColors.pureBlack
+            : AppColors.whiteColor,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         automaticallyImplyLeading: false,
         leading: Builder(
-          builder:
-              (ctx) => IconButton(
-          icon: SvgPicture.asset(
-            'assets/svg/ib_dashboard/home.svg',
-            colorFilter: ColorFilter.mode(
-              AppColors.textPrimary,
-              BlendMode.srcIn,
+          builder: (ctx) => IconButton(
+            icon: SvgPicture.asset(
+              'assets/svg/ib_dashboard/home.svg',
+              colorFilter: ColorFilter.mode(
+                AppColors.textPrimary,
+                BlendMode.srcIn,
+              ),
             ),
+            onPressed: () => Get.offAllNamed(AppPages.TRADING),
           ),
-          onPressed: () => Get.offAllNamed(AppPages.TRADING),
-        ),
         ),
         titleSpacing: 0,
         title: Text(
@@ -108,18 +109,16 @@ class _IbmWalletScreenState extends State<IbmWalletScreen>
         bottom: PreferredSize(
           preferredSize: Size.fromHeight(48.h),
           child: Container(
-            color:
-                AppColors.isDarkMode
-                    ? AppColors.pureBlack
-                    : AppColors.whiteColor,
+            color: AppColors.isDarkMode
+                ? AppColors.pureBlack
+                : AppColors.whiteColor,
             padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
             child: Container(
               height: 36.h,
               decoration: BoxDecoration(
-                color:
-                    AppColors.isDarkMode
-                        ? const Color(0xFF1E1E1E)
-                        : const Color(0xFFF1EEF8),
+                color: AppColors.isDarkMode
+                    ? const Color(0xFF1E1E1E)
+                    : const Color(0xFFF1EEF8),
                 borderRadius: BorderRadius.circular(18.r),
               ),
               child: TabBar(
@@ -194,9 +193,7 @@ class _MyCommissionTabState extends State<MyCommissionTab> {
 
   String _currency() {
     final w = _wallet0();
-    return (w['currency'] ??
-            _ibmController.walletData['currency'] ??
-            'USD')
+    return (w['currency'] ?? _ibmController.walletData['currency'] ?? 'USD')
         .toString();
   }
 
@@ -320,7 +317,7 @@ class _MyCommissionTabState extends State<MyCommissionTab> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Cancel payout'),
+        title: Text(TranslationUtils.tr('ibm_cancel_payout')),
         content: TextField(
           controller: reasonCtrl,
           decoration: const InputDecoration(
@@ -331,7 +328,7 @@ class _MyCommissionTabState extends State<MyCommissionTab> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Keep'),
+            child: Text(TranslationUtils.tr('common_keep')),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
@@ -340,7 +337,7 @@ class _MyCommissionTabState extends State<MyCommissionTab> {
               foregroundColor: AppColors.whiteColor,
               elevation: 0,
             ),
-            child: const Text('Cancel payout'),
+            child: Text(TranslationUtils.tr('ibm_cancel_payout')),
           ),
         ],
       ),
@@ -357,7 +354,9 @@ class _MyCommissionTabState extends State<MyCommissionTab> {
       );
       if (!mounted) return;
       if (res.success) {
-        CustomToastService.showSuccess(message: 'Payout cancelled');
+        CustomToastService.showSuccess(
+          message: TranslationUtils.tr('ib_payout_cancelled'),
+        );
         await _ibmController.fetchWallet();
       } else {
         CustomToastService.showError(
@@ -375,13 +374,17 @@ class _MyCommissionTabState extends State<MyCommissionTab> {
     return Obx(() {
       final wallet = _ibmController.walletData;
       final w0 = _wallet0(wallet);
-      final availableBalance = w0['balance'] ??
+      final availableBalance =
+          w0['balance'] ??
           w0['available'] ??
           wallet['unpaid_balance'] ??
           wallet['balance'] ??
           0;
       final pendingPayout =
-          w0['pending_payout'] ?? wallet['pending_payout'] ?? wallet['locked'] ?? 0;
+          w0['pending_payout'] ??
+          wallet['pending_payout'] ??
+          wallet['locked'] ??
+          0;
       final earnedAllTime =
           w0['lifetime_earned'] ?? wallet['lifetime_earned'] ?? 0;
       final paidOut = w0['lifetime_paid'] ?? wallet['lifetime_paid'] ?? 0;
@@ -476,7 +479,8 @@ class _MyCommissionTabState extends State<MyCommissionTab> {
                   Obx(() {
                     final w = _ibmController.walletData;
                     final block = _wallet0(w);
-                    final isFrozen = (block['is_frozen'] ?? w['is_frozen']) == true;
+                    final isFrozen =
+                        (block['is_frozen'] ?? w['is_frozen']) == true;
                     // Doc §7: can_withdraw && !is_frozen && !open_payout_status
                     // && balance >= minimum_payout. can_withdraw defaults true
                     // when the server omits it.
@@ -487,17 +491,17 @@ class _MyCommissionTabState extends State<MyCommissionTab> {
                         (block['can_withdraw'] ?? w['can_withdraw']) != false;
                     final openPayoutStatus =
                         block['open_payout_status'] ?? w['open_payout_status'];
-                    final hasOpenPayout = openPayoutStatus != null &&
+                    final hasOpenPayout =
+                        openPayoutStatus != null &&
                         openPayoutStatus.toString().isNotEmpty;
-                    final canRequest = canWithdrawFlag &&
+                    final canRequest =
+                        canWithdrawFlag &&
                         !isFrozen &&
                         !hasOpenPayout &&
                         _asNum(availableBalance) >= _minPayout();
                     return ElevatedButton(
-                      onPressed: 
-                      canRequest
-                          ?
-                           () => Get.toNamed(AppPages.WITHDRAWAL)
+                      onPressed: canRequest
+                          ? () => Get.toNamed(AppPages.WITHDRAWAL)
                           : null,
                       style: ElevatedButton.styleFrom(
                         minimumSize: Size.zero,
@@ -517,7 +521,7 @@ class _MyCommissionTabState extends State<MyCommissionTab> {
                           borderRadius: BorderRadius.circular(8.r),
                         ),
                       ),
-                      child: const Text('Request payout'),
+                      child: Text(TranslationUtils.tr('ibm_request_payout')),
                     );
                   }),
                 ],
@@ -529,197 +533,193 @@ class _MyCommissionTabState extends State<MyCommissionTab> {
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
-                children:
-                    _subTabs.map((tabName) {
-                      final isSelected = _selectedSubTab == tabName;
-                      return Padding(
-                        padding: EdgeInsets.only(right: 8.w),
-                        child: InkWell(
-                          onTap: () {
-                            setState(() {
-                              _selectedSubTab = tabName;
-                            });
-                            if (tabName == 'My Commission Plan') {
-                              _fetchMyPlan();
-                            }
-                          },
+                children: _subTabs.map((tabName) {
+                  final isSelected = _selectedSubTab == tabName;
+                  return Padding(
+                    padding: EdgeInsets.only(right: 8.w),
+                    child: InkWell(
+                      onTap: () {
+                        setState(() {
+                          _selectedSubTab = tabName;
+                        });
+                        if (tabName == 'My Commission Plan') {
+                          _fetchMyPlan();
+                        }
+                      },
+                      borderRadius: BorderRadius.circular(20.r),
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 14.w,
+                          vertical: 6.h,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? AppColors.primary
+                              : (AppColors.isDarkMode
+                                    ? const Color(0xFF1E1E1E)
+                                    : const Color(0xFFF1EEF8)),
                           borderRadius: BorderRadius.circular(20.r),
-                          child: Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 14.w,
-                              vertical: 6.h,
-                            ),
-                            decoration: BoxDecoration(
-                              color:
-                                  isSelected
-                                      ? AppColors.primary
-                                      : (AppColors.isDarkMode
-                                          ? const Color(0xFF1E1E1E)
-                                          : const Color(0xFFF1EEF8)),
-                              borderRadius: BorderRadius.circular(20.r),
-                            ),
-                            child: Text(
-                              tabName,
-                              style: TextStyle(
-                                fontSize: 12.sp,
-                                fontWeight:
-                                    isSelected
-                                        ? FontWeight.w700
-                                        : FontWeight.w500,
-                                color:
-                                    isSelected
-                                        ? AppColors.whiteColor
-                                        : AppColors.textPrimary,
-                              ),
-                            ),
+                        ),
+                        child: Text(
+                          tabName,
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            fontWeight: isSelected
+                                ? FontWeight.w700
+                                : FontWeight.w500,
+                            color: isSelected
+                                ? AppColors.whiteColor
+                                : AppColors.textPrimary,
                           ),
                         ),
-                      );
-                    }).toList(),
+                      ),
+                    ),
+                  );
+                }).toList(),
               ),
             ),
             SizedBox(height: 14.h),
             if (_selectedSubTab == 'Earnings') ...[
-            Divider(color: AppColors.divider),
-            SizedBox(height: 10.h),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                PopupMenuButton<String>(
-                  onSelected: _onFilterSelected,
-                  offset: const Offset(0, 30),
-                  color: AppColors.card,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8.r),
-                  ),
-                  itemBuilder: (BuildContext context) {
-                    return _filterOptions.keys.map((String choice) {
-                      return PopupMenuItem<String>(
-                        value: choice,
-                        child: Row(
-                          children: [
-                            if (_selectedFilter == choice)
-                              Icon(
-                                Icons.check,
-                                size: 16.w,
-                                color: AppColors.textPrimary,
-                              )
-                            else
-                              SizedBox(width: 16.w),
-                            SizedBox(width: 8.w),
-                            Text(
-                              choice,
-                              style: TextStyle(
-                                fontSize: 12.sp,
-                                color: AppColors.textPrimary,
+              Divider(color: AppColors.divider),
+              SizedBox(height: 10.h),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  PopupMenuButton<String>(
+                    onSelected: _onFilterSelected,
+                    offset: const Offset(0, 30),
+                    color: AppColors.card,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.r),
+                    ),
+                    itemBuilder: (BuildContext context) {
+                      return _filterOptions.keys.map((String choice) {
+                        return PopupMenuItem<String>(
+                          value: choice,
+                          child: Row(
+                            children: [
+                              if (_selectedFilter == choice)
+                                Icon(
+                                  Icons.check,
+                                  size: 16.w,
+                                  color: AppColors.textPrimary,
+                                )
+                              else
+                                SizedBox(width: 16.w),
+                              SizedBox(width: 8.w),
+                              Text(
+                                choice,
+                                style: TextStyle(
+                                  fontSize: 12.sp,
+                                  color: AppColors.textPrimary,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
+                        );
+                      }).toList();
+                    },
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 12.w,
+                        vertical: 6.h,
+                      ),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: AppColors.divider),
+                        borderRadius: BorderRadius.circular(4.r),
+                      ),
+                      child: Text(
+                        _selectedFilter,
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          color: AppColors.textPrimary,
                         ),
-                      );
-                    }).toList();
-                  },
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 12.w,
-                      vertical: 6.h,
-                    ),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: AppColors.divider),
-                      borderRadius: BorderRadius.circular(4.r),
-                    ),
-                    child: Text(
-                      _selectedFilter,
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        color: AppColors.textPrimary,
                       ),
                     ),
                   ),
-                ),
-                Text(
-                  'Every line is one movement of this wallet.',
-                  style: TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 10.sp,
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 16.h),
-            if (_isLoading)
-              Padding(
-                padding: EdgeInsets.symmetric(vertical: 24.h),
-                child: Center(
-                  child: CircularProgressIndicator(
-                    color: AppColors.primary, // Theme primary color
-                  ),
-                ),
-              )
-            else if (_error != null)
-              Padding(
-                padding: EdgeInsets.symmetric(vertical: 24.h),
-                child: Center(
-                  child: Text(
-                    _error!,
-                    style: TextStyle(color: Colors.red, fontSize: 14.sp),
-                  ),
-                ),
-              )
-            else if (_transactions.isEmpty)
-              Padding(
-                padding: EdgeInsets.symmetric(vertical: 24.h),
-                child: Center(
-                  child: Text(
-                    'No transactions found',
+                  Text(
+                    'Every line is one movement of this wallet.',
                     style: TextStyle(
                       color: AppColors.textSecondary,
-                      fontSize: 14.sp,
+                      fontSize: 10.sp,
                     ),
                   ),
-                ),
-              )
-            else
-              ..._transactions.map((tx) {
-                final trade = tx['trade'];
-                final symbol = trade?['symbol'] ?? tx['symbol'] ?? 'WALLET';
-                final type =
-                    trade?['side']?.toString().toUpperCase() ??
-                    tx['type']?.toString().toUpperCase() ??
-                    'UNKNOWN';
+                ],
+              ),
+              SizedBox(height: 16.h),
+              if (_isLoading)
+                Padding(
+                  padding: EdgeInsets.symmetric(vertical: 24.h),
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      color: AppColors.primary, // Theme primary color
+                    ),
+                  ),
+                )
+              else if (_error != null)
+                Padding(
+                  padding: EdgeInsets.symmetric(vertical: 24.h),
+                  child: Center(
+                    child: Text(
+                      _error!,
+                      style: TextStyle(color: Colors.red, fontSize: 14.sp),
+                    ),
+                  ),
+                )
+              else if (_transactions.isEmpty)
+                Padding(
+                  padding: EdgeInsets.symmetric(vertical: 24.h),
+                  child: Center(
+                    child: Text(
+                      'No transactions found',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 14.sp,
+                      ),
+                    ),
+                  ),
+                )
+              else
+                ..._transactions.map((tx) {
+                  final trade = tx['trade'];
+                  final symbol = trade?['symbol'] ?? tx['symbol'] ?? 'WALLET';
+                  final type =
+                      trade?['side']?.toString().toUpperCase() ??
+                      tx['type']?.toString().toUpperCase() ??
+                      'UNKNOWN';
 
-                String details = tx['description'] ?? 'Transaction details';
-                if (trade != null) {
-                  final account = trade['account'] ?? '';
-                  final lots = trade['lots']?.toString() ?? '';
-                  final entryPrice = trade['entry_price']?.toString() ?? '';
-                  final exitPrice = trade['exit_price']?.toString() ?? '';
-                  details =
-                      'TA#$account - $lots lots - $entryPrice -> $exitPrice';
-                }
+                  String details = tx['description'] ?? 'Transaction details';
+                  if (trade != null) {
+                    final account = trade['account'] ?? '';
+                    final lots = trade['lots']?.toString() ?? '';
+                    final entryPrice = trade['entry_price']?.toString() ?? '';
+                    final exitPrice = trade['exit_price']?.toString() ?? '';
+                    details =
+                        'TA#$account - $lots lots - $entryPrice -> $exitPrice';
+                  }
 
-                // Handle positive/negative amounts
-                final direction = tx['direction'] == 'credit' ? '+' : '-';
-                final txCurrency = tx['currency']?.toString() ?? _currency();
-                final amountStr =
-                    '$direction ${IbmCurrency.format(_asNum(tx['amount']), currencyCode: txCurrency)}';
+                  // Handle positive/negative amounts
+                  final direction = tx['direction'] == 'credit' ? '+' : '-';
+                  final txCurrency = tx['currency']?.toString() ?? _currency();
+                  final amountStr =
+                      '$direction ${IbmCurrency.format(_asNum(tx['amount']), currencyCode: txCurrency)}';
 
-                final balanceStr = IbmCurrency.format(
-                  _asNum(tx['balance_after']),
-                  currencyCode: txCurrency,
-                );
+                  final balanceStr = IbmCurrency.format(
+                    _asNum(tx['balance_after']),
+                    currencyCode: txCurrency,
+                  );
 
-                final date = tx['created_at'] ?? 'N/A';
+                  final date = tx['created_at'] ?? 'N/A';
 
-                return _buildTransactionItem(
-                  symbol,
-                  type,
-                  details,
-                  amountStr,
-                  balanceStr,
-                  date,
-                );
-              }).toList(),
+                  return _buildTransactionItem(
+                    symbol,
+                    type,
+                    details,
+                    amountStr,
+                    balanceStr,
+                    date,
+                  );
+                }).toList(),
             ] else if (_selectedSubTab == 'Payouts')
               _buildPayoutsBody()
             else
@@ -748,8 +748,11 @@ class _MyCommissionTabState extends State<MyCommissionTab> {
       children: payouts.whereType<Map>().map((p) {
         final currency = p['currency']?.toString() ?? _currency();
         final status = p['status']?.toString() ?? '';
-        final isCancellable = const ['pending', 'open', 'requested']
-            .contains(status.toLowerCase());
+        final isCancellable = const [
+          'pending',
+          'open',
+          'requested',
+        ].contains(status.toLowerCase());
         final payoutId = p['id'] is int
             ? p['id'] as int
             : int.tryParse(p['id']?.toString() ?? '') ?? 0;
@@ -885,8 +888,8 @@ class _MyCommissionTabState extends State<MyCommissionTab> {
           )
         else
           ...groups.whereType<Map>().map((g) {
-            final gName =
-                (g['name'] ?? g['symbol_group'] ?? 'Group').toString();
+            final gName = (g['name'] ?? g['symbol_group'] ?? 'Group')
+                .toString();
             final rawRates = g['rates'];
             final List rates = rawRates is List ? rawRates : const [];
             return Container(
@@ -897,8 +900,9 @@ class _MyCommissionTabState extends State<MyCommissionTab> {
                 border: Border.all(color: AppColors.divider),
               ),
               child: Theme(
-                data: Theme.of(context)
-                    .copyWith(dividerColor: Colors.transparent),
+                data: Theme.of(
+                  context,
+                ).copyWith(dividerColor: Colors.transparent),
                 child: ExpansionTile(
                   tilePadding: EdgeInsets.symmetric(horizontal: 14.w),
                   childrenPadding: EdgeInsets.zero,
@@ -997,77 +1001,81 @@ class _MyCommissionTabState extends State<MyCommissionTab> {
                                 ),
                               );
                             }),
-                          Builder(builder: (_) {
-                            final rawOverrides = g['symbol_overrides'];
-                            final List overrides =
-                                rawOverrides is List ? rawOverrides : const [];
-                            final rawBlocked = g['blocked_symbols'];
-                            final List blocked =
-                                rawBlocked is List ? rawBlocked : const [];
-                            return Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                if (overrides.isNotEmpty) ...[
-                                  SizedBox(height: 12.h),
-                                  Text(
-                                    'SYMBOL-SPECIFIC RATES',
-                                    style: TextStyle(
-                                      fontSize: 10.sp,
-                                      color: AppColors.textSecondary,
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: 0.5,
+                          Builder(
+                            builder: (_) {
+                              final rawOverrides = g['symbol_overrides'];
+                              final List overrides = rawOverrides is List
+                                  ? rawOverrides
+                                  : const [];
+                              final rawBlocked = g['blocked_symbols'];
+                              final List blocked = rawBlocked is List
+                                  ? rawBlocked
+                                  : const [];
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  if (overrides.isNotEmpty) ...[
+                                    SizedBox(height: 12.h),
+                                    Text(
+                                      'SYMBOL-SPECIFIC RATES',
+                                      style: TextStyle(
+                                        fontSize: 10.sp,
+                                        color: AppColors.textSecondary,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 0.5,
+                                      ),
                                     ),
-                                  ),
-                                  SizedBox(height: 10.h),
-                                  ...overrides.whereType<Map>().map((o) {
-                                    final currency =
-                                        o['currency']?.toString() ??
-                                            _currency();
-                                    return Padding(
-                                      padding: EdgeInsets.only(bottom: 8.h),
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Expanded(
-                                            child: Text(
-                                              (o['symbol'] ?? 'Unknown')
-                                                  .toString(),
-                                              style: TextStyle(
-                                                fontSize: 13.sp,
-                                                color: AppColors.textPrimary,
+                                    SizedBox(height: 10.h),
+                                    ...overrides.whereType<Map>().map((o) {
+                                      final currency =
+                                          o['currency']?.toString() ??
+                                          _currency();
+                                      return Padding(
+                                        padding: EdgeInsets.only(bottom: 8.h),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                (o['symbol'] ?? 'Unknown')
+                                                    .toString(),
+                                                style: TextStyle(
+                                                  fontSize: 13.sp,
+                                                  color: AppColors.textPrimary,
+                                                ),
                                               ),
                                             ),
-                                          ),
-                                          Text(
-                                            IbmCurrency.format(
-                                              _asNum(o['rate_per_lot']),
-                                              currencyCode: currency,
+                                            Text(
+                                              IbmCurrency.format(
+                                                _asNum(o['rate_per_lot']),
+                                                currencyCode: currency,
+                                              ),
+                                              style: TextStyle(
+                                                fontSize: 13.sp,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.green,
+                                              ),
                                             ),
-                                            style: TextStyle(
-                                              fontSize: 13.sp,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.green,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  }),
-                                ],
-                                SizedBox(height: 10.h),
-                                Text(
-                                  blocked.isEmpty
-                                      ? 'All symbols allowed on this group.'
-                                      : '${blocked.length} symbol(s) blocked on this group.',
-                                  style: TextStyle(
-                                    fontSize: 12.sp,
-                                    color: AppColors.textSecondary,
+                                          ],
+                                        ),
+                                      );
+                                    }),
+                                  ],
+                                  SizedBox(height: 10.h),
+                                  Text(
+                                    blocked.isEmpty
+                                        ? 'All symbols allowed on this group.'
+                                        : '${blocked.length} symbol(s) blocked on this group.',
+                                    style: TextStyle(
+                                      fontSize: 12.sp,
+                                      color: AppColors.textSecondary,
+                                    ),
                                   ),
-                                ),
-                              ],
-                            );
-                          }),
+                                ],
+                              );
+                            },
+                          ),
                         ],
                       ),
                     ),
@@ -1301,24 +1309,20 @@ class _CommissionPlansTabState extends State<CommissionPlansTab> {
   Future<void> _deletePlan(int planId, String planName) async {
     final bool? confirm = await showDialog<bool>(
       context: context,
-      builder:
-          (ctx) => AlertDialog(
-            title: const Text('Delete Plan'),
-            content: Text('Are you sure you want to delete "$planName"?'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx, false),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pop(ctx, true),
-                child: const Text(
-                  'Delete',
-                  style: TextStyle(color: Colors.red),
-                ),
-              ),
-            ],
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Plan'),
+        content: Text('Are you sure you want to delete "$planName"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
           ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
     );
 
     if (confirm != true) return;
@@ -1339,17 +1343,16 @@ class _CommissionPlansTabState extends State<CommissionPlansTab> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder:
-          (context) => Padding(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom,
-            ),
-            child: AssignPlanBottomSheet(
-              planId: planId,
-              planName: planName,
-              onAssigned: () => _fetchPlans(),
-            ),
-          ),
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: AssignPlanBottomSheet(
+          planId: planId,
+          planName: planName,
+          onAssigned: () => _fetchPlans(),
+        ),
+      ),
     );
   }
 
@@ -1426,13 +1429,10 @@ class _CommissionPlansTabState extends State<CommissionPlansTab> {
               final String description = plan['description']?.toString() ?? '';
               final bool isActive =
                   plan['is_active'] == true || plan['is_active'] == 1;
-              final int partnersUsing =
-                  plan['partners_using'] is int
-                      ? plan['partners_using']
-                      : int.tryParse(
-                            plan['partners_using']?.toString() ?? '0',
-                          ) ??
-                          0;
+              final int partnersUsing = plan['partners_using'] is int
+                  ? plan['partners_using']
+                  : int.tryParse(plan['partners_using']?.toString() ?? '0') ??
+                        0;
               // A plan is locked (read-only) once it is assigned to a sub-IB.
               // The list endpoint may omit is_locked, so fall back to
               // partners_using as the "locked once assigned" signal.

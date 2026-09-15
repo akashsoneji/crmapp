@@ -56,10 +56,7 @@ class _ViewProfileScreenState extends State<ViewProfileScreen> {
       body: Obx(() {
         if (controller.isInitializing.value) {
           return Center(
-            child: CommonLoadingWidget(
-              size: 50.0,
-              color: AppColors.primary,
-            ),
+            child: CommonLoadingWidget(size: 50.0, color: AppColors.primary),
           );
         }
 
@@ -70,14 +67,14 @@ class _ViewProfileScreenState extends State<ViewProfileScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.error_outline,
-                      size: 48.h, color: AppColors.error),
+                  Icon(Icons.error_outline, size: 48.h, color: AppColors.error),
                   SizedBox(height: 16.h),
                   Text(
                     controller.errorMessage.value,
                     textAlign: TextAlign.center,
-                    style: AppTextStyles.subheading
-                        .copyWith(color: AppColors.error),
+                    style: AppTextStyles.subheading.copyWith(
+                      color: AppColors.error,
+                    ),
                   ),
                   SizedBox(height: 16.h),
                   ElevatedButton(
@@ -213,9 +210,7 @@ class _ViewProfileScreenState extends State<ViewProfileScreen> {
             AppColors.primary.withValues(alpha: 0.04),
           ],
         ),
-        border: Border.all(
-          color: AppColors.primary.withValues(alpha: 0.18),
-        ),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.18)),
       ),
       child: Row(
         children: [
@@ -224,11 +219,7 @@ class _ViewProfileScreenState extends State<ViewProfileScreen> {
               CircleAvatar(
                 radius: 34.r,
                 backgroundColor: AppColors.primary.withValues(alpha: 0.15),
-                child: Icon(
-                  Icons.person,
-                  size: 38.r,
-                  color: AppColors.primary,
-                ),
+                child: Icon(Icons.person, size: 38.r, color: AppColors.primary),
               ),
               Positioned(
                 right: 0,
@@ -403,11 +394,7 @@ class _ViewProfileScreenState extends State<ViewProfileScreen> {
             ),
           ),
           if (verified)
-            Icon(
-              Icons.verified,
-              size: 18.sp,
-              color: AppColors.primary,
-            ),
+            Icon(Icons.verified, size: 18.sp, color: AppColors.primary),
         ],
       ),
     );
@@ -431,8 +418,7 @@ class _ViewProfileScreenState extends State<ViewProfileScreen> {
           ),
           child: Row(
             children: [
-              Icon(Icons.lock_outline,
-                  size: 18.sp, color: AppColors.primary),
+              Icon(Icons.lock_outline, size: 18.sp, color: AppColors.primary),
               SizedBox(width: 10.w),
               Expanded(
                 child: Text(
@@ -444,7 +430,6 @@ class _ViewProfileScreenState extends State<ViewProfileScreen> {
                   ),
                 ),
               ),
-              
             ],
           ),
         ),

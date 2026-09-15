@@ -29,14 +29,14 @@ class ContestJoinCard extends StatelessWidget {
     final tagColor = ended
         ? AppColors.textGrey
         : live
-            ? AppColors.success
-            : AppColors.warning;
+        ? AppColors.success
+        : AppColors.warning;
 
     final tagLabel = ended
         ? 'ENDED'
         : live
-            ? '● LIVE NOW'
-            : 'UPCOMING';
+        ? '● LIVE NOW'
+        : 'UPCOMING';
 
     return Material(
       color: Colors.transparent,
@@ -136,25 +136,19 @@ class ContestJoinCard extends StatelessWidget {
                   Expanded(
                     child: _Metric(
                       icon: Icons.attach_money,
-                      label: '\$${(contest.prizes.isNotEmpty ? contest.prizes.first.amount : 0).toStringAsFixed(0)}',
+                      label:
+                          '\$${(contest.prizes.isNotEmpty ? contest.prizes.first.amount : 0).toStringAsFixed(0)}',
                     ),
                   ),
-                  Container(
-                    width: 1,
-                    height: 26.h,
-                    color: AppColors.border,
-                  ),
+                  Container(width: 1, height: 26.h, color: AppColors.border),
                   Expanded(
                     child: _Metric(
                       icon: Icons.people_alt_outlined,
-                      label: '${(contest.joinedParticipants / 1000).toStringAsFixed(1)}k',
+                      label:
+                          '${(contest.joinedParticipants / 1000).toStringAsFixed(1)}k',
                     ),
                   ),
-                  Container(
-                    width: 1,
-                    height: 26.h,
-                    color: AppColors.border,
-                  ),
+                  Container(width: 1, height: 26.h, color: AppColors.border),
                   Expanded(
                     child: _Metric(
                       icon: Icons.bar_chart,
@@ -177,8 +171,8 @@ class ContestJoinCard extends StatelessWidget {
                     ended
                         ? 'Ended · ${_formatDate(contest.endsAt)}'
                         : live
-                            ? 'Ends in'
-                            : 'Starts in',
+                        ? 'Ends in'
+                        : 'Starts in',
                     style: TextStyle(
                       fontSize: 12.sp,
                       color: AppColors.textGrey,
@@ -212,8 +206,8 @@ class ContestJoinCard extends StatelessWidget {
                     joined
                         ? 'View Entry'
                         : ended
-                            ? 'View Results'
-                            : 'View Details',
+                        ? 'View Results'
+                        : 'View Details',
                     style: TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 14.sp,
@@ -239,8 +233,18 @@ class ContestJoinCard extends StatelessWidget {
 
   String _monthName(int m) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return months[m - 1];
   }

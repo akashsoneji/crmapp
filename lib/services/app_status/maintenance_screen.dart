@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/services/app_status/app_status_controller.dart';
+import 'package:crm_app/services/language_service.dart';
 
 /// Full-screen maintenance mode widget
 /// Shows when app is under maintenance
@@ -13,6 +14,7 @@ class MaintenanceScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<AppStatusController>();
+    final languageService = Get.find<LanguageService>();
 
     return Container(
       color: AppColors.whiteColor,
@@ -40,7 +42,7 @@ class MaintenanceScreen extends StatelessWidget {
 
               // Title
               Text(
-                'Under Maintenance',
+                languageService.tr('app_status_maintenance_title'),
                 style: AppTextStyles.heading.copyWith(
                   fontSize: 24.sp,
                   fontWeight: FontWeight.w600,
@@ -52,7 +54,7 @@ class MaintenanceScreen extends StatelessWidget {
 
               // Message
               Text(
-                'App is under maintenance please try again later',
+                languageService.tr('app_status_maintenance_message'),
                 style: TextStyle(
                   fontSize: 16.sp,
                   color: AppColors.textSecondary,
@@ -92,7 +94,7 @@ class MaintenanceScreen extends StatelessWidget {
                             ),
                           )
                         : Text(
-                            'Retry',
+                            languageService.tr('common_retry'),
                             style: TextStyle(
                               fontSize: 16.sp,
                               fontWeight: FontWeight.w600,

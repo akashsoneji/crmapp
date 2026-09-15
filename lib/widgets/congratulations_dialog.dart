@@ -8,6 +8,7 @@ import '../controllers/app_notification_controller.dart';
 import '../screens/home/more/finance/deposit_screen.dart';
 import '../controllers/dashboard_controller.dart';
 import '../services/account_websocket_service.dart';
+import 'package:crm_app/services/language_service.dart' show TranslationUtils;
 
 class CongratulationsDialog extends StatelessWidget {
   final String accountNumber;
@@ -88,7 +89,7 @@ class CongratulationsDialog extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
                             Text(
-                              'Congratulations!',
+                              TranslationUtils.tr('congratulations_title'),
                               style: TextStyle(
                                 fontSize: 16.sp,
                                 fontWeight: FontWeight.w500,
@@ -125,7 +126,9 @@ class CongratulationsDialog extends StatelessWidget {
                         ),
                         SizedBox(height: 12),
                         Text(
-                          'You have successfully Created trading account',
+                          TranslationUtils.tr(
+                            'trading_account_created_description',
+                          ),
                           style: TextStyle(
                             fontSize: 11,
                             color: AppColors.icongrey,
@@ -149,7 +152,7 @@ class CongratulationsDialog extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Account Number',
+                                  TranslationUtils.tr('account_number'),
                                   style: TextStyle(
                                     fontSize: 12.sp,
                                     fontWeight: FontWeight.w400,
@@ -181,9 +184,12 @@ class CongratulationsDialog extends StatelessWidget {
                                         >()) {
                                           Get.find<AppNotificationController>()
                                               .showSuccess(
-                                                message:
-                                                    'Account number copied to clipboard',
-                                                title: 'Copied!',
+                                                message: TranslationUtils.tr(
+                                                  'account_number_copied',
+                                                ),
+                                                title: TranslationUtils.tr(
+                                                  'common_copied',
+                                                ),
                                               );
                                         }
                                       },
@@ -205,7 +211,7 @@ class CongratulationsDialog extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Server Name',
+                                  TranslationUtils.tr('server_name'),
                                   style: TextStyle(
                                     fontSize: 12.sp,
                                     fontWeight: FontWeight.w400,
@@ -312,7 +318,7 @@ class CongratulationsDialog extends StatelessWidget {
                             }
                           });
                         },
-                        child: Text('Make Deposit'),
+                        child: Text(TranslationUtils.tr('make_deposit')),
                       ),
                     ),
 
@@ -320,7 +326,7 @@ class CongratulationsDialog extends StatelessWidget {
 
                     // Information Text
                     Text(
-                      'Please remember your password. And also note that your real Account ID & Password has been sent to your email ID, you can always change your password in Account setting reset',
+                      TranslationUtils.tr('trading_account_password_reminder'),
                       style: TextStyle(
                         fontSize: 12,
                         color: AppColors.icongrey,
@@ -338,7 +344,7 @@ class CongratulationsDialog extends StatelessWidget {
                         _refreshAccountsAndNavigateBack();
                       },
                       child: Text(
-                        'See account list',
+                        TranslationUtils.tr('see_account_list'),
                         style: TextStyle(
                           fontSize: 12.sp,
                           fontWeight: FontWeight.w500,

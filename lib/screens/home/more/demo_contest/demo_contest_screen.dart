@@ -81,15 +81,13 @@ class _DemoContestScreenState extends State<DemoContestScreen> {
                           iconAssetPath:
                               'assets/svg/more/demo_contest/contest-rules.svg',
                           label: languageService.tr('contest_rule'),
-                          onTap: () =>
-                              Get.toNamed(AppPages.DEMO_CONTEST_RULES),
+                          onTap: () => Get.toNamed(AppPages.DEMO_CONTEST_RULES),
                         ),
                         MoreMenuTile(
                           iconAssetPath:
                               'assets/svg/more/demo_contest/join-contest.svg',
                           label: languageService.tr('join_contest'),
-                          onTap: () =>
-                              Get.toNamed(AppPages.DEMO_CONTEST_JOIN),
+                          onTap: () => Get.toNamed(AppPages.DEMO_CONTEST_JOIN),
                         ),
                         MoreMenuTile(
                           iconAssetPath:
@@ -123,7 +121,10 @@ class _DemoContestScreenState extends State<DemoContestScreen> {
 class _FeaturedBanner extends StatelessWidget {
   final dynamic featuredContest;
   final DemoContestController controller;
-  const _FeaturedBanner({required this.featuredContest, required this.controller});
+  const _FeaturedBanner({
+    required this.featuredContest,
+    required this.controller,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -151,10 +152,7 @@ class _FeaturedBanner extends StatelessWidget {
             Row(
               children: [
                 Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 8.w,
-                    vertical: 3.h,
-                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
                   decoration: BoxDecoration(
                     color: AppColors.success,
                     borderRadius: BorderRadius.circular(6.r),
@@ -290,9 +288,7 @@ class _InfoBanner extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.primary.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(14.r),
-        border: Border.all(
-          color: AppColors.primary.withValues(alpha: 0.18),
-        ),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.18)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -305,10 +301,7 @@ class _InfoBanner extends StatelessWidget {
               shape: BoxShape.circle,
             ),
             alignment: Alignment.center,
-            child: Text(
-              'ℹ️',
-              style: TextStyle(fontSize: 16.sp),
-            ),
+            child: Text('ℹ️', style: TextStyle(fontSize: 16.sp)),
           ),
           SizedBox(width: 12.w),
           Expanded(

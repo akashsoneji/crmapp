@@ -43,17 +43,17 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
   String? _validateCurrentPassword(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Current password is required';
+      return languageService.tr('change_password_current_required');
     }
     return null;
   }
 
   String? _validateNewPassword(String? value) {
     if (value == null || value.isEmpty) {
-      return 'New password is required';
+      return languageService.tr('change_password_new_required');
     }
     if (value.length < 8) {
-      return 'Password must be at least 8 characters long';
+      return languageService.tr('change_password_min_length');
     }
     if (!_passwordRegex.hasMatch(value)) {
       return 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character';
@@ -63,10 +63,10 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
   String? _validateConfirmPassword(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Please confirm your password';
+      return languageService.tr('change_password_confirm_required');
     }
     if (value != _changePasswordController.newPasswordController.text) {
-      return 'Password confirmation does not match';
+      return languageService.tr('change_password_mismatch');
     }
     return null;
   }
@@ -132,7 +132,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
           languageService.tr('change_password'),
           style: AppTextStyles.screenTitle,
         ),
-        leading:  AppSvgBackButton(
+        leading: AppSvgBackButton(
           onPressed: () => Get.back(closeOverlays: true),
           iconWidth: 30.w,
           iconHeight: 30.h,
@@ -148,7 +148,10 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildPasswordField(
-                label: 'Current Password',
+                label: languageService.trf(
+                  'change_password_current_password',
+                  'Current Password',
+                ),
                 controller: _changePasswordController.currentPasswordController,
                 validator: _validateCurrentPassword,
                 obscureText: _obscureCurrentPassword,
@@ -159,7 +162,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 },
               ),
               _buildPasswordField(
-                label: 'New Password',
+                label: languageService.trf('home_new_password', 'New Password'),
                 controller: _changePasswordController.newPasswordController,
                 validator: _validateNewPassword,
                 obscureText: _obscureNewPassword,
@@ -170,7 +173,10 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 },
               ),
               _buildPasswordField(
-                label: 'Confirm Password',
+                label: languageService.trf(
+                  'home_confirm_password',
+                  'Confirm Password',
+                ),
                 controller: _changePasswordController.confirmPasswordController,
                 validator: _validateConfirmPassword,
                 obscureText: _obscureConfirmPassword,
@@ -212,7 +218,9 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   height: 20.h,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(AppColors.whiteColor),
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      AppColors.whiteColor,
+                    ),
                   ),
                 )
               : Text(

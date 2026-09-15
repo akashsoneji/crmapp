@@ -70,7 +70,8 @@ class PlanHeroCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isPaused = plan.status.toLowerCase() == 'paused';
-    final isInactive = plan.status.toLowerCase() == 'inactive' ||
+    final isInactive =
+        plan.status.toLowerCase() == 'inactive' ||
         plan.status.toLowerCase() == 'inactivated';
     final isCopyingOn = !plan.copyingPaused;
     final s = _statusColor();
@@ -91,10 +92,7 @@ class PlanHeroCard extends StatelessWidget {
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [
-                      tokens.brand,
-                      tokens.brand.withValues(alpha: 0.7),
-                    ],
+                    colors: [tokens.brand, tokens.brand.withValues(alpha: 0.7)],
                   ),
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -129,10 +127,7 @@ class PlanHeroCard extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                         _CopyingDotPill(
-                          on: isCopyingOn,
-                          tokens: tokens,
-                        ),
+                        _CopyingDotPill(on: isCopyingOn, tokens: tokens),
                       ],
                     ),
                     const SizedBox(height: 6),
@@ -150,11 +145,7 @@ class PlanHeroCard extends StatelessWidget {
                           text: s.text,
                         ),
                         if (plan.commissionLabel.isNotEmpty)
-                          _MetaChip(
-                            text: plan.commissionLabel,
-                            tokens: tokens,
-                          ),
-                       
+                          _MetaChip(text: plan.commissionLabel, tokens: tokens),
                       ],
                     ),
                   ],
@@ -302,7 +293,6 @@ class _HeroMetric extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 6),
-
             ],
           ),
           const SizedBox(height: 6),
@@ -464,11 +454,7 @@ class _HeroAction extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              icon,
-              size: 14,
-              color: disabled ? tokens.mutedText : c,
-            ),
+            Icon(icon, size: 14, color: disabled ? tokens.mutedText : c),
             const SizedBox(width: 5),
             Text(
               label,

@@ -8,6 +8,7 @@ import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/pmam/pmam_controller.dart';
 import 'package:crm_app/routes/app_pages.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
+import 'package:crm_app/services/language_service.dart';
 import 'widgets/edit_plan_bottom_sheet.dart';
 import 'package:crm_app/screens/home/more/pmam/pmam_manager_investor_detail_screen.dart';
 
@@ -20,6 +21,7 @@ class PmamManagerPortalScreen extends StatefulWidget {
 
   /// 0 = Investors, 1 = Plans.
   final int initialTab;
+
   /// When true, hides the app bar (caller provides its own).
   final bool embedded;
 
@@ -85,59 +87,68 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
       appBar: widget.embedded
           ? null
           : AppBar(
-        scrolledUnderElevation: 0,
-        backgroundColor: AppColors.tradeBackgroundCenterColor,
-        elevation: 0,
-        leading: AppSvgBackButton(
-          onPressed: () => Get.back(closeOverlays: true),
-          iconWidth: 30.w,
-          iconHeight: 30.h,
-        ),
-        title: Text('Manager Portal', style: AppTextStyles.heading),
-        centerTitle: true,
-        actions: [
-          Padding(
-            padding: EdgeInsets.only(right: 12.w),
-            child: GestureDetector(
-              onTap: () => Get.toNamed(AppPages.PMAM_CREATE_PLAN),
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-                decoration: BoxDecoration(
-                  color: AppColors.brandPrimary,
-                  borderRadius: BorderRadius.circular(8.r),
+              scrolledUnderElevation: 0,
+              backgroundColor: AppColors.tradeBackgroundCenterColor,
+              elevation: 0,
+              leading: AppSvgBackButton(
+                onPressed: () => Get.back(closeOverlays: true),
+                iconWidth: 30.w,
+                iconHeight: 30.h,
+              ),
+              title: Text(
+                Get.find<LanguageService>().tr('pmam_manager_portal'),
+                style: AppTextStyles.heading,
+              ),
+              centerTitle: true,
+              actions: [
+                Padding(
+                  padding: EdgeInsets.only(right: 12.w),
+                  child: GestureDetector(
+                    onTap: () => Get.toNamed(AppPages.PMAM_CREATE_PLAN),
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 12.w,
+                        vertical: 6.h,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.brandPrimary,
+                        borderRadius: BorderRadius.circular(8.r),
+                      ),
+                      child: Text(
+                        '+ New Plan',
+                        style: TextStyle(
+                          color: AppColors.onColoredBackground,
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
-                child: Text(
-                  '+ New Plan',
-                  style: TextStyle(
-                    color: AppColors.onColoredBackground,
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.w600,
+              ],
+              bottom: PreferredSize(
+                preferredSize: Size.fromHeight(46.h),
+                child: Container(
+                  color: AppColors.onColoredBackground,
+                  child: TabBar(
+                    controller: _tabCtrl,
+                    labelColor: AppColors.primary,
+                    unselectedLabelColor: AppColors.textGrey,
+                    indicatorColor: AppColors.primary,
+                    indicatorWeight: 2.5,
+                    labelStyle: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    unselectedLabelStyle: TextStyle(fontSize: 14.sp),
+                    tabs: const [
+                      Tab(text: 'My Investors'),
+                      Tab(text: 'My Plans'),
+                    ],
                   ),
                 ),
               ),
             ),
-          ),
-        ],
-        bottom: PreferredSize(
-          preferredSize: Size.fromHeight(46.h),
-          child: Container(
-            color: AppColors.onColoredBackground,
-            child: TabBar(
-              controller: _tabCtrl,
-              labelColor: AppColors.primary,
-              unselectedLabelColor: AppColors.textGrey,
-              indicatorColor: AppColors.primary,
-              indicatorWeight: 2.5,
-              labelStyle: TextStyle(
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w600,
-              ),
-              unselectedLabelStyle: TextStyle(fontSize: 14.sp),
-              tabs: const [Tab(text: 'My Investors'), Tab(text: 'My Plans')],
-            ),
-          ),
-        ),
-      ),
       body: TabBarView(
         controller: _tabCtrl,
         children: [_buildInvestorsTab(), _buildPlansTab()],
@@ -163,12 +174,9 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
         'pending': allInvestors.where((i) => i['status'] == 'pending').length,
       };
 
-      final filtered =
-          _investorFilter == 'all'
-              ? allInvestors
-              : allInvestors
-                  .where((i) => i['status'] == _investorFilter)
-                  .toList();
+      final filtered = _investorFilter == 'all'
+          ? allInvestors
+          : allInvestors.where((i) => i['status'] == _investorFilter).toList();
 
       return Column(
         children: [
@@ -267,258 +275,251 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
 
           // Investor list
           Expanded(
-            child:
-                filtered.isEmpty
-                    ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.people_outline_rounded,
-                            size: 48.sp,
-                            color: AppColors.textGrey.withOpacity(0.4),
+            child: filtered.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.people_outline_rounded,
+                          size: 48.sp,
+                          color: AppColors.textGrey.withOpacity(0.4),
+                        ),
+                        SizedBox(height: 12.h),
+                        Text(
+                          Get.find<LanguageService>().tr('common_no_data'),
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            color: AppColors.textGrey,
                           ),
-                          SizedBox(height: 12.h),
-                          Text(
-                            'No investors in this category',
-                            style: TextStyle(
-                              fontSize: 14.sp,
-                              color: AppColors.textGrey,
-                            ),
+                        ),
+                      ],
+                    ),
+                  )
+                : RefreshIndicator(
+                    color: AppColors.primary,
+                    onRefresh: _ctrl.loadManagerInvestors,
+                    child: ListView.separated(
+                      padding: EdgeInsets.symmetric(horizontal: 16.w),
+                      itemCount: filtered.length,
+                      separatorBuilder: (_, __) => SizedBox(height: 8.h),
+                      itemBuilder: (_, i) {
+                        final inv = filtered[i];
+                        final invId =
+                            int.tryParse(inv['id']?.toString() ?? '') ?? 0;
+                        final name = (inv['investor_name'] ?? 'Unknown')
+                            .toString();
+                        final email = (inv['investor_email'] ?? '').toString();
+                        final account = (inv['account_number'] ?? '-')
+                            .toString();
+                        final invested =
+                            double.tryParse(
+                              inv['invested_amount']?.toString() ?? '0',
+                            ) ??
+                            0.0;
+                        final pnl =
+                            double.tryParse(
+                              inv['net_pnl']?.toString() ?? '0',
+                            ) ??
+                            0.0;
+                        final status = (inv['status'] ?? '').toString();
+                        final activeSince = (inv['active_since'] ?? '')
+                            .toString();
+                        final pnlIsPos = pnl >= 0;
+                        final bool isPending = status == 'pending';
+                        final bool isActionLoading =
+                            _actionInvestorId == invId &&
+                            (_actionType == 'approve' ||
+                                _actionType == 'reject');
+
+                        final initials = name
+                            .split(' ')
+                            .take(2)
+                            .map((e) => e.isNotEmpty ? e[0].toUpperCase() : '')
+                            .join();
+
+                        return Container(
+                          padding: EdgeInsets.all(14.w),
+                          decoration: BoxDecoration(
+                            color: AppColors.card,
+                            borderRadius: BorderRadius.circular(12.r),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.border.withValues(alpha: 0.04),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                    )
-                    : RefreshIndicator(
-                      color: AppColors.primary,
-                      onRefresh: _ctrl.loadManagerInvestors,
-                      child: ListView.separated(
-                        padding: EdgeInsets.symmetric(horizontal: 16.w),
-                        itemCount: filtered.length,
-                        separatorBuilder: (_, __) => SizedBox(height: 8.h),
-                        itemBuilder: (_, i) {
-                          final inv = filtered[i];
-                          final invId =
-                              int.tryParse(inv['id']?.toString() ?? '') ?? 0;
-                          final name =
-                              (inv['investor_name'] ?? 'Unknown').toString();
-                          final email =
-                              (inv['investor_email'] ?? '').toString();
-                          final account =
-                              (inv['account_number'] ?? '-').toString();
-                          final invested =
-                              double.tryParse(
-                                inv['invested_amount']?.toString() ?? '0',
-                              ) ??
-                              0.0;
-                          final pnl =
-                              double.tryParse(
-                                inv['net_pnl']?.toString() ?? '0',
-                              ) ??
-                              0.0;
-                          final status = (inv['status'] ?? '').toString();
-                          final activeSince =
-                              (inv['active_since'] ?? '').toString();
-                          final pnlIsPos = pnl >= 0;
-                          final bool isPending = status == 'pending';
-                          final bool isActionLoading =
-                              _actionInvestorId == invId &&
-                              (_actionType == 'approve' ||
-                                  _actionType == 'reject');
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Name + status row
+                              Row(
+                                children: [
+                                  CircleAvatar(
+                                    radius: 20.r,
+                                    backgroundColor: AppColors.primary
+                                        .withOpacity(0.12),
+                                    child: Text(
+                                      initials,
+                                      style: TextStyle(
+                                        color: AppColors.primary,
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 13.sp,
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(width: 10.w),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          name,
+                                          style: TextStyle(
+                                            fontSize: 13.sp,
+                                            fontWeight: FontWeight.w700,
+                                            color: AppColors.textPrimary,
+                                          ),
+                                        ),
+                                        Text(
+                                          email,
+                                          style: TextStyle(
+                                            fontSize: 11.sp,
+                                            color: AppColors.textGrey,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 9.w,
+                                      vertical: 3.h,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: _statusColor(
+                                        status,
+                                      ).withOpacity(0.12),
+                                      borderRadius: BorderRadius.circular(20.r),
+                                    ),
+                                    child: Text(
+                                      status.toUpperCase(),
+                                      style: TextStyle(
+                                        fontSize: 9.sp,
+                                        color: _statusColor(status),
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 10.h),
 
-                          final initials =
-                              name
-                                  .split(' ')
-                                  .take(2)
-                                  .map(
-                                    (e) =>
-                                        e.isNotEmpty ? e[0].toUpperCase() : '',
-                                  )
-                                  .join();
-
-                          return Container(
-                            padding: EdgeInsets.all(14.w),
-                            decoration: BoxDecoration(
-                              color: AppColors.card,
-                              borderRadius: BorderRadius.circular(12.r),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.border.withValues(alpha: 0.04),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
+                              // Info grid
+                              Container(
+                                padding: EdgeInsets.all(10.w),
+                                decoration: BoxDecoration(
+                                  color: AppColors.tradeBackgroundCenterColor,
+                                  borderRadius: BorderRadius.circular(8.r),
                                 ),
-                              ],
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // Name + status row
-                                Row(
+                                child: Row(
                                   children: [
-                                    CircleAvatar(
-                                      radius: 20.r,
-                                      backgroundColor: AppColors.primary
-                                          .withOpacity(0.12),
-                                      child: Text(
-                                        initials,
-                                        style: TextStyle(
-                                          color: AppColors.primary,
-                                          fontWeight: FontWeight.w700,
-                                          fontSize: 13.sp,
-                                        ),
-                                      ),
-                                    ),
-                                    SizedBox(width: 10.w),
                                     Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            name,
-                                            style: TextStyle(
-                                              fontSize: 13.sp,
-                                              fontWeight: FontWeight.w700,
-                                              color: AppColors.textPrimary,
-                                            ),
-                                          ),
-                                          Text(
-                                            email,
-                                            style: TextStyle(
-                                              fontSize: 11.sp,
-                                              color: AppColors.textGrey,
-                                            ),
-                                          ),
-                                        ],
+                                      child: _InvInfoCol(
+                                        label: 'Account',
+                                        value: account,
                                       ),
                                     ),
-                                    Container(
-                                      padding: EdgeInsets.symmetric(
-                                        horizontal: 9.w,
-                                        vertical: 3.h,
+                                    Expanded(
+                                      child: _InvInfoCol(
+                                        label: 'Invested',
+                                        value:
+                                            '\$${invested.toStringAsFixed(2)}',
                                       ),
-                                      decoration: BoxDecoration(
-                                        color: _statusColor(
-                                          status,
-                                        ).withOpacity(0.12),
-                                        borderRadius: BorderRadius.circular(
-                                          20.r,
-                                        ),
-                                      ),
-                                      child: Text(
-                                        status.toUpperCase(),
-                                        style: TextStyle(
-                                          fontSize: 9.sp,
-                                          color: _statusColor(status),
-                                          fontWeight: FontWeight.w700,
-                                        ),
+                                    ),
+                                    Expanded(
+                                      child: _InvInfoCol(
+                                        label: 'Net PnL',
+                                        value:
+                                            '${pnlIsPos ? '+' : ''}\$${pnl.toStringAsFixed(2)}',
+                                        valueColor: pnlIsPos
+                                            ? AppColors.green
+                                            : AppColors.error,
                                       ),
                                     ),
                                   ],
                                 ),
-                                SizedBox(height: 10.h),
+                              ),
 
-                                // Info grid
-                                Container(
-                                  padding: EdgeInsets.all(10.w),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.tradeBackgroundCenterColor,
-                                    borderRadius: BorderRadius.circular(8.r),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Expanded(
-                                        child: _InvInfoCol(
-                                          label: 'Account',
-                                          value: account,
-                                        ),
-                                      ),
-                                      Expanded(
-                                        child: _InvInfoCol(
-                                          label: 'Invested',
-                                          value:
-                                              '\$${invested.toStringAsFixed(2)}',
-                                        ),
-                                      ),
-                                      Expanded(
-                                        child: _InvInfoCol(
-                                          label: 'Net PnL',
-                                          value:
-                                              '${pnlIsPos ? '+' : ''}\$${pnl.toStringAsFixed(2)}',
-                                          valueColor:
-                                              pnlIsPos
-                                                  ? AppColors.green
-                                                  : AppColors.error,
-                                        ),
-                                      ),
-                                    ],
+                              if (activeSince.isNotEmpty &&
+                                  activeSince.length >= 10) ...[
+                                SizedBox(height: 6.h),
+                                Text(
+                                  'Active since: ${activeSince.substring(0, 10)}',
+                                  style: TextStyle(
+                                    fontSize: 10.sp,
+                                    color: AppColors.textGrey,
                                   ),
                                 ),
+                              ],
 
-                                if (activeSince.isNotEmpty &&
-                                    activeSince.length >= 10) ...[
-                                  SizedBox(height: 6.h),
-                                  Text(
-                                    'Active since: ${activeSince.substring(0, 10)}',
-                                    style: TextStyle(
-                                      fontSize: 10.sp,
-                                      color: AppColors.textGrey,
-                                    ),
-                                  ),
-                                ],
-
-                                SizedBox(height: 12.h),
-                                if (isPending)
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: OutlinedButton(
-                                          onPressed:
-                                              isActionLoading
-                                                  ? null
-                                                  : () async {
-                                                    setState(() {
-                                                      _actionInvestorId = invId;
-                                                      _actionType = 'reject';
-                                                    });
-                                                    final ok =
-                                                        await _ctrl
-                                                            .rejectInvestorRequest(
-                                                              invId,
-                                                            );
-                                                    if (ok) {
-                                                      await _ctrl
-                                                          .loadManagerInvestors();
-                                                    }
-                                                    if (mounted) {
-                                                      setState(() {
-                                                        _actionInvestorId = null;
-                                                        _actionType = null;
-                                                      });
-                                                    }
-                                                  },
-                                          style: OutlinedButton.styleFrom(
-                                            side: BorderSide(color: AppColors.error),
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.circular(
-                                                10.r,
-                                              ),
-                                            ),
-                                            padding: EdgeInsets.symmetric(
-                                              vertical: 10.h,
+                              SizedBox(height: 12.h),
+                              if (isPending)
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: OutlinedButton(
+                                        onPressed: isActionLoading
+                                            ? null
+                                            : () async {
+                                                setState(() {
+                                                  _actionInvestorId = invId;
+                                                  _actionType = 'reject';
+                                                });
+                                                final ok = await _ctrl
+                                                    .rejectInvestorRequest(
+                                                      invId,
+                                                    );
+                                                if (ok) {
+                                                  await _ctrl
+                                                      .loadManagerInvestors();
+                                                }
+                                                if (mounted) {
+                                                  setState(() {
+                                                    _actionInvestorId = null;
+                                                    _actionType = null;
+                                                  });
+                                                }
+                                              },
+                                        style: OutlinedButton.styleFrom(
+                                          side: BorderSide(
+                                            color: AppColors.error,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              10.r,
                                             ),
                                           ),
-                                          child: isActionLoading &&
-                                                  _actionType == 'reject'
-                                              ? SizedBox(
+                                          padding: EdgeInsets.symmetric(
+                                            vertical: 10.h,
+                                          ),
+                                        ),
+                                        child:
+                                            isActionLoading &&
+                                                _actionType == 'reject'
+                                            ? SizedBox(
                                                 height: 16.h,
                                                 width: 16.h,
-                                                child: CircularProgressIndicator(
-                                                  strokeWidth: 2,
-                                                  color: AppColors.error,
-                                                ),
+                                                child:
+                                                    CircularProgressIndicator(
+                                                      strokeWidth: 2,
+                                                      color: AppColors.error,
+                                                    ),
                                               )
-                                              : Text(
+                                            : Text(
                                                 'Reject',
                                                 style: TextStyle(
                                                   color: AppColors.error,
@@ -526,108 +527,113 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
                                                   fontWeight: FontWeight.w700,
                                                 ),
                                               ),
-                                        ),
                                       ),
-                                      SizedBox(width: 10.w),
-                                      Expanded(
-                                        child: ElevatedButton(
-                                          onPressed:
-                                              isActionLoading
-                                                  ? null
-                                                  : () async {
-                                                    setState(() {
-                                                      _actionInvestorId = invId;
-                                                      _actionType = 'approve';
-                                                    });
-                                                    final ok =
-                                                        await _ctrl
-                                                            .approveInvestorRequest(
-                                                              invId,
-                                                            );
-                                                    if (ok) {
-                                                      await _ctrl
-                                                          .loadManagerInvestors();
-                                                    }
-                                                    if (mounted) {
-                                                      setState(() {
-                                                        _actionInvestorId = null;
-                                                        _actionType = null;
-                                                      });
-                                                    }
-                                                  },
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: AppColors.brandPrimary,
-                                            foregroundColor: AppColors.onColoredBackground,
-                                            elevation: 0,
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.circular(
-                                                10.r,
-                                              ),
-                                            ),
-                                            padding: EdgeInsets.symmetric(
-                                              vertical: 10.h,
+                                    ),
+                                    SizedBox(width: 10.w),
+                                    Expanded(
+                                      child: ElevatedButton(
+                                        onPressed: isActionLoading
+                                            ? null
+                                            : () async {
+                                                setState(() {
+                                                  _actionInvestorId = invId;
+                                                  _actionType = 'approve';
+                                                });
+                                                final ok = await _ctrl
+                                                    .approveInvestorRequest(
+                                                      invId,
+                                                    );
+                                                if (ok) {
+                                                  await _ctrl
+                                                      .loadManagerInvestors();
+                                                }
+                                                if (mounted) {
+                                                  setState(() {
+                                                    _actionInvestorId = null;
+                                                    _actionType = null;
+                                                  });
+                                                }
+                                              },
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor:
+                                              AppColors.brandPrimary,
+                                          foregroundColor:
+                                              AppColors.onColoredBackground,
+                                          elevation: 0,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              10.r,
                                             ),
                                           ),
-                                          child: isActionLoading &&
-                                                  _actionType == 'approve'
-                                              ? SizedBox(
+                                          padding: EdgeInsets.symmetric(
+                                            vertical: 10.h,
+                                          ),
+                                        ),
+                                        child:
+                                            isActionLoading &&
+                                                _actionType == 'approve'
+                                            ? SizedBox(
                                                 height: 16.h,
                                                 width: 16.h,
-                                                child: CircularProgressIndicator(
-                                                  strokeWidth: 2,
-                                                  color: AppColors.onColoredBackground,
-                                                ),
+                                                child:
+                                                    CircularProgressIndicator(
+                                                      strokeWidth: 2,
+                                                      color: AppColors
+                                                          .onColoredBackground,
+                                                    ),
                                               )
-                                              : Text(
+                                            : Text(
                                                 'Approve',
                                                 style: TextStyle(
                                                   fontSize: 13.sp,
                                                   fontWeight: FontWeight.w700,
                                                 ),
                                               ),
+                                      ),
+                                    ),
+                                  ],
+                                )
+                              else
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: OutlinedButton(
+                                    onPressed: () {
+                                      Get.to(
+                                        () => PmamManagerInvestorDetailScreen(
+                                          investorId: invId,
+                                          investorName: name,
+                                        ),
+                                      );
+                                    },
+                                    style: OutlinedButton.styleFrom(
+                                      side: BorderSide(
+                                        color: AppColors.primary,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(
+                                          10.r,
                                         ),
                                       ),
-                                    ],
-                                  )
-                                else
-                                  SizedBox(
-                                    width: double.infinity,
-                                    child: OutlinedButton(
-                                      onPressed: () {
-                                        Get.to(
-                                          () => PmamManagerInvestorDetailScreen(
-                                            investorId: invId,
-                                            investorName: name,
-                                          ),
-                                        );
-                                      },
-                                      style: OutlinedButton.styleFrom(
-                                        side: BorderSide(color: AppColors.primary),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            10.r,
-                                          ),
-                                        ),
-                                        padding: EdgeInsets.symmetric(
-                                          vertical: 10.h,
-                                        ),
+                                      padding: EdgeInsets.symmetric(
+                                        vertical: 10.h,
                                       ),
-                                      child: Text(
-                                        'View',
-                                        style: TextStyle(
-                                          color: AppColors.primary,
-                                          fontSize: 13.sp,
-                                          fontWeight: FontWeight.w700,
-                                        ),
+                                    ),
+                                    child: Text(
+                                      'View',
+                                      style: TextStyle(
+                                        color: AppColors.primary,
+                                        fontSize: 13.sp,
+                                        fontWeight: FontWeight.w700,
                                       ),
                                     ),
                                   ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
+                                ),
+                            ],
+                          ),
+                        );
+                      },
                     ),
+                  ),
           ),
         ],
       );
@@ -675,7 +681,8 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
               default:
                 statusColor = AppColors.textGrey;
             }
-            final isPaused = status == 'paused' ||
+            final isPaused =
+                status == 'paused' ||
                 (p['is_paused'] == 1 || p['is_paused'] == true);
             final canPauseResume = status == 'approved' || isPaused;
             return Container(
@@ -757,11 +764,10 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
                       Expanded(
                         child: OutlinedButton.icon(
                           icon: Icon(Icons.visibility),
-                          onPressed:
-                              () => Get.toNamed(
-                                AppPages.PMAM_MANAGER_PLAN_DETAIL,
-                                arguments: p['id'],
-                              ),
+                          onPressed: () => Get.toNamed(
+                            AppPages.PMAM_MANAGER_PLAN_DETAIL,
+                            arguments: p['id'],
+                          ),
                           style: OutlinedButton.styleFrom(
                             side: BorderSide(color: AppColors.primary),
                             shape: RoundedRectangleBorder(
@@ -769,7 +775,7 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
                             ),
                             padding: EdgeInsets.symmetric(vertical: 8.h),
                           ),
-                           label:  Text(
+                          label: Text(
                             'View',
                             style: TextStyle(
                               color: AppColors.primary,
@@ -797,8 +803,9 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
                             ),
                           ),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                                AppColors.primary.withValues(alpha: 0.1),
+                            backgroundColor: AppColors.primary.withValues(
+                              alpha: 0.1,
+                            ),
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8.r),
@@ -838,10 +845,11 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
                               ),
                             ),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: (isPaused
-                                      ? AppColors.green
-                                      : AppColors.warningText)
-                                  .withValues(alpha: 0.1),
+                              backgroundColor:
+                                  (isPaused
+                                          ? AppColors.green
+                                          : AppColors.warningText)
+                                      .withValues(alpha: 0.1),
                               elevation: 0,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8.r),
@@ -857,7 +865,9 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
                           child: ElevatedButton(
                             onPressed: () => _ctrl.inactivatePlan(p['id'] ?? 0),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.error.withValues(alpha: 0.1),
+                              backgroundColor: AppColors.error.withValues(
+                                alpha: 0.1,
+                              ),
                               elevation: 0,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8.r),
@@ -904,11 +914,11 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
         : 'Pause plan "$planName"?';
     final body = isPaused
         ? 'New investor joins and trade allocations will restart. '
-            'MT5 trading rights on the pool account will be re-enabled.'
+              'MT5 trading rights on the pool account will be re-enabled.'
         : 'New investor joins and new trade allocations will stop.\n\n'
-            'Existing investor positions stay open. While paused, you also '
-            'cannot CLOSE positions on the pool MT5 account — resume the '
-            'plan first to manage open trades.';
+              'Existing investor positions stay open. While paused, you also '
+              'cannot CLOSE positions on the pool MT5 account — resume the '
+              'plan first to manage open trades.';
 
     final confirmed = await showDialog<bool>(
       context: context,
@@ -937,14 +947,15 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
             child: Text(
-              'Cancel',
+              Get.find<LanguageService>().tr('common_cancel'),
               style: TextStyle(color: AppColors.textGrey),
             ),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor:
-                  isPaused ? AppColors.green : AppColors.warningText,
+              backgroundColor: isPaused
+                  ? AppColors.green
+                  : AppColors.warningText,
               foregroundColor: AppColors.onColoredBackground,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8.r),
@@ -1046,23 +1057,24 @@ class _PortalFilterChip extends StatelessWidget {
           border: Border.all(
             color: selected ? AppColors.primary : AppColors.border,
           ),
-          boxShadow:
-              selected
-                  ? [
-                    BoxShadow(
-                      color: AppColors.primary.withOpacity(0.25),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
-                    ),
-                  ]
-                  : [],
+          boxShadow: selected
+              ? [
+                  BoxShadow(
+                    color: AppColors.primary.withOpacity(0.25),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : [],
         ),
         child: Text(
           count > 0 ? '$label ($count)' : label,
           style: TextStyle(
             fontSize: 12.sp,
             fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-            color: selected ? AppColors.onColoredBackground : AppColors.textGrey,
+            color: selected
+                ? AppColors.onColoredBackground
+                : AppColors.textGrey,
           ),
         ),
       ),

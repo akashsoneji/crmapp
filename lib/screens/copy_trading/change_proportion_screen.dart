@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/widgets/labeled_app_text_field.dart';
+import 'package:crm_app/services/language_service.dart';
 
 class ChangeProportionScreen extends StatefulWidget {
   final String traderName;
@@ -30,11 +31,17 @@ class _ChangeProportionScreenState extends State<ChangeProportionScreen> {
         leading: IconButton(
           icon: SvgPicture.asset(
             'assets/svg/trade/arro_back.svg',
-            colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn),
+            colorFilter: ColorFilter.mode(
+              AppColors.textPrimary,
+              BlendMode.srcIn,
+            ),
           ),
           onPressed: () => Get.back(),
         ),
-        title: Text('Change Copy Proportion', style: AppTextStyles.heading),
+        title: Text(
+          TranslationUtils.tr('copy_change_proportion'),
+          style: AppTextStyles.heading,
+        ),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -46,7 +53,7 @@ class _ChangeProportionScreenState extends State<ChangeProportionScreen> {
             _buildBalanceCard(),
             SizedBox(height: 16.h),
             Text(
-              'Copy Proportion',
+              TranslationUtils.tr('copy_proportion'),
               style: TextStyle(
                 fontSize: 16.sp,
                 fontWeight: FontWeight.w600,
@@ -55,9 +62,9 @@ class _ChangeProportionScreenState extends State<ChangeProportionScreen> {
             ),
             SizedBox(height: 16.h),
             LabeledAppTextField(
-              label: 'Enter value',
+              label: TranslationUtils.tr('copy_enter_value'),
               controller: _proportionController,
-              hintText: 'Enter value',
+              hintText: TranslationUtils.tr('copy_enter_value'),
             ),
             SizedBox(height: 100.h), // Spacing as per image
           ],
@@ -73,7 +80,9 @@ class _ChangeProportionScreenState extends State<ChangeProportionScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'New copy proportion : ${_proportionController.text}',
+              TranslationUtils.tr(
+                'copy_new_proportion',
+              ).replaceFirst('{value}', _proportionController.text),
               style: TextStyle(
                 fontSize: 14.sp,
                 color: AppColors.textPrimary,
@@ -94,7 +103,7 @@ class _ChangeProportionScreenState extends State<ChangeProportionScreen> {
                   elevation: 0,
                 ),
                 child: Text(
-                  'Apply new Proportion',
+                  TranslationUtils.tr('copy_apply_new_proportion'),
                   style: TextStyle(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w600,
@@ -123,7 +132,7 @@ class _ChangeProportionScreenState extends State<ChangeProportionScreen> {
             SvgPicture.asset('assets/svg/copy_trading/person_svg.svg'),
             SizedBox(width: 12),
             Text(
-              'Prime_traders',
+              TranslationUtils.tr('copy_prime_traders'),
               style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
             ),
           ],
@@ -144,7 +153,7 @@ class _ChangeProportionScreenState extends State<ChangeProportionScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            'Balance',
+            TranslationUtils.tr('balance'),
             style: TextStyle(
               fontSize: 16.sp,
               fontWeight: FontWeight.w600,

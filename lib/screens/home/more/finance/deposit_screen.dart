@@ -75,9 +75,12 @@ class _DepositScreenState extends State<DepositScreen> {
           padding: EdgeInsets.only(left: 10.w),
           child: IconButton(
             icon: SvgPicture.asset(
-            "assets/svg/trade/arro_back.svg",
-            colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn),
-          ),
+              "assets/svg/trade/arro_back.svg",
+              colorFilter: ColorFilter.mode(
+                AppColors.textPrimary,
+                BlendMode.srcIn,
+              ),
+            ),
             onPressed: () => NavigationHelper.safeBack(context: context),
           ),
         ),
@@ -151,7 +154,7 @@ class _DepositScreenState extends State<DepositScreen> {
         _SingleDecimalTextFormatter(),
       ],
       decoration: InputDecoration(
-        labelText: 'Amount',
+        labelText: languageService.tr('amount'),
         contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -199,7 +202,9 @@ class _DepositScreenState extends State<DepositScreen> {
     // Show loading
 
     if (amountController.text.isEmpty || amountController.text == "0.00") {
-      CustomToastService.showError(message: 'Please enter a valid amount');
+      CustomToastService.showError(
+        message: languageService.tr('deposit_valid_amount_required'),
+      );
       return;
     }
 
@@ -218,92 +223,88 @@ class _DepositScreenState extends State<DepositScreen> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder:
-          (context) => Container(
-            padding: EdgeInsets.all(24.w),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 40.w,
-                  height: 4.h,
-                  decoration: BoxDecoration(
-                    color: AppColors.border,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                SizedBox(height: 24.h),
-                Text(
-                  'Select Payment Mode',
-                  style: TextStyle(
-                    fontSize: 18.sp,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                SizedBox(height: 24.h),
-                Container(
-                  height: 200.h,
-                  child: ListView.builder(
-                    itemCount: paymentModes.length,
-                    itemBuilder: (context, index) {
-                      final mode = paymentModes[index];
-                      final isSelected = mode == selectedPaymentMode;
-
-                      return InkWell(
-                        onTap: () {
-                          setState(() {
-                            selectedPaymentMode = mode;
-                            paymentModeController.text = mode;
-                          });
-                          Navigator.pop(context);
-                        },
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                            vertical: 16.h,
-                            horizontal: 16.w,
-                          ),
-                          decoration: BoxDecoration(
-                            color:
-                                isSelected
-                                    ? AppColors.primary.withOpacity(0.1)
-                                    : null,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  mode,
-                                  style: TextStyle(
-                                    fontSize: 16.sp,
-                                    color:
-                                        isSelected
-                                            ? AppColors.primary
-                                            : AppColors.textPrimary,
-                                    fontWeight:
-                                        isSelected
-                                            ? FontWeight.w600
-                                            : FontWeight.w400,
-                                  ),
-                                ),
-                              ),
-                              if (isSelected)
-                                Icon(
-                                  Icons.check,
-                                  color: AppColors.primary,
-                                  size: 20,
-                                ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
+      builder: (context) => Container(
+        padding: EdgeInsets.all(24.w),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40.w,
+              height: 4.h,
+              decoration: BoxDecoration(
+                color: AppColors.border,
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
-          ),
+            SizedBox(height: 24.h),
+            Text(
+              languageService.tr('deposit_select_payment_mode'),
+              style: TextStyle(
+                fontSize: 18.sp,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            SizedBox(height: 24.h),
+            Container(
+              height: 200.h,
+              child: ListView.builder(
+                itemCount: paymentModes.length,
+                itemBuilder: (context, index) {
+                  final mode = paymentModes[index];
+                  final isSelected = mode == selectedPaymentMode;
+
+                  return InkWell(
+                    onTap: () {
+                      setState(() {
+                        selectedPaymentMode = mode;
+                        paymentModeController.text = mode;
+                      });
+                      Navigator.pop(context);
+                    },
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        vertical: 16.h,
+                        horizontal: 16.w,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? AppColors.primary.withOpacity(0.1)
+                            : null,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              mode,
+                              style: TextStyle(
+                                fontSize: 16.sp,
+                                color: isSelected
+                                    ? AppColors.primary
+                                    : AppColors.textPrimary,
+                                fontWeight: isSelected
+                                    ? FontWeight.w600
+                                    : FontWeight.w400,
+                              ),
+                            ),
+                          ),
+                          if (isSelected)
+                            Icon(
+                              Icons.check,
+                              color: AppColors.primary,
+                              size: 20,
+                            ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -314,92 +315,88 @@ class _DepositScreenState extends State<DepositScreen> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder:
-          (context) => Container(
-            padding: EdgeInsets.all(24.w),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 40.w,
-                  height: 4.h,
-                  decoration: BoxDecoration(
-                    color: AppColors.border,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                SizedBox(height: 24.h),
-                Text(
-                  'Select Account',
-                  style: TextStyle(
-                    fontSize: 18.sp,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                SizedBox(height: 24.h),
-                Container(
-                  height: 200.h,
-                  child: ListView.builder(
-                    itemCount: accounts.length,
-                    itemBuilder: (context, index) {
-                      final account = accounts[index];
-                      final isSelected = account == selectedAccount;
-
-                      return InkWell(
-                        onTap: () {
-                          setState(() {
-                            selectedAccount = account;
-                            transferToController.text = '$account MT5 0.00 USD';
-                          });
-                          Navigator.pop(context);
-                        },
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                            vertical: 16.h,
-                            horizontal: 16.w,
-                          ),
-                          decoration: BoxDecoration(
-                            color:
-                                isSelected
-                                    ? AppColors.primary.withOpacity(0.1)
-                                    : null,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  '$account MT5',
-                                  style: TextStyle(
-                                    fontSize: 16.sp,
-                                    color:
-                                        isSelected
-                                            ? AppColors.primary
-                                            : AppColors.textPrimary,
-                                    fontWeight:
-                                        isSelected
-                                            ? FontWeight.w600
-                                            : FontWeight.w400,
-                                  ),
-                                ),
-                              ),
-                              if (isSelected)
-                                Icon(
-                                  Icons.check,
-                                  color: AppColors.primary,
-                                  size: 20,
-                                ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
+      builder: (context) => Container(
+        padding: EdgeInsets.all(24.w),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40.w,
+              height: 4.h,
+              decoration: BoxDecoration(
+                color: AppColors.border,
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
-          ),
+            SizedBox(height: 24.h),
+            Text(
+              languageService.tr('deposit_select_account'),
+              style: TextStyle(
+                fontSize: 18.sp,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            SizedBox(height: 24.h),
+            Container(
+              height: 200.h,
+              child: ListView.builder(
+                itemCount: accounts.length,
+                itemBuilder: (context, index) {
+                  final account = accounts[index];
+                  final isSelected = account == selectedAccount;
+
+                  return InkWell(
+                    onTap: () {
+                      setState(() {
+                        selectedAccount = account;
+                        transferToController.text = '$account MT5 0.00 USD';
+                      });
+                      Navigator.pop(context);
+                    },
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        vertical: 16.h,
+                        horizontal: 16.w,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? AppColors.primary.withOpacity(0.1)
+                            : null,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              '$account MT5',
+                              style: TextStyle(
+                                fontSize: 16.sp,
+                                color: isSelected
+                                    ? AppColors.primary
+                                    : AppColors.textPrimary,
+                                fontWeight: isSelected
+                                    ? FontWeight.w600
+                                    : FontWeight.w400,
+                              ),
+                            ),
+                          ),
+                          if (isSelected)
+                            Icon(
+                              Icons.check,
+                              color: AppColors.primary,
+                              size: 20,
+                            ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

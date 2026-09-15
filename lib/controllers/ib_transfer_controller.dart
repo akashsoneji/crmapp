@@ -1,6 +1,7 @@
 import 'package:crm_app/constants/api_const.dart';
 import 'package:crm_app/models/ib_transfer_models.dart';
 import 'package:crm_app/services/api_service.dart';
+import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
 import 'package:get/get.dart';
 
@@ -21,14 +22,16 @@ class IbTransferController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    // Fetching is handled explicitly in the view's initState to ensure 
+    // Fetching is handled explicitly in the view's initState to ensure
     // it refreshes every time the screen is opened, not just on controller creation.
   }
 
   Future<void> fetchInitData() async {
     try {
       isLoadingInit.value = true;
-      final response = await ApiService.get(endpoint: ApiConstants.ibTransferCreate);
+      final response = await ApiService.get(
+        endpoint: ApiConstants.ibTransferCreate,
+      );
       if (response.success && response.data != null) {
         initData.value = IbTransferInitResponse.fromJson(response.data!);
       }
@@ -74,18 +77,28 @@ class IbTransferController extends GetxController {
         data: payload,
       );
       if (response.success) {
-        CustomToastService.showSuccess(message: response.message ?? 'Transfer request submitted successfully.');
+        CustomToastService.showSuccess(
+          message:
+              response.message ??
+              Get.find<LanguageService>().tr('ib_transfer_submitted'),
+        );
         // Refresh balance and history
         fetchInitData();
         fetchHistory(refresh: true);
         return true;
       } else {
-        CustomToastService.showError(message: response.message ?? 'Failed to submit transfer request.');
+        CustomToastService.showError(
+          message:
+              response.message ??
+              Get.find<LanguageService>().tr('ib_transfer_submit_failed'),
+        );
         return false;
       }
     } catch (e) {
       print('Error submitting transfer: \$e');
-      CustomToastService.showError(message: 'An error occurred while submitting the request.');
+      CustomToastService.showError(
+        message: Get.find<LanguageService>().tr('ib_transfer_submit_error'),
+      );
       return false;
     } finally {
       isSubmitting.value = false;
@@ -110,7 +123,7 @@ class IbTransferController extends GetxController {
       if (response.success && response.data != null) {
         final parsed = IbTransferHistoryResponse.fromJson(response.data!);
         final newItems = parsed.data?.data ?? [];
-        
+
         if (refresh) {
           historyData.value = newItems;
         } else {
@@ -137,17 +150,27 @@ class IbTransferController extends GetxController {
         endpoint: '\${ApiConstants.ibTransferCancel}\$transferId/cancel',
       );
       if (response.success) {
-        CustomToastService.showSuccess(message: response.message ?? 'Transfer cancelled successfully.');
+        CustomToastService.showSuccess(
+          message:
+              response.message ??
+              Get.find<LanguageService>().tr('ib_transfer_cancelled'),
+        );
         fetchHistory(refresh: true);
         fetchInitData();
         return true;
       } else {
-        CustomToastService.showError(message: response.message ?? 'Failed to cancel transfer.');
+        CustomToastService.showError(
+          message:
+              response.message ??
+              Get.find<LanguageService>().tr('ib_transfer_cancel_failed'),
+        );
         return false;
       }
     } catch (e) {
       print('Error cancelling transfer: \$e');
-      CustomToastService.showError(message: 'An error occurred while cancelling the request.');
+      CustomToastService.showError(
+        message: Get.find<LanguageService>().tr('ib_transfer_cancel_error'),
+      );
       return false;
     } finally {
       isCancelling.value = false;

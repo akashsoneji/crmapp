@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:get/get.dart';
+import 'package:crm_app/services/language_service.dart';
 
 class CopyTradingPaymentMethodsScreen extends StatelessWidget {
   const CopyTradingPaymentMethodsScreen({super.key});
@@ -19,7 +20,7 @@ class CopyTradingPaymentMethodsScreen extends StatelessWidget {
         title: Column(
           children: [
             Text(
-              'Payment Methods',
+              TranslationUtils.tr('copy_payment_methods'),
               style: AppTextStyles.heading.copyWith(
                 fontWeight: FontWeight.w600,
               ),
@@ -138,7 +139,9 @@ class _PaymentMethodTile extends StatelessWidget {
             decoration: BoxDecoration(
               color: AppColors.whiteColor,
               borderRadius: BorderRadius.circular(8.r),
-              border: Border.all(color: AppColors.border.withValues(alpha: 0.1)),
+              border: Border.all(
+                color: AppColors.border.withValues(alpha: 0.1),
+              ),
             ),
             child: Icon(icon, color: iconColor, size: 24.r),
           ),

@@ -55,10 +55,9 @@ class ChartScreen extends StatefulWidget {
   static void setSelectedSymbol(String symbol) {
     print("🚀 ChartScreen: setSelectedSymbol called with: $symbol");
     try {
-      final selectionService =
-          Get.isRegistered<SymbolSelectionService>()
-              ? Get.find<SymbolSelectionService>()
-              : Get.put(SymbolSelectionService(), permanent: true);
+      final selectionService = Get.isRegistered<SymbolSelectionService>()
+          ? Get.find<SymbolSelectionService>()
+          : Get.put(SymbolSelectionService(), permanent: true);
       selectionService.setSymbol(symbol);
       _selectedSymbolNotifier.value = symbol;
       print("🚀 ChartScreen: Symbol successfully set to: $symbol");
@@ -305,14 +304,12 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
     try {
       print('🚀 ChartScreen: Initializing...');
 
-      symbolSelectionService =
-          Get.isRegistered<SymbolSelectionService>()
-              ? Get.find<SymbolSelectionService>()
-              : Get.put(SymbolSelectionService(), permanent: true);
-      selectedSymbol =
-          symbolSelectionService.currentSymbol.isNotEmpty
-              ? symbolSelectionService.currentSymbol
-              : 'XAUUSD';
+      symbolSelectionService = Get.isRegistered<SymbolSelectionService>()
+          ? Get.find<SymbolSelectionService>()
+          : Get.put(SymbolSelectionService(), permanent: true);
+      selectedSymbol = symbolSelectionService.currentSymbol.isNotEmpty
+          ? symbolSelectionService.currentSymbol
+          : 'XAUUSD';
       ChartScreen._selectedSymbolNotifier.value = selectedSymbol;
       _loadPersistedSymbol();
 
@@ -481,22 +478,21 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
         _lastTradesSignature = signature;
 
         // Serialize only necessary data for the chart
-        final tradesList =
-            positions
-                .map(
-                  (p) => {
-                    'id': p.orderId,
-                    'symbol': p.symbol,
-                    'price': double.tryParse(p.entryPrice) ?? 0.0,
-                    'type': p.action.toLowerCase(),
-                    'volume': p.volume,
-                    'sl': double.tryParse(p.stopLoss) ?? 0.0,
-                    'tp': double.tryParse(p.takeProfit) ?? 0.0,
-                    'profit': p.profitLoss,
-                    'accountId': p.accountId,
-                  },
-                )
-                .toList();
+        final tradesList = positions
+            .map(
+              (p) => {
+                'id': p.orderId,
+                'symbol': p.symbol,
+                'price': double.tryParse(p.entryPrice) ?? 0.0,
+                'type': p.action.toLowerCase(),
+                'volume': p.volume,
+                'sl': double.tryParse(p.stopLoss) ?? 0.0,
+                'tp': double.tryParse(p.takeProfit) ?? 0.0,
+                'profit': p.profitLoss,
+                'accountId': p.accountId,
+              },
+            )
+            .toList();
 
         final jsonString = jsonEncode(tradesList);
         _webViewKey.currentState?.updateNativeTrades(jsonString);
@@ -710,10 +706,9 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
             break;
           default:
             // Fallback based on simple toggle
-            orderType =
-                _selectedPendingOrderType.value == 0
-                    ? OrderType.sellLimit
-                    : OrderType.buyLimit;
+            orderType = _selectedPendingOrderType.value == 0
+                ? OrderType.sellLimit
+                : OrderType.buyLimit;
         }
       }
 
@@ -722,10 +717,9 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
 
       // Get decimal digits from price data (default 5 for forex)
       final priceData = chartSocketController.getCurrentPrice();
-      final decimals =
-          priceData != null && priceData.containsKey('digits')
-              ? (int.tryParse(priceData['digits'].toString()) ?? 5)
-              : 5;
+      final decimals = priceData != null && priceData.containsKey('digits')
+          ? (int.tryParse(priceData['digits'].toString()) ?? 5)
+          : 5;
 
       // Price logic for different order types:
       // For Stop Limit orders: price is the Trigger Price, stopLimitPrice is the Limit Price.
@@ -755,21 +749,19 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
         }
       }
 
-      final takeProfit =
-          _takeProfitEnabled.value
-              ? PrecisionHelper.formatPrice(
-                _takeProfitPrice.value,
-                decimals: decimals,
-              )
-              : null;
+      final takeProfit = _takeProfitEnabled.value
+          ? PrecisionHelper.formatPrice(
+              _takeProfitPrice.value,
+              decimals: decimals,
+            )
+          : null;
 
-      final stopLoss =
-          _stopLossEnabled.value
-              ? PrecisionHelper.formatPrice(
-                _stopLossPrice.value,
-                decimals: decimals,
-              )
-              : null;
+      final stopLoss = _stopLossEnabled.value
+          ? PrecisionHelper.formatPrice(
+              _stopLossPrice.value,
+              decimals: decimals,
+            )
+          : null;
 
       // Log the order attempt
       AppLogger.order('''
@@ -810,8 +802,8 @@ Placing Order:
 
         // Show success message (non-blocking)
         CustomToastService.showSuccess(
-          title: 'Success',
-          message: 'Order placed successfully',
+          title: TranslationUtils.tr('common_success'),
+          message: TranslationUtils.tr('chart_order_placed_success'),
         );
 
         // Pre-connect WebSocket in background (non-blocking, fire and forget)
@@ -833,16 +825,21 @@ Placing Order:
         // Show error message from TradingController
         final errorMessage = tradingController.errorMessage;
         CustomToastService.showError(
-          title: 'Error',
-          message:
-              errorMessage.isNotEmpty ? errorMessage : 'Failed to place order',
+          title: TranslationUtils.trf('common_error', 'Error'),
+          message: errorMessage.isNotEmpty
+              ? errorMessage
+              : TranslationUtils.trf(
+                  'chart_order_place_failed',
+                  'Failed to place order',
+                ),
         );
       }
     } catch (e) {
       AppLogger.error('Exception in _placePendingOrder: $e', error: e);
       CustomToastService.showError(
-        title: 'Error',
-        message: 'Failed to place order: $e',
+        title: TranslationUtils.trf('common_error', 'Error'),
+        message:
+            '${TranslationUtils.trf('chart_order_place_failed', 'Failed to place order')}: $e',
       );
     } finally {
       // Always reset the flag
@@ -900,7 +897,8 @@ Placing Order:
     setState(() {
       selectedSymbol = newSymbol;
       _datafeedSymbolForSelected = ''; // force prop change in ChartInAppWebView
-      _lastSymbolForDatafeedLookup = ''; // allow fresh datafeed lookup for new symbol
+      _lastSymbolForDatafeedLookup =
+          ''; // allow fresh datafeed lookup for new symbol
       _isFetchingDatafeedSymbol = false;
     });
     symbolSelectionService.setSymbol(newSymbol);
@@ -1031,10 +1029,9 @@ Placing Order:
 
     // Get digits from socket data
     final priceData = chartSocketController.getCurrentPrice();
-    final digits =
-        priceData != null && priceData.containsKey('digits')
-            ? (int.tryParse(priceData['digits'].toString()) ?? 5)
-            : 5;
+    final digits = priceData != null && priceData.containsKey('digits')
+        ? (int.tryParse(priceData['digits'].toString()) ?? 5)
+        : 5;
 
     print(
       "Chart: Showing price alert dialog for ${selectedSymbol} at price ${currentPrice} with ${digits} digits",
@@ -1050,12 +1047,11 @@ Placing Order:
       isDismissible: true,
       enableDrag: true,
       useSafeArea: true, // Ensure dialog is visible above keyboard
-      builder:
-          (context) => PriceAlertDialog(
-            symbol: selectedSymbol,
-            currentPrice: currentPrice,
-            digits: digits, // Pass digits from socket
-          ),
+      builder: (context) => PriceAlertDialog(
+        symbol: selectedSymbol,
+        currentPrice: currentPrice,
+        digits: digits, // Pass digits from socket
+      ),
     );
   }
 
@@ -1069,198 +1065,190 @@ Placing Order:
 
       showDialog(
         context: context,
-        builder:
-            (context) => AlertDialog(
-              title: Text('Price Debug Info'),
-              content: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
+        builder: (context) => AlertDialog(
+          title: Text(TranslationUtils.tr('price_debug_info')),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Symbol: $selectedSymbol',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  'Bid Price (SELL): ${PrecisionHelper.formatPrice(bidPrice, decimals: _getCurrentDigits())}',
+                ),
+                Text(
+                  'Ask Price (BUY): ${PrecisionHelper.formatPrice(askPrice, decimals: _getCurrentDigits())}',
+                ),
+                Text(
+                  'Market Price (Alert): ${PrecisionHelper.formatPrice(marketPrice, decimals: _getCurrentDigits())}',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.blue,
+                  ),
+                ),
+                SizedBox(height: 16),
+                Text(
+                  'Monitoring Status:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                Text('Active: ${status['isMonitoring']}'),
+                Text('Active Alerts: ${status['activeAlertsCount']}'),
+                SizedBox(height: 16),
+                if (status['alerts'] != null &&
+                    (status['alerts'] as List).isNotEmpty) ...[
+                  Text(
+                    'Active Alerts:',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  ...(status['alerts'] as List).map(
+                    (alert) => Padding(
+                      padding: EdgeInsets.only(left: 8, top: 4),
+                      child: Text(
+                        '${alert['symbol']} ${alert['condition']} ${PrecisionHelper.formatPrice(alert['targetPrice'] ?? 0.0, decimals: _getCurrentDigits())}',
+                      ),
+                    ),
+                  ),
+                ] else
+                  Text(
+                    Get.find<LanguageService>().tr('common_no_data'),
+                    style: TextStyle(color: AppColors.textGrey),
+                  ),
+                SizedBox(height: 16),
+                Text(
+                  'Test Actions:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                SizedBox(height: 8),
+                Row(
                   children: [
-                    Text(
-                      'Symbol: $selectedSymbol',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    SizedBox(height: 8),
-                    Text(
-                      'Bid Price (SELL): ${PrecisionHelper.formatPrice(bidPrice, decimals: _getCurrentDigits())}',
-                    ),
-                    Text(
-                      'Ask Price (BUY): ${PrecisionHelper.formatPrice(askPrice, decimals: _getCurrentDigits())}',
-                    ),
-                    Text(
-                      'Market Price (Alert): ${PrecisionHelper.formatPrice(marketPrice, decimals: _getCurrentDigits())}',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.blue,
-                      ),
-                    ),
-                    SizedBox(height: 16),
-                    Text(
-                      'Monitoring Status:',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    Text('Active: ${status['isMonitoring']}'),
-                    Text('Active Alerts: ${status['activeAlertsCount']}'),
-                    SizedBox(height: 16),
-                    if (status['alerts'] != null &&
-                        (status['alerts'] as List).isNotEmpty) ...[
-                      Text(
-                        'Active Alerts:',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      ...(status['alerts'] as List).map(
-                        (alert) => Padding(
-                          padding: EdgeInsets.only(left: 8, top: 4),
-                          child: Text(
-                            '${alert['symbol']} ${alert['condition']} ${PrecisionHelper.formatPrice(alert['targetPrice'] ?? 0.0, decimals: _getCurrentDigits())}',
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          Navigator.pop(context);
+                          final monitorService =
+                              Get.find<PriceAlertMonitorService>();
+                          await monitorService.addTestAlert(
+                            selectedSymbol,
+                            1.80950,
+                            'above',
+                          );
+                          if (Get.isRegistered<AppNotificationController>()) {
+                            Get.find<AppNotificationController>().showInfo(
+                              message:
+                                  'Test alert added: $selectedSymbol above 1.80950',
+                            );
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.blue,
+                        ),
+                        child: Text(
+                          'Add Test Alert\n(1.80950 above)',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: AppColors.whiteColor,
                           ),
                         ),
                       ),
-                    ] else
-                      Text(
-                        'No active alerts',
-                        style: TextStyle(color: AppColors.textGrey),
+                    ),
+                    SizedBox(width: 4),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          Navigator.pop(context);
+                          final monitorService =
+                              Get.find<PriceAlertMonitorService>();
+                          await monitorService.testTriggerAlert(
+                            selectedSymbol,
+                            marketPrice,
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.warning,
+                        ),
+                        child: Text(
+                          'Test Trigger\nNow',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: AppColors.whiteColor,
+                          ),
+                        ),
                       ),
-                    SizedBox(height: 16),
-                    Text(
-                      'Test Actions:',
-                      style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: () async {
-                              Navigator.pop(context);
-                              final monitorService =
-                                  Get.find<PriceAlertMonitorService>();
-                              await monitorService.addTestAlert(
-                                selectedSymbol,
-                                1.80950,
-                                'above',
-                              );
-                              if (Get.isRegistered<
-                                AppNotificationController
-                              >()) {
-                                Get.find<AppNotificationController>().showInfo(
-                                  message:
-                                      'Test alert added: $selectedSymbol above 1.80950',
-                                );
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.blue,
-                            ),
-                            child: Text(
-                              'Add Test Alert\n(1.80950 above)',
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: AppColors.whiteColor,
-                              ),
-                            ),
+                    SizedBox(width: 4),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          Navigator.pop(context);
+                          final monitorService =
+                              Get.find<PriceAlertMonitorService>();
+                          await monitorService.testNotificationSystem();
+                          if (Get.isRegistered<AppNotificationController>()) {
+                            Get.find<AppNotificationController>().showSuccess(
+                              message: 'Test notification sent!',
+                            );
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.green,
+                        ),
+                        child: Text(
+                          'Test Notification\nSystem',
+                          style: TextStyle(
+                            fontSize: 9,
+                            color: AppColors.whiteColor,
                           ),
                         ),
-                        SizedBox(width: 4),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: () async {
-                              Navigator.pop(context);
-                              final monitorService =
-                                  Get.find<PriceAlertMonitorService>();
-                              await monitorService.testTriggerAlert(
-                                selectedSymbol,
-                                marketPrice,
-                              );
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.warning,
-                            ),
-                            child: Text(
-                              'Test Trigger\nNow',
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: AppColors.whiteColor,
-                              ),
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: 4),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: () async {
-                              Navigator.pop(context);
-                              final monitorService =
-                                  Get.find<PriceAlertMonitorService>();
-                              await monitorService.testNotificationSystem();
-                              if (Get.isRegistered<
-                                AppNotificationController
-                              >()) {
-                                Get.find<AppNotificationController>()
-                                    .showSuccess(
-                                      message: 'Test notification sent!',
-                                    );
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.green,
-                            ),
-                            child: Text(
-                              'Test Notification\nSystem',
-                              style: TextStyle(
-                                fontSize: 9,
-                                color: AppColors.whiteColor,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: () async {
-                              Navigator.pop(context);
-                              final monitorService =
-                                  Get.find<PriceAlertMonitorService>();
-                              await monitorService.ensureChartSocketConnected(
-                                selectedSymbol,
-                              );
-                              if (Get.isRegistered<
-                                AppNotificationController
-                              >()) {
-                                Get.find<AppNotificationController>().showInfo(
-                                  message: 'ChartSocket connection checked!',
-                                );
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.quickActionPurple,
-                            ),
-                            child: Text(
-                              'Fix WebSocket\nConnection',
-                              style: TextStyle(
-                                fontSize: 9,
-                                color: AppColors.whiteColor,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ],
                 ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text('Close'),
+                SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          Navigator.pop(context);
+                          final monitorService =
+                              Get.find<PriceAlertMonitorService>();
+                          await monitorService.ensureChartSocketConnected(
+                            selectedSymbol,
+                          );
+                          if (Get.isRegistered<AppNotificationController>()) {
+                            Get.find<AppNotificationController>().showInfo(
+                              message: 'ChartSocket connection checked!',
+                            );
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.quickActionPurple,
+                        ),
+                        child: Text(
+                          'Fix WebSocket\nConnection',
+                          style: TextStyle(
+                            fontSize: 9,
+                            color: AppColors.whiteColor,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Close'),
+            ),
+          ],
+        ),
       );
     } catch (e) {
       if (Get.isRegistered<AppNotificationController>()) {
@@ -1311,10 +1299,9 @@ Placing Order:
   /// Returns path like 'assets/svg/flags/eurusd.svg'
   String _getFlagPath(String symbol) {
     // Remove suffix if present (e.g., EURUSD.c -> EURUSD)
-    String cleanSymbol =
-        symbol.contains('.')
-            ? symbol.substring(0, symbol.lastIndexOf('.'))
-            : symbol;
+    String cleanSymbol = symbol.contains('.')
+        ? symbol.substring(0, symbol.lastIndexOf('.'))
+        : symbol;
 
     // Return path with full symbol lowercase
     return 'assets/svg/flags/${cleanSymbol.toLowerCase()}.svg';
@@ -1505,10 +1492,9 @@ Placing Order:
 
     // ✅ FIX: If no symbol from instrument screen and selectedSymbol is empty, use XAUUSD default
     if (selectedSymbol.isEmpty && mounted) {
-      final defaultSymbol =
-          cachedSymbol.isNotEmpty
-              ? cachedSymbol
-              : ChartScreen._selectedSymbolNotifier.value;
+      final defaultSymbol = cachedSymbol.isNotEmpty
+          ? cachedSymbol
+          : ChartScreen._selectedSymbolNotifier.value;
       if (defaultSymbol.isNotEmpty) {
         print(
           '📊 Chart Screen: No symbol set, using default cached/notifier: $defaultSymbol',
@@ -1585,13 +1571,13 @@ Placing Order:
     // so on iOS we only add the visible tab-bar height — NOT the safe area again,
     // which previously produced a large empty gap.
     final bool isIOS = Theme.of(context).platform == TargetPlatform.iOS;
-    final double navBarHeight =
-        isIOS
-            ? 56.h // iOS native floating tab-bar height (safe area handled by SafeArea)
-            : 45.h + // Item height
-                16.h + // Internal vertical padding (8.h * 2)
-                8.h + // Outer bottom padding
-                MediaQuery.of(context).padding.bottom; // Safe area
+    final double navBarHeight = isIOS
+        ? 56
+              .h // iOS native floating tab-bar height (safe area handled by SafeArea)
+        : 45.h + // Item height
+              16.h + // Internal vertical padding (8.h * 2)
+              8.h + // Outer bottom padding
+              MediaQuery.of(context).padding.bottom; // Safe area
 
     return Scaffold(
       // Resize so the on-screen keyboard (e.g. TradingView text/annotation
@@ -1608,12 +1594,11 @@ Placing Order:
 
                 // Chart Area - Responsive height
                 Expanded(
-                  flex:
-                      isSmallScreen
-                          ? 3
-                          : isLargeScreen
-                          ? 4
-                          : 3,
+                  flex: isSmallScreen
+                      ? 3
+                      : isLargeScreen
+                      ? 4
+                      : 3,
                   child: _buildChartArea(),
                 ),
 
@@ -1845,26 +1830,26 @@ Placing Order:
         );
         if (!mounted) return;
 
-        final resolvedDatafeedSymbol =
-            (details?['datafeed_symbol'] ?? '').toString();
+        final resolvedDatafeedSymbol = (details?['datafeed_symbol'] ?? '')
+            .toString();
 
         // Avoid applying stale results if symbol changed during fetch.
         if (symbolToLookup != _lastSymbolForDatafeedLookup) return;
 
         setState(() {
           // If API value isn't available, fallback to display symbol.
-          _datafeedSymbolForSelected =
-              resolvedDatafeedSymbol.isNotEmpty ? resolvedDatafeedSymbol : displaySymbol;
+          _datafeedSymbolForSelected = resolvedDatafeedSymbol.isNotEmpty
+              ? resolvedDatafeedSymbol
+              : displaySymbol;
           _isFetchingDatafeedSymbol = false;
         });
       });
     }
 
     // Use resolved datafeed symbol if available, else displaySymbol.
-    final effectiveDatafeedSymbol =
-        _datafeedSymbolForSelected.isNotEmpty
-            ? _datafeedSymbolForSelected
-            : displaySymbol;
+    final effectiveDatafeedSymbol = _datafeedSymbolForSelected.isNotEmpty
+        ? _datafeedSymbolForSelected
+        : displaySymbol;
 
     // Use stable URL and stable webViewKey to prevent full page reloads on symbol change
     final chartUrl =
@@ -1877,13 +1862,13 @@ Placing Order:
       margin: EdgeInsets.zero,
       child: ChartInAppWebView(
         key: _webViewKey,
-        symbol: effectiveDatafeedSymbol, // JS-updated for fast in-session switches
-        url: chartUrl,                   // stable URL triggers fast JS updates under didUpdateWidget
+        symbol:
+            effectiveDatafeedSymbol, // JS-updated for fast in-session switches
+        url:
+            chartUrl, // stable URL triggers fast JS updates under didUpdateWidget
       ),
     );
   }
-
-
 
   /// Build notification stack overlay (only shown when one-click trading is enabled)
   /// NOTE: Notifications are now handled globally via AppNotificationStack in main.dart
@@ -2102,7 +2087,8 @@ Placing Order:
           child: ClipRRect(
             borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
             child: SearchInstrumentsScreen(
-              favoritesOnly: true, // Only show favourites, hide segments & add button
+              favoritesOnly:
+                  true, // Only show favourites, hide segments & add button
               onNavigateToChart: (symbol) {
                 _onSymbolChanged(symbol);
               },
@@ -2112,7 +2098,6 @@ Placing Order:
       },
     );
   }
-
 
   Widget _buildInteractiveIcons() {
     return Padding(
@@ -2135,10 +2120,9 @@ Placing Order:
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(7.r),
-                color:
-                    AppColors.isDarkMode
-                        ? AppColors.primary.withOpacity(0.1)
-                        : AppColors.primary,
+                color: AppColors.isDarkMode
+                    ? AppColors.primary.withOpacity(0.1)
+                    : AppColors.primary,
               ),
               child: Text(
                 languageService.tr('chart_pending_order_header'),
@@ -2266,8 +2250,8 @@ Placing Order:
                       });
                       // Check if One Click Trading is enabled
                       final oneClickService = OneClickTradingService.instance;
-                      final isOneClickEnabled =
-                          await oneClickService.isOneClickTradingEnabled();
+                      final isOneClickEnabled = await oneClickService
+                          .isOneClickTradingEnabled();
 
                       if (isOneClickEnabled) {
                         // Add notification immediately with loading status
@@ -2286,22 +2270,23 @@ Placing Order:
                           symbol: selectedSymbol,
                           volume: volume,
                           notificationId: notificationId,
-                          onTradeComplete: (
-                            id,
-                            symbol,
-                            type,
-                            volume,
-                            isSuccess,
-                            errorMessage,
-                          ) {
-                            // Update notification status when trade completes
-                            notificationController
-                                .updateTradingNotificationStatus(
-                                  id: id,
-                                  isSuccess: isSuccess,
-                                  errorMessage: errorMessage,
-                                );
-                          },
+                          onTradeComplete:
+                              (
+                                id,
+                                symbol,
+                                type,
+                                volume,
+                                isSuccess,
+                                errorMessage,
+                              ) {
+                                // Update notification status when trade completes
+                                notificationController
+                                    .updateTradingNotificationStatus(
+                                      id: id,
+                                      isSuccess: isSuccess,
+                                      errorMessage: errorMessage,
+                                    );
+                              },
                         );
                         return; // Exit immediately, trade will process in background
                       }
@@ -2361,34 +2346,32 @@ Placing Order:
                           final positionIdValue =
                               responseData?['position_id'] ??
                               deal?['PositionID'];
-                          final positionId =
-                              positionIdValue != null
-                                  ? positionIdValue.toString()
-                                  : 'N/A';
+                          final positionId = positionIdValue != null
+                              ? positionIdValue.toString()
+                              : 'N/A';
 
                           // Extract order_id from data.order_id
                           final orderIdValue =
                               responseData?['order_id'] ?? deal?['Deal'];
-                          final orderId =
-                              orderIdValue != null
-                                  ? orderIdValue.toString()
-                                  : 'N/A';
+                          final orderId = orderIdValue != null
+                              ? orderIdValue.toString()
+                              : 'N/A';
 
                           // Extract execution price from deal.Price (ONLY from API response)
                           final priceValue =
                               deal?['Price'] ?? responseData?['price'];
-                          final executionPrice =
-                              priceValue != null ? priceValue.toString() : null;
+                          final executionPrice = priceValue != null
+                              ? priceValue.toString()
+                              : null;
 
                           // Extract symbol from deal.Symbol or use selectedSymbol
                           final symbolFromResponse =
                               deal?['Symbol']?.toString() ?? selectedSymbol;
 
                           // Convert execution price to double (ONLY from API, no fallback to old prices)
-                          final executionPriceDouble =
-                              executionPrice != null
-                                  ? double.tryParse(executionPrice)
-                                  : null;
+                          final executionPriceDouble = executionPrice != null
+                              ? double.tryParse(executionPrice)
+                              : null;
 
                           // If price is missing from API, log error but don't use old cached price
                           if (executionPriceDouble == null &&
@@ -2500,8 +2483,8 @@ Placing Order:
                       });
                       // Check if One Click Trading is enabled
                       final oneClickService = OneClickTradingService.instance;
-                      final isOneClickEnabled =
-                          await oneClickService.isOneClickTradingEnabled();
+                      final isOneClickEnabled = await oneClickService
+                          .isOneClickTradingEnabled();
 
                       if (isOneClickEnabled) {
                         // Add notification immediately with loading status
@@ -2520,22 +2503,23 @@ Placing Order:
                           symbol: selectedSymbol,
                           volume: volume,
                           notificationId: notificationId,
-                          onTradeComplete: (
-                            id,
-                            symbol,
-                            type,
-                            volume,
-                            isSuccess,
-                            errorMessage,
-                          ) {
-                            // Update notification status when trade completes
-                            notificationController
-                                .updateTradingNotificationStatus(
-                                  id: id,
-                                  isSuccess: isSuccess,
-                                  errorMessage: errorMessage,
-                                );
-                          },
+                          onTradeComplete:
+                              (
+                                id,
+                                symbol,
+                                type,
+                                volume,
+                                isSuccess,
+                                errorMessage,
+                              ) {
+                                // Update notification status when trade completes
+                                notificationController
+                                    .updateTradingNotificationStatus(
+                                      id: id,
+                                      isSuccess: isSuccess,
+                                      errorMessage: errorMessage,
+                                    );
+                              },
                         );
                         return; // Exit immediately, trade will process in background
                       }
@@ -2595,34 +2579,32 @@ Placing Order:
                           final positionIdValue =
                               responseData?['position_id'] ??
                               deal?['PositionID'];
-                          final positionId =
-                              positionIdValue != null
-                                  ? positionIdValue.toString()
-                                  : 'N/A';
+                          final positionId = positionIdValue != null
+                              ? positionIdValue.toString()
+                              : 'N/A';
 
                           // Extract order_id from data.order_id
                           final orderIdValue =
                               responseData?['order_id'] ?? deal?['Deal'];
-                          final orderId =
-                              orderIdValue != null
-                                  ? orderIdValue.toString()
-                                  : 'N/A';
+                          final orderId = orderIdValue != null
+                              ? orderIdValue.toString()
+                              : 'N/A';
 
                           // Extract execution price from deal.Price (ONLY from API response)
                           final priceValue =
                               deal?['Price'] ?? responseData?['price'];
-                          final executionPrice =
-                              priceValue != null ? priceValue.toString() : null;
+                          final executionPrice = priceValue != null
+                              ? priceValue.toString()
+                              : null;
 
                           // Extract symbol from deal.Symbol or use selectedSymbol
                           final symbolFromResponse =
                               deal?['Symbol']?.toString() ?? selectedSymbol;
 
                           // Convert execution price to double (ONLY from API, no fallback to old prices)
-                          final executionPriceDouble =
-                              executionPrice != null
-                                  ? double.tryParse(executionPrice)
-                                  : null;
+                          final executionPriceDouble = executionPrice != null
+                              ? double.tryParse(executionPrice)
+                              : null;
 
                           // If price is missing from API, log error but don't use old cached price
                           if (executionPriceDouble == null &&
@@ -2853,10 +2835,9 @@ Placing Order:
                       // Clamp to [_minLot, _maxLot] when user leaves the field.
                       FocusScope.of(context).unfocus();
                       final parsed = double.tryParse(_volumeController.text);
-                      final clamped =
-                          (parsed == null || parsed <= 0)
-                              ? _minLot
-                              : parsed.clamp(_minLot, _maxLot);
+                      final clamped = (parsed == null || parsed <= 0)
+                          ? _minLot
+                          : parsed.clamp(_minLot, _maxLot);
                       setState(() {
                         volume = double.parse(clamped.toStringAsFixed(2));
                       });
@@ -3133,9 +3114,9 @@ Placing Order:
                                         (_takeProfitPrice.value - 0.01)
                                             .toStringAsFixed(2),
                                       );
-                                      _takeProfitController
-                                          .text = _takeProfitPrice.value
-                                          .toStringAsFixed(2);
+                                      _takeProfitController.text =
+                                          _takeProfitPrice.value
+                                              .toStringAsFixed(2);
                                     }
                                   });
                                 },
@@ -3227,11 +3208,8 @@ Placing Order:
                                           );
                                           final clamped =
                                               (parsed == null || parsed <= 0)
-                                                  ? _minLot
-                                                  : parsed.clamp(
-                                                    _minLot,
-                                                    _maxLot,
-                                                  );
+                                              ? _minLot
+                                              : parsed.clamp(_minLot, _maxLot);
                                           setState(() {
                                             volume = double.parse(
                                               clamped.toStringAsFixed(2),
@@ -3388,9 +3366,9 @@ Placing Order:
                                         (_takeProfitPrice.value - 0.01)
                                             .toStringAsFixed(2),
                                       );
-                                      _takeProfitController
-                                          .text = _takeProfitPrice.value
-                                          .toStringAsFixed(2);
+                                      _takeProfitController.text =
+                                          _takeProfitPrice.value
+                                              .toStringAsFixed(2);
                                     }
                                   });
                                 },
@@ -3539,7 +3517,7 @@ Placing Order:
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                'Confirm Buy order',
+                languageService.tr('trading_order_confirm_buy_order'),
                 style: AppTextStyles.button.copyWith(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.w700,
@@ -4305,29 +4283,29 @@ Placing Order:
                 builder: (context, selectedTab, child) {
                   return selectedTab == 1
                       ? Column(
-                        children: [
-                          _buildSwitchTile(
-                            'Order expiration',
-                            _orderExpirationEnabled,
-                            onChanged: (value) {
-                              _orderExpirationEnabled.value = value;
-                            },
-                          ),
-                          ValueListenableBuilder<bool>(
-                            valueListenable: _orderExpirationEnabled,
-                            builder: (context, enabled, child) {
-                              if (!enabled) return SizedBox.shrink();
-                              return Column(
-                                children: [
-                                  SizedBox(height: 8.h),
-                                  _buildOrderExpirationInput(),
-                                  SizedBox(height: 8.h),
-                                ],
-                              );
-                            },
-                          ),
-                        ],
-                      )
+                          children: [
+                            _buildSwitchTile(
+                              'Order expiration',
+                              _orderExpirationEnabled,
+                              onChanged: (value) {
+                                _orderExpirationEnabled.value = value;
+                              },
+                            ),
+                            ValueListenableBuilder<bool>(
+                              valueListenable: _orderExpirationEnabled,
+                              builder: (context, enabled, child) {
+                                if (!enabled) return SizedBox.shrink();
+                                return Column(
+                                  children: [
+                                    SizedBox(height: 8.h),
+                                    _buildOrderExpirationInput(),
+                                    SizedBox(height: 8.h),
+                                  ],
+                                );
+                              },
+                            ),
+                          ],
+                        )
                       : SizedBox.shrink();
                 },
               ),

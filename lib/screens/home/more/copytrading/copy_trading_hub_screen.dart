@@ -4,6 +4,7 @@ import 'package:crm_app/widgets/app_svg_back_button.dart';
 import 'package:crm_app/widgets/labeled_app_text_field.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
 import 'package:crm_app/controllers/copy_trading/copy_trading_hub_controller.dart';
+import 'package:crm_app/services/language_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -19,6 +20,7 @@ class CopyTradingHubScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.put(CopyTradingHubController());
+    final languageService = Get.find<LanguageService>();
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -28,7 +30,7 @@ class CopyTradingHubScreen extends StatelessWidget {
         elevation: 0,
         centerTitle: true,
         title: Text(
-          'Copy Trading',
+          languageService.tr('more_copy_trading'),
           style: TextStyle(
             fontSize: 18.sp,
             color: AppColors.textPrimary,
@@ -53,37 +55,54 @@ class CopyTradingHubScreen extends StatelessWidget {
 
             final masterTile = switch (status) {
               CopyTradingMasterApplicationStatus.pending => _HubMenuItem(
-                  icon: Icons.access_time,
-                  label: 'Pending Review',
-                  subtitle: code.isEmpty ? null : 'Code: $code',
-                  trailing: _StatusPill(text: 'Pending', color: AppColors.warning),
-                  onTap: () => Get.to(() => _PendingReviewScreen(masterCode: code)),
+                icon: Icons.access_time,
+                label: languageService.tr('copy_trading_pending_review'),
+                subtitle: code.isEmpty
+                    ? null
+                    : '${languageService.tr('copy_trading_code')}: $code',
+                trailing: _StatusPill(
+                  text: languageService.tr('copy_trading_pending'),
+                  color: AppColors.warning,
                 ),
+                onTap: () =>
+                    Get.to(() => _PendingReviewScreen(masterCode: code)),
+              ),
               CopyTradingMasterApplicationStatus.approved => _HubMenuItem(
-                  icon: Icons.verified,
-                  label: 'Master Dashboard',
-                  subtitle: code.isEmpty ? null : 'Code: $code',
-                  trailing: _StatusPill(text: 'Active', color: AppColors.green),
-                  onTap: () => Get.to(() => MasterDashboardScreen(masterCode: code)),
+                icon: Icons.verified,
+                label: languageService.tr('copy_trading_master_dashboard'),
+                subtitle: code.isEmpty
+                    ? null
+                    : '${languageService.tr('copy_trading_code')}: $code',
+                trailing: _StatusPill(
+                  text: languageService.tr('copy_trading_active'),
+                  color: AppColors.green,
                 ),
+                onTap: () =>
+                    Get.to(() => MasterDashboardScreen(masterCode: code)),
+              ),
               CopyTradingMasterApplicationStatus.rejected => _HubMenuItem(
-                  icon: Icons.error_outline,
-                  label: 'Become a Master',
-                  subtitle: 'Application rejected — apply again',
-                  trailing: _StatusPill(text: 'Rejected', color: AppColors.error),
-                  onTap: () => Get.to(() => const _BecomeMasterScreen()),
+                icon: Icons.error_outline,
+                label: languageService.tr('copy_trading_become_master'),
+                subtitle: languageService.tr(
+                  'copy_trading_application_rejected',
                 ),
+                trailing: _StatusPill(
+                  text: languageService.tr('copy_trading_rejected'),
+                  color: AppColors.error,
+                ),
+                onTap: () => Get.to(() => const _BecomeMasterScreen()),
+              ),
               CopyTradingMasterApplicationStatus.unknown => _HubMenuItem(
-                  icon: Icons.help_outline,
-                  label: 'Become a Master',
-                  subtitle: 'Status unknown — try refresh',
-                  onTap: () => Get.to(() => const _BecomeMasterScreen()),
-                ),
+                icon: Icons.help_outline,
+                label: languageService.tr('copy_trading_become_master'),
+                subtitle: languageService.tr('copy_trading_status_unknown'),
+                onTap: () => Get.to(() => const _BecomeMasterScreen()),
+              ),
               _ => _HubMenuItem(
-                  icon: Icons.tune,
-                  label: 'Become a Master',
-                  onTap: () => Get.to(() => const _BecomeMasterScreen()),
-                ),
+                icon: Icons.tune,
+                label: languageService.tr('copy_trading_become_master'),
+                onTap: () => Get.to(() => const _BecomeMasterScreen()),
+              ),
             };
 
             return Column(
@@ -96,11 +115,16 @@ class CopyTradingHubScreen extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: AppColors.error.withValues(alpha: 0.06),
                       borderRadius: BorderRadius.circular(12.r),
-                      border: Border.all(color: AppColors.error.withValues(alpha: 0.15)),
+                      border: Border.all(
+                        color: AppColors.error.withValues(alpha: 0.15),
+                      ),
                     ),
                     child: Text(
                       controller.errorMessage.value,
-                      style: TextStyle(color: AppColors.errorText, fontSize: 12.sp),
+                      style: TextStyle(
+                        color: AppColors.errorText,
+                        fontSize: 12.sp,
+                      ),
                     ),
                   ),
 
@@ -114,13 +138,19 @@ class CopyTradingHubScreen extends StatelessWidget {
                     _divider(),
                     _HubMenuItem(
                       icon: Icons.copy_all_outlined,
-                      label: status == CopyTradingMasterApplicationStatus.approved ? 'My Copies' : 'My Investments',
-                      trailing:
-                          hasSubs
-                              ? _StatusPill(text: 'Active', color: AppColors.green)
-                              : _StatusPill(text: 'None', color: AppColors.textGrey),
+                      label:
+                          status == CopyTradingMasterApplicationStatus.approved
+                          ? 'My Copies'
+                          : 'My Investments',
+                      trailing: hasSubs
+                          ? _StatusPill(text: 'Active', color: AppColors.green)
+                          : _StatusPill(
+                              text: 'None',
+                              color: AppColors.textGrey,
+                            ),
                       onTap: () {
-                        if (status == CopyTradingMasterApplicationStatus.approved) {
+                        if (status ==
+                            CopyTradingMasterApplicationStatus.approved) {
                           Get.to(() => const MyCopiesScreen());
                         } else {
                           Get.to(() => const MyInvestmentsScreen());
@@ -140,7 +170,10 @@ class CopyTradingHubScreen extends StatelessWidget {
                     child: SizedBox(
                       width: 18.r,
                       height: 18.r,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppColors.primary,
+                      ),
                     ),
                   ),
                 ],
@@ -153,9 +186,13 @@ class CopyTradingHubScreen extends StatelessWidget {
   }
 
   Widget _divider() => Padding(
-        padding: EdgeInsets.symmetric(horizontal: 16.w),
-        child: Divider(height: 1, thickness: 0.5, color: AppColors.icongrey.withValues(alpha: 0.14)),
-      );
+    padding: EdgeInsets.symmetric(horizontal: 16.w),
+    child: Divider(
+      height: 1,
+      thickness: 0.5,
+      color: AppColors.icongrey.withValues(alpha: 0.14),
+    ),
+  );
 }
 
 class _SectionCard extends StatelessWidget {
@@ -237,11 +274,12 @@ class _HubMenuItem extends StatelessWidget {
                 ],
               ),
             ),
-            if (trailing != null) ...[
-              trailing!,
-              SizedBox(width: 10.w),
-            ],
-            Icon(Icons.arrow_forward_ios, size: 14.r, color: AppColors.textGrey),
+            if (trailing != null) ...[trailing!, SizedBox(width: 10.w)],
+            Icon(
+              Icons.arrow_forward_ios,
+              size: 14.r,
+              color: AppColors.textGrey,
+            ),
           ],
         ),
       ),
@@ -265,7 +303,11 @@ class _StatusPill extends StatelessWidget {
       ),
       child: Text(
         text,
-        style: TextStyle(fontSize: 11.sp, fontWeight: FontWeight.w600, color: color),
+        style: TextStyle(
+          fontSize: 11.sp,
+          fontWeight: FontWeight.w600,
+          color: color,
+        ),
       ),
     );
   }
@@ -282,7 +324,7 @@ class _PendingReviewScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: AppColors.tradeBackgroundCenterColor,
         elevation: 0,
-        title: const Text('Pending Review'),
+        title: Text(TranslationUtils.tr('copy_trading_pending_review')),
       ),
       body: Center(
         child: Container(
@@ -301,21 +343,27 @@ class _PendingReviewScreen extends StatelessWidget {
               Text(
                 'Your master application is under review.',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14.sp, color: AppColors.textPrimary, fontWeight: FontWeight.w600),
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               if (masterCode.isNotEmpty) ...[
                 SizedBox(height: 6.h),
-                Text('Code: $masterCode', style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey)),
+                Text(
+                  'Code: $masterCode',
+                  style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey),
+                ),
               ],
               SizedBox(height: 14.h),
               ElevatedButton(
                 onPressed: () => Get.back(),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.brandPrimary,
-                  foregroundColor:
-                      AppColors.primary.computeLuminance() > 0.5
-                          ? AppColors.textPrimaryLight
-                          : AppColors.onColoredBackground,
+                  foregroundColor: AppColors.primary.computeLuminance() > 0.5
+                      ? AppColors.textPrimaryLight
+                      : AppColors.onColoredBackground,
                 ),
                 child: const Text('OK'),
               ),
@@ -366,7 +414,7 @@ class _BecomeMasterScreenState extends State<_BecomeMasterScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.tradeBackgroundCenterColor,
         elevation: 0,
-         leading: AppSvgBackButton(
+        leading: AppSvgBackButton(
           onPressed: () => AppSvgBackButton.popRoute(context),
         ),
         title: Text('Become a Master', style: AppTextStyles.screenTitle),
@@ -382,14 +430,19 @@ class _BecomeMasterScreenState extends State<_BecomeMasterScreen> {
 
           final canSubmit = hub.canSubmitMasterApply;
           final applying = hub.isLoading.value;
-          final applyBtnFg =
-              AppColors.primary.computeLuminance() > 0.5
-                  ? AppColors.textPrimaryLight
-                  : AppColors.onColoredBackground;
+          final applyBtnFg = AppColors.primary.computeLuminance() > 0.5
+              ? AppColors.textPrimaryLight
+              : AppColors.onColoredBackground;
           final isDark = AppColors.isDarkMode;
-          final checkBorder = isDark ? AppColors.textPrimaryDark : AppColors.primary;
-          final checkFill = isDark ? AppColors.textPrimaryDark : AppColors.primary;
-          final checkMark = isDark ? AppColors.textPrimaryLight : AppColors.onColoredBackground;
+          final checkBorder = isDark
+              ? AppColors.textPrimaryDark
+              : AppColors.primary;
+          final checkFill = isDark
+              ? AppColors.textPrimaryDark
+              : AppColors.primary;
+          final checkMark = isDark
+              ? AppColors.textPrimaryLight
+              : AppColors.onColoredBackground;
 
           return Container(
             padding: EdgeInsets.all(16.r),
@@ -401,7 +454,6 @@ class _BecomeMasterScreenState extends State<_BecomeMasterScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-
                 LabeledAppTextField(
                   label: 'Nickname *',
                   controller: _nicknameCtrl,
@@ -444,19 +496,23 @@ class _BecomeMasterScreenState extends State<_BecomeMasterScreen> {
                         checkColor: checkMark,
                         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         visualDensity: VisualDensity.compact,
-                        onChanged: (v) => hub.masterApplyTermsAccepted.value = v ?? false,
+                        onChanged: (v) =>
+                            hub.masterApplyTermsAccepted.value = v ?? false,
                       ),
                     ),
                     Padding(
                       padding: EdgeInsets.only(left: 4.w),
                       child: Text(
                         'I accept the Terms & Conditions',
-                        style: TextStyle(fontSize: 14.sp, color: AppColors.textPrimary),
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          color: AppColors.textPrimary,
+                        ),
                       ),
                     ),
                   ],
                 ),
-                
+
                 SizedBox(height: 16.h),
                 SizedBox(
                   width: double.infinity,
@@ -464,9 +520,12 @@ class _BecomeMasterScreenState extends State<_BecomeMasterScreen> {
                   child: ElevatedButton(
                     onPressed: canSubmit && !applying
                         ? () async {
-                            final nick = hub.masterApplyNicknameDraft.value.trim();
-                            final strategy = hub.masterApplyStrategyDraft.value.trim();
-                            final riskInfo = hub.masterApplyRiskInfoDraft.value.trim();
+                            final nick = hub.masterApplyNicknameDraft.value
+                                .trim();
+                            final strategy = hub.masterApplyStrategyDraft.value
+                                .trim();
+                            final riskInfo = hub.masterApplyRiskInfoDraft.value
+                                .trim();
                             final res = await hub.applyForMaster(
                               nickname: nick,
                               termsAccepted: hub.masterApplyTermsAccepted.value,
@@ -492,12 +551,18 @@ class _BecomeMasterScreenState extends State<_BecomeMasterScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.brandPrimary,
                       foregroundColor: applyBtnFg,
-                      disabledBackgroundColor: AppColors.textGrey.withValues(alpha: 0.35),
-                      disabledForegroundColor: applyBtnFg.withValues(alpha: 0.45),
+                      disabledBackgroundColor: AppColors.textGrey.withValues(
+                        alpha: 0.35,
+                      ),
+                      disabledForegroundColor: applyBtnFg.withValues(
+                        alpha: 0.45,
+                      ),
                       padding: EdgeInsets.zero,
                       minimumSize: Size(double.infinity, 44.h),
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
                     ),
                     child: applying
                         ? SizedBox(
@@ -510,7 +575,9 @@ class _BecomeMasterScreenState extends State<_BecomeMasterScreen> {
                           )
                         : Text(
                             'Apply',
-                            style: AppTextStyles.button.copyWith(color: applyBtnFg),
+                            style: AppTextStyles.button.copyWith(
+                              color: applyBtnFg,
+                            ),
                           ),
                   ),
                 ),
@@ -522,4 +589,3 @@ class _BecomeMasterScreenState extends State<_BecomeMasterScreen> {
     );
   }
 }
-

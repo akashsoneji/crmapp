@@ -10,6 +10,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:open_filex/open_filex.dart';
+import '../../services/language_service.dart' show TranslationUtils;
 
 // Transaction Model
 class Transaction {
@@ -29,10 +30,9 @@ class Transaction {
         data!.add(new Data.fromJson(v));
       });
     }
-    pagination =
-        json['pagination'] != null
-            ? new Pagination.fromJson(json['pagination'])
-            : null;
+    pagination = json['pagination'] != null
+        ? new Pagination.fromJson(json['pagination'])
+        : null;
   }
 
   Map<String, dynamic> toJson() {
@@ -84,10 +84,9 @@ class Data {
 
   Data.fromJson(Map<String, dynamic> json) {
     id = json['id']?.toString();
-    userId =
-        json['user_id'] is int
-            ? json['user_id']
-            : int.tryParse(json['user_id']?.toString() ?? '');
+    userId = json['user_id'] is int
+        ? json['user_id']
+        : int.tryParse(json['user_id']?.toString() ?? '');
     mt5AccountId = json['mt5_account_id']?.toString();
     referenceNumber = json['reference_number']?.toString();
     amount = json['amount']?.toString();
@@ -97,7 +96,8 @@ class Data {
     proof = json['proof']?.toString();
     proofUrl = json['proof_url']?.toString();
     paymentDetails = json['payment_details']?.toString();
-    createdAt = json['created_at_iso']?.toString() ?? json['created_at']?.toString();
+    createdAt =
+        json['created_at_iso']?.toString() ?? json['created_at']?.toString();
     transactionType = json['transaction_type']?.toString();
     type = json['type']?.toString();
   }
@@ -223,10 +223,9 @@ class TransactionHistoryController extends GetxController {
 
           if (accountsData.isNotEmpty) {
             // User has MT5 accounts
-            final parsedAccounts =
-                accountsData
-                    .map((account) => MT5Account.fromJson(account))
-                    .toList();
+            final parsedAccounts = accountsData
+                .map((account) => MT5Account.fromJson(account))
+                .toList();
             accounts.assignAll(parsedAccounts);
             print(
               ': Updated mt5Accounts observable with ${accounts.length} accounts',
@@ -694,7 +693,7 @@ class TransactionHistoryController extends GetxController {
   /// authoritative source of truth — once the gateway writes the matching row,
   /// the row will appear here.
   Future<({Data? row, int totalRows, String rawStatus})>
-      fetchLatestTransactionForRef(String ref, {bool statusFilter = true}) async {
+  fetchLatestTransactionForRef(String ref, {bool statusFilter = true}) async {
     try {
       final token = await SecureStorageService.getAuthToken();
       final response = await ApiService.get(
@@ -705,7 +704,9 @@ class TransactionHistoryController extends GetxController {
         return (row: null, totalRows: 0, rawStatus: 'http_error');
       }
 
-      final parsed = Transaction.fromJson(response.data as Map<String, dynamic>);
+      final parsed = Transaction.fromJson(
+        response.data as Map<String, dynamic>,
+      );
       final rows = parsed.data ?? <Data>[];
 
       for (final row in rows) {
@@ -786,13 +787,15 @@ class TransactionHistoryController extends GetxController {
 
     try {
       _setLoading(true);
-      CustomToastService.showSuccess(message: "Downloading receipt...");
+      CustomToastService.showSuccess(
+        message: TranslationUtils.tr('finance_downloading_receipt'),
+      );
 
       final token = await SecureStorageService.getAuthToken();
-      final headers = token != null 
-          ? <String, String>{'Authorization': 'Bearer $token'} 
+      final headers = token != null
+          ? <String, String>{'Authorization': 'Bearer $token'}
           : <String, String>{};
-      
+
       // Log request
       final timestamp = DateTime.now().toIso8601String();
       dev.log('═══════════════════════════════════════════════════════════');
@@ -802,18 +805,16 @@ class TransactionHistoryController extends GetxController {
       dev.log('URL: $url');
       dev.log('Headers: $headers');
       dev.log('═══════════════════════════════════════════════════════════');
-      
-      final response = await http.get(
-        Uri.parse(url),
-        headers: headers,
-      );
-      
+
+      final response = await http.get(Uri.parse(url), headers: headers);
+
       // Log response
-      final statusEmoji = response.statusCode >= 200 && response.statusCode < 300 
-          ? '✅' 
-          : response.statusCode >= 400 
-              ? '❌' 
-              : '⚠️';
+      final statusEmoji =
+          response.statusCode >= 200 && response.statusCode < 300
+          ? '✅'
+          : response.statusCode >= 400
+          ? '❌'
+          : '⚠️';
       dev.log('═══════════════════════════════════════════════════════════');
       dev.log('$statusEmoji DIRECT HTTP RESPONSE [$timestamp]');
       dev.log('═══════════════════════════════════════════════════════════');
@@ -842,7 +843,7 @@ class TransactionHistoryController extends GetxController {
         await file.writeAsBytes(response.bodyBytes);
 
         CustomToastService.showSuccess(
-          message: "Receipt downloaded successfully",
+          message: TranslationUtils.tr('receipt_downloaded_successfully'),
         );
 
         // Open the file

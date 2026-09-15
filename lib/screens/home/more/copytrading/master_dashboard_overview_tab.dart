@@ -1,6 +1,7 @@
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/controllers/copy_trading/copy_trading_master_dashboard_controller.dart';
 import 'package:crm_app/models/copy_trading_dashboard_overview.dart';
+import 'package:crm_app/services/language_service.dart' show TranslationUtils;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -51,8 +52,10 @@ class MasterDashboardOverviewTab extends StatelessWidget {
       // ValueKey on the data column forces Flutter to discard the old
       // sub-tree (including any CustomPainter state that holds a cached
       // points list) and build a brand-new one when the range changes.
-      final dataKey = ValueKey('overview-${overview.range.preset}-'
-          '${overview.range.from}-${overview.range.to}');
+      final dataKey = ValueKey(
+        'overview-${overview.range.preset}-'
+        '${overview.range.from}-${overview.range.to}',
+      );
 
       return Padding(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
@@ -198,8 +201,7 @@ class _RangePills extends StatelessWidget {
   final String current;
   final ValueChanged<String> onChanged;
 
-  bool _isSelected(String chip) =>
-      chip.toLowerCase() == current.toLowerCase();
+  bool _isSelected(String chip) => chip.toLowerCase() == current.toLowerCase();
 
   @override
   Widget build(BuildContext context) {
@@ -214,8 +216,10 @@ class _RangePills extends StatelessWidget {
               onTap: () => onChanged(chip),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 150),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: _isSelected(chip) ? brand : theme.cardColor,
                   borderRadius: BorderRadius.circular(999),
@@ -277,12 +281,9 @@ class _KpiGrid extends StatelessWidget {
         accent: const Color(0xFF00BFA6),
         accentSoft: const Color(0xFFD7F6F0),
         value: '${copiers.current}',
-        pill: _TrendPill(
-          value: copiers.delta,
-          signed: true,
-          isInt: true,
-        ),
-        sub: 'Net new in window: ${copiers.delta > 0 ? '+' : ''}${copiers.delta}',
+        pill: _TrendPill(value: copiers.delta, signed: true, isInt: true),
+        sub:
+            'Net new in window: ${copiers.delta > 0 ? '+' : ''}${copiers.delta}',
         spark: copiers.series.values,
       ),
       _KpiCard(
@@ -470,7 +471,8 @@ class _TrendPill extends StatelessWidget {
       text = '${value >= 0 ? '+' : ''}${value.toInt()}';
     } else {
       final absVal = value.abs().toDouble();
-      text = '${positive ? '↗' : '↘'} '
+      text =
+          '${positive ? '↗' : '↘'} '
           '${absVal.toStringAsFixed(2)}$suffix';
     }
 
@@ -627,7 +629,7 @@ class _PerformanceChartCardState extends State<_PerformanceChartCard> {
             child: Row(
               children: [
                 _ChartToggle(
-                  label: 'Equity',
+                  label: TranslationUtils.tr('copy_equity'),
                   selected: _series == 'equity',
                   color: const Color(0xFF2C5FFB),
                   onTap: () => setState(() => _series = 'equity'),
@@ -700,9 +702,7 @@ class _ChartToggle extends StatelessWidget {
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: selected
-              ? color.withValues(alpha: 0.12)
-              : Colors.transparent,
+          color: selected ? color.withValues(alpha: 0.12) : Colors.transparent,
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
             color: selected ? color : theme.dividerColor.withValues(alpha: 0.6),
@@ -715,10 +715,7 @@ class _ChartToggle extends StatelessWidget {
             Container(
               width: 6,
               height: 6,
-              decoration: BoxDecoration(
-                color: color,
-                shape: BoxShape.circle,
-              ),
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
             ),
             const SizedBox(width: 6),
             Text(
@@ -823,8 +820,18 @@ class _ChartXAxis extends StatelessWidget {
     final dt = DateTime.tryParse(raw);
     if (dt == null) return raw;
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     final mm = months[dt.month - 1];
     final dd = dt.day.toString().padLeft(2, '0');
@@ -919,18 +926,9 @@ class _CopierHealthCard extends StatelessWidget {
                 child: CustomPaint(
                   painter: _DonutPainter(
                     segments: [
-                      _DonutSegment(
-                        health.active,
-                        const Color(0xFF1DB954),
-                      ),
-                      _DonutSegment(
-                        health.paused,
-                        const Color(0xFFF79009),
-                      ),
-                      _DonutSegment(
-                        health.stopped,
-                        const Color(0xFFE5484D),
-                      ),
+                      _DonutSegment(health.active, const Color(0xFF1DB954)),
+                      _DonutSegment(health.paused, const Color(0xFFF79009)),
+                      _DonutSegment(health.stopped, const Color(0xFFE5484D)),
                     ],
                   ),
                   child: Center(
@@ -1069,12 +1067,7 @@ class _LegendDot extends StatelessWidget {
           decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            label,
-            style: theme.textTheme.bodyMedium,
-          ),
-        ),
+        Expanded(child: Text(label, style: theme.textTheme.bodyMedium)),
         Text(
           '$value',
           style: theme.textTheme.bodyMedium?.copyWith(
@@ -1518,9 +1511,7 @@ class _TradeRow extends StatelessWidget {
             child: Text(
               _timeLabel(),
               style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.textTheme.bodySmall?.color?.withValues(
-                  alpha: 0.7,
-                ),
+                color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
               ),
             ),
           ),
@@ -1565,8 +1556,8 @@ class _TradeRow extends StatelessWidget {
                 color: isProfit
                     ? const Color(0xFF1DB954)
                     : isLoss
-                        ? const Color(0xFFE5484D)
-                        : theme.textTheme.bodyMedium?.color,
+                    ? const Color(0xFFE5484D)
+                    : theme.textTheme.bodyMedium?.color,
                 fontFeatures: const [FontFeature.tabularFigures()],
               ),
             ),
@@ -1757,12 +1748,12 @@ class _EmptyState extends StatelessWidget {
           children: [
             const Icon(Icons.bar_chart_rounded, size: 48),
             const SizedBox(height: 8),
-            const Text('No overview data available'),
+            Text(TranslationUtils.tr('copy_no_overview_data')),
             const SizedBox(height: 12),
             OutlinedButton.icon(
               onPressed: onRetry,
               icon: const Icon(Icons.refresh_rounded),
-              label: const Text('Retry'),
+              label: Text(TranslationUtils.tr('common_retry')),
             ),
           ],
         ),

@@ -251,10 +251,9 @@ class _TradersTabState extends State<TradersTab> {
       child: Container(
         padding: EdgeInsets.symmetric(vertical: 4, horizontal: 10),
         decoration: BoxDecoration(
-          color:
-              isSelected
-                  ? AppColors.primary
-                  : AppColors.primary.withOpacity(0.05),
+          color: isSelected
+              ? AppColors.primary
+              : AppColors.primary.withOpacity(0.05),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Text(

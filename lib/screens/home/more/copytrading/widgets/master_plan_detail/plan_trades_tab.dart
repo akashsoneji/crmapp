@@ -9,11 +9,7 @@ class PlanTradesTab extends StatelessWidget {
   final CopyTradingMasterPlanDetail plan;
   final PlanTokens tokens;
 
-  const PlanTradesTab({
-    super.key,
-    required this.plan,
-    required this.tokens,
-  });
+  const PlanTradesTab({super.key, required this.plan, required this.tokens});
 
   @override
   Widget build(BuildContext context) {
@@ -90,7 +86,9 @@ class _OpenPositionRow extends StatelessWidget {
               ),
               alignment: Alignment.center,
               child: Icon(
-                isBuy ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
+                isBuy
+                    ? Icons.arrow_upward_rounded
+                    : Icons.arrow_downward_rounded,
                 color: dirColor,
                 size: 18,
               ),
@@ -112,8 +110,10 @@ class _OpenPositionRow extends StatelessWidget {
                       ),
                       const SizedBox(width: 6),
                       Container(
-                        padding:
-                            const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: dirColor.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(4),
@@ -132,10 +132,7 @@ class _OpenPositionRow extends StatelessWidget {
                   const SizedBox(height: 3),
                   Text(
                     'Vol ${item.masterVolume} • Open @ ${item.openPrice.toStringAsFixed(2)}',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: tokens.mutedText,
-                    ),
+                    style: TextStyle(fontSize: 11, color: tokens.mutedText),
                   ),
                 ],
               ),
@@ -156,10 +153,7 @@ class _OpenPositionRow extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   item.copierAccount.isEmpty ? '—' : item.copierAccount,
-                  style: TextStyle(
-                    fontSize: 10.5,
-                    color: tokens.mutedText,
-                  ),
+                  style: TextStyle(fontSize: 10.5, color: tokens.mutedText),
                 ),
               ],
             ),
@@ -230,7 +224,9 @@ class _TradeRow extends StatelessWidget {
               ),
               alignment: Alignment.center,
               child: Icon(
-                isBuy ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
+                isBuy
+                    ? Icons.arrow_upward_rounded
+                    : Icons.arrow_downward_rounded,
                 color: dirColor,
                 size: 18,
               ),
@@ -252,8 +248,10 @@ class _TradeRow extends StatelessWidget {
                       ),
                       const SizedBox(width: 6),
                       Container(
-                        padding:
-                            const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: dirColor.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(4),
@@ -268,33 +266,27 @@ class _TradeRow extends StatelessWidget {
                         ),
                       ),
                       Padding(
-                        padding: const EdgeInsets.only(left:4.0),
+                        padding: const EdgeInsets.only(left: 4.0),
                         child: Text(
-                            '${item.masterVolume}',
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: tokens.mutedText,
-                              fontWeight: FontWeight.w700,
-                            ),
+                          '${item.masterVolume}',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: tokens.mutedText,
+                            fontWeight: FontWeight.w700,
                           ),
+                        ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 3),
                   Text(
                     '${item.copierAccount}',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: tokens.mutedText,
-                    ),
+                    style: TextStyle(fontSize: 11, color: tokens.mutedText),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     _fmtRange(item.openTime, item.closeTime),
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: tokens.mutedText,
-                    ),
+                    style: TextStyle(fontSize: 10, color: tokens.mutedText),
                   ),
                 ],
               ),
@@ -313,10 +305,7 @@ class _TradeRow extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   'Master P&L',
-                  style: TextStyle(
-                    fontSize: 9.5,
-                    color: tokens.mutedText,
-                  ),
+                  style: TextStyle(fontSize: 9.5, color: tokens.mutedText),
                 ),
               ],
             ),
@@ -338,11 +327,9 @@ class _TradeRow extends StatelessWidget {
   String _short(String iso) {
     if (iso.isEmpty) return '—';
     try {
-      return DateFormat('d MMM, HH:mm')
-          .format(DateTime.parse(iso).toLocal());
+      return DateFormat('d MMM, HH:mm').format(DateTime.parse(iso).toLocal());
     } catch (_) {
       return iso;
     }
   }
 }
- 

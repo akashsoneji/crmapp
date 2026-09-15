@@ -17,6 +17,7 @@ class CreateNewPasswordScreen extends StatefulWidget {
 
 class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
   final AuthController authController = Get.find<AuthController>();
+  final LanguageService languageService = Get.find<LanguageService>();
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
@@ -58,7 +59,10 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
                   ),
                   child: IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: Icon(Icons.arrow_back_ios, color: AppColors.textPrimary),
+                    icon: Icon(
+                      Icons.arrow_back_ios,
+                      color: AppColors.textPrimary,
+                    ),
                     iconSize: 17.h,
                     padding: EdgeInsets.only(left: 5.w),
                   ),
@@ -77,8 +81,8 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
                 const SizedBox(height: 40),
                 RTLHelper.rtlTextField(
                   controller: passwordController,
-                  labelText: 'New Password',
-                  hintText: 'Enter new password',
+                  labelText: languageService.tr('auth_new_password'),
+                  hintText: languageService.tr('auth_enter_new_password'),
                   obscureText: obscurePassword,
                   suffixIcon: IconButton(
                     icon: Icon(
@@ -92,10 +96,10 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Password is required';
+                      return languageService.tr('auth_password_required');
                     }
                     if (value.length < 8) {
-                      return 'Password must be at least 8 characters';
+                      return languageService.tr('auth_password_min_length');
                     }
                     return null;
                   },
@@ -103,8 +107,8 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
                 const SizedBox(height: 16),
                 RTLHelper.rtlTextField(
                   controller: confirmPasswordController,
-                  labelText: 'Confirm Password',
-                  hintText: 'Confirm new password',
+                  labelText: languageService.tr('auth_confirm_password'),
+                  hintText: languageService.tr('auth_confirm_new_password'),
                   obscureText: obscureConfirmPassword,
                   suffixIcon: IconButton(
                     icon: Icon(
@@ -135,17 +139,16 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: isLoading ? null : _handleResetPassword,
-                      child:
-                          isLoading
-                              ? ButtonLoadingWidget(
-                                size: 20.0,
-                                color: AppColors.whiteColor,
-                              )
-                              : Text(
-                                Get.find<LanguageService>().tr(
-                                  'create_password_reset_password',
-                                ),
+                      child: isLoading
+                          ? ButtonLoadingWidget(
+                              size: 20.0,
+                              color: AppColors.whiteColor,
+                            )
+                          : Text(
+                              Get.find<LanguageService>().tr(
+                                'create_password_reset_password',
                               ),
+                            ),
                     ),
                   );
                 }),

@@ -40,7 +40,10 @@ class _PartnershipProgramScreenState extends State<PartnershipProgramScreen> {
         leading: IconButton(
           icon: SvgPicture.asset(
             "assets/svg/trade/arro_back.svg",
-            colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn),
+            colorFilter: ColorFilter.mode(
+              AppColors.textPrimary,
+              BlendMode.srcIn,
+            ),
           ),
           onPressed: () => Navigator.of(context).pop(),
         ),
@@ -198,14 +201,16 @@ class _PartnershipProgramScreenState extends State<PartnershipProgramScreen> {
                       width: 20.w,
                       height: 20.w,
                       decoration: BoxDecoration(
-                        color:
-                            isCompleted
-                                ? AppColors.primary
-                                : isPending
-                                ? AppColors.warning
-                                : AppColors.textGrey,
+                        color: isCompleted
+                            ? AppColors.primary
+                            : isPending
+                            ? AppColors.warning
+                            : AppColors.textGrey,
                         shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.whiteColor, width: 2),
+                        border: Border.all(
+                          color: AppColors.whiteColor,
+                          width: 2,
+                        ),
                       ),
                       child: Center(
                         child: Icon(
@@ -258,23 +263,21 @@ class _PartnershipProgramScreenState extends State<PartnershipProgramScreen> {
         isEmailVerified && isMobileVerified && isPersonalInfoVerified;
 
     return Padding(
-      padding:  EdgeInsets.only(top:16.h),
+      padding: EdgeInsets.only(top: 16.h),
       child: ElevatedButton(
-        onPressed:
-            _isApplicationSubmitted
-                ? () {
-                  // Navigate to IB Main Screen
-                  Navigator.of(context).pushReplacementNamed('/ib-main');
-                }
-                : canSubmit
-                ? _showIbApplicationDialog
-                : null,
+        onPressed: _isApplicationSubmitted
+            ? () {
+                // Navigate to IB Main Screen
+                Navigator.of(context).pushReplacementNamed('/ib-main');
+              }
+            : canSubmit
+            ? _showIbApplicationDialog
+            : null,
         style: ElevatedButton.styleFrom(
           padding: EdgeInsets.zero,
-          backgroundColor:
-              _isApplicationSubmitted || canSubmit
-                  ? AppColors.primary
-                  : AppColors.textGrey,
+          backgroundColor: _isApplicationSubmitted || canSubmit
+              ? AppColors.primary
+              : AppColors.textGrey,
           foregroundColor: AppColors.whiteColor,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12.r),
@@ -389,8 +392,13 @@ class _PartnershipProgramScreenState extends State<PartnershipProgramScreen> {
                             ),
                             activeColor: AppColors.primary,
                             checkColor: AppColors.whiteColor,
-                            side: BorderSide(color: AppColors.textGrey, width: 1.5),
-                            fillColor: WidgetStateProperty.resolveWith((states) {
+                            side: BorderSide(
+                              color: AppColors.textGrey,
+                              width: 1.5,
+                            ),
+                            fillColor: WidgetStateProperty.resolveWith((
+                              states,
+                            ) {
                               if (states.contains(WidgetState.selected)) {
                                 return AppColors.primary;
                               }
@@ -426,13 +434,12 @@ class _PartnershipProgramScreenState extends State<PartnershipProgramScreen> {
                       width: double.infinity,
                       height: 44.h,
                       child: ElevatedButton(
-                        onPressed:
-                            isAgreed
-                                ? () async {
-                                  Navigator.of(context).pop();
-                                  await _submitIBApplication();
-                                }
-                                : null,
+                        onPressed: isAgreed
+                            ? () async {
+                                Navigator.of(context).pop();
+                                await _submitIBApplication();
+                              }
+                            : null,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
                           foregroundColor: AppColors.darkThemeOnPrimary,
@@ -445,7 +452,7 @@ class _PartnershipProgramScreenState extends State<PartnershipProgramScreen> {
                           elevation: 0,
                         ),
                         child: Text(
-                          'Submit',
+                          Get.find<LanguageService>().tr('submit'),
                           style: TextStyle(
                             fontSize: 16.sp,
                             fontWeight: FontWeight.w600,
@@ -478,7 +485,7 @@ class _PartnershipProgramScreenState extends State<PartnershipProgramScreen> {
       Get.dialog(
         Center(
           child: CommonLoadingWidget(
-            message: 'Submitting IB application...',
+            message: Get.find<LanguageService>().tr('partnership_submitting'),
             size: 50.0,
             color: AppColors.primary,
           ),
@@ -511,7 +518,10 @@ class _PartnershipProgramScreenState extends State<PartnershipProgramScreen> {
         Get.back(closeOverlays: true);
       }
       CustomToastService.showError(
-        message: 'Error submitting IB application: $e',
+        message: TranslationUtils.trf(
+          'partnership_error_fallback',
+          'Error submitting IB application: {error}',
+        ).replaceFirst('{error}', '$e'),
       );
     }
   }

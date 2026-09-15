@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:crm_app/services/language_service.dart';
 import '../../constants/color.dart';
 import '../../flavor_config.dart';
 import '../../brand_switcher.dart';
@@ -10,9 +11,13 @@ class BrandTestScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final languageService = Get.find<LanguageService>();
+
     return Scaffold(
       appBar: AppBar(
-        title: Text('🎨 ${FlavorConfig.instance.appName} Brand Test'),
+        title: Text(
+          '🎨 ${FlavorConfig.instance.appName} ${languageService.tr('brand_test_title')}',
+        ),
         backgroundColor: FlavorConfig.instance.primaryColor,
         foregroundColor: AppColors.whiteColor,
       ),
@@ -30,8 +35,8 @@ class BrandTestScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '🎯 Current Brand: ${FlavorConfig.instance.appName}',
-                      style:   TextStyle(
+                      '🎯 ${languageService.tr('brand_current')}: ${FlavorConfig.instance.appName}',
+                      style: TextStyle(
                         color: AppColors.whiteColor,
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -39,8 +44,8 @@ class BrandTestScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'App Title: ${FlavorConfig.instance.appTitle}',
-                      style:   TextStyle(color: AppColors.whiteColor),
+                      '${languageService.tr('brand_app_title')}: ${FlavorConfig.instance.appTitle}',
+                      style: TextStyle(color: AppColors.whiteColor),
                     ),
                   ],
                 ),
@@ -51,37 +56,37 @@ class BrandTestScreen extends StatelessWidget {
 
             // Color Samples
             Text(
-              '🎨 Brand Colors:',
+              '🎨 ${languageService.tr('brand_colors')}:',
               style: Theme.of(context).textTheme.headlineSmall,
             ),
             const SizedBox(height: 16),
 
             // Primary Color
             _buildColorSample(
-              'Primary Color',
+              languageService.tr('brand_primary_color'),
               FlavorConfig.instance.primaryColor,
-              'Used for buttons, app bar, etc.',
+              languageService.tr('brand_primary_color_description'),
             ),
 
             // Secondary Color
             _buildColorSample(
-              'Secondary Color',
+              languageService.tr('brand_secondary_color'),
               FlavorConfig.instance.secondaryColor,
-              'Used for backgrounds, cards, etc.',
+              languageService.tr('brand_secondary_color_description'),
             ),
 
             // Accent Color
             _buildColorSample(
-              'Accent Color',
+              languageService.tr('brand_accent_color'),
               FlavorConfig.instance.accentColor,
-              'Used for highlights, links, etc.',
+              languageService.tr('brand_accent_color_description'),
             ),
 
             const SizedBox(height: 30),
 
             // Brand Switching Buttons
             Text(
-              '🔄 Switch Brands:',
+              '🔄 ${languageService.tr('brand_switch')}:',
               style: Theme.of(context).textTheme.headlineSmall,
             ),
             const SizedBox(height: 16),
@@ -94,8 +99,10 @@ class BrandTestScreen extends StatelessWidget {
                       BrandSwitcher.switchToPipze();
                       if (Get.isRegistered<AppNotificationController>()) {
                         Get.find<AppNotificationController>().showSuccess(
-                          message: 'Switched to Pipze (Purple)',
-                          title: 'Brand Changed!',
+                          message: languageService.tr(
+                            'brand_switched_to_pipze',
+                          ),
+                          title: languageService.tr('brand_changed'),
                         );
                       }
                     },
@@ -113,8 +120,8 @@ class BrandTestScreen extends StatelessWidget {
                       BrandSwitcher.switchToOcta();
                       if (Get.isRegistered<AppNotificationController>()) {
                         Get.find<AppNotificationController>().showSuccess(
-                          message: 'Switched to Octa (Orange)',
-                          title: 'Brand Changed!',
+                          message: languageService.tr('brand_switched_to_octa'),
+                          title: languageService.tr('brand_changed'),
                         );
                       }
                     },
@@ -132,8 +139,10 @@ class BrandTestScreen extends StatelessWidget {
                       BrandSwitcher.switchToFleza();
                       if (Get.isRegistered<AppNotificationController>()) {
                         Get.find<AppNotificationController>().showSuccess(
-                          message: 'Switched to Fleza (Green)',
-                          title: 'Brand Changed!',
+                          message: languageService.tr(
+                            'brand_switched_to_fleza',
+                          ),
+                          title: languageService.tr('brand_changed'),
                         );
                       }
                     },
@@ -156,8 +165,8 @@ class BrandTestScreen extends StatelessWidget {
                   BrandSwitcher.quickSwitchBrand();
                   if (Get.isRegistered<AppNotificationController>()) {
                     Get.find<AppNotificationController>().showSuccess(
-                      message: 'Switched to next brand',
-                      title: 'Quick Switch!',
+                      message: languageService.tr('brand_switched_to_next'),
+                      title: languageService.tr('brand_quick_switch'),
                     );
                   }
                 },
@@ -165,7 +174,9 @@ class BrandTestScreen extends StatelessWidget {
                   backgroundColor: FlavorConfig.instance.primaryColor,
                   foregroundColor: AppColors.whiteColor,
                 ),
-                child: const Text('🔄 Quick Switch to Next Brand'),
+                child: Text(
+                  '🔄 ${languageService.tr('brand_quick_switch_to_next')}',
+                ),
               ),
             ),
 
@@ -173,7 +184,7 @@ class BrandTestScreen extends StatelessWidget {
 
             // Test using AppColors
             Text(
-              '🧪 Testing AppColors:',
+              '🧪 ${languageService.tr('brand_testing_app_colors')}:',
               style: Theme.of(context).textTheme.headlineSmall,
             ),
             const SizedBox(height: 16),
@@ -186,8 +197,8 @@ class BrandTestScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
-                'This uses AppColors.primary - should match brand color!',
-                style:   TextStyle(
+                languageService.tr('brand_primary_color_test'),
+                style: TextStyle(
                   color: AppColors.whiteColor,
                   fontWeight: FontWeight.bold,
                 ),
@@ -229,7 +240,7 @@ class BrandTestScreen extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    '#${color.value.toRadixString(16).substring(2).toUpperCase()}',
+                    '#${color.toARGB32().toRadixString(16).substring(2).toUpperCase()}',
                     style: TextStyle(
                       color: AppColors.textGrey,
                       fontFamily: 'monospace',

@@ -14,10 +14,7 @@ class EditPlanBottomSheet extends StatefulWidget {
 
   final Map<String, dynamic> plan;
 
-  static Future<bool?> show(
-    BuildContext context,
-    Map<String, dynamic> plan,
-  ) {
+  static Future<bool?> show(BuildContext context, Map<String, dynamic> plan) {
     return showDialog<bool>(
       context: context,
       barrierDismissible: true,
@@ -96,7 +93,7 @@ class _EditPlanBottomSheetState extends State<EditPlanBottomSheet> {
     if (!_hasActiveInvestors) {
       final originalComm =
           double.tryParse('${widget.plan['commission_percentage'] ?? ''}') ??
-              double.nan;
+          double.nan;
       final newComm = double.tryParse(_commission.text.trim());
       if (newComm != null && newComm != originalComm) {
         body['commission_percentage'] = newComm;
@@ -104,7 +101,7 @@ class _EditPlanBottomSheetState extends State<EditPlanBottomSheet> {
 
       final originalMin =
           double.tryParse('${widget.plan['minimum_investment'] ?? ''}') ??
-              double.nan;
+          double.nan;
       final newMin = double.tryParse(_minInvestment.text.trim());
       if (newMin != null && newMin != originalMin) {
         body['minimum_investment'] = newMin;
@@ -140,9 +137,7 @@ class _EditPlanBottomSheetState extends State<EditPlanBottomSheet> {
       backgroundColor: AppColors.card,
       surfaceTintColor: Colors.transparent,
       insetPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 24.h),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16.r),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
       titlePadding: EdgeInsets.fromLTRB(20.w, 16.h, 8.w, 8.h),
       contentPadding: EdgeInsets.fromLTRB(20.w, 8.h, 20.w, 0),
       actionsPadding: EdgeInsets.fromLTRB(12.w, 8.h, 12.w, 12.h),
@@ -191,19 +186,11 @@ class _EditPlanBottomSheetState extends State<EditPlanBottomSheet> {
                 SizedBox(height: 14.h),
                 _buildLabel('Strategy description'),
                 SizedBox(height: 6.h),
-                _buildField(
-                  controller: _strategy,
-                  maxLines: 3,
-                  minLines: 3,
-                ),
+                _buildField(controller: _strategy, maxLines: 3, minLines: 3),
                 SizedBox(height: 14.h),
                 _buildLabel('Risk information'),
                 SizedBox(height: 6.h),
-                _buildField(
-                  controller: _risk,
-                  maxLines: 3,
-                  minLines: 3,
-                ),
+                _buildField(controller: _risk, maxLines: 3, minLines: 3),
                 if (!_hasActiveInvestors) ...[
                   SizedBox(height: 14.h),
                   _buildLabel('Commission %'),
@@ -280,57 +267,57 @@ class _EditPlanBottomSheetState extends State<EditPlanBottomSheet> {
   }
 
   Widget _buildLockBanner() => Container(
-        padding: EdgeInsets.all(12.w),
-        decoration: BoxDecoration(
-          color: AppColors.error.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(10.r),
-          border: Border.all(color: AppColors.error.withValues(alpha: 0.18)),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(Icons.info_outline, size: 18.sp, color: AppColors.error),
-            SizedBox(width: 8.w),
-            Expanded(
-              child: Text(
-                'This plan has active investors. You can update the name '
-                'and descriptions only. To change commission or minimum '
-                'investment, all investors must unsubscribe first.',
-                style: TextStyle(
-                  color: AppColors.error,
-                  fontSize: 12.sp,
-                  height: 1.4,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-
-  Widget _buildLabel(String text, {bool required = false}) => Row(
-        children: [
-          Text(
-            text,
+    padding: EdgeInsets.all(12.w),
+    decoration: BoxDecoration(
+      color: AppColors.error.withValues(alpha: 0.08),
+      borderRadius: BorderRadius.circular(10.r),
+      border: Border.all(color: AppColors.error.withValues(alpha: 0.18)),
+    ),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(Icons.info_outline, size: 18.sp, color: AppColors.error),
+        SizedBox(width: 8.w),
+        Expanded(
+          child: Text(
+            'This plan has active investors. You can update the name '
+            'and descriptions only. To change commission or minimum '
+            'investment, all investors must unsubscribe first.',
             style: TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 13.sp,
-              fontWeight: FontWeight.w700,
+              color: AppColors.error,
+              fontSize: 12.sp,
+              height: 1.4,
+              fontWeight: FontWeight.w500,
             ),
           ),
-          if (required) ...[
-            SizedBox(width: 4.w),
-            Text(
-              '*',
-              style: TextStyle(
-                color: AppColors.error,
-                fontSize: 13.sp,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
-        ],
-      );
+        ),
+      ],
+    ),
+  );
+
+  Widget _buildLabel(String text, {bool required = false}) => Row(
+    children: [
+      Text(
+        text,
+        style: TextStyle(
+          color: AppColors.textPrimary,
+          fontSize: 13.sp,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      if (required) ...[
+        SizedBox(width: 4.w),
+        Text(
+          '*',
+          style: TextStyle(
+            color: AppColors.error,
+            fontSize: 13.sp,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
+    ],
+  );
 
   Widget _buildField({
     required TextEditingController controller,
@@ -354,8 +341,7 @@ class _EditPlanBottomSheetState extends State<EditPlanBottomSheet> {
         suffixText: suffix,
         prefixStyle: TextStyle(color: AppColors.textGrey, fontSize: 14.sp),
         suffixStyle: TextStyle(color: AppColors.textGrey, fontSize: 14.sp),
-        contentPadding:
-            EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+        contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
         filled: true,
         fillColor: AppColors.background,
         border: OutlineInputBorder(

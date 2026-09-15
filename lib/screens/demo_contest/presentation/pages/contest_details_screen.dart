@@ -83,13 +83,13 @@ class _ContestDetailsScreenState extends State<ContestDetailsScreen> {
       final statusColor = ended
           ? AppColors.textGrey
           : live
-              ? AppColors.success
-              : AppColors.warning;
+          ? AppColors.success
+          : AppColors.warning;
       final statusLabel = ended
           ? 'ENDED'
           : live
-              ? '● LIVE'
-              : 'UPCOMING';
+          ? '● LIVE'
+          : 'UPCOMING';
 
       return Scaffold(
         backgroundColor: AppColors.backgroundLight,
@@ -126,15 +126,11 @@ class _ContestDetailsScreenState extends State<ContestDetailsScreen> {
                     SizedBox(height: 8.h),
                     _PrizeList(contest: contest),
                     SizedBox(height: 18.h),
-                    _SectionTitle(
-                      text: languageService.tr('dc_contest_rules'),
-                    ),
+                    _SectionTitle(text: languageService.tr('dc_contest_rules')),
                     SizedBox(height: 8.h),
                     _RulesList(contest: contest),
                     SizedBox(height: 18.h),
-                    _SectionTitle(
-                      text: languageService.tr('dc_requirements'),
-                    ),
+                    _SectionTitle(text: languageService.tr('dc_requirements')),
                     SizedBox(height: 8.h),
                     _RequirementsList(contest: contest),
                     SizedBox(height: 22.h),
@@ -198,15 +194,15 @@ class _ContestDetailsScreenState extends State<ContestDetailsScreen> {
                               }
                             : () => _handleJoin(controller, contest),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor:  AppColors.primary,
+                          backgroundColor: AppColors.primary,
                           // backgroundColor: joined
                           //     ? AppColors.success
                           //     : AppColors.primary,
                           foregroundColor: AppColors.whiteColor,
                           disabledBackgroundColor: AppColors.icongrey
                               .withValues(alpha: 0.3),
-                          disabledForegroundColor:
-                              AppColors.whiteColor.withValues(alpha: 0.7),
+                          disabledForegroundColor: AppColors.whiteColor
+                              .withValues(alpha: 0.7),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14.r),
                           ),
@@ -228,8 +224,8 @@ class _ContestDetailsScreenState extends State<ContestDetailsScreen> {
                             joined
                                 ? languageService.tr('dc_view_leaderboard')
                                 : upcoming
-                                    ? languageService.tr('dc_register_now')
-                                    : languageService.tr('dc_join_now'),
+                                ? languageService.tr('dc_register_now')
+                                : languageService.tr('dc_join_now'),
                             style: AppTextStyles.bodyText.copyWith(
                               fontSize: 15.sp,
                               fontWeight: FontWeight.w700,
@@ -247,27 +243,21 @@ class _ContestDetailsScreenState extends State<ContestDetailsScreen> {
     });
   }
 
-  Future<void> _handleJoin(
-    DemoContestController controller,
-    contest,
-  ) async {
+  Future<void> _handleJoin(DemoContestController controller, contest) async {
     if (!_acceptedTerms) {
       CustomToastService.showError(
-        message: 'Please accept the contest terms first.',
+        message: Get.find<LanguageService>().tr('dc_accept_terms_first'),
       );
       return;
     }
     final entry = await controller.joinContest(contest.id);
     if (entry != null) {
-      CustomToastService.showSuccess(message: 'Successfully joined!');
-      Get.toNamed(
-        AppPages.DEMO_CONTEST_DETAILS,
-        arguments: contest.id,
+      CustomToastService.showSuccess(
+        message: Get.find<LanguageService>().tr('dc_join_success'),
       );
+      Get.toNamed(AppPages.DEMO_CONTEST_DETAILS, arguments: contest.id);
     } else if (controller.errorMessage.value.isNotEmpty) {
-      CustomToastService.showError(
-        message: controller.errorMessage.value,
-      );
+      CustomToastService.showError(message: controller.errorMessage.value);
     }
   }
 }
@@ -312,10 +302,7 @@ class _HeroCard extends StatelessWidget {
           Row(
             children: [
               Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 8.w,
-                  vertical: 3.h,
-                ),
+                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
                 decoration: BoxDecoration(
                   color: statusColor,
                   borderRadius: BorderRadius.circular(6.r),
@@ -399,7 +386,8 @@ class _HeroCard extends StatelessWidget {
                 Expanded(
                   child: _StatBlock(
                     label: languageService.tr('dc_start_balance').toUpperCase(),
-                    value: '\$${(contest.startingBalance as double).toStringAsFixed(0)}',
+                    value:
+                        '\$${(contest.startingBalance as double).toStringAsFixed(0)}',
                     color: AppColors.whiteColor,
                   ),
                 ),
@@ -414,10 +402,10 @@ class _HeroCard extends StatelessWidget {
                     value: contest.hasEnded
                         ? '—'
                         : (contest.isLive
-                            ? languageService.tr('dc_live').toUpperCase()
-                            : languageService
-                                .tr('dc_starts_in')
-                                .toUpperCase()),
+                              ? languageService.tr('dc_live').toUpperCase()
+                              : languageService
+                                    .tr('dc_starts_in')
+                                    .toUpperCase()),
                     color: AppColors.whiteColor,
                   ),
                 ),
@@ -462,14 +450,12 @@ class _HeroCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(999.r),
             child: LinearProgressIndicator(
               minHeight: 6.h,
-              backgroundColor:
-                  AppColors.whiteColor.withValues(alpha: 0.25),
-              valueColor: const AlwaysStoppedAnimation<Color>(
-                Colors.white,
-              ),
-              value: (contest.joinedParticipants.toDouble() /
-                      contest.maxParticipants.toDouble())
-                  .clamp(0.0, 1.0),
+              backgroundColor: AppColors.whiteColor.withValues(alpha: 0.25),
+              valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+              value:
+                  (contest.joinedParticipants.toDouble() /
+                          contest.maxParticipants.toDouble())
+                      .clamp(0.0, 1.0),
             ),
           ),
         ],
@@ -630,11 +616,7 @@ class _SmallStat extends StatelessWidget {
   final String label;
   final String value;
   final Color? color;
-  const _SmallStat({
-    required this.label,
-    required this.value,
-    this.color,
-  });
+  const _SmallStat({required this.label, required this.value, this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -693,9 +675,7 @@ class _PrizeList extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(14.r),
-        border: Border.all(
-          color: AppColors.icongrey.withValues(alpha: 0.18),
-        ),
+        border: Border.all(color: AppColors.icongrey.withValues(alpha: 0.18)),
       ),
       child: Column(
         children: List.generate(prizes.length, (i) {
@@ -780,9 +760,7 @@ class _RulesList extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(14.r),
-        border: Border.all(
-          color: AppColors.icongrey.withValues(alpha: 0.18),
-        ),
+        border: Border.all(color: AppColors.icongrey.withValues(alpha: 0.18)),
       ),
       child: Column(
         children: List.generate(rules.length, (i) {
@@ -848,16 +826,16 @@ class _RequirementsList extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.warning.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(14.r),
-        border: Border.all(
-          color: AppColors.warning.withValues(alpha: 0.25),
-        ),
+        border: Border.all(color: AppColors.warning.withValues(alpha: 0.25)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: List.generate(requirements.length, (i) {
           final req = requirements[i];
           return Padding(
-            padding: EdgeInsets.only(bottom: i == requirements.length - 1 ? 0 : 8.h),
+            padding: EdgeInsets.only(
+              bottom: i == requirements.length - 1 ? 0 : 8.h,
+            ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

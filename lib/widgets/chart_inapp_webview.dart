@@ -10,8 +10,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-
 import 'package:crm_app/services/chart_datafeed_bridge.dart';
+import 'package:crm_app/services/language_service.dart' show TranslationUtils;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ChartInAppWebView
@@ -58,10 +58,9 @@ class ChartInAppWebViewState extends State<ChartInAppWebView> {
 
   /// Full initial URL with symbol baked in so the chart opens on the right symbol.
   String _urlWithSymbol(String symbol) {
-    final base =
-        widget.url.contains('?')
-            ? '${widget.url}&symbol=${Uri.encodeComponent(symbol)}'
-            : '${widget.url}?symbol=${Uri.encodeComponent(symbol)}';
+    final base = widget.url.contains('?')
+        ? '${widget.url}&symbol=${Uri.encodeComponent(symbol)}'
+        : '${widget.url}?symbol=${Uri.encodeComponent(symbol)}';
     return base;
   }
 
@@ -187,12 +186,12 @@ class ChartInAppWebViewState extends State<ChartInAppWebView> {
     }
 
     // Strip broker suffix (.c / .m / .r) for fallback attempts.
-    final symClean =
-        symbol.contains('.')
-            ? symbol.substring(0, symbol.lastIndexOf('.'))
-            : symbol;
+    final symClean = symbol.contains('.')
+        ? symbol.substring(0, symbol.lastIndexOf('.'))
+        : symbol;
 
-    String jsSource(String s) => '''
+    String jsSource(String s) =>
+        '''
       (function() {
         var sym = ${_jsStr(s)};
 
@@ -255,7 +254,8 @@ class ChartInAppWebViewState extends State<ChartInAppWebView> {
     if (_controller == null || !_isReady) return;
     try {
       await _controller!.evaluateJavascript(
-        source: '''
+        source:
+            '''
         (function() {
           try {
             if (typeof updateNativeTrades === 'function') {
@@ -314,10 +314,9 @@ class ChartInAppWebViewState extends State<ChartInAppWebView> {
             case 'resolveSymbol':
               String? accountNumber;
               if (Get.isRegistered<AccountController>()) {
-                accountNumber =
-                    Get.find<AccountController>()
-                        .activeMT5Account
-                        ?.metaAccountNumber;
+                accountNumber = Get.find<AccountController>()
+                    .activeMT5Account
+                    ?.metaAccountNumber;
               }
               result = await _df.resolveSymbol(
                 symbol: payload['sym']?.toString() ?? '',
@@ -492,7 +491,7 @@ class ChartInAppWebViewState extends State<ChartInAppWebView> {
               color: Colors.transparent,
               child: Center(
                 child: CommonLoadingWidget(
-                  message: 'Loading chart...',
+                  message: TranslationUtils.tr('chart_loading'),
                   size: 40.0,
                   color: AppColors.primary,
                 ),
@@ -514,7 +513,7 @@ class ChartInAppWebViewState extends State<ChartInAppWebView> {
                     ),
                     SizedBox(height: 12.h),
                     Text(
-                      'Chart unavailable',
+                      TranslationUtils.tr('chart_unavailable'),
                       style: AppTextStyles.subheading.copyWith(
                         color: AppColors.textGrey,
                       ),
@@ -532,7 +531,7 @@ class ChartInAppWebViewState extends State<ChartInAppWebView> {
                           ),
                         ),
                         child: Text(
-                          'Retry',
+                          TranslationUtils.tr('common_retry'),
                           style: AppTextStyles.label.copyWith(
                             fontSize: 12.sp,
                             fontWeight: FontWeight.w600,

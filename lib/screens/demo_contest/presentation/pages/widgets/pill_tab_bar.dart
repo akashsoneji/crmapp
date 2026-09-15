@@ -36,9 +36,7 @@ class PillTabBar extends StatelessWidget {
               duration: const Duration(milliseconds: 200),
               padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 8.h),
               decoration: BoxDecoration(
-                color: selected
-                    ? AppColors.primary
-                    : AppColors.whiteColor,
+                color: selected ? AppColors.primary : AppColors.whiteColor,
                 borderRadius: BorderRadius.circular(999.r),
                 border: Border.all(
                   color: selected ? AppColors.primary : AppColors.border,
@@ -51,7 +49,9 @@ class PillTabBar extends StatelessWidget {
                 style: AppTextStyles.bodyText.copyWith(
                   fontSize: 13.sp,
                   fontWeight: FontWeight.w600,
-                  color: selected ? AppColors.whiteColor : AppColors.textPrimary,
+                  color: selected
+                      ? AppColors.whiteColor
+                      : AppColors.textPrimary,
                 ),
               ),
             ),

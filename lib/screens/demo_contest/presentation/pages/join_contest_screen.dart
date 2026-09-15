@@ -24,8 +24,10 @@ class JoinContestScreen extends StatefulWidget {
 
 class _JoinContestScreenState extends State<JoinContestScreen>
     with SingleTickerProviderStateMixin {
-  late final TabController _tabController =
-      TabController(length: 3, vsync: this);
+  late final TabController _tabController = TabController(
+    length: 3,
+    vsync: this,
+  );
 
   @override
   void dispose() {
@@ -136,7 +138,7 @@ class _ContestList extends StatelessWidget {
         padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 32.h),
         physics: const AlwaysScrollableScrollPhysics(),
         itemCount: contests.length,
-        separatorBuilder: (_, __) => SizedBox(height: 14.h),
+        separatorBuilder: (_, _) => SizedBox(height: 14.h),
         itemBuilder: (context, i) {
           final c = contests[i];
           return ContestJoinCard(
@@ -144,19 +146,13 @@ class _ContestList extends StatelessWidget {
             joined: controller.isJoined(c.id),
             onTap: () {
               if (controller.isJoined(c.id)) {
-                Get.toNamed(
-                  AppPages.DEMO_CONTEST_DETAILS,
-                  arguments: c.id,
-                );
+                Get.toNamed(AppPages.DEMO_CONTEST_DETAILS, arguments: c.id);
               } else if (!c.acceptingEntries) {
                 CustomToastService.showInfo(
-                  message: 'This contest has ended.',
+                  message: Get.find<LanguageService>().tr('demo_contest_ended'),
                 );
               } else {
-                Get.toNamed(
-                  AppPages.DEMO_CONTEST_DETAILS,
-                  arguments: c.id,
-                );
+                Get.toNamed(AppPages.DEMO_CONTEST_DETAILS, arguments: c.id);
               }
             },
           );

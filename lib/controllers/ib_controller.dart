@@ -1,5 +1,6 @@
 import 'package:crm_app/constants/api_const.dart';
 import 'package:crm_app/services/api_service.dart';
+import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/models/ib_models.dart';
@@ -40,7 +41,8 @@ class IBController extends GetxController {
   final Rx<UserIBDetails?> ibDashboardData = Rxn<UserIBDetails>();
 
   // IB Progressive Stats Data
-  final Rx<IbProgressiveStatsData?> progressiveStatsData = Rxn<IbProgressiveStatsData?>();
+  final Rx<IbProgressiveStatsData?> progressiveStatsData =
+      Rxn<IbProgressiveStatsData?>();
 
   // Active Banners
   final RxList<BannerItem> banners = <BannerItem>[].obs;
@@ -158,7 +160,8 @@ class IBController extends GetxController {
           return false;
         }
 
-        final isOk = _isTruthy(applicationResponse.status) ||
+        final isOk =
+            _isTruthy(applicationResponse.status) ||
             _isTruthy(applicationResponse.success) ||
             _isTruthy(rawStatus) ||
             _isTruthy(rawSuccess);
@@ -167,7 +170,7 @@ class IBController extends GetxController {
           CustomToastService.showSuccess(
             message:
                 applicationResponse.message ??
-                'IB application submitted successfully',
+                TranslationUtils.tr('ib_application_submitted'),
           );
           return true;
         } else {
@@ -423,7 +426,9 @@ class IBController extends GetxController {
         } catch (e) {
           print('❌ addAll FAILED: $e');
         }
-        print('🔵 IBController: AFTER addAll — ibTradeHistory.length=${ibTradeHistory.length}');
+        print(
+          '🔵 IBController: AFTER addAll — ibTradeHistory.length=${ibTradeHistory.length}',
+        );
         update(['ib_clients']);
         return ibTradeHistory;
       } else {
@@ -718,11 +723,14 @@ class IBController extends GetxController {
       );
 
       if (response.success && response.data != null) {
-        final statsResponse = IbProgressiveStatsResponse.fromJson(response.data!);
+        final statsResponse = IbProgressiveStatsResponse.fromJson(
+          response.data!,
+        );
         progressiveStatsData.value = statsResponse.data;
         update(['ib_dashboard']);
       } else {
-        errorMessage.value = response.message ?? 'Failed to get progressive stats';
+        errorMessage.value =
+            response.message ?? 'Failed to get progressive stats';
         progressiveStatsData.value = null;
         update(['ib_dashboard']);
       }
@@ -932,15 +940,17 @@ class IBController extends GetxController {
   Future<void> backToParentIB() async {
     if (clientsHierarchy.isNotEmpty) {
       clientsHierarchy.removeLast();
-      clientsSelectedSubIB.value =
-          clientsHierarchy.isNotEmpty ? clientsHierarchy.last : null;
+      clientsSelectedSubIB.value = clientsHierarchy.isNotEmpty
+          ? clientsHierarchy.last
+          : null;
     } else {
       clientsSelectedSubIB.value = null;
     }
     clientsExpandedItems.clear();
 
-    final parentId =
-        clientsHierarchy.isNotEmpty ? clientsHierarchy.last.id : null;
+    final parentId = clientsHierarchy.isNotEmpty
+        ? clientsHierarchy.last.id
+        : null;
 
     // If parentId is null → Master IB (top level)
     await loadMyClientsData(subIbId: parentId);
@@ -1050,8 +1060,8 @@ class IBController extends GetxController {
       };
 
       if (groupId != null) {
-        payload['id'] =
-            groupId.toString(); // Send as string as per API requirement
+        payload['id'] = groupId
+            .toString(); // Send as string as per API requirement
       }
 
       final response = await ApiService.post(
@@ -1061,10 +1071,9 @@ class IBController extends GetxController {
 
       if (response.success) {
         CustomToastService.showSuccess(
-          message:
-              groupId != null
-                  ? 'Commission group updated successfully'
-                  : 'Commission group created successfully',
+          message: groupId != null
+              ? 'Commission group updated successfully'
+              : 'Commission group created successfully',
         );
         await getCommissionGroups(showLoading: false);
         return true;
@@ -1095,7 +1104,7 @@ class IBController extends GetxController {
 
       if (response.success) {
         CustomToastService.showSuccess(
-          message: 'Commission group deleted successfully',
+          message: TranslationUtils.tr('ib_commission_group_deleted'),
         );
         await getCommissionGroups(showLoading: false);
         return true;

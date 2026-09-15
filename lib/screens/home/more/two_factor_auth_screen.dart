@@ -19,7 +19,9 @@ class TwoFactorAuthScreen extends StatefulWidget {
 }
 
 class _TwoFactorAuthScreenState extends State<TwoFactorAuthScreen> {
-  final TwoFactorAuthController _controller = Get.put(TwoFactorAuthController());
+  final TwoFactorAuthController _controller = Get.put(
+    TwoFactorAuthController(),
+  );
   final LanguageService _languageService = Get.find<LanguageService>();
 
   void _showSetupOtpModal() {
@@ -90,7 +92,9 @@ class _TwoFactorAuthScreenState extends State<TwoFactorAuthScreen> {
           }),
           Obx(() {
             if (_controller.isLoading) {
-              return const Center(child: CommonLoadingWidget(isFullScreen: true));
+              return const Center(
+                child: CommonLoadingWidget(isFullScreen: true),
+              );
             }
             return const SizedBox.shrink();
           }),
@@ -349,7 +353,9 @@ class _TwoFactorAuthScreenState extends State<TwoFactorAuthScreen> {
           backgroundColor: AppColors.primary,
           foregroundColor: AppColors.whiteColor,
           disabledBackgroundColor: AppColors.border,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           elevation: 0,
         ),
         child: Text(
@@ -364,7 +370,10 @@ class _TwoFactorAuthScreenState extends State<TwoFactorAuthScreen> {
     );
   }
 
-  Widget _secondaryButton({required String label, required VoidCallback onPressed}) {
+  Widget _secondaryButton({
+    required String label,
+    required VoidCallback onPressed,
+  }) {
     return SizedBox(
       width: double.infinity,
       height: 46.h,
@@ -372,7 +381,9 @@ class _TwoFactorAuthScreenState extends State<TwoFactorAuthScreen> {
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
           side: BorderSide(color: AppColors.border),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
         child: Text(
           label,
@@ -386,7 +397,10 @@ class _TwoFactorAuthScreenState extends State<TwoFactorAuthScreen> {
     );
   }
 
-  Widget _outlineButton({required String label, required VoidCallback onPressed}) {
+  Widget _outlineButton({
+    required String label,
+    required VoidCallback onPressed,
+  }) {
     return SizedBox(
       width: double.infinity,
       height: 46.h,
@@ -394,7 +408,9 @@ class _TwoFactorAuthScreenState extends State<TwoFactorAuthScreen> {
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
           side: BorderSide(color: AppColors.error.withValues(alpha: 0.5)),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
         child: Text(
           label,

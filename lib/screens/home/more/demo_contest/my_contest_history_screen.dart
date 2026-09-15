@@ -22,8 +22,10 @@ class MyContestHistoryScreen extends StatefulWidget {
 
 class _MyContestHistoryScreenState extends State<MyContestHistoryScreen>
     with SingleTickerProviderStateMixin {
-  late final TabController _tabController =
-      TabController(length: 3, vsync: this);
+  late final TabController _tabController = TabController(
+    length: 3,
+    vsync: this,
+  );
 
   @override
   void dispose() {
@@ -54,10 +56,7 @@ class _MyContestHistoryScreenState extends State<MyContestHistoryScreen>
           unselectedLabelColor: AppColors.textGrey,
           indicatorColor: AppColors.primary,
           indicatorWeight: 3,
-          labelStyle: TextStyle(
-            fontWeight: FontWeight.w700,
-            fontSize: 13.sp,
-          ),
+          labelStyle: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.sp),
           tabs: [
             Tab(text: languageService.tr('dc_history_active')),
             Tab(text: languageService.tr('dc_history_completed')),
@@ -74,8 +73,9 @@ class _MyContestHistoryScreenState extends State<MyContestHistoryScreen>
 
         final entries = controller.myEntries;
         final active = entries.where((e) => e.isLive).toList();
-        final completed =
-            entries.where((e) => !e.isLive && !e.isWinner).toList();
+        final completed = entries
+            .where((e) => !e.isLive && !e.isWinner)
+            .toList();
         final winners = entries.where((e) => e.isWinner).toList();
 
         return TabBarView(
@@ -145,8 +145,7 @@ class _HistoryList extends StatelessWidget {
     }
     return RefreshIndicator(
       color: AppColors.primary,
-      onRefresh: () =>
-          Get.find<DemoContestController>().refreshPull(),
+      onRefresh: () => Get.find<DemoContestController>().refreshPull(),
       child: ListView.separated(
         padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 32.h),
         physics: const AlwaysScrollableScrollPhysics(),
@@ -249,9 +248,7 @@ class _WinnerTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(14.r),
-        border: Border.all(
-          color: AppColors.warning.withValues(alpha: 0.3),
-        ),
+        border: Border.all(color: AppColors.warning.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
@@ -289,10 +286,7 @@ class _WinnerTile extends StatelessWidget {
                 ),
                 Text(
                   winner.contestTitle,
-                  style: TextStyle(
-                    fontSize: 11.sp,
-                    color: AppColors.textGrey,
-                  ),
+                  style: TextStyle(fontSize: 11.sp, color: AppColors.textGrey),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),

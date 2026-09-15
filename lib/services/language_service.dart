@@ -12,10 +12,24 @@ class LanguageService extends GetxService {
   // Supported languages
   static const Map<String, String> supportedLanguages = {
     'en': 'English',
+    'es': 'Español',
+    'es_MX': 'Español (México)',
+    'zh_CN': '中文 (简体)',
+    'id': 'Bahasa Indonesia',
     'ar': 'العربية',
     'tr': 'Türkçe',
     'hi': 'हिंदी',
-    'es': 'Español',
+  };
+
+  static const Map<String, Locale> supportedLocales = {
+    'en': Locale('en', 'US'),
+    'es': Locale('es', 'ES'),
+    'es_MX': Locale('es', 'MX'),
+    'zh_CN': Locale('zh', 'CN'),
+    'id': Locale('id', 'ID'),
+    'ar': Locale('ar', 'SA'),
+    'tr': Locale('tr', 'TR'),
+    'hi': Locale('hi', 'IN'),
   };
 
   // RTL languages
@@ -59,22 +73,11 @@ class LanguageService extends GetxService {
   Future<void> _loadSavedLanguage() async {
     try {
       final savedLanguage = await _storage.read(key: _languageKey);
-      final savedLocale = await _storage.read(key: _localeKey);
 
       if (savedLanguage != null &&
           supportedLanguages.containsKey(savedLanguage)) {
         currentLanguage.value = savedLanguage;
-
-        if (savedLocale != null) {
-          final localeParts = savedLocale.split('_');
-          if (localeParts.length == 2) {
-            currentLocale.value = Locale(localeParts[0], localeParts[1]);
-          } else {
-            currentLocale.value = Locale(savedLanguage);
-          }
-        } else {
-          currentLocale.value = Locale(savedLanguage);
-        }
+        currentLocale.value = supportedLocales[savedLanguage]!;
       }
     } catch (e) {
       print('LanguageService: Error loading saved language: $e');
@@ -109,10 +112,9 @@ class LanguageService extends GetxService {
   void _loadOtherTranslationsInBackground() {
     // Load other languages asynchronously without blocking
     Future.microtask(() async {
-      final otherLanguages =
-          supportedLanguages.keys
-              .where((code) => code != currentLanguage.value)
-              .toList();
+      final otherLanguages = supportedLanguages.keys
+          .where((code) => code != currentLanguage.value)
+          .toList();
 
       // Load in parallel for better performance
       await Future.wait(
@@ -153,14 +155,13 @@ class LanguageService extends GetxService {
       currentLanguage.value = languageCode;
 
       // Update locale
-      currentLocale.value = Locale(languageCode);
+      currentLocale.value =
+          supportedLocales[languageCode] ?? Locale(languageCode);
 
       // Save to secure storage
       await _storage.write(key: _languageKey, value: languageCode);
-      await _storage.write(
-        key: _localeKey,
-        value: '${languageCode}_${languageCode.toUpperCase()}',
-      );
+      final locale = supportedLocales[languageCode]!;
+      await _storage.write(key: _localeKey, value: locale.toLanguageTag());
 
       // Update GetX locale
       Get.updateLocale(currentLocale.value);
@@ -206,7 +207,10 @@ class LanguageService extends GetxService {
         return key;
       }
 
-      String translation = translations[key]?.toString() ?? key;
+      final localizedTranslation = translations[key]?.toString();
+      final defaultTranslation = _translations[defaultLanguage]?[key]
+          ?.toString();
+      String translation = localizedTranslation ?? defaultTranslation ?? key;
 
       // Replace arguments if provided
       if (args != null) {
@@ -264,7 +268,9 @@ class LanguageService extends GetxService {
 
   /// Get all available locales
   List<Locale> getAvailableLocales() {
-    return supportedLanguages.keys.map((code) => Locale(code)).toList();
+    return supportedLanguages.keys
+        .map((code) => supportedLocales[code] ?? Locale(code))
+        .toList();
   }
 
   /// Reset to default language
@@ -289,7 +295,7 @@ class LanguageService extends GetxService {
       'code': languageCode,
       'name': supportedLanguages[languageCode] ?? 'Unknown',
       'isRTL': rtlLanguages.contains(languageCode),
-      'locale': Locale(languageCode),
+      'locale': supportedLocales[languageCode] ?? Locale(languageCode),
     };
   }
 
@@ -303,19 +309,15 @@ class LanguageService extends GetxService {
     final systemLocale = Get.deviceLocale;
     if (systemLocale != null) {
       final languageCode = systemLocale.languageCode;
-      if (isLanguageSupported(languageCode)) {
-        return languageCode;
-      }
+      if (languageCode == 'zh') return 'zh_CN';
+      if (isLanguageSupported(languageCode)) return languageCode;
     }
     return defaultLanguage;
   }
 
   /// Initialize with system language
   Future<void> initializeWithSystemLanguage() async {
-    final systemLanguage = getSystemLanguage();
-    if (systemLanguage != defaultLanguage) {
-      await changeLanguage(systemLanguage);
-    }
+    await changeLanguage(getSystemLanguage());
   }
 
   /// Get translation statistics
@@ -327,14 +329,12 @@ class LanguageService extends GetxService {
       if (translations != null) {
         stats[languageCode] = {
           'total_keys': translations.length,
-          'translated_keys':
-              translations.values
-                  .where((v) => v != null && v.toString().isNotEmpty)
-                  .length,
-          'missing_keys':
-              translations.values
-                  .where((v) => v == null || v.toString().isEmpty)
-                  .length,
+          'translated_keys': translations.values
+              .where((v) => v != null && v.toString().isNotEmpty)
+              .length,
+          'missing_keys': translations.values
+              .where((v) => v == null || v.toString().isEmpty)
+              .length,
         };
       }
     }

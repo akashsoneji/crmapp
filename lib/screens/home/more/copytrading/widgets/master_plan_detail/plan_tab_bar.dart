@@ -67,9 +67,7 @@ class _TabPill extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
           color: active ? tokens.brand : tokens.surface,
-          border: Border.all(
-            color: active ? tokens.brand : tokens.border,
-          ),
+          border: Border.all(color: active ? tokens.brand : tokens.border),
           borderRadius: BorderRadius.circular(999),
         ),
         child: Text(

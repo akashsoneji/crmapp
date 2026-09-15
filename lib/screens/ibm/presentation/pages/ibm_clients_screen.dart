@@ -9,6 +9,7 @@ import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/screens/ibm/view_models/ibm_controller.dart';
 import 'package:crm_app/screens/ibm/presentation/pages/ibm_client_profile_screen.dart';
 import 'package:crm_app/screens/ibm/presentation/widgets/ibm_shimmer_loading.dart';
+import 'package:crm_app/services/language_service.dart';
 
 class IbmClientsScreen extends StatefulWidget {
   const IbmClientsScreen({super.key});
@@ -58,7 +59,7 @@ class _IbmClientsScreenState extends State<IbmClientsScreen>
   final List<String> _requestTabs = [
     'Waiting on you',
     'With the broker',
-    'Approved',
+    TranslationUtils.tr('copy_approved'),
     'Declined',
     'All',
   ];
@@ -76,14 +77,12 @@ class _IbmClientsScreenState extends State<IbmClientsScreen>
 
   void _refreshAllData() {
     final p = _mapFilterToApi(_selectedDateFilter);
-    final from =
-        _customStartDate != null
-            ? DateFormat('yyyy-MM-dd').format(_customStartDate!)
-            : null;
-    final to =
-        _customEndDate != null
-            ? DateFormat('yyyy-MM-dd').format(_customEndDate!)
-            : null;
+    final from = _customStartDate != null
+        ? DateFormat('yyyy-MM-dd').format(_customStartDate!)
+        : null;
+    final to = _customEndDate != null
+        ? DateFormat('yyyy-MM-dd').format(_customEndDate!)
+        : null;
 
     controller.fetchClients(period: p);
     controller
@@ -189,23 +188,23 @@ class _IbmClientsScreenState extends State<IbmClientsScreen>
     return Scaffold(
       backgroundColor: AppColors.tradeBackgroundCenterColor,
       appBar: AppBar(
-        backgroundColor:
-            AppColors.isDarkMode ? AppColors.pureBlack : AppColors.whiteColor,
+        backgroundColor: AppColors.isDarkMode
+            ? AppColors.pureBlack
+            : AppColors.whiteColor,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         automaticallyImplyLeading: false,
         leading: Builder(
-          builder:
-              (ctx) => IconButton(
-                icon: SvgPicture.asset(
-                  'assets/svg/ib_dashboard/home.svg',
-                  colorFilter: ColorFilter.mode(
-                    AppColors.textPrimary,
-                    BlendMode.srcIn,
-                  ),
-                ),
-                onPressed: () => Get.offAllNamed(AppPages.TRADING),
+          builder: (ctx) => IconButton(
+            icon: SvgPicture.asset(
+              'assets/svg/ib_dashboard/home.svg',
+              colorFilter: ColorFilter.mode(
+                AppColors.textPrimary,
+                BlendMode.srcIn,
               ),
+            ),
+            onPressed: () => Get.offAllNamed(AppPages.TRADING),
+          ),
         ),
         titleSpacing: 0,
         title: Text(
@@ -253,18 +252,16 @@ class _IbmClientsScreenState extends State<IbmClientsScreen>
         bottom: PreferredSize(
           preferredSize: Size.fromHeight(48.h),
           child: Container(
-            color:
-                AppColors.isDarkMode
-                    ? AppColors.pureBlack
-                    : AppColors.whiteColor,
+            color: AppColors.isDarkMode
+                ? AppColors.pureBlack
+                : AppColors.whiteColor,
             padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
             child: Container(
               height: 36.h,
               decoration: BoxDecoration(
-                color:
-                    AppColors.isDarkMode
-                        ? const Color(0xFF1E1E1E)
-                        : const Color(0xFFF1EEF8),
+                color: AppColors.isDarkMode
+                    ? const Color(0xFF1E1E1E)
+                    : const Color(0xFFF1EEF8),
                 borderRadius: BorderRadius.circular(18.r),
               ),
               child: TabBar(
@@ -282,7 +279,7 @@ class _IbmClientsScreenState extends State<IbmClientsScreen>
                   fontWeight: FontWeight.bold,
                 ),
                 tabs: [
-                  const Tab(text: 'My Clients'),
+                  Tab(text: TranslationUtils.tr('ibm_my_clients')),
                   Tab(
                     child: Obx(() {
                       final reqs =
@@ -290,7 +287,7 @@ class _IbmClientsScreenState extends State<IbmClientsScreen>
                       return Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Text('Sub-IB Requests'),
+                          Text(TranslationUtils.tr('ibm_sub_ib_requests')),
                           if (reqs > 0) ...[
                             SizedBox(width: 6.w),
                             Container(
@@ -348,41 +345,39 @@ class _IbmClientsScreenState extends State<IbmClientsScreen>
       final treeSummary = controller.networkTreeSummaryData;
 
       final totalClients = summary['total'] ?? 0;
-      final activeClients =
-          isNetwork ? (treeSummary['active'] ?? 0) : (summary['active'] ?? 0);
+      final activeClients = isNetwork
+          ? (treeSummary['active'] ?? 0)
+          : (summary['active'] ?? 0);
       final newClients = summary['new_in_period'] ?? 0;
-      final commission =
-          summary['commission'] is Map
-              ? summary['commission']['USD'] ?? 0.0
-              : (double.tryParse((summary['commission'] ?? 0).toString()) ??
-                  0.0);
+      final commission = summary['commission'] is Map
+          ? summary['commission']['USD'] ?? 0.0
+          : (double.tryParse((summary['commission'] ?? 0).toString()) ?? 0.0);
 
       final directPartners = treeSummary['direct'] ?? 0;
       final totalPartners = treeSummary['total'] ?? treeSummary['sub_ibs'] ?? 0;
       final totalNetworkClients =
           treeSummary['clients'] ?? treeSummary['network_clients'] ?? 3;
-      final networkEarned = (double.tryParse(
-                (treeSummary['earned'] ?? treeSummary['you_earned'] ?? 0.09)
-                    .toString(),
-              ) ??
-              0.09)
-          .toStringAsFixed(2);
+      final networkEarned =
+          (double.tryParse(
+                    (treeSummary['earned'] ?? treeSummary['you_earned'] ?? 0.09)
+                        .toString(),
+                  ) ??
+                  0.09)
+              .toStringAsFixed(2);
 
       final List<dynamic> rows = data['rows'] ?? [];
 
-      final filteredRows =
-          rows.where((r) {
-            if (_searchQuery.isEmpty) return true;
-            final name = (r['name'] ?? '').toString().toLowerCase();
-            final email = (r['email'] ?? '').toString().toLowerCase();
-            return name.contains(_searchQuery.toLowerCase()) ||
-                email.contains(_searchQuery.toLowerCase());
-          }).toList();
+      final filteredRows = rows.where((r) {
+        if (_searchQuery.isEmpty) return true;
+        final name = (r['name'] ?? '').toString().toLowerCase();
+        final email = (r['email'] ?? '').toString().toLowerCase();
+        return name.contains(_searchQuery.toLowerCase()) ||
+            email.contains(_searchQuery.toLowerCase());
+      }).toList();
 
-      final subtitle =
-          isNetwork
-              ? '$directPartners direct sub-IBs, $totalPartners in the whole cascade, $totalNetworkClients clients'
-              : '$totalClients client(s) assigned straight to you';
+      final subtitle = isNetwork
+          ? '$directPartners direct sub-IBs, $totalPartners in the whole cascade, $totalNetworkClients clients'
+          : '$totalClients client(s) assigned straight to you';
 
       // Parse Tree list from treeData or fallback
       final treeList = _extractTreeNodes(treeData);
@@ -434,7 +429,7 @@ class _IbmClientsScreenState extends State<IbmClientsScreen>
             Row(
               children: [
                 _buildSubTabBadge(
-                  label: 'Direct Clients',
+                  label: TranslationUtils.tr('ib_direct_clients'),
                   count: totalClients,
                   isSelected: !isNetwork,
                   onTap: () {
@@ -444,7 +439,7 @@ class _IbmClientsScreenState extends State<IbmClientsScreen>
                 ),
                 SizedBox(width: 8.w),
                 _buildSubTabBadge(
-                  label: 'Network',
+                  label: TranslationUtils.tr('ibm_network'),
                   count: totalNetworkClients,
                   isSelected: isNetwork,
                   onTap: () {
@@ -464,8 +459,10 @@ class _IbmClientsScreenState extends State<IbmClientsScreen>
                     children: [
                       Expanded(
                         child: _buildMobileMetricCard(
-                          title: 'Total Clients',
-                          subtitle: 'assigned straight to you',
+                          title: TranslationUtils.tr('ibm_total_clients'),
+                          subtitle: TranslationUtils.tr(
+                            'ibm_assigned_directly',
+                          ),
                           value: '$totalClients',
                           icon: Icons.people_rounded,
                           color: AppColors.primary,
@@ -474,8 +471,10 @@ class _IbmClientsScreenState extends State<IbmClientsScreen>
                       SizedBox(width: 12.w),
                       Expanded(
                         child: _buildMobileMetricCard(
-                          title: 'Active',
-                          subtitle: 'traded this period',
+                          title: TranslationUtils.tr('common_active'),
+                          subtitle: TranslationUtils.tr(
+                            'ibm_traded_this_period',
+                          ),
                           value: '$activeClients',
                           icon: Icons.person_rounded,
                           color: const Color(0xFF00C48C),
@@ -488,8 +487,10 @@ class _IbmClientsScreenState extends State<IbmClientsScreen>
                     children: [
                       Expanded(
                         child: _buildMobileMetricCard(
-                          title: 'New',
-                          subtitle: 'joined this period',
+                          title: TranslationUtils.tr('common_new'),
+                          subtitle: TranslationUtils.tr(
+                            'ibm_joined_this_period',
+                          ),
                           value: '$newClients',
                           icon: Icons.person_add_rounded,
                           color: const Color(0xFF2D9CDB),
@@ -498,8 +499,10 @@ class _IbmClientsScreenState extends State<IbmClientsScreen>
                       SizedBox(width: 12.w),
                       Expanded(
                         child: _buildMobileMetricCard(
-                          title: 'Commission Earned',
-                          subtitle: 'from these clients',
+                          title: TranslationUtils.tr('ibm_commission_earned'),
+                          subtitle: TranslationUtils.tr(
+                            'ibm_from_these_clients',
+                          ),
                           value: '\$${commission.toStringAsFixed(2)}',
                           icon: Icons.monetization_on_rounded,
                           color: const Color(0xFFF2994A),
@@ -518,7 +521,7 @@ class _IbmClientsScreenState extends State<IbmClientsScreen>
                     children: [
                       Expanded(
                         child: _buildMobileMetricCard(
-                          title: 'Sub-IBs',
+                          title: TranslationUtils.tr('ibm_sub_ibs'),
                           subtitle: '$directPartners directly under you',
                           value: '$totalPartners',
                           icon: Icons.account_tree_rounded,
@@ -528,8 +531,8 @@ class _IbmClientsScreenState extends State<IbmClientsScreen>
                       SizedBox(width: 12.w),
                       Expanded(
                         child: _buildMobileMetricCard(
-                          title: 'Network Clients',
-                          subtitle: 'you and your partners',
+                          title: TranslationUtils.tr('ibm_network_clients'),
+                          subtitle: TranslationUtils.tr('ibm_you_and_partners'),
                           value: '$totalNetworkClients',
                           icon: Icons.groups_rounded,
                           color: const Color(0xFF00C48C),
@@ -542,8 +545,10 @@ class _IbmClientsScreenState extends State<IbmClientsScreen>
                     children: [
                       Expanded(
                         child: _buildMobileMetricCard(
-                          title: 'Active',
-                          subtitle: 'traded this period',
+                          title: TranslationUtils.tr('common_active'),
+                          subtitle: TranslationUtils.tr(
+                            'ibm_traded_this_period',
+                          ),
                           value: '$activeClients',
                           icon: Icons.person_outline_rounded,
                           color: const Color(0xFF2D9CDB),
@@ -586,10 +591,9 @@ class _IbmClientsScreenState extends State<IbmClientsScreen>
                         color: AppColors.textPrimary,
                       ),
                       decoration: InputDecoration(
-                        hintText:
-                            isNetwork
-                                ? 'Search anyone in your network'
-                                : 'Search name or email',
+                        hintText: isNetwork
+                            ? 'Search anyone in your network'
+                            : 'Search name or email',
                         hintStyle: TextStyle(
                           color: AppColors.textGrey,
                           fontSize: 13.sp,
@@ -599,20 +603,19 @@ class _IbmClientsScreenState extends State<IbmClientsScreen>
                           size: 20.w,
                           color: AppColors.textGrey,
                         ),
-                        suffixIcon:
-                            _searchQuery.isNotEmpty
-                                ? GestureDetector(
-                                  onTap: () {
-                                    _searchController.clear();
-                                    setState(() => _searchQuery = '');
-                                  },
-                                  child: Icon(
-                                    Icons.close,
-                                    size: 18.w,
-                                    color: AppColors.textGrey,
-                                  ),
-                                )
-                                : null,
+                        suffixIcon: _searchQuery.isNotEmpty
+                            ? GestureDetector(
+                                onTap: () {
+                                  _searchController.clear();
+                                  setState(() => _searchQuery = '');
+                                },
+                                child: Icon(
+                                  Icons.close,
+                                  size: 18.w,
+                                  color: AppColors.textGrey,
+                                ),
+                              )
+                            : null,
                         border: InputBorder.none,
                         enabledBorder: InputBorder.none,
                         focusedBorder: InputBorder.none,
@@ -824,17 +827,16 @@ class _IbmClientsScreenState extends State<IbmClientsScreen>
                             now.subtract(const Duration(days: 30)),
                         firstDate: DateTime(2000),
                         lastDate: now,
-                        builder:
-                            (context, child) => Theme(
-                              data: Theme.of(context).copyWith(
-                                colorScheme: ColorScheme.light(
-                                  primary: AppColors.primary,
-                                  onPrimary: Colors.white,
-                                  onSurface: Colors.black,
-                                ),
-                              ),
-                              child: child!,
+                        builder: (context, child) => Theme(
+                          data: Theme.of(context).copyWith(
+                            colorScheme: ColorScheme.light(
+                              primary: AppColors.primary,
+                              onPrimary: Colors.white,
+                              onSurface: Colors.black,
                             ),
+                          ),
+                          child: child!,
+                        ),
                       );
                       if (start == null) return;
                       final DateTime? end = await showDatePicker(
@@ -843,17 +845,16 @@ class _IbmClientsScreenState extends State<IbmClientsScreen>
                         initialDate: start,
                         firstDate: start,
                         lastDate: now,
-                        builder:
-                            (context, child) => Theme(
-                              data: Theme.of(context).copyWith(
-                                colorScheme: ColorScheme.light(
-                                  primary: AppColors.primary,
-                                  onPrimary: Colors.white,
-                                  onSurface: Colors.black,
-                                ),
-                              ),
-                              child: child!,
+                        builder: (context, child) => Theme(
+                          data: Theme.of(context).copyWith(
+                            colorScheme: ColorScheme.light(
+                              primary: AppColors.primary,
+                              onPrimary: Colors.white,
+                              onSurface: Colors.black,
                             ),
+                          ),
+                          child: child!,
+                        ),
                       );
                       if (end == null) return;
                       setState(() {
@@ -877,8 +878,9 @@ class _IbmClientsScreenState extends State<IbmClientsScreen>
                       vertical: 8.h,
                     ),
                     decoration: BoxDecoration(
-                      color:
-                          isSelected ? AppColors.primary : Colors.transparent,
+                      color: isSelected
+                          ? AppColors.primary
+                          : Colors.transparent,
                       borderRadius: BorderRadius.circular(6.r),
                     ),
                     child: (filter == 'Custom' && _customStartDate == null)
@@ -888,8 +890,8 @@ class _IbmClientsScreenState extends State<IbmClientsScreen>
                             color: isSelected
                                 ? AppColors.whiteColor
                                 : (AppColors.isDarkMode
-                                    ? Colors.white70
-                                    : const Color(0xFF222222)),
+                                      ? Colors.white70
+                                      : const Color(0xFF222222)),
                           )
                         : Text(
                             filter == 'Custom' && _customStartDate != null
@@ -899,8 +901,8 @@ class _IbmClientsScreenState extends State<IbmClientsScreen>
                               color: isSelected
                                   ? AppColors.whiteColor
                                   : (AppColors.isDarkMode
-                                      ? Colors.white70
-                                      : const Color(0xFF222222)),
+                                        ? Colors.white70
+                                        : const Color(0xFF222222)),
                               fontSize: 13.sp,
                               fontWeight: isSelected
                                   ? FontWeight.w700
@@ -913,10 +915,9 @@ class _IbmClientsScreenState extends State<IbmClientsScreen>
                   Container(
                     width: 1,
                     height: 18.h,
-                    color:
-                        AppColors.isDarkMode
-                            ? AppColors.divider
-                            : const Color(0xFFE0E0E0),
+                    color: AppColors.isDarkMode
+                        ? AppColors.divider
+                        : const Color(0xFFE0E0E0),
                   ),
               ],
             );
@@ -954,27 +955,29 @@ class _IbmClientsScreenState extends State<IbmClientsScreen>
 
     final clients = node['clients_count'] ?? node['clients'] ?? '1/1';
     final subIbs = node['subs_count'] ?? node['sub_ibs'] ?? 0;
-    final deposits = (double.tryParse((node['deposits'] ?? 200).toString()) ??
-            200.0)
-        .toStringAsFixed(2);
-    final netFunding = (double.tryParse(
-              (node['net'] ?? node['net_funding'] ?? 200).toString(),
-            ) ??
-            200.0)
-        .toStringAsFixed(2);
+    final deposits =
+        (double.tryParse((node['deposits'] ?? 200).toString()) ?? 200.0)
+            .toStringAsFixed(2);
+    final netFunding =
+        (double.tryParse(
+                  (node['net'] ?? node['net_funding'] ?? 200).toString(),
+                ) ??
+                200.0)
+            .toStringAsFixed(2);
     final lots = (double.tryParse((node['lots'] ?? 0.03).toString()) ?? 0.03)
         .toStringAsFixed(2);
-    final equity = (double.tryParse((node['equity'] ?? 155.01).toString()) ??
-            155.01)
-        .toStringAsFixed(2);
+    final equity =
+        (double.tryParse((node['equity'] ?? 155.01).toString()) ?? 155.01)
+            .toStringAsFixed(2);
     final available =
         (double.tryParse((node['available'] ?? 0.15).toString()) ?? 0.15)
             .toStringAsFixed(2);
-    final pendingPayout = (double.tryParse(
-              (node['pending_payout'] ?? node['pending'] ?? 0).toString(),
-            ) ??
-            0.0)
-        .toStringAsFixed(2);
+    final pendingPayout =
+        (double.tryParse(
+                  (node['pending_payout'] ?? node['pending'] ?? 0).toString(),
+                ) ??
+                0.0)
+            .toStringAsFixed(2);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -985,7 +988,7 @@ class _IbmClientsScreenState extends State<IbmClientsScreen>
               child: _buildMiniDetailCard(
                 title: 'Clients',
                 value: '$clients',
-                subtitle: 'their own / whole branch',
+                subtitle: TranslationUtils.tr('ibm_own_whole_branch'),
                 icon: Icons.groups_rounded,
                 color: AppColors.primary,
               ),
@@ -1080,10 +1083,9 @@ class _IbmClientsScreenState extends State<IbmClientsScreen>
         Container(
           padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
           decoration: BoxDecoration(
-            color:
-                AppColors.isDarkMode
-                    ? const Color(0xFF1E1E1E)
-                    : const Color(0xFFFAF5FF),
+            color: AppColors.isDarkMode
+                ? const Color(0xFF1E1E1E)
+                : const Color(0xFFFAF5FF),
             borderRadius: BorderRadius.circular(10.r),
             border: Border.all(color: AppColors.primary.withOpacity(0.3)),
           ),
@@ -1288,15 +1290,16 @@ class _IbmClientsScreenState extends State<IbmClientsScreen>
     final direct = youData['direct'] ?? summary['direct'] ?? 3;
     final totalSubs =
         youData['sub_ibs'] ?? summary['total'] ?? summary['sub_ibs'] ?? 3;
-    final earned = (double.tryParse(
-              (youData['earned'] ??
-                      summary['earned'] ??
-                      summary['you_earned'] ??
-                      0.09)
-                  .toString(),
-            ) ??
-            0.09)
-        .toStringAsFixed(2);
+    final earned =
+        (double.tryParse(
+                  (youData['earned'] ??
+                          summary['earned'] ??
+                          summary['you_earned'] ??
+                          0.09)
+                      .toString(),
+                ) ??
+                0.09)
+            .toStringAsFixed(2);
     final myId = youData['partner_user_id'] ?? youData['user_id'] ?? 38;
 
     return Container(
@@ -1508,45 +1511,47 @@ class _IbmClientsScreenState extends State<IbmClientsScreen>
         (nodeLevel == 1 && isSubIb);
     final isSubClient = !isDirectClient && !isSubIb;
 
-    final branch =
-        node['branch'] is Map
-            ? node['branch'] as Map
-            : (node['branch'] is List && (node['branch'] as List).isNotEmpty
-                ? (node['branch'] as List)[0]
-                : node);
-    final own =
-        node['own'] is Map
-            ? node['own'] as Map
-            : (node['own'] is List && (node['own'] as List).isNotEmpty
-                ? (node['own'] as List)[0]
-                : {});
+    final branch = node['branch'] is Map
+        ? node['branch'] as Map
+        : (node['branch'] is List && (node['branch'] as List).isNotEmpty
+              ? (node['branch'] as List)[0]
+              : node);
+    final own = node['own'] is Map
+        ? node['own'] as Map
+        : (node['own'] is List && (node['own'] as List).isNotEmpty
+              ? (node['own'] as List)[0]
+              : {});
 
     // The card represents the Sub-IB themselves, so DEPOSITS / NET / LOTS
     // must come from their OWN trading activity (node['own'][0]), not from
     // their branch aggregates. Branch aggregates flow into BRANCH EARNED only,
     // matching the web UI.
-    final deposits = (double.tryParse(
-              (own['deposits'] ?? node['deposits'] ?? 0).toString(),
-            ) ??
-            0.0)
-        .toStringAsFixed(2);
-    final net = (double.tryParse(
-              (own['net'] ?? own['net_funding'] ?? node['net'] ?? 0).toString(),
-            ) ??
-            0.0)
-        .toStringAsFixed(2);
+    final deposits =
+        (double.tryParse(
+                  (own['deposits'] ?? node['deposits'] ?? 0).toString(),
+                ) ??
+                0.0)
+            .toStringAsFixed(2);
+    final net =
+        (double.tryParse(
+                  (own['net'] ?? own['net_funding'] ?? node['net'] ?? 0)
+                      .toString(),
+                ) ??
+                0.0)
+            .toStringAsFixed(2);
     final lots =
         (double.tryParse((own['lots'] ?? node['lots'] ?? 0).toString()) ?? 0.0)
             .toStringAsFixed(2);
-    final earned = (double.tryParse(
-              (own['commission'] ??
-                      node['you_earned'] ??
-                      node['commission'] ??
-                      0)
-                  .toString(),
-            ) ??
-            0.0)
-        .toStringAsFixed(2);
+    final earned =
+        (double.tryParse(
+                  (own['commission'] ??
+                          node['you_earned'] ??
+                          node['commission'] ??
+                          0)
+                      .toString(),
+                ) ??
+                0.0)
+            .toStringAsFixed(2);
     final downlineSubs =
         node['downline_subs'] ?? node['sub_ibs'] ?? node['subs_count'] ?? 0;
     final downlineClients =
@@ -1555,40 +1560,37 @@ class _IbmClientsScreenState extends State<IbmClientsScreen>
         node['clients_count'] ??
         node['clients'] ??
         0;
-    final branchEarned = (double.tryParse(
-              (node['branch_earned'] ??
-                      branch['commission'] ??
-                      branch['you_earned'] ??
-                      node['commission'] ??
-                      0)
-                  .toString(),
-            ) ??
-            0.0)
-        .toStringAsFixed(2);
+    final branchEarned =
+        (double.tryParse(
+                  (node['branch_earned'] ??
+                          branch['commission'] ??
+                          branch['you_earned'] ??
+                          node['commission'] ??
+                          0)
+                      .toString(),
+                ) ??
+                0.0)
+            .toStringAsFixed(2);
 
-    final List<dynamic> rawChildren =
-        node['children'] is List
-            ? node['children'] as List
-            : (node['nodes'] is List
-                ? node['nodes'] as List
-                : (node['clients'] is List ? node['clients'] as List : []));
+    final List<dynamic> rawChildren = node['children'] is List
+        ? node['children'] as List
+        : (node['nodes'] is List
+              ? node['nodes'] as List
+              : (node['clients'] is List ? node['clients'] as List : []));
     // Children come from the parent's /node fetch ONLY — never both that
     // AND rawChildren. The previous concat duplicated every kid because
     // network-tree `children[]` and /node `people[]` list the same rows.
-    final cachedChildren =
-        _lazyChildrenCache.containsKey(nodeKey)
-            ? _lazyChildrenCache[nodeKey]!
-            : <Map<String, dynamic>>[];
-    final List<Map<String, dynamic>> children =
-        cachedChildren.isNotEmpty
-            ? cachedChildren
-            : rawChildren.whereType<Map<String, dynamic>>().toList();
+    final cachedChildren = _lazyChildrenCache.containsKey(nodeKey)
+        ? _lazyChildrenCache[nodeKey]!
+        : <Map<String, dynamic>>[];
+    final List<Map<String, dynamic>> children = cachedChildren.isNotEmpty
+        ? cachedChildren
+        : rawChildren.whereType<Map<String, dynamic>>().toList();
     // Wait, simpler `isCollapsed`: if it's in `_collapsedNodeKeys`, it's the OPPOSITE of `_isAllExpanded`.
     // Actually, let's just do:
-    final isCollapsedLocal =
-        _isAllExpanded
-            ? _collapsedNodeKeys.contains(nodeKey)
-            : !_collapsedNodeKeys.contains(nodeKey);
+    final isCollapsedLocal = _isAllExpanded
+        ? _collapsedNodeKeys.contains(nodeKey)
+        : !_collapsedNodeKeys.contains(nodeKey);
 
     final bool canExpand =
         children.isNotEmpty ||
@@ -1627,17 +1629,16 @@ class _IbmClientsScreenState extends State<IbmClientsScreen>
         children: [
           GestureDetector(
             behavior: HitTestBehavior.opaque,
-            onTap:
-                partnerId > 0
-                    ? () {
-                      Get.to(
-                        () => IbmClientProfileScreen(
-                          clientId: partnerId,
-                          clientName: name,
-                        ),
-                      );
-                    }
-                    : null,
+            onTap: partnerId > 0
+                ? () {
+                    Get.to(
+                      () => IbmClientProfileScreen(
+                        clientId: partnerId,
+                        clientName: name,
+                      ),
+                    );
+                  }
+                : null,
             child: Container(
               decoration: BoxDecoration(
                 color: AppColors.card,
@@ -1651,12 +1652,11 @@ class _IbmClientsScreenState extends State<IbmClientsScreen>
                   children: [
                     Container(
                       width: 4.w,
-                      color:
-                          _selectedFocusNode == node
-                              ? AppColors.primary
-                              : (isSubIb
-                                  ? AppColors.primary
-                                  : const Color(0xFFF2994A)),
+                      color: _selectedFocusNode == node
+                          ? AppColors.primary
+                          : (isSubIb
+                                ? AppColors.primary
+                                : const Color(0xFFF2994A)),
                     ),
                     Expanded(
                       child: Padding(
@@ -1679,14 +1679,13 @@ class _IbmClientsScreenState extends State<IbmClientsScreen>
                                           _collapsedNodeKeys.add(nodeKey);
                                         }
 
-                                        final isCollapsedNow =
-                                            _isAllExpanded
-                                                ? _collapsedNodeKeys.contains(
-                                                  nodeKey,
-                                                )
-                                                : !_collapsedNodeKeys.contains(
-                                                  nodeKey,
-                                                );
+                                        final isCollapsedNow = _isAllExpanded
+                                            ? _collapsedNodeKeys.contains(
+                                                nodeKey,
+                                              )
+                                            : !_collapsedNodeKeys.contains(
+                                                nodeKey,
+                                              );
 
                                         if (!isCollapsedNow) {
                                           if (children.isEmpty &&
@@ -1724,24 +1723,22 @@ class _IbmClientsScreenState extends State<IbmClientsScreen>
                                         right: 6.w,
                                         top: 2.h,
                                       ),
-                                      child:
-                                          _lazyLoadingKeys.contains(nodeKey)
-                                              ? SizedBox(
-                                                width: 14.w,
-                                                height: 14.w,
-                                                child:
-                                                    CircularProgressIndicator(
-                                                      strokeWidth: 2,
-                                                      color: AppColors.primary,
-                                                    ),
-                                              )
-                                              : Icon(
-                                                isCollapsedLocal
-                                                    ? Icons.chevron_right
-                                                    : Icons.expand_more,
-                                                size: 20.w,
-                                                color: AppColors.textGrey,
+                                      child: _lazyLoadingKeys.contains(nodeKey)
+                                          ? SizedBox(
+                                              width: 14.w,
+                                              height: 14.w,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                color: AppColors.primary,
                                               ),
+                                            )
+                                          : Icon(
+                                              isCollapsedLocal
+                                                  ? Icons.chevron_right
+                                                  : Icons.expand_more,
+                                              size: 20.w,
+                                              color: AppColors.textGrey,
+                                            ),
                                     ),
                                   ),
                                 Expanded(
@@ -1876,10 +1873,9 @@ class _IbmClientsScreenState extends State<IbmClientsScreen>
                                 vertical: 6.h,
                               ),
                               decoration: BoxDecoration(
-                                color:
-                                    AppColors.isDarkMode
-                                        ? const Color(0xFF1E1E1E)
-                                        : const Color(0xFFF8F9FA),
+                                color: AppColors.isDarkMode
+                                    ? const Color(0xFF1E1E1E)
+                                    : const Color(0xFFF8F9FA),
                                 borderRadius: BorderRadius.circular(8.r),
                               ),
                               child: Wrap(
@@ -1924,46 +1920,42 @@ class _IbmClientsScreenState extends State<IbmClientsScreen>
           if (canExpand && !isCollapsedLocal)
             Padding(
               padding: EdgeInsets.only(top: 8.h),
-              child:
-                  _lazyLoadingKeys.contains(nodeKey)
-                      ? Padding(
-                        padding: EdgeInsets.only(
-                          left: 14.w,
-                          top: 8.h,
-                          bottom: 8.h,
-                        ),
-                        child: Row(
-                          children: [
-                            SizedBox(
-                              width: 16.w,
-                              height: 16.w,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: AppColors.primary,
-                              ),
-                            ),
-                            SizedBox(width: 8.w),
-                            Text(
-                              'Loading...',
-                              style: TextStyle(
-                                color: AppColors.textGrey,
-                                fontSize: 12.sp,
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                      : Column(
-                        children:
-                            children
-                                .map(
-                                  (child) => _buildTreeNodeWidget(
-                                    child,
-                                    level: level + 1,
-                                  ),
-                                )
-                                .toList(),
+              child: _lazyLoadingKeys.contains(nodeKey)
+                  ? Padding(
+                      padding: EdgeInsets.only(
+                        left: 14.w,
+                        top: 8.h,
+                        bottom: 8.h,
                       ),
+                      child: Row(
+                        children: [
+                          SizedBox(
+                            width: 16.w,
+                            height: 16.w,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                          SizedBox(width: 8.w),
+                          Text(
+                            'Loading...',
+                            style: TextStyle(
+                              color: AppColors.textGrey,
+                              fontSize: 12.sp,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : Column(
+                      children: children
+                          .map(
+                            (child) =>
+                                _buildTreeNodeWidget(child, level: level + 1),
+                          )
+                          .toList(),
+                    ),
             ),
         ],
       ),
@@ -1974,24 +1966,24 @@ class _IbmClientsScreenState extends State<IbmClientsScreen>
   List<Map<String, dynamic>> _extractTreeNodes(Map<String, dynamic> treeData) {
     List<Map<String, dynamic>> list = [];
     if (treeData['tree'] is List && (treeData['tree'] as List).isNotEmpty) {
-      list =
-          (treeData['tree'] as List).whereType<Map<String, dynamic>>().toList();
+      list = (treeData['tree'] as List)
+          .whereType<Map<String, dynamic>>()
+          .toList();
     } else if (treeData['nodes'] is List &&
         (treeData['nodes'] as List).isNotEmpty) {
-      list =
-          (treeData['nodes'] as List)
-              .whereType<Map<String, dynamic>>()
-              .toList();
+      list = (treeData['nodes'] as List)
+          .whereType<Map<String, dynamic>>()
+          .toList();
     } else if (treeData['people'] is List &&
         (treeData['people'] as List).isNotEmpty) {
-      list =
-          (treeData['people'] as List)
-              .whereType<Map<String, dynamic>>()
-              .toList();
+      list = (treeData['people'] as List)
+          .whereType<Map<String, dynamic>>()
+          .toList();
     } else if (treeData['rows'] is List &&
         (treeData['rows'] as List).isNotEmpty) {
-      list =
-          (treeData['rows'] as List).whereType<Map<String, dynamic>>().toList();
+      list = (treeData['rows'] as List)
+          .whereType<Map<String, dynamic>>()
+          .toList();
     }
 
     // Normalise every node so downstream widgets see consistent keys
@@ -2017,11 +2009,10 @@ class _IbmClientsScreenState extends State<IbmClientsScreen>
         final rawChildren =
             first['children'] ?? first['nodes'] ?? first['people'] ?? [];
         if (rawChildren is List && rawChildren.isNotEmpty) {
-          list =
-              rawChildren
-                  .whereType<Map<String, dynamic>>()
-                  .map(_normaliseTreeNode)
-                  .toList();
+          list = rawChildren
+              .whereType<Map<String, dynamic>>()
+              .map(_normaliseTreeNode)
+              .toList();
         } else {
           list = [];
         }
@@ -2081,10 +2072,9 @@ class _IbmClientsScreenState extends State<IbmClientsScreen>
       final id = node['partner_user_id'] ?? node['user_id'] ?? 0;
       keys.add('${name}_${id}_$level');
       if (node['children'] is List) {
-        final children =
-            (node['children'] as List)
-                .whereType<Map<String, dynamic>>()
-                .toList();
+        final children = (node['children'] as List)
+            .whereType<Map<String, dynamic>>()
+            .toList();
         keys.addAll(_getAllNodeKeys(children, level: level + 1));
       }
     }
@@ -2105,24 +2095,24 @@ class _IbmClientsScreenState extends State<IbmClientsScreen>
         decoration: BoxDecoration(
           color: isSelected ? AppColors.primary : AppColors.card,
           borderRadius: BorderRadius.circular(20.r),
-          boxShadow:
-              isSelected && !AppColors.isDarkMode
-                  ? [
-                    BoxShadow(
-                      color: AppColors.primary.withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    ),
-                  ]
-                  : [],
+          boxShadow: isSelected && !AppColors.isDarkMode
+              ? [
+                  BoxShadow(
+                    color: AppColors.primary.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : [],
         ),
         child: Row(
           children: [
             Text(
               label,
               style: TextStyle(
-                color:
-                    isSelected ? AppColors.whiteColor : AppColors.textSecondary,
+                color: isSelected
+                    ? AppColors.whiteColor
+                    : AppColors.textSecondary,
                 fontSize: 13.sp,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
               ),
@@ -2131,23 +2121,21 @@ class _IbmClientsScreenState extends State<IbmClientsScreen>
             Container(
               padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
               decoration: BoxDecoration(
-                color:
-                    isSelected
-                        ? AppColors.whiteColor.withOpacity(0.2)
-                        : (AppColors.isDarkMode
-                            ? AppColors.surface
-                            : const Color(0xFFF1EEF8)),
+                color: isSelected
+                    ? AppColors.whiteColor.withOpacity(0.2)
+                    : (AppColors.isDarkMode
+                          ? AppColors.surface
+                          : const Color(0xFFF1EEF8)),
                 borderRadius: BorderRadius.circular(10.r),
               ),
               child: Text(
                 '$count',
                 style: TextStyle(
-                  color:
-                      isSelected
-                          ? AppColors.whiteColor
-                          : (AppColors.isDarkMode
-                              ? AppColors.textPrimary
-                              : AppColors.primary),
+                  color: isSelected
+                      ? AppColors.whiteColor
+                      : (AppColors.isDarkMode
+                            ? AppColors.textPrimary
+                            : AppColors.primary),
                   fontSize: 10.sp,
                   fontWeight: FontWeight.bold,
                 ),
@@ -2171,18 +2159,18 @@ class _IbmClientsScreenState extends State<IbmClientsScreen>
       decoration: BoxDecoration(
         color: AppColors.card,
         borderRadius: BorderRadius.circular(14.r),
-        border:
-            AppColors.isDarkMode ? Border.all(color: AppColors.divider) : null,
-        boxShadow:
-            AppColors.isDarkMode
-                ? []
-                : [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.03),
-                    blurRadius: 8,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
+        border: AppColors.isDarkMode
+            ? Border.all(color: AppColors.divider)
+            : null,
+        boxShadow: AppColors.isDarkMode
+            ? []
+            : [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.03),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
+                ),
+              ],
       ),
       child: Row(
         children: [
@@ -2257,10 +2245,9 @@ class _IbmClientsScreenState extends State<IbmClientsScreen>
           style: TextStyle(
             fontSize: 12.sp,
             fontWeight: FontWeight.bold,
-            color:
-                isPositive && value != '\$0.00' && value != '\$0'
-                    ? const Color(0xFF00C48C)
-                    : AppColors.textPrimary,
+            color: isPositive && value != '\$0.00' && value != '\$0'
+                ? const Color(0xFF00C48C)
+                : AppColors.textPrimary,
           ),
         ),
       ],
@@ -2281,18 +2268,33 @@ class _IbmClientsScreenState extends State<IbmClientsScreen>
       firstCurr = currencies.first is Map ? currencies.first : null;
     }
 
-    final depositsValue = double.tryParse((firstCurr?['deposits'] ?? r['deposits'] ?? 0).toString()) ?? 0.0;
+    final depositsValue =
+        double.tryParse(
+          (firstCurr?['deposits'] ?? r['deposits'] ?? 0).toString(),
+        ) ??
+        0.0;
     final deposits = depositsValue.toStringAsFixed(2);
 
-    final withdrawalsValue = double.tryParse((firstCurr?['withdrawals'] ?? r['withdrawals'] ?? 0).toString()) ?? 0.0;
+    final withdrawalsValue =
+        double.tryParse(
+          (firstCurr?['withdrawals'] ?? r['withdrawals'] ?? 0).toString(),
+        ) ??
+        0.0;
 
-    final netRaw = firstCurr?['net_deposit'] ?? firstCurr?['net'] ?? r['net_deposit'] ?? r['net'];
-    final netValue = netRaw != null ? (double.tryParse(netRaw.toString()) ?? 0.0) : (depositsValue - withdrawalsValue);
+    final netRaw =
+        firstCurr?['net_deposit'] ??
+        firstCurr?['net'] ??
+        r['net_deposit'] ??
+        r['net'];
+    final netValue = netRaw != null
+        ? (double.tryParse(netRaw.toString()) ?? 0.0)
+        : (depositsValue - withdrawalsValue);
     final net = netValue.toStringAsFixed(2);
 
     final lots = (firstCurr?['lots'] ?? r['lots'])?.toString() ?? '0';
 
-    final commStr = (firstCurr?['commission'] ?? r['commission'] ?? 0).toString();
+    final commStr = (firstCurr?['commission'] ?? r['commission'] ?? 0)
+        .toString();
     final comm = (double.tryParse(commStr) ?? 0.0).toStringAsFixed(2);
 
     return GestureDetector(
@@ -2307,16 +2309,15 @@ class _IbmClientsScreenState extends State<IbmClientsScreen>
         decoration: BoxDecoration(
           color: AppColors.card,
           borderRadius: BorderRadius.circular(14.r),
-          boxShadow:
-              AppColors.isDarkMode
-                  ? []
-                  : [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.02),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
+          boxShadow: AppColors.isDarkMode
+              ? []
+              : [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.02),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
         ),
         child: Column(
           children: [
@@ -2392,10 +2393,9 @@ class _IbmClientsScreenState extends State<IbmClientsScreen>
             Container(
               padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
               decoration: BoxDecoration(
-                color:
-                    AppColors.isDarkMode
-                        ? AppColors.surface
-                        : const Color(0xFFF8F9FA),
+                color: AppColors.isDarkMode
+                    ? AppColors.surface
+                    : const Color(0xFFF8F9FA),
                 borderRadius: BorderRadius.circular(8.r),
               ),
               child: Row(
@@ -2442,23 +2442,22 @@ class _IbmClientsScreenState extends State<IbmClientsScreen>
       final rawList = requests['requests'] ?? requests['rows'] ?? [];
       final List<dynamic> list = rawList is List ? rawList : [];
 
-      final filtered =
-          list.where((req) {
-            final r = req is Map ? req : {};
-            if (_selectedRequestTab == 'Waiting on you') {
-              return r['status'] == 'pending' || r['status'] == 'waiting';
-            }
-            if (_selectedRequestTab == 'Approved') {
-              return r['status'] == 'approved';
-            }
-            if (_selectedRequestTab == 'Declined') {
-              return r['status'] == 'declined' || r['status'] == 'rejected';
-            }
-            if (_selectedRequestTab == 'With the broker') {
-              return r['status'] == 'with_broker';
-            }
-            return true;
-          }).toList();
+      final filtered = list.where((req) {
+        final r = req is Map ? req : {};
+        if (_selectedRequestTab == 'Waiting on you') {
+          return r['status'] == 'pending' || r['status'] == 'waiting';
+        }
+        if (_selectedRequestTab == 'Approved') {
+          return r['status'] == 'approved';
+        }
+        if (_selectedRequestTab == 'Declined') {
+          return r['status'] == 'declined' || r['status'] == 'rejected';
+        }
+        if (_selectedRequestTab == 'With the broker') {
+          return r['status'] == 'with_broker';
+        }
+        return true;
+      }).toList();
 
       return ListView(
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
@@ -2467,47 +2466,44 @@ class _IbmClientsScreenState extends State<IbmClientsScreen>
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
-              children:
-                  _requestTabs.map((tab) {
-                    final isSelected = _selectedRequestTab == tab;
-                    return GestureDetector(
-                      onTap: () => setState(() => _selectedRequestTab = tab),
-                      child: Container(
-                        margin: EdgeInsets.only(right: 8.w),
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 14.w,
-                          vertical: 6.h,
-                        ),
-                        decoration: BoxDecoration(
-                          color:
-                              isSelected
-                                  ? AppColors.primary
-                                  : (AppColors.isDarkMode
-                                      ? AppColors.surface
-                                      : AppColors.whiteColor),
-                          borderRadius: BorderRadius.circular(16.r),
-                          border: Border.all(
-                            color:
-                                isSelected
-                                    ? AppColors.primary
-                                    : AppColors.divider,
-                          ),
-                        ),
-                        child: Text(
-                          tab,
-                          style: TextStyle(
-                            color:
-                                isSelected
-                                    ? AppColors.whiteColor
-                                    : AppColors.textSecondary,
-                            fontSize: 12.sp,
-                            fontWeight:
-                                isSelected ? FontWeight.bold : FontWeight.w500,
-                          ),
-                        ),
+              children: _requestTabs.map((tab) {
+                final isSelected = _selectedRequestTab == tab;
+                return GestureDetector(
+                  onTap: () => setState(() => _selectedRequestTab = tab),
+                  child: Container(
+                    margin: EdgeInsets.only(right: 8.w),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 14.w,
+                      vertical: 6.h,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? AppColors.primary
+                          : (AppColors.isDarkMode
+                                ? AppColors.surface
+                                : AppColors.whiteColor),
+                      borderRadius: BorderRadius.circular(16.r),
+                      border: Border.all(
+                        color: isSelected
+                            ? AppColors.primary
+                            : AppColors.divider,
                       ),
-                    );
-                  }).toList(),
+                    ),
+                    child: Text(
+                      tab,
+                      style: TextStyle(
+                        color: isSelected
+                            ? AppColors.whiteColor
+                            : AppColors.textSecondary,
+                        fontSize: 12.sp,
+                        fontWeight: isSelected
+                            ? FontWeight.bold
+                            : FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
             ),
           ),
           SizedBox(height: 16.h),
@@ -2648,7 +2644,7 @@ class _IbmClientsScreenState extends State<IbmClientsScreen>
         ),
       ),
       textConfirm: 'Approve',
-      textCancel: 'Cancel',
+      textCancel: TranslationUtils.tr('common_cancel'),
       confirmTextColor: AppColors.whiteColor,
       buttonColor: AppColors.primary,
       onConfirm: () async {

@@ -28,7 +28,10 @@ class IbDashboardScreen extends StatelessWidget {
         leading: IconButton(
           icon: SvgPicture.asset(
             "assets/svg/trade/arro_back.svg",
-            colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn),
+            colorFilter: ColorFilter.mode(
+              AppColors.textPrimary,
+              BlendMode.srcIn,
+            ),
           ),
           onPressed: () => Navigator.of(context).pop(),
         ),
@@ -137,14 +140,12 @@ class _MenuItem extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           border: Border(
-            top:
-                showTopBorder
-                    ? BorderSide(color: AppColors.border, width: 1)
-                    : BorderSide.none,
-            bottom:
-                showBottomBorder
-                    ? BorderSide(color: AppColors.border, width: 1)
-                    : BorderSide.none,
+            top: showTopBorder
+                ? BorderSide(color: AppColors.border, width: 1)
+                : BorderSide.none,
+            bottom: showBottomBorder
+                ? BorderSide(color: AppColors.border, width: 1)
+                : BorderSide.none,
           ),
         ),
         child: SizedBox(
@@ -167,14 +168,15 @@ class _MenuItem extends StatelessWidget {
                 color: color,
               ),
             ),
-            trailing:
-                showBottomBorder
-                    ? Icon(
-                      Icons.arrow_forward_ios_sharp,
-                      size: 14.h,
-                      color: AppColors.icongrey,
-                    )
-                    : null,
+            trailing: showBottomBorder
+                ? Icon(
+                    Directionality.of(context) == TextDirection.rtl
+                        ? Icons.arrow_back_ios
+                        : Icons.arrow_forward_ios_sharp,
+                    size: 14.h,
+                    color: AppColors.icongrey,
+                  )
+                : null,
             onTap: onTap,
             minLeadingWidth: 10,
             horizontalTitleGap: 8.w,
@@ -184,4 +186,3 @@ class _MenuItem extends StatelessWidget {
     );
   }
 }
-

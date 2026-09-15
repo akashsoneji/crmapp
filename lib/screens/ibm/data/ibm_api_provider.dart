@@ -107,7 +107,11 @@ class IbmApiProvider {
       'per_page': perPage.toString(),
     };
     if (currency != null && currency.isNotEmpty) query['currency'] = currency;
-    if (type != null && type.isNotEmpty && type != 'all' && type != 'Everything') query['type'] = type;
+    if (type != null &&
+        type.isNotEmpty &&
+        type != 'all' &&
+        type != 'Everything')
+      query['type'] = type;
     return await ApiService.get(
       endpoint: 'ibm/portal/wallet/transactions',
       queryParameters: query,
@@ -121,12 +125,10 @@ class IbmApiProvider {
     String? methodSlug,
     int? withdrawalMethodId,
   }) async {
-    final data = <String, dynamic>{
-      'currency': currency,
-      'amount': amount,
-    };
+    final data = <String, dynamic>{'currency': currency, 'amount': amount};
     if (methodSlug != null) data['method_slug'] = methodSlug;
-    if (withdrawalMethodId != null) data['withdrawal_method_id'] = withdrawalMethodId;
+    if (withdrawalMethodId != null)
+      data['withdrawal_method_id'] = withdrawalMethodId;
     return await ApiService.post(
       endpoint: 'ibm/portal/wallet/withdraw',
       data: data,
@@ -163,9 +165,7 @@ class IbmApiProvider {
   }) async {
     return await ApiService.post(
       endpoint: 'ibm/portal/requests/$requestId/reject',
-      data: {
-        if (reason != null && reason.isNotEmpty) 'reason': reason,
-      },
+      data: {if (reason != null && reason.isNotEmpty) 'reason': reason},
     );
   }
 
@@ -193,7 +193,10 @@ class IbmApiProvider {
   }
 
   /// Update an existing Partner Plan
-  Future<ApiResponse> updatePartnerPlan(int planId, Map<String, dynamic> data) async {
+  Future<ApiResponse> updatePartnerPlan(
+    int planId,
+    Map<String, dynamic> data,
+  ) async {
     return await ApiService.put(
       endpoint: 'ibm/portal/partner-plans/$planId',
       data: data,
@@ -202,7 +205,9 @@ class IbmApiProvider {
 
   /// Delete a Partner Plan
   Future<ApiResponse> deletePartnerPlan(int planId) async {
-    return await ApiService.delete(endpoint: 'ibm/portal/partner-plans/$planId');
+    return await ApiService.delete(
+      endpoint: 'ibm/portal/partner-plans/$planId',
+    );
   }
 
   /// Get Assignable Sub-IBs for a plan
@@ -242,7 +247,8 @@ class IbmApiProvider {
         'label': label,
         if (code != null && code.isNotEmpty) 'code': code,
         if (planGroupIds != null) 'plan_group_ids': planGroupIds,
-        if (defaultPlanGroupId != null) 'default_plan_group_id': defaultPlanGroupId,
+        if (defaultPlanGroupId != null)
+          'default_plan_group_id': defaultPlanGroupId,
         if (expiresAt != null && expiresAt.isNotEmpty) 'expires_at': expiresAt,
       },
     );
@@ -260,7 +266,8 @@ class IbmApiProvider {
     final Map<String, dynamic> data = {};
     if (label != null) data['label'] = label;
     if (planGroupIds != null) data['plan_group_ids'] = planGroupIds;
-    if (defaultPlanGroupId != null) data['default_plan_group_id'] = defaultPlanGroupId;
+    if (defaultPlanGroupId != null)
+      data['default_plan_group_id'] = defaultPlanGroupId;
     if (isActive != null) data['is_active'] = isActive;
     if (expiresAt != null) data['expires_at'] = expiresAt;
 
@@ -309,7 +316,8 @@ class IbmApiProvider {
     };
     if (from != null && from.isNotEmpty) params['from'] = from;
     if (to != null && to.isNotEmpty) params['to'] = to;
-    if (type != null && type.isNotEmpty && type != 'All') params['type'] = type.toLowerCase();
+    if (type != null && type.isNotEmpty && type != 'All')
+      params['type'] = type.toLowerCase();
     if (symbol != null && symbol.isNotEmpty) params['symbol'] = symbol;
 
     return await ApiService.get(
@@ -354,16 +362,12 @@ class IbmApiProvider {
 
   /// Get Commission Plan for a node
   Future<ApiResponse> getNetworkPlan(int id) async {
-    return await ApiService.get(
-      endpoint: 'ibm/portal/network/$id/plan',
-    );
+    return await ApiService.get(endpoint: 'ibm/portal/network/$id/plan');
   }
 
   /// Get Client Visibility
   Future<ApiResponse> getClientVisibility() async {
-    return await ApiService.get(
-      endpoint: 'ibm/portal/client-visibility',
-    );
+    return await ApiService.get(endpoint: 'ibm/portal/client-visibility');
   }
 
   /// Update Client Visibility
@@ -371,9 +375,7 @@ class IbmApiProvider {
     required List<int> planGroupIds,
     int? defaultPlanGroupId,
   }) async {
-    final Map<String, dynamic> data = {
-      'plan_group_ids': planGroupIds,
-    };
+    final Map<String, dynamic> data = {'plan_group_ids': planGroupIds};
     if (defaultPlanGroupId != null) {
       data['default_plan_group_id'] = defaultPlanGroupId;
     }
@@ -409,7 +411,9 @@ class IbmApiProvider {
   }
 
   /// Get IBM Portal Network Summary (direct / network / total scopes)
-  Future<ApiResponse> getPortalNetworkSummary({String period = 'this_month'}) async {
+  Future<ApiResponse> getPortalNetworkSummary({
+    String period = 'this_month',
+  }) async {
     return await ApiService.get(
       endpoint: 'ibm/portal/network/summary',
       queryParameters: {'period': period},
@@ -454,7 +458,10 @@ class IbmApiProvider {
   }
 
   /// Get Partner Detail (Show)
-  Future<ApiResponse> getPartnerDetail(int partnerUserId, {String? period}) async {
+  Future<ApiResponse> getPartnerDetail(
+    int partnerUserId, {
+    String? period,
+  }) async {
     final Map<String, String> query = {};
     if (period != null && period.isNotEmpty) query['period'] = period;
     return await ApiService.get(
@@ -552,7 +559,10 @@ class IbmApiProvider {
   }
 
   /// Get Referral Link Clients
-  Future<ApiResponse> getLinkClients(int linkId, {String period = 'all'}) async {
+  Future<ApiResponse> getLinkClients(
+    int linkId, {
+    String period = 'all',
+  }) async {
     return await ApiService.get(
       endpoint: 'ibm/portal/links/$linkId/clients',
       queryParameters: {'period': period},

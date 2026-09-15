@@ -11,8 +11,6 @@ class PmamMyInvestmentScreen extends StatelessWidget {
     final args = Get.arguments as Map?;
     final managerCode = args?['managerCode'] as String?;
 
-    return PmamInvestorPortalScreen(
-      managerCode: managerCode,
-    );
+    return PmamInvestorPortalScreen(managerCode: managerCode);
   }
 }

@@ -38,13 +38,13 @@ class _BankListScreenState extends State<BankListScreen> {
         backgroundColor: AppColors.backgroundLight,
         scrolledUnderElevation: 0,
         elevation: 0,
-        leading:  AppSvgBackButton(
+        leading: AppSvgBackButton(
           onPressed: () => Get.back(closeOverlays: true),
           iconWidth: 30.w,
           iconHeight: 30.h,
         ),
-         title: Text(
-          'Withdrawal Method',
+        title: Text(
+          languageService.tr('withdrawal_method'),
           style: AppTextStyles.heading.copyWith(
             fontSize: 18.sp,
             fontWeight: FontWeight.w600,
@@ -128,7 +128,7 @@ class _BankListScreenState extends State<BankListScreen> {
             ),
             SizedBox(height: 24.h),
             Text(
-              'No Withdrawal Methods',
+              languageService.tr('kyc_no_withdrawal_methods'),
               style: AppTextStyles.heading.copyWith(
                 fontSize: 20.sp,
                 fontWeight: FontWeight.w600,
@@ -137,7 +137,7 @@ class _BankListScreenState extends State<BankListScreen> {
             ),
             SizedBox(height: 8.h),
             Text(
-              'You haven\'t added any withdrawal methods yet.\nAdd your first withdrawal method to get started.',
+              languageService.tr('kyc_no_withdrawal_methods_instruction'),
               textAlign: TextAlign.center,
               style: AppTextStyles.subheading.copyWith(
                 fontSize: 14.sp,
@@ -174,7 +174,7 @@ class _BankListScreenState extends State<BankListScreen> {
                 padding: EdgeInsets.zero,
               ),
               child: Text(
-                'Add Withdrawal Method',
+                languageService.tr('kyc_add_withdrawal_method'),
                 style: TextStyle(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.w600,
@@ -210,8 +210,9 @@ class _BankListScreenState extends State<BankListScreen> {
 
   // Individual withdrawal method item
   Widget _buildWithdrawalItem(WithdrawalMethods method) {
-    final isExpanded =
-        method.id != null ? (expandedItems[method.id!] ?? false) : false;
+    final isExpanded = method.id != null
+        ? (expandedItems[method.id!] ?? false)
+        : false;
 
     return Container(
       margin: EdgeInsets.only(bottom: 12.h),
@@ -270,8 +271,9 @@ class _BankListScreenState extends State<BankListScreen> {
           AnimatedSize(
             duration: Duration(milliseconds: 300),
             curve: Curves.easeInOut,
-            child:
-                isExpanded ? _buildExpandedDetails(method) : SizedBox.shrink(),
+            child: isExpanded
+                ? _buildExpandedDetails(method)
+                : SizedBox.shrink(),
           ),
         ],
       ),
@@ -344,7 +346,10 @@ class _BankListScreenState extends State<BankListScreen> {
     } else if (methodType == 'crypto') {
       if (_hasValue(method.cryptoNetwork)) {
         detailRows.add(
-          _buildDetailRow('Network', _formatCryptoNetworkLabel(method.cryptoNetwork!)),
+          _buildDetailRow(
+            'Network',
+            _formatCryptoNetworkLabel(method.cryptoNetwork!),
+          ),
         );
       }
       if (_hasValue(method.cryptoAddress)) {
@@ -429,10 +434,9 @@ class _BankListScreenState extends State<BankListScreen> {
     switch (method.withdrawalMethod?.toLowerCase()) {
       case 'bank':
         final accountNo = method.bankAccountNo ?? '';
-        final last4 =
-            accountNo.length > 4
-                ? accountNo.substring(accountNo.length - 4)
-                : accountNo;
+        final last4 = accountNo.length > 4
+            ? accountNo.substring(accountNo.length - 4)
+            : accountNo;
         return '${method.bankName ?? 'Bank'} - $last4';
       case 'upi':
         return 'UPI';
@@ -466,22 +470,21 @@ class _BankListScreenState extends State<BankListScreen> {
   void _showProofDialog(String proofUrl) {
     showDialog(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            title: Text(languageService.tr('kyc_attached_proof')),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text('${languageService.tr('kyc_proof_url')}: $proofUrl'),
-                SizedBox(height: 16.h),
-                // TODO: Add image viewer or download functionality
-                ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text(languageService.tr('navigation_close')),
-                ),
-              ],
+      builder: (context) => AlertDialog(
+        title: Text(languageService.tr('kyc_attached_proof')),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('${languageService.tr('kyc_proof_url')}: $proofUrl'),
+            SizedBox(height: 16.h),
+            // TODO: Add image viewer or download functionality
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(languageService.tr('navigation_close')),
             ),
-          ),
+          ],
+        ),
+      ),
     );
   }
 }

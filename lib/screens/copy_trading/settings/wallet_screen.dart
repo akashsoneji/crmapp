@@ -7,6 +7,7 @@ import 'package:flutter_svg/svg.dart';
 // import 'package:flutter_svg/svg.dart' as Assets;
 import 'package:get/get.dart';
 import 'package:crm_app/controllers/copy_trading/copy_trading_settings_controller.dart';
+import 'package:crm_app/services/language_service.dart';
 
 class CopyTradingWalletScreen extends StatelessWidget {
   const CopyTradingWalletScreen({super.key});
@@ -23,7 +24,7 @@ class CopyTradingWalletScreen extends StatelessWidget {
         elevation: 0,
         centerTitle: true,
         title: Text(
-          'Wallet',
+          TranslationUtils.tr('wallet_title'),
           style: AppTextStyles.heading.copyWith(
             color: AppColors.textPrimary,
             fontWeight: FontWeight.w600,
@@ -42,17 +43,16 @@ class CopyTradingWalletScreen extends StatelessWidget {
         ),
         actions: [
           Obx(
-            () =>
-                controller.selectedWalletTab.value == 1
-                    ? IconButton(
-                      icon: Icon(
-                        Icons.filter_alt_outlined,
-                        color: AppColors.textPrimary,
-                        size: 24.r,
-                      ),
-                      onPressed: () => _showFilterSheet(context, controller),
-                    )
-                    : const SizedBox.shrink(),
+            () => controller.selectedWalletTab.value == 1
+                ? IconButton(
+                    icon: Icon(
+                      Icons.filter_alt_outlined,
+                      color: AppColors.textPrimary,
+                      size: 24.r,
+                    ),
+                    onPressed: () => _showFilterSheet(context, controller),
+                  )
+                : const SizedBox.shrink(),
           ),
         ],
       ),
@@ -68,7 +68,9 @@ class CopyTradingWalletScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.whiteColor,
                 borderRadius: BorderRadius.circular(16.r),
-                border: Border.all(color: AppColors.border.withValues(alpha: 0.1)),
+                border: Border.all(
+                  color: AppColors.border.withValues(alpha: 0.1),
+                ),
                 boxShadow: [
                   BoxShadow(
                     color: AppColors.border.withValues(alpha: 0.02),
@@ -126,24 +128,25 @@ class CopyTradingWalletScreen extends StatelessWidget {
                     children: [
                       _ActionItem(
                         iconData: Icons.add_circle_outline_rounded,
-                        label: 'Deposit',
+                        label: TranslationUtils.tr('common_deposit'),
                         onTap: () => Get.toNamed(AppPages.FINANCE),
                       ),
                       _ActionItem(
                         iconData: Icons.arrow_circle_up_rounded,
-                        label: 'Withdrawal',
+                        label: TranslationUtils.tr('copy_withdrawal'),
                         onTap: () {},
                       ),
                       _ActionItem(
                         iconData: Icons.swap_horizontal_circle_outlined,
-                        label: 'Internal Transfer',
-                        onTap:
-                            () =>
-                                Get.toNamed('/copy-trading-internal-transfer'),
+                        label: TranslationUtils.tr('copy_internal_transfer'),
+                        onTap: () =>
+                            Get.toNamed('/copy-trading-internal-transfer'),
                       ),
                       _ActionItem(
                         iconData: Icons.history_rounded,
-                        label: 'Internal Transfer History',
+                        label: TranslationUtils.tr(
+                          'copy_internal_transfer_history',
+                        ),
                         onTap: () {},
                       ),
                     ],
@@ -152,8 +155,8 @@ class CopyTradingWalletScreen extends StatelessWidget {
                   return ListView.separated(
                     physics: const BouncingScrollPhysics(),
                     itemCount: controller.transactions.length,
-                    separatorBuilder:
-                        (context, index) => SizedBox(height: 12.h),
+                    separatorBuilder: (context, index) =>
+                        SizedBox(height: 12.h),
                     itemBuilder: (context, index) {
                       return _HistoryItem(
                         transaction: controller.transactions[index],
@@ -220,26 +223,29 @@ class CopyTradingWalletScreen extends StatelessWidget {
             ),
             SizedBox(height: 24.h),
             _FilterOption(
-              label: 'Transaction Type',
-              onTap:
-                  () => _showSelectionSheet(
-                    context,
-                    'Transaction Type',
-                    ['All', 'Withdrawal', 'Deposit', 'Copytrading'],
-                    controller.selectedTransactionType,
-                    controller,
-                  ),
+              label: TranslationUtils.tr('copy_transaction_type'),
+              onTap: () => _showSelectionSheet(
+                context,
+                TranslationUtils.tr('copy_transaction_type'),
+                [
+                  'All',
+                  TranslationUtils.tr('copy_withdrawal'),
+                  'Deposit',
+                  'Copytrading',
+                ],
+                controller.selectedTransactionType,
+                controller,
+              ),
             ),
             _FilterOption(
-              label: 'Status',
-              onTap:
-                  () => _showSelectionSheet(
-                    context,
-                    'Status',
-                    ['All', 'Complete', 'Pending', 'Rejected', 'Cancelled'],
-                    controller.selectedStatus,
-                    controller,
-                  ),
+              label: TranslationUtils.tr('common_status'),
+              onTap: () => _showSelectionSheet(
+                context,
+                TranslationUtils.tr('common_status'),
+                ['All', 'Complete', 'Pending', 'Rejected', 'Cancelled'],
+                controller.selectedStatus,
+                controller,
+              ),
             ),
             SizedBox(height: 24.h),
             SizedBox(
@@ -247,18 +253,19 @@ class CopyTradingWalletScreen extends StatelessWidget {
               height: 50.h,
               child: ElevatedButton(
                 onPressed: () => Get.back(),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary.withOpacity(0.1),
-                  elevation: 0,
-                  shadowColor: Colors.transparent,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12.r),
-                  ),
-                ).copyWith(
-                  overlayColor: WidgetStateProperty.all(Colors.transparent),
-                ),
+                style:
+                    ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary.withOpacity(0.1),
+                      elevation: 0,
+                      shadowColor: Colors.transparent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                    ).copyWith(
+                      overlayColor: WidgetStateProperty.all(Colors.transparent),
+                    ),
                 child: Text(
-                  'Cancel',
+                  TranslationUtils.tr('common_cancel'),
                   style: AppTextStyles.button.copyWith(
                     color: AppColors.primary,
                     fontWeight: FontWeight.w600,
@@ -401,10 +408,9 @@ class CopyTradingWalletScreen extends StatelessWidget {
               color: isSelected ? AppColors.primary : AppColors.whiteColor,
               borderRadius: BorderRadius.circular(8.r),
               border: Border.all(
-                color:
-                    isSelected
-                        ? AppColors.primary
-                        : AppColors.border.withValues(alpha: 0.3),
+                color: isSelected
+                    ? AppColors.primary
+                    : AppColors.border.withValues(alpha: 0.3),
               ),
             ),
             child: Text(
@@ -518,10 +524,9 @@ class _HistoryItem extends StatelessWidget {
                             Text(
                               transaction.amount,
                               style: AppTextStyles.label.copyWith(
-                                color:
-                                    transaction.isNegative
-                                        ? AppColors.error
-                                        : AppColors.success,
+                                color: transaction.isNegative
+                                    ? AppColors.error
+                                    : AppColors.success,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -543,7 +548,10 @@ class _HistoryItem extends StatelessWidget {
             ),
             if (isExpanded) ...[
               SizedBox(height: 16.h),
-              Divider(height: 1, color: AppColors.border.withValues(alpha: 0.1)),
+              Divider(
+                height: 1,
+                color: AppColors.border.withValues(alpha: 0.1),
+              ),
               SizedBox(height: 12.h),
               _DetailRow(label: 'Status', value: transaction.status),
               _DetailRow(label: 'Request ID', value: transaction.requestId),
@@ -627,7 +635,9 @@ class _DetailRow extends StatelessWidget {
                 '..........................................................................................................................................',
                 maxLines: 1,
                 overflow: TextOverflow.clip,
-                style: TextStyle(color: AppColors.border.withValues(alpha: 0.3)),
+                style: TextStyle(
+                  color: AppColors.border.withValues(alpha: 0.3),
+                ),
               ),
             ),
           ),
@@ -699,14 +709,14 @@ class _AboutItem extends StatelessWidget {
           (svg.isBlank == true)
               ? Icon(icon, color: AppColors.textPrimary, size: 22.w)
               : SvgPicture.asset(
-                svg,
-                height: 22.w,
-                width: 22.w,
-                colorFilter: ColorFilter.mode(
-                  AppColors.textPrimary,
-                  BlendMode.srcIn,
+                  svg,
+                  height: 22.w,
+                  width: 22.w,
+                  colorFilter: ColorFilter.mode(
+                    AppColors.textPrimary,
+                    BlendMode.srcIn,
+                  ),
                 ),
-              ),
           SizedBox(width: 10.w),
           Expanded(
             child: Column(

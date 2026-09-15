@@ -5,16 +5,13 @@ import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/screens/ibm/data/ibm_api_provider.dart';
 import 'package:crm_app/screens/ibm/view_models/ibm_controller.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
+import 'package:crm_app/services/language_service.dart';
 
 class CreateEditPlanScreen extends StatefulWidget {
   final int? planId;
   final bool readOnly;
 
-  const CreateEditPlanScreen({
-    super.key,
-    this.planId,
-    this.readOnly = false,
-  });
+  const CreateEditPlanScreen({super.key, this.planId, this.readOnly = false});
 
   @override
   State<CreateEditPlanScreen> createState() => _CreateEditPlanScreenState();
@@ -96,36 +93,96 @@ class _CreateEditPlanScreenState extends State<CreateEditPlanScreen>
         'group_id': 1,
         'name': 'Standard',
         'categories': [
-          {'category_id': 1, 'name': 'Forex / Currency', 'max_rate': 10.0, 'max_allowed': 10.0},
-          {'category_id': 2, 'name': 'Metals / Commodities', 'max_rate': 10.0, 'max_allowed': 10.0},
-          {'category_id': 3, 'name': 'Indices', 'max_rate': 5.0, 'max_allowed': 5.0},
-          {'category_id': 4, 'name': 'Crypto', 'max_rate': 15.0, 'max_allowed': 15.0},
+          {
+            'category_id': 1,
+            'name': 'Forex / Currency',
+            'max_rate': 10.0,
+            'max_allowed': 10.0,
+          },
+          {
+            'category_id': 2,
+            'name': 'Metals / Commodities',
+            'max_rate': 10.0,
+            'max_allowed': 10.0,
+          },
+          {
+            'category_id': 3,
+            'name': 'Indices',
+            'max_rate': 5.0,
+            'max_allowed': 5.0,
+          },
+          {
+            'category_id': 4,
+            'name': 'Crypto',
+            'max_rate': 15.0,
+            'max_allowed': 15.0,
+          },
         ],
       },
       {
         'group_id': 2,
         'name': 'PRO',
         'categories': [
-          {'category_id': 1, 'name': 'Forex / Currency', 'max_rate': 8.0, 'max_allowed': 8.0},
-          {'category_id': 2, 'name': 'Metals / Commodities', 'max_rate': 8.0, 'max_allowed': 8.0},
-          {'category_id': 3, 'name': 'Indices', 'max_rate': 4.0, 'max_allowed': 4.0},
-          {'category_id': 4, 'name': 'Crypto', 'max_rate': 10.0, 'max_allowed': 10.0},
+          {
+            'category_id': 1,
+            'name': 'Forex / Currency',
+            'max_rate': 8.0,
+            'max_allowed': 8.0,
+          },
+          {
+            'category_id': 2,
+            'name': 'Metals / Commodities',
+            'max_rate': 8.0,
+            'max_allowed': 8.0,
+          },
+          {
+            'category_id': 3,
+            'name': 'Indices',
+            'max_rate': 4.0,
+            'max_allowed': 4.0,
+          },
+          {
+            'category_id': 4,
+            'name': 'Crypto',
+            'max_rate': 10.0,
+            'max_allowed': 10.0,
+          },
         ],
       },
       {
         'group_id': 3,
         'name': 'PRO 25',
         'categories': [
-          {'category_id': 1, 'name': 'Forex / Currency', 'max_rate': 6.0, 'max_allowed': 6.0},
-          {'category_id': 2, 'name': 'Metals / Commodities', 'max_rate': 6.0, 'max_allowed': 6.0},
+          {
+            'category_id': 1,
+            'name': 'Forex / Currency',
+            'max_rate': 6.0,
+            'max_allowed': 6.0,
+          },
+          {
+            'category_id': 2,
+            'name': 'Metals / Commodities',
+            'max_rate': 6.0,
+            'max_allowed': 6.0,
+          },
         ],
       },
       {
         'group_id': 4,
         'name': 'Standard 30',
         'categories': [
-          {'category_id': 1, 'name': 'Forex / Currency', 'max_rate': 10.0, 'max_allowed': 10.0},
-          {'category_id': 2, 'name': 'Metals / Commodities', 'max_rate': 10.0, 'max_allowed': 10.0},
+          {
+            'category_id': 1,
+            'name': 'Forex / Currency',
+            'max_rate': 10.0,
+            'max_allowed': 10.0,
+          },
+          {
+            'category_id': 2,
+            'name': 'Metals / Commodities',
+            'max_rate': 10.0,
+            'max_allowed': 10.0,
+          },
         ],
       },
     ];
@@ -145,7 +202,8 @@ class _CreateEditPlanScreenState extends State<CreateEditPlanScreen>
     }
 
     // Parse symbol catalogue
-    if (payload['symbol_catalogue'] is Map && payload['symbol_catalogue']['names'] is Map) {
+    if (payload['symbol_catalogue'] is Map &&
+        payload['symbol_catalogue']['names'] is Map) {
       final names = payload['symbol_catalogue']['names'] as Map;
       names.forEach((k, v) {
         final id = int.tryParse(k.toString());
@@ -158,27 +216,50 @@ class _CreateEditPlanScreenState extends State<CreateEditPlanScreen>
     }
 
     if (widget.planId != null) {
-      final planData = payload['plan'] is Map ? payload['plan'] as Map : payload;
-      _nameController.text = planData['name']?.toString() ?? planData['plan_name']?.toString() ?? '';
+      final planData = payload['plan'] is Map
+          ? payload['plan'] as Map
+          : payload;
+      _nameController.text =
+          planData['name']?.toString() ??
+          planData['plan_name']?.toString() ??
+          '';
       _descController.text = planData['description']?.toString() ?? '';
-      _isActive = planData['is_active'] == true || planData['is_active'] == 1 || planData['is_active'] == null;
+      _isActive =
+          planData['is_active'] == true ||
+          planData['is_active'] == 1 ||
+          planData['is_active'] == null;
     }
 
     // Parse selected/draft groups
-    final draftList = payload['draft'] ?? payload['groups'] ?? payload['plan_groups'] ?? [];
+    final draftList =
+        payload['draft'] ?? payload['groups'] ?? payload['plan_groups'] ?? [];
     if (draftList is List) {
       for (var group in draftList) {
         if (group is! Map) continue;
-        int groupId = int.tryParse((group['group_id'] ?? group['id'] ?? group['plan_group_id'] ?? 0).toString()) ?? 0;
-        int planGroupId = int.tryParse((group['plan_group_id'] ?? groupId).toString()) ?? groupId;
+        int groupId =
+            int.tryParse(
+              (group['group_id'] ?? group['id'] ?? group['plan_group_id'] ?? 0)
+                  .toString(),
+            ) ??
+            0;
+        int planGroupId =
+            int.tryParse((group['plan_group_id'] ?? groupId).toString()) ??
+            groupId;
         if (groupId != 0) {
           final ratesMap = <String, dynamic>{};
           if (group['rates'] is Map) {
-            (group['rates'] as Map).forEach((k, v) => ratesMap[k.toString()] = v);
+            (group['rates'] as Map).forEach(
+              (k, v) => ratesMap[k.toString()] = v,
+            );
           } else if (group['categories'] is List) {
             for (var c in group['categories']) {
               if (c is Map) {
-                final catId = (c['symbol_category_id'] ?? c['category_id'] ?? c['id'] ?? '').toString();
+                final catId =
+                    (c['symbol_category_id'] ??
+                            c['category_id'] ??
+                            c['id'] ??
+                            '')
+                        .toString();
                 final rate = c['rate'] ?? c['given'] ?? c['amount'] ?? 0;
                 ratesMap[catId] = rate;
               }
@@ -187,7 +268,9 @@ class _CreateEditPlanScreenState extends State<CreateEditPlanScreen>
 
           final symRatesMap = <String, dynamic>{};
           if (group['symbol_rates'] is Map) {
-            (group['symbol_rates'] as Map).forEach((k, v) => symRatesMap[k.toString()] = v);
+            (group['symbol_rates'] as Map).forEach(
+              (k, v) => symRatesMap[k.toString()] = v,
+            );
           } else if (group['symbols'] is List) {
             for (var s in group['symbols']) {
               if (s is Map) {
@@ -228,14 +311,20 @@ class _CreateEditPlanScreenState extends State<CreateEditPlanScreen>
       // Also check if any group in caps has given rates
       for (var cap in _availableCaps) {
         if (cap is! Map) continue;
-        int gId = int.tryParse((cap['group_id'] ?? cap['id'] ?? 0).toString()) ?? 0;
+        int gId =
+            int.tryParse((cap['group_id'] ?? cap['id'] ?? 0).toString()) ?? 0;
         if (gId != 0 && !_selectedGroups.containsKey(gId)) {
           bool hasGiven = false;
           final rMap = <String, dynamic>{};
           if (cap['categories'] is List) {
             for (var c in cap['categories']) {
               if (c is Map && c['given'] != null) {
-                final catId = (c['symbol_category_id'] ?? c['category_id'] ?? c['id'] ?? '').toString();
+                final catId =
+                    (c['symbol_category_id'] ??
+                            c['category_id'] ??
+                            c['id'] ??
+                            '')
+                        .toString();
                 rMap[catId] = c['given'];
                 hasGiven = true;
               }
@@ -252,7 +341,8 @@ class _CreateEditPlanScreenState extends State<CreateEditPlanScreen>
           }
         }
       }
-    } else if (payload['template'] is Map && payload['template']['caps'] is List) {
+    } else if (payload['template'] is Map &&
+        payload['template']['caps'] is List) {
       _availableCaps = List.from(payload['template']['caps']);
     } else if (payload['groups'] is List && _availableCaps.isEmpty) {
       _availableCaps = List.from(payload['groups']);
@@ -262,7 +352,9 @@ class _CreateEditPlanScreenState extends State<CreateEditPlanScreen>
   Future<void> _submit() async {
     final name = _nameController.text.trim();
     if (name.isEmpty) {
-      CustomToastService.showError(message: 'Please enter a plan name');
+      CustomToastService.showError(
+        message: TranslationUtils.tr('ibm_enter_plan_name'),
+      );
       _tabController.animateTo(0);
       return;
     }
@@ -340,20 +432,15 @@ class _CreateEditPlanScreenState extends State<CreateEditPlanScreen>
     });
 
     try {
-      final res =
-          widget.planId == null
-              ? await IbmApiProvider().createPartnerPlan(payload)
-              : await IbmApiProvider().updatePartnerPlan(
-                widget.planId!,
-                payload,
-              );
+      final res = widget.planId == null
+          ? await IbmApiProvider().createPartnerPlan(payload)
+          : await IbmApiProvider().updatePartnerPlan(widget.planId!, payload);
 
       if (res.success) {
         CustomToastService.showSuccess(
-          message:
-              widget.planId == null
-                  ? 'Plan created successfully'
-                  : 'Plan updated successfully',
+          message: widget.planId == null
+              ? 'Plan created successfully'
+              : 'Plan updated successfully',
         );
         if (Get.isRegistered<IbmController>()) {
           Get.find<IbmController>().fetchPlans();
@@ -361,7 +448,9 @@ class _CreateEditPlanScreenState extends State<CreateEditPlanScreen>
         }
         Get.back(result: true);
       } else {
-        CustomToastService.showError(message: res.message ?? 'Failed to save plan');
+        CustomToastService.showError(
+          message: res.message ?? 'Failed to save plan',
+        );
       }
     } catch (e) {
       CustomToastService.showError(message: 'Error saving plan: $e');
@@ -389,8 +478,8 @@ class _CreateEditPlanScreenState extends State<CreateEditPlanScreen>
           widget.readOnly
               ? 'View Partner Plan'
               : (widget.planId == null
-                  ? 'Create Partner Plan'
-                  : 'Edit Partner Plan'),
+                    ? 'Create Partner Plan'
+                    : 'Edit Partner Plan'),
           style: TextStyle(color: AppColors.textPrimary, fontSize: 18.sp),
         ),
         backgroundColor: AppColors.whiteColor,
@@ -409,41 +498,37 @@ class _CreateEditPlanScreenState extends State<CreateEditPlanScreen>
                 ],
               ),
       ),
-      body:
-          _isLoading
-              ? Center(
-                child: CircularProgressIndicator(color: AppColors.primary),
-              )
-              : _error != null
-              ? Center(
-                child: Text(_error!, style: TextStyle(color: Colors.red)),
-              )
-              : widget.readOnly
-              ? _buildReadOnlyBody()
-              : TabBarView(
-                controller: _tabController,
-                physics:
-                    const NeverScrollableScrollPhysics(), // Prevent swipe to force Next button usage if wanted
-                children: [_buildDetailsTab(), _buildGroupsRatesTab()],
+      body: _isLoading
+          ? Center(child: CircularProgressIndicator(color: AppColors.primary))
+          : _error != null
+          ? Center(
+              child: Text(_error!, style: TextStyle(color: Colors.red)),
+            )
+          : widget.readOnly
+          ? _buildReadOnlyBody()
+          : TabBarView(
+              controller: _tabController,
+              physics:
+                  const NeverScrollableScrollPhysics(), // Prevent swipe to force Next button usage if wanted
+              children: [_buildDetailsTab(), _buildGroupsRatesTab()],
+            ),
+      bottomNavigationBar: _isLoading || _error != null || widget.readOnly
+          ? null
+          : Container(
+              padding: EdgeInsets.all(16.w),
+              decoration: BoxDecoration(
+                color: AppColors.whiteColor,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, -5),
+                  ),
+                ],
               ),
-      bottomNavigationBar:
-          _isLoading || _error != null || widget.readOnly
-              ? null
-              : Container(
-                padding: EdgeInsets.all(16.w),
-                decoration: BoxDecoration(
-                  color: AppColors.whiteColor,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, -5),
-                    ),
-                  ],
-                ),
-                child: SafeArea(
-                  top: false,
-                  child: Row(
+              child: SafeArea(
+                top: false,
+                child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     TextButton(
@@ -455,18 +540,17 @@ class _CreateEditPlanScreenState extends State<CreateEditPlanScreen>
                       ),
                     ),
                     ElevatedButton(
-                      onPressed:
-                          _isSubmitting
-                              ? null
-                              : () {
-                                if (_tabController.index == 0) {
-                                  if (_formKey.currentState!.validate()) {
-                                    _tabController.animateTo(1);
-                                  }
-                                } else {
-                                  _submit();
+                      onPressed: _isSubmitting
+                          ? null
+                          : () {
+                              if (_tabController.index == 0) {
+                                if (_formKey.currentState!.validate()) {
+                                  _tabController.animateTo(1);
                                 }
-                              },
+                              } else {
+                                _submit();
+                              }
+                            },
                       style: ElevatedButton.styleFrom(
                         minimumSize:
                             Size.zero, // Override global infinite width
@@ -479,30 +563,29 @@ class _CreateEditPlanScreenState extends State<CreateEditPlanScreen>
                           borderRadius: BorderRadius.circular(8.r),
                         ),
                       ),
-                      child:
-                          _isSubmitting
-                              ? SizedBox(
-                                width: 20.w,
-                                height: 20.w,
-                                child: CircularProgressIndicator(
-                                  color: AppColors.whiteColor,
-                                  strokeWidth: 2,
-                                ),
-                              )
-                              : Text(
-                                _tabController.index == 0
-                                    ? 'Next: Groups & Rates'
-                                    : 'Save Plan',
-                                style: TextStyle(
-                                  color: AppColors.whiteColor,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                      child: _isSubmitting
+                          ? SizedBox(
+                              width: 20.w,
+                              height: 20.w,
+                              child: CircularProgressIndicator(
+                                color: AppColors.whiteColor,
+                                strokeWidth: 2,
                               ),
+                            )
+                          : Text(
+                              _tabController.index == 0
+                                  ? 'Next: Groups & Rates'
+                                  : 'Save Plan',
+                              style: TextStyle(
+                                color: AppColors.whiteColor,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                     ),
                   ],
-                  ),
                 ),
               ),
+            ),
     );
   }
 
@@ -536,8 +619,8 @@ class _CreateEditPlanScreenState extends State<CreateEditPlanScreen>
                 vertical: 12.h,
               ),
             ),
-            validator:
-                (val) => val == null || val.trim().isEmpty ? 'Required' : null,
+            validator: (val) =>
+                val == null || val.trim().isEmpty ? 'Required' : null,
           ),
           SizedBox(height: 24.h),
           Text(
@@ -617,10 +700,7 @@ class _CreateEditPlanScreenState extends State<CreateEditPlanScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: EdgeInsets.all(16.w),
-            child: _buildDetailsFields(),
-          ),
+          Padding(padding: EdgeInsets.all(16.w), child: _buildDetailsFields()),
           _buildInfoBanner(),
           if (_availableCaps.isEmpty)
             Padding(
@@ -651,26 +731,25 @@ class _CreateEditPlanScreenState extends State<CreateEditPlanScreen>
       children: [
         _buildInfoBanner(),
         Expanded(
-          child:
-              _availableCaps.isEmpty
-                  ? Center(
-                    child: Text(
-                      'No groups available',
-                      style: TextStyle(color: AppColors.textSecondary),
-                    ),
-                  )
-                  : ListView.builder(
-                    itemCount: _availableCaps.length,
-                    itemBuilder: (context, index) {
-                      final cap = _availableCaps[index];
-                      final int groupId = cap['group_id'] ?? cap['id'] ?? 0;
-                      final String groupName =
-                          cap['group_name'] ?? cap['name'] ?? 'Group $groupId';
-                      final bool isAdded = _selectedGroups.containsKey(groupId);
-
-                      return _buildGroupRow(groupId, groupName, cap, isAdded);
-                    },
+          child: _availableCaps.isEmpty
+              ? Center(
+                  child: Text(
+                    'No groups available',
+                    style: TextStyle(color: AppColors.textSecondary),
                   ),
+                )
+              : ListView.builder(
+                  itemCount: _availableCaps.length,
+                  itemBuilder: (context, index) {
+                    final cap = _availableCaps[index];
+                    final int groupId = cap['group_id'] ?? cap['id'] ?? 0;
+                    final String groupName =
+                        cap['group_name'] ?? cap['name'] ?? 'Group $groupId';
+                    final bool isAdded = _selectedGroups.containsKey(groupId);
+
+                    return _buildGroupRow(groupId, groupName, cap, isAdded);
+                  },
+                ),
         ),
       ],
     );
@@ -737,7 +816,11 @@ class _CreateEditPlanScreenState extends State<CreateEditPlanScreen>
                             });
                           },
                           style: TextButton.styleFrom(minimumSize: Size.zero),
-                          icon: Icon(Icons.close, size: 16.w, color: Colors.red),
+                          icon: Icon(
+                            Icons.close,
+                            size: 16.w,
+                            color: Colors.red,
+                          ),
                           label: const Text(
                             'Remove',
                             style: TextStyle(color: Colors.red),
@@ -930,8 +1013,11 @@ class _CreateEditPlanScreenState extends State<CreateEditPlanScreen>
                     Expanded(
                       flex: 3,
                       child: TextFormField(
-                        initialValue:
-                            currentRate > 0 ? (currentRate % 1 == 0 ? currentRate.toInt().toString() : currentRate.toString()) : '',
+                        initialValue: currentRate > 0
+                            ? (currentRate % 1 == 0
+                                  ? currentRate.toInt().toString()
+                                  : currentRate.toString())
+                            : '',
                         readOnly: widget.readOnly,
                         keyboardType: const TextInputType.numberWithOptions(
                           decimal: true,
@@ -1039,8 +1125,8 @@ class _CreateEditPlanScreenState extends State<CreateEditPlanScreen>
               ),
             ),
             ...symbolRates.map((sym) {
-              final String symId =
-                  (sym['symbol_id'] ?? sym['id'] ?? '').toString();
+              final String symId = (sym['symbol_id'] ?? sym['id'] ?? '')
+                  .toString();
               final String name =
                   sym['name'] ?? sym['symbol_name'] ?? 'Symbol $symId';
               final double parentCap =
@@ -1091,8 +1177,11 @@ class _CreateEditPlanScreenState extends State<CreateEditPlanScreen>
                     Expanded(
                       flex: 3,
                       child: TextFormField(
-                        initialValue:
-                            currentRate > 0 ? (currentRate % 1 == 0 ? currentRate.toInt().toString() : currentRate.toString()) : '',
+                        initialValue: currentRate > 0
+                            ? (currentRate % 1 == 0
+                                  ? currentRate.toInt().toString()
+                                  : currentRate.toString())
+                            : '',
                         readOnly: widget.readOnly,
                         keyboardType: const TextInputType.numberWithOptions(
                           decimal: true,
@@ -1160,9 +1249,15 @@ class _CreateEditPlanScreenState extends State<CreateEditPlanScreen>
                       controller: blockController,
                       decoration: InputDecoration(
                         hintText: 'Symbol name e.g. BTCUSD',
-                        hintStyle: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary),
+                        hintStyle: TextStyle(
+                          fontSize: 12.sp,
+                          color: AppColors.textSecondary,
+                        ),
                         border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 10.w,
+                          vertical: 8.h,
+                        ),
                       ),
                     ),
                   ),
@@ -1180,12 +1275,17 @@ class _CreateEditPlanScreenState extends State<CreateEditPlanScreen>
                     }
                   },
                   icon: Icon(Icons.block, size: 14.w, color: Colors.white),
-                  label: const Text('Block'),
+                  label: Text(TranslationUtils.tr('ibm_block')),
                   style: ElevatedButton.styleFrom(
                     minimumSize: Size.zero,
                     backgroundColor: AppColors.primary,
-                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6.r)),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 12.w,
+                      vertical: 8.h,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(6.r),
+                    ),
                   ),
                 ),
               ],
@@ -1203,15 +1303,23 @@ class _CreateEditPlanScreenState extends State<CreateEditPlanScreen>
               runSpacing: 6.h,
               children: blockedSymbols.map((sym) {
                 return Chip(
-                  label: Text(sym.toString(), style: TextStyle(fontSize: 11.sp, fontWeight: FontWeight.w600)),
-                  deleteIcon:
-                      widget.readOnly ? null : const Icon(Icons.close, size: 14),
+                  label: Text(
+                    sym.toString(),
+                    style: TextStyle(
+                      fontSize: 11.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  deleteIcon: widget.readOnly
+                      ? null
+                      : const Icon(Icons.close, size: 14),
                   onDeleted: widget.readOnly
                       ? null
                       : () {
                           setState(() {
                             blockedSymbols.remove(sym);
-                            _selectedGroups[groupId]!['blocked'] = blockedSymbols;
+                            _selectedGroups[groupId]!['blocked'] =
+                                blockedSymbols;
                           });
                         },
                   backgroundColor: Colors.red.shade50,

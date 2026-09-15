@@ -18,6 +18,7 @@ import 'package:crm_app/services/trading_websocket_service.dart';
 import 'package:crm_app/routes/app_pages.dart';
 import 'package:crm_app/flavor_config.dart';
 import 'package:crm_app/services/symbol_details_cache_service.dart';
+import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/models/mt5_account.dart';
 import 'pending_order_content.dart';
 import 'dart:async';
@@ -195,8 +196,11 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
       final activeAccount = accountController.activeMT5Account;
       if (activeAccount == null) {
         CustomToastService.showError(
-          title: 'Error',
-          message: 'No active account found',
+          title: TranslationUtils.trf('common_error', 'Error'),
+          message: TranslationUtils.trf(
+            'trading_no_active_account',
+            'No active account found',
+          ),
         );
         return;
       }
@@ -236,75 +240,75 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
       // Get decimal digits from price data
       final priceData = chartSocketController.getCurrentPrice();
       final decimals =
-          priceData != null && (priceData.containsKey('digits') || priceData.containsKey('Digits'))
-              ? (int.tryParse((priceData['digits'] ?? priceData['Digits']).toString()) ?? 5)
-              : 5;
+          priceData != null &&
+              (priceData.containsKey('digits') ||
+                  priceData.containsKey('Digits'))
+          ? (int.tryParse(
+                  (priceData['digits'] ?? priceData['Digits']).toString(),
+                ) ??
+                5)
+          : 5;
 
       // Format values properly
       final volumeStr = volume.toString();
 
       final limitPriceControllerValue = _limitPriceController.text.trim();
-      final limitPriceFromController =
-          limitPriceControllerValue.isNotEmpty
-              ? double.tryParse(limitPriceControllerValue)
-              : null;
+      final limitPriceFromController = limitPriceControllerValue.isNotEmpty
+          ? double.tryParse(limitPriceControllerValue)
+          : null;
 
       // All dropdown order types require a price
       final requiresPrice = true;
 
-      final price =
-          requiresPrice
-              ? PrecisionHelper.formatPrice(
-                PrecisionHelper.parseDouble(
-                  orderType.isStopLimit
-                      ? (_openPriceController.text.isNotEmpty
+      final price = requiresPrice
+          ? PrecisionHelper.formatPrice(
+              PrecisionHelper.parseDouble(
+                orderType.isStopLimit
+                    ? (_openPriceController.text.isNotEmpty
                           ? _openPriceController.text
                           : _openPrice.value.toString())
-                      : (limitPriceFromController != null &&
+                    : (limitPriceFromController != null &&
                           limitPriceFromController > 0)
-                      ? limitPriceControllerValue
-                      : _limitPrice.value.toString(),
-                  decimals: decimals,
-                ),
+                    ? limitPriceControllerValue
+                    : _limitPrice.value.toString(),
                 decimals: decimals,
-              )
-              : null;
+              ),
+              decimals: decimals,
+            )
+          : null;
 
-      final stopLimitPrice =
-          orderType.isStopLimit
-              ? PrecisionHelper.formatPrice(
-                PrecisionHelper.parseDouble(
-                  (limitPriceFromController != null &&
-                          limitPriceFromController > 0)
-                      ? limitPriceControllerValue
-                      : _limitPrice.value.toString(),
-                  decimals: decimals,
-                ),
+      final stopLimitPrice = orderType.isStopLimit
+          ? PrecisionHelper.formatPrice(
+              PrecisionHelper.parseDouble(
+                (limitPriceFromController != null &&
+                        limitPriceFromController > 0)
+                    ? limitPriceControllerValue
+                    : _limitPrice.value.toString(),
                 decimals: decimals,
-              )
-              : null;
+              ),
+              decimals: decimals,
+            )
+          : null;
 
-      final takeProfit =
-          _takeProfitEnabled.value
-              ? PrecisionHelper.formatPrice(
-                PrecisionHelper.parseDouble(
-                  _takeProfitPrice.value.toString(),
-                  decimals: decimals,
-                ),
+      final takeProfit = _takeProfitEnabled.value
+          ? PrecisionHelper.formatPrice(
+              PrecisionHelper.parseDouble(
+                _takeProfitPrice.value.toString(),
                 decimals: decimals,
-              )
-              : null;
+              ),
+              decimals: decimals,
+            )
+          : null;
 
-      final stopLoss =
-          _stopLossEnabled.value
-              ? PrecisionHelper.formatPrice(
-                PrecisionHelper.parseDouble(
-                  _stopLossPrice.value.toString(),
-                  decimals: decimals,
-                ),
+      final stopLoss = _stopLossEnabled.value
+          ? PrecisionHelper.formatPrice(
+              PrecisionHelper.parseDouble(
+                _stopLossPrice.value.toString(),
                 decimals: decimals,
-              )
-              : null;
+              ),
+              decimals: decimals,
+            )
+          : null;
 
       // Place the order using TradingController
       final success = await tradingController.placeTradeOrder(
@@ -387,10 +391,9 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
       } else {
         CustomToastService.showError(
           title: 'Error',
-          message:
-              tradingController.errorMessage.isNotEmpty
-                  ? tradingController.errorMessage
-                  : 'Failed to place order',
+          message: tradingController.errorMessage.isNotEmpty
+              ? tradingController.errorMessage
+              : 'Failed to place order',
         );
       }
     } catch (e) {
@@ -431,10 +434,9 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
 
   /// Get the flag SVG path based on the instrument symbol
   String _getFlagPath(String symbol) {
-    String cleanSymbol =
-        symbol.contains('.')
-            ? symbol.substring(0, symbol.lastIndexOf('.'))
-            : symbol;
+    String cleanSymbol = symbol.contains('.')
+        ? symbol.substring(0, symbol.lastIndexOf('.'))
+        : symbol;
     return 'assets/svg/flags/${cleanSymbol.toLowerCase()}.svg';
   }
 
@@ -751,10 +753,9 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
                 key: ValueKey(
                   '${selectedSymbol}|${accountController.activeMT5Account?.metaAccountNumber ?? ''}|${_datafeedSymbolForSelected.isNotEmpty ? _datafeedSymbolForSelected : selectedSymbol}',
                 ), // Force update when symbol/account changes
-                symbol:
-                    _datafeedSymbolForSelected.isNotEmpty
-                        ? _datafeedSymbolForSelected
-                        : _removeSymbolSuffixForDisplay(selectedSymbol),
+                symbol: _datafeedSymbolForSelected.isNotEmpty
+                    ? _datafeedSymbolForSelected
+                    : _removeSymbolSuffixForDisplay(selectedSymbol),
                 url: _buildChartUrlWithDatafeedSymbol(),
               ),
             ),
@@ -839,10 +840,9 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
 
   String _buildChartUrlWithDatafeedSymbol() {
     final displaySymbol = _removeSymbolSuffixForDisplay(selectedSymbol);
-    final effectiveDatafeedSymbol =
-        _datafeedSymbolForSelected.isNotEmpty
-            ? _datafeedSymbolForSelected
-            : displaySymbol;
+    final effectiveDatafeedSymbol = _datafeedSymbolForSelected.isNotEmpty
+        ? _datafeedSymbolForSelected
+        : displaySymbol;
 
     return '${FlavorConfig.instance.chartBaseUrl}/mobile-chart?symbol=$effectiveDatafeedSymbol&theme=${AppColors.chartTheme}';
   }

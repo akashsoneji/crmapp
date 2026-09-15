@@ -3,6 +3,7 @@ import 'package:camera/camera.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../screens/home/more/camera_screen.dart';
 import '../controllers/app_notification_controller.dart';
+import '../services/language_service.dart' show TranslationUtils;
 
 class IdScannerController extends GetxController {
   var frontImagePath = ''.obs;
@@ -47,8 +48,8 @@ class IdScannerController extends GetxController {
         print('Error starting camera: $e');
         if (Get.isRegistered<AppNotificationController>()) {
           Get.find<AppNotificationController>().showError(
-            message: 'Failed to start camera. Please check permissions.',
-            title: 'Error',
+            message: TranslationUtils.tr('id_scanner_camera_start_failed'),
+            title: TranslationUtils.tr('common_error'),
           );
         }
       }
@@ -73,17 +74,19 @@ class IdScannerController extends GetxController {
 
         if (Get.isRegistered<AppNotificationController>()) {
           Get.find<AppNotificationController>().showSuccess(
-            message:
-                '${currentSide.value.capitalizeFirst} side captured successfully!',
-            title: 'Success',
+            message: TranslationUtils.trArgs(
+              'id_scanner_side_captured_successfully',
+              {'side': currentSide.value.capitalizeFirst ?? currentSide.value},
+            ),
+            title: TranslationUtils.tr('common_success'),
           );
         }
       } catch (e) {
         print('Error capturing image: $e');
         if (Get.isRegistered<AppNotificationController>()) {
           Get.find<AppNotificationController>().showError(
-            message: 'Failed to capture image',
-            title: 'Error',
+            message: TranslationUtils.tr('id_scanner_capture_failed'),
+            title: TranslationUtils.tr('common_error'),
           );
         }
       } finally {
@@ -106,8 +109,8 @@ class IdScannerController extends GetxController {
     if (frontImagePath.value.isEmpty) {
       if (Get.isRegistered<AppNotificationController>()) {
         Get.find<AppNotificationController>().showError(
-          message: 'Please capture the front side of your ID',
-          title: 'Missing Image',
+          message: TranslationUtils.tr('id_scanner_capture_front_required'),
+          title: TranslationUtils.tr('id_scanner_missing_image'),
         );
       }
       return;
@@ -116,8 +119,8 @@ class IdScannerController extends GetxController {
     // Handle submission logic here
     if (Get.isRegistered<AppNotificationController>()) {
       Get.find<AppNotificationController>().showSuccess(
-        message: 'ID card submitted successfully!',
-        title: 'Success',
+        message: TranslationUtils.tr('id_scanner_submitted_successfully'),
+        title: TranslationUtils.tr('common_success'),
       );
     }
   }

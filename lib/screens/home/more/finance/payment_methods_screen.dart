@@ -53,7 +53,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
         scrolledUnderElevation: 0,
         backgroundColor: AppColors.background,
         elevation: 0,
-         leading: AppSvgBackButton(
+        leading: AppSvgBackButton(
           onPressed: () => Get.back(closeOverlays: true),
           iconWidth: 30.w,
           iconHeight: 30.h,
@@ -141,7 +141,9 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                     final navigationArguments = {
                       'accountNumber': accountNumberToPass,
                       'paymentMethod': paymentMethod,
-                      if (Get.arguments != null && Get.arguments is Map && Get.arguments['from'] == 'bonus')
+                      if (Get.arguments != null &&
+                          Get.arguments is Map &&
+                          Get.arguments['from'] == 'bonus')
                         'from': 'bonus',
                     };
                     print(
@@ -169,26 +171,33 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                 child: ListTile(
                   leading: ClipRRect(
                     borderRadius: BorderRadius.circular(25),
-                    child:
-                        (iconBytes != null)
-                            ? Image.memory(
-                              iconBytes,
-                              width: 40,
-                              height: 40,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return CircleAvatar(
-                                  child: Text(name.isNotEmpty ? name[0] : "?"),
-                                );
-                              },
-                            )
-                            : CircleAvatar(
-                              child: Text(name.isNotEmpty ? name[0] : "?",style: AppTextStyles.label.copyWith(color: AppColors.whiteColor)),
+                    child: (iconBytes != null)
+                        ? Image.memory(
+                            iconBytes,
+                            width: 40,
+                            height: 40,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return CircleAvatar(
+                                child: Text(name.isNotEmpty ? name[0] : "?"),
+                              );
+                            },
+                          )
+                        : CircleAvatar(
+                            child: Text(
+                              name.isNotEmpty ? name[0] : "?",
+                              style: AppTextStyles.label.copyWith(
+                                color: AppColors.whiteColor,
+                              ),
                             ),
+                          ),
                   ),
-                  title: Text(name,style: AppTextStyles.label),
+                  title: Text(name, style: AppTextStyles.label),
                   // subtitle: Text("Instant up to 1 hour"),
-                  trailing: Icon(Icons.arrow_forward_ios_rounded,color: AppColors.textPrimary),
+                  trailing: Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
               );
             },

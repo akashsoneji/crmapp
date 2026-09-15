@@ -96,7 +96,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
 
         final selectedContest =
             controller.contestById(_selectedContestId) ??
-                controller.contests.first;
+            controller.contests.first;
 
         final entries =
             controller.leaderboards[selectedContest.id] ?? <LeaderboardEntry>[];
@@ -121,10 +121,10 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                       (r) => r == 'Today'
                           ? languageService.tr('dc_range_today')
                           : r == 'Weekly'
-                              ? languageService.tr('dc_range_weekly')
-                              : r == 'Monthly'
-                                  ? languageService.tr('dc_range_monthly')
-                                  : languageService.tr('dc_range_all_time'),
+                          ? languageService.tr('dc_range_weekly')
+                          : r == 'Monthly'
+                          ? languageService.tr('dc_range_monthly')
+                          : languageService.tr('dc_range_all_time'),
                     )
                     .toList(),
                 selectedIndex: _selectedRange,
@@ -144,7 +144,8 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                   isLoading: controller.isLoadingLeaderboard.value,
                   entries: entries,
                   myEntry: myEntry,
-                  hasContest: selectedContest.acceptingEntries ||
+                  hasContest:
+                      selectedContest.acceptingEntries ||
                       selectedContest.isLive,
                 ),
               ),
@@ -206,7 +207,9 @@ class _ContestPicker extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 12.sp,
                       fontWeight: FontWeight.w700,
-                      color: selected ? AppColors.primary : AppColors.textPrimary,
+                      color: selected
+                          ? AppColors.primary
+                          : AppColors.textPrimary,
                     ),
                   ),
                 ],
@@ -306,9 +309,7 @@ class _LeaderboardBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (isLoading && entries.isEmpty) {
-      return Center(
-        child: CircularProgressIndicator(color: AppColors.primary),
-      );
+      return Center(child: CircularProgressIndicator(color: AppColors.primary));
     }
     if (entries.isEmpty) {
       return _EmptyLeaderboard();
@@ -376,10 +377,7 @@ class _LeaderboardBody extends StatelessWidget {
                   ),
                 ),
               ...rest.map(
-                (e) => LeaderboardRow(
-                  entry: e,
-                  highlightRank: myEntry?.rank,
-                ),
+                (e) => LeaderboardRow(entry: e, highlightRank: myEntry?.rank),
               ),
             ],
           ),

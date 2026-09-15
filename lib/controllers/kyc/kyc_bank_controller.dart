@@ -14,6 +14,7 @@ import 'package:crm_app/services/secure_storage_service.dart';
 import 'package:crm_app/models/currency_list_model.dart';
 import 'package:crm_app/screens/home/kyc/kyc_bank_camera_screen.dart';
 import 'package:crm_app/controllers/app_notification_controller.dart';
+import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/controllers/finance/withdrawal_controller.dart'
     show WithdrawalMethod, WithdrawalMethodResponse;
 
@@ -30,8 +31,7 @@ class KycBankController extends GetxController {
   final RxString selectedRelationship = 'Self'.obs;
   final RxList<String> accountTypes = <String>[].obs;
   final RxList<WithdrawalMethod> withdrawalMethods = <WithdrawalMethod>[].obs;
-  final RxList<String> relationShips =
-      ['Self', 'Other'].obs;
+  final RxList<String> relationShips = ['Self', 'Other'].obs;
   final RxList<String> ifscIbanList = ['IFSC', 'IBAN'].obs;
 
   // Currency list
@@ -189,7 +189,7 @@ class KycBankController extends GetxController {
                 .where((name) => name.isNotEmpty)
                 .toList(),
           );
-// Prefer 'crypto' as the default selected withdrawal method when available.
+          // Prefer 'crypto' as the default selected withdrawal method when available.
           if (selectedAccountType.value.isEmpty ||
               !accountTypes.contains(selectedAccountType.value)) {
             final cryptoIndex = accountTypes.indexWhere(
@@ -206,10 +206,9 @@ class KycBankController extends GetxController {
             '✅ Loaded ${accountTypes.length} withdrawal methods for account type',
           );
         } else {
-          errorMessage.value =
-              withdrawalMethodResponse.message.isNotEmpty
-                  ? withdrawalMethodResponse.message
-                  : 'Failed to fetch withdrawal methods';
+          errorMessage.value = withdrawalMethodResponse.message.isNotEmpty
+              ? withdrawalMethodResponse.message
+              : 'Failed to fetch withdrawal methods';
         }
       } else {
         errorMessage.value =
@@ -385,7 +384,7 @@ class KycBankController extends GetxController {
       // Use AppNotificationController for consistent notifications
       if (Get.isRegistered<AppNotificationController>()) {
         Get.find<AppNotificationController>().showError(
-          message: 'Error sending OTP: $e',
+          message: '${TranslationUtils.tr('kyc_otp_error')}: $e',
         );
       }
     } finally {
@@ -438,7 +437,7 @@ class KycBankController extends GetxController {
                 response.message ?? 'Withdrawal request submitted successfully',
           );
         }
-// Prefer 'crypto' as the default selected withdrawal method when available.
+        // Prefer 'crypto' as the default selected withdrawal method when available.
         // Reset form
         clearFormFields();
         if (accountTypes.isNotEmpty) {
@@ -803,7 +802,7 @@ class KycBankController extends GetxController {
     onNavigationCallback = callback;
   }
 
-// Prefer 'crypto' as the default selected withdrawal method when available.
+  // Prefer 'crypto' as the default selected withdrawal method when available.
   // Clear all data
   void clearAllData() {
     clearFormFields();

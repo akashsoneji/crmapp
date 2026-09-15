@@ -213,15 +213,15 @@ class BonusController extends GetxController {
         if (rawData != null) {
           // Parse deposits
           final List<dynamic> depList = rawData['newDepositRequests'] ?? [];
-          deposits.value =
-              depList.map((d) => DepositRequestModel.fromJson(d)).toList();
+          deposits.value = depList
+              .map((d) => DepositRequestModel.fromJson(d))
+              .toList();
 
           // Parse active bonuses
           final List<dynamic> bonusList = rawData['bonus'] ?? [];
-          activeBonuses.value =
-              bonusList
-                  .map((b) => EligibleBonus.fromJson(b as Map<String, dynamic>))
-                  .toList();
+          activeBonuses.value = bonusList
+              .map((b) => EligibleBonus.fromJson(b as Map<String, dynamic>))
+              .toList();
 
           // Parse eligible bonuses mapping safely
           final rawEligible = rawData['eligibleBonusesByDepositId'];
@@ -229,13 +229,11 @@ class BonusController extends GetxController {
           if (rawEligible != null && rawEligible is Map) {
             rawEligible.forEach((key, val) {
               if (val is List) {
-                parsedEligible[key.toString()] =
-                    val
-                        .map(
-                          (b) =>
-                              EligibleBonus.fromJson(b as Map<String, dynamic>),
-                        )
-                        .toList();
+                parsedEligible[key.toString()] = val
+                    .map(
+                      (b) => EligibleBonus.fromJson(b as Map<String, dynamic>),
+                    )
+                    .toList();
               }
             });
           }
@@ -306,8 +304,9 @@ class BonusController extends GetxController {
               claimTotal.value = (pagination['total'] as num?)?.toInt() ?? 0;
             }
           }
-          final parsedClaims =
-              rawClaims.map((c) => BonusClaim.fromJson(c)).toList();
+          final parsedClaims = rawClaims
+              .map((c) => BonusClaim.fromJson(c))
+              .toList();
 
           if (loadMore) {
             claims.addAll(parsedClaims);
@@ -487,12 +486,11 @@ class BonusScreen extends StatelessWidget {
             // Active: brand-tinted surface (light) / elevated surface (dark).
             // Inactive: transparent. No white pill, no shadows — so it never
             // reads as a Cupertino segmented control.
-            color:
-                isActive
-                    ? (isDark
-                        ? const Color(0xFF2C2C2E)
-                        : AppColors.primary.withValues(alpha: 0.08))
-                    : Colors.transparent,
+            color: isActive
+                ? (isDark
+                      ? const Color(0xFF2C2C2E)
+                      : AppColors.primary.withValues(alpha: 0.08))
+                : Colors.transparent,
             borderRadius: BorderRadius.circular(10.r),
           ),
           child: Column(
@@ -501,12 +499,11 @@ class BonusScreen extends StatelessWidget {
               Icon(
                 icon,
                 size: 20.h,
-                color:
-                    isActive
-                        ? AppColors.primary
-                        : (isDark
-                            ? const Color(0xFF9A9AA0)
-                            : AppColors.textSecondary),
+                color: isActive
+                    ? AppColors.primary
+                    : (isDark
+                          ? const Color(0xFF9A9AA0)
+                          : AppColors.textSecondary),
               ),
               SizedBox(height: 6.h),
               Text(
@@ -514,12 +511,11 @@ class BonusScreen extends StatelessWidget {
                 style: AppTextStyles.bodyText.copyWith(
                   fontSize: 13.sp,
                   fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
-                  color:
-                      isActive
-                          ? AppColors.textPrimary
-                          : (isDark
-                              ? const Color(0xFF8E8E93)
-                              : AppColors.textSecondary),
+                  color: isActive
+                      ? AppColors.textPrimary
+                      : (isDark
+                            ? const Color(0xFF8E8E93)
+                            : AppColors.textSecondary),
                 ),
               ),
               SizedBox(height: 6.h),
@@ -560,12 +556,11 @@ class BonusScreen extends StatelessWidget {
         }
 
         // Only display deposits that actually have eligible bonuses
-        final validDeposits =
-            controller.deposits.where((dep) {
-              final key = dep.id.toString();
-              final eligible = controller.eligibleBonusesByDepositId[key];
-              return eligible != null && eligible.isNotEmpty;
-            }).toList();
+        final validDeposits = controller.deposits.where((dep) {
+          final key = dep.id.toString();
+          final eligible = controller.eligibleBonusesByDepositId[key];
+          return eligible != null && eligible.isNotEmpty;
+        }).toList();
 
         if (validDeposits.isEmpty && controller.activeBonuses.isEmpty) {
           return ListView(
@@ -656,10 +651,9 @@ class BonusScreen extends StatelessWidget {
                         color: AppColors.card,
                         borderRadius: BorderRadius.circular(12.r),
                         border: Border.all(
-                          color:
-                              isExpanded
-                                  ? AppColors.primary.withOpacity(0.3)
-                                  : AppColors.border,
+                          color: isExpanded
+                              ? AppColors.primary.withOpacity(0.3)
+                              : AppColors.border,
                           width: 1,
                         ),
                       ),
@@ -668,8 +662,8 @@ class BonusScreen extends StatelessWidget {
                           // Deposit Request Info Bar
                           InkWell(
                             borderRadius: BorderRadius.circular(12.r),
-                            onTap:
-                                () => controller.toggleDepositExpanded(dep.id),
+                            onTap: () =>
+                                controller.toggleDepositExpanded(dep.id),
                             child: Padding(
                               padding: EdgeInsets.symmetric(
                                 horizontal: 16.w,
@@ -775,248 +769,224 @@ class BonusScreen extends StatelessWidget {
                             Padding(
                               padding: EdgeInsets.all(12.w),
                               child: Column(
-                                children:
-                                    eligibleList.map((bonus) {
-                                      return Container(
-                                        margin: EdgeInsets.only(bottom: 8.h),
-                                        padding: EdgeInsets.all(14.w),
-                                        decoration: BoxDecoration(
-                                          color:
-                                              AppColors.isDarkMode
-                                                  ? const Color(0xFF2C2C2E)
-                                                  : const Color(0xFFFAF9FF),
-                                          borderRadius: BorderRadius.circular(
-                                            10.r,
-                                          ),
-                                          border: Border.all(
-                                            color: AppColors.primary
-                                                .withOpacity(0.1),
-                                            width: 1,
-                                          ),
+                                children: eligibleList.map((bonus) {
+                                  return Container(
+                                    margin: EdgeInsets.only(bottom: 8.h),
+                                    padding: EdgeInsets.all(14.w),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.isDarkMode
+                                          ? const Color(0xFF2C2C2E)
+                                          : const Color(0xFFFAF9FF),
+                                      borderRadius: BorderRadius.circular(10.r),
+                                      border: Border.all(
+                                        color: AppColors.primary.withOpacity(
+                                          0.1,
                                         ),
-                                        child: Column(
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
                                           crossAxisAlignment:
                                               CrossAxisAlignment.start,
                                           children: [
-                                            Row(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Expanded(
-                                                  child: Column(
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment
-                                                            .start,
-                                                    children: [
-                                                      Text(
-                                                        '${bonus.bonusPercentage}%',
-                                                        style: AppTextStyles
-                                                            .bodyText
-                                                            .copyWith(
-                                                              fontSize: 26.sp,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .bold,
-                                                              color:
-                                                                  const Color(
-                                                                    0xFF10B981,
-                                                                  ),
-                                                              height: 1.1,
-                                                            ),
-                                                      ),
-                                                      SizedBox(height: 2.h),
-                                                      Text(
-                                                        '${bonus.bonusType.capitalizeFirst} Bonus',
-                                                        style: AppTextStyles
-                                                            .bodyText
-                                                            .copyWith(
-                                                              fontSize: 14.sp,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w600,
-                                                              color:
-                                                                  AppColors
-                                                                      .textPrimary,
-                                                            ),
-                                                      ),
-                                                      SizedBox(height: 2.h),
-                                                      Text(
-                                                        'Deposit Bonus available.',
-                                                        style: AppTextStyles
-                                                            .bodyText
-                                                            .copyWith(
-                                                              fontSize: 12.sp,
-                                                              color:
-                                                                  AppColors
-                                                                      .textSecondary,
-                                                            ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                                // Tag Chip
-                                                Container(
-                                                  padding: EdgeInsets.symmetric(
-                                                    horizontal: 8.w,
-                                                    vertical: 4.h,
-                                                  ),
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.grey
-                                                        .withOpacity(0.12),
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          4.r,
-                                                        ),
-                                                  ),
-                                                  child: Text(
-                                                    'REQUEST',
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    '${bonus.bonusPercentage}%',
                                                     style: AppTextStyles
                                                         .bodyText
                                                         .copyWith(
-                                                          fontSize: 10.sp,
+                                                          fontSize: 26.sp,
                                                           fontWeight:
-                                                              FontWeight.w600,
-                                                          color:
-                                                              AppColors
-                                                                  .textSecondary,
-                                                          letterSpacing: 0.5,
+                                                              FontWeight.bold,
+                                                          color: const Color(
+                                                            0xFF10B981,
+                                                          ),
+                                                          height: 1.1,
                                                         ),
                                                   ),
-                                                ),
-                                              ],
-                                            ),
-                                            SizedBox(height: 12.h),
-                                            // Allowed groups
-                                            Text(
-                                              'ALLOWED GROUPS',
-                                              style: AppTextStyles.bodyText
-                                                  .copyWith(
-                                                    fontSize: 10.sp,
-                                                    fontWeight: FontWeight.w600,
-                                                    color:
-                                                        AppColors.textSecondary,
-                                                    letterSpacing: 0.5,
+                                                  SizedBox(height: 2.h),
+                                                  Text(
+                                                    '${bonus.bonusType.capitalizeFirst} Bonus',
+                                                    style: AppTextStyles
+                                                        .bodyText
+                                                        .copyWith(
+                                                          fontSize: 14.sp,
+                                                          fontWeight:
+                                                              FontWeight.w600,
+                                                          color: AppColors
+                                                              .textPrimary,
+                                                        ),
                                                   ),
+                                                  SizedBox(height: 2.h),
+                                                  Text(
+                                                    'Deposit Bonus available.',
+                                                    style: AppTextStyles
+                                                        .bodyText
+                                                        .copyWith(
+                                                          fontSize: 12.sp,
+                                                          color: AppColors
+                                                              .textSecondary,
+                                                        ),
+                                                  ),
+                                                ],
+                                              ),
                                             ),
-                                            SizedBox(height: 4.h),
+                                            // Tag Chip
                                             Container(
                                               padding: EdgeInsets.symmetric(
                                                 horizontal: 8.w,
                                                 vertical: 4.h,
                                               ),
                                               decoration: BoxDecoration(
-                                                color: const Color(0xFFE2F9F0),
+                                                color: Colors.grey.withOpacity(
+                                                  0.12,
+                                                ),
                                                 borderRadius:
                                                     BorderRadius.circular(4.r),
                                               ),
                                               child: Text(
-                                                'All Groups',
+                                                'REQUEST',
                                                 style: AppTextStyles.bodyText
                                                     .copyWith(
-                                                      fontSize: 11.sp,
+                                                      fontSize: 10.sp,
                                                       fontWeight:
                                                           FontWeight.w600,
-                                                      color: const Color(
-                                                        0xFF10B981,
-                                                      ),
+                                                      color: AppColors
+                                                          .textSecondary,
+                                                      letterSpacing: 0.5,
                                                     ),
-                                              ),
-                                            ),
-                                            SizedBox(height: 14.h),
-                                            Divider(
-                                              height: 1,
-                                              color: AppColors.border,
-                                            ),
-                                            SizedBox(height: 12.h),
-                                            // Details grid
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                _buildDetailItem(
-                                                  label: 'MAX CAP',
-                                                  value:
-                                                      bonus.maxDepositCap !=
-                                                                  null &&
-                                                              bonus
-                                                                  .maxDepositCap
-                                                                  .toString()
-                                                                  .isNotEmpty
-                                                          ? '\$${bonus.maxDepositCap}'
-                                                          : 'None',
-                                                ),
-                                                _buildDetailItem(
-                                                  label: 'MIN DEP',
-                                                  value:
-                                                      bonus.minDepositAmount !=
-                                                                  null &&
-                                                              bonus
-                                                                  .minDepositAmount
-                                                                  .toString()
-                                                                  .isNotEmpty
-                                                          ? '\$${bonus.minDepositAmount}'
-                                                          : 'Any',
-                                                ),
-                                                _buildDetailItem(
-                                                  label: 'DURATION',
-                                                  value:
-                                                      bonus.maxBonusDurationDays !=
-                                                                  null &&
-                                                              bonus
-                                                                  .maxBonusDurationDays
-                                                                  .toString()
-                                                                  .isNotEmpty
-                                                          ? '${bonus.maxBonusDurationDays} days'
-                                                          : '∞',
-                                                ),
-                                              ],
-                                            ),
-                                            SizedBox(height: 16.h),
-                                            // Claim Reward Button
-                                            SizedBox(
-                                              width: double.infinity,
-                                              height: 44.h,
-                                              child: ElevatedButton(
-                                                onPressed:
-                                                    () =>
-                                                        _showClaimConfirmationDialog(
-                                                          context: context,
-                                                          controller:
-                                                              controller,
-                                                          bonus: bonus,
-                                                          deposit: dep,
-                                                        ),
-                                                style: ElevatedButton.styleFrom(
-                                                  backgroundColor:
-                                                      AppColors.primary,
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          8.r,
-                                                        ),
-                                                  ),
-                                                  elevation: 0,
-                                                ),
-                                                child: Text(
-                                                  'Claim Reward',
-                                                  style: AppTextStyles.bodyText
-                                                      .copyWith(
-                                                        fontSize: 14.sp,
-                                                        fontWeight:
-                                                            FontWeight.w600,
-                                                        color:
-                                                            AppColors.isDarkMode
-                                                                ? Colors.black
-                                                                : Colors.white,
-                                                      ),
-                                                ),
                                               ),
                                             ),
                                           ],
                                         ),
-                                      );
-                                    }).toList(),
+                                        SizedBox(height: 12.h),
+                                        // Allowed groups
+                                        Text(
+                                          'ALLOWED GROUPS',
+                                          style: AppTextStyles.bodyText
+                                              .copyWith(
+                                                fontSize: 10.sp,
+                                                fontWeight: FontWeight.w600,
+                                                color: AppColors.textSecondary,
+                                                letterSpacing: 0.5,
+                                              ),
+                                        ),
+                                        SizedBox(height: 4.h),
+                                        Container(
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: 8.w,
+                                            vertical: 4.h,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFE2F9F0),
+                                            borderRadius: BorderRadius.circular(
+                                              4.r,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            'All Groups',
+                                            style: AppTextStyles.bodyText
+                                                .copyWith(
+                                                  fontSize: 11.sp,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: const Color(
+                                                    0xFF10B981,
+                                                  ),
+                                                ),
+                                          ),
+                                        ),
+                                        SizedBox(height: 14.h),
+                                        Divider(
+                                          height: 1,
+                                          color: AppColors.border,
+                                        ),
+                                        SizedBox(height: 12.h),
+                                        // Details grid
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            _buildDetailItem(
+                                              label: 'MAX CAP',
+                                              value:
+                                                  bonus.maxDepositCap != null &&
+                                                      bonus.maxDepositCap
+                                                          .toString()
+                                                          .isNotEmpty
+                                                  ? '\$${bonus.maxDepositCap}'
+                                                  : 'None',
+                                            ),
+                                            _buildDetailItem(
+                                              label: 'MIN DEP',
+                                              value:
+                                                  bonus.minDepositAmount !=
+                                                          null &&
+                                                      bonus.minDepositAmount
+                                                          .toString()
+                                                          .isNotEmpty
+                                                  ? '\$${bonus.minDepositAmount}'
+                                                  : 'Any',
+                                            ),
+                                            _buildDetailItem(
+                                              label: 'DURATION',
+                                              value:
+                                                  bonus.maxBonusDurationDays !=
+                                                          null &&
+                                                      bonus.maxBonusDurationDays
+                                                          .toString()
+                                                          .isNotEmpty
+                                                  ? '${bonus.maxBonusDurationDays} days'
+                                                  : '∞',
+                                            ),
+                                          ],
+                                        ),
+                                        SizedBox(height: 16.h),
+                                        // Claim Reward Button
+                                        SizedBox(
+                                          width: double.infinity,
+                                          height: 44.h,
+                                          child: ElevatedButton(
+                                            onPressed: () =>
+                                                _showClaimConfirmationDialog(
+                                                  context: context,
+                                                  controller: controller,
+                                                  bonus: bonus,
+                                                  deposit: dep,
+                                                ),
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor:
+                                                  AppColors.primary,
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(8.r),
+                                              ),
+                                              elevation: 0,
+                                            ),
+                                            child: Text(
+                                              'Claim Reward',
+                                              style: AppTextStyles.bodyText
+                                                  .copyWith(
+                                                    fontSize: 14.sp,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: AppColors.isDarkMode
+                                                        ? Colors.black
+                                                        : Colors.white,
+                                                  ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }).toList(),
                               ),
                             ),
                           ],
@@ -1142,25 +1112,25 @@ class BonusScreen extends StatelessWidget {
                 label: 'MAX CAP',
                 value:
                     bonus.maxDepositCap != null &&
-                            bonus.maxDepositCap.toString().isNotEmpty
-                        ? '\$${bonus.maxDepositCap}'
-                        : 'None',
+                        bonus.maxDepositCap.toString().isNotEmpty
+                    ? '\$${bonus.maxDepositCap}'
+                    : 'None',
               ),
               _buildDetailItem(
                 label: 'MIN DEP',
                 value:
                     bonus.minDepositAmount != null &&
-                            bonus.minDepositAmount.toString().isNotEmpty
-                        ? '\$${bonus.minDepositAmount}'
-                        : 'Any',
+                        bonus.minDepositAmount.toString().isNotEmpty
+                    ? '\$${bonus.minDepositAmount}'
+                    : 'Any',
               ),
               _buildDetailItem(
                 label: 'DURATION',
                 value:
                     bonus.maxBonusDurationDays != null &&
-                            bonus.maxBonusDurationDays.toString().isNotEmpty
-                        ? '${bonus.maxBonusDurationDays} days'
-                        : '∞',
+                        bonus.maxBonusDurationDays.toString().isNotEmpty
+                    ? '${bonus.maxBonusDurationDays} days'
+                    : '∞',
               ),
             ],
           ),
@@ -1318,16 +1288,15 @@ class BonusScreen extends StatelessWidget {
                     color: AppColors.border.withOpacity(0.4),
                     width: 1,
                   ),
-                  boxShadow:
-                      !AppColors.isDarkMode
-                          ? [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.03),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
-                            ),
-                          ]
-                          : null,
+                  boxShadow: !AppColors.isDarkMode
+                      ? [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.03),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ]
+                      : null,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1436,10 +1405,9 @@ class BonusScreen extends StatelessWidget {
                         child: LinearProgressIndicator(
                           value: progressPercent,
                           minHeight: 6.h,
-                          backgroundColor:
-                              AppColors.isDarkMode
-                                  ? const Color(0xFF2C2C2E)
-                                  : const Color(0xFFF2F2F7),
+                          backgroundColor: AppColors.isDarkMode
+                              ? const Color(0xFF2C2C2E)
+                              : const Color(0xFFF2F2F7),
                           valueColor: AlwaysStoppedAnimation<Color>(
                             progressPercent >= 1.0
                                 ? const Color(0xFF10B981)
@@ -1466,11 +1434,11 @@ class BonusScreen extends StatelessWidget {
                                 size: 12.h,
                                 color:
                                     claim.remainingDays.isEmpty ||
-                                            claim.remainingDays
-                                                .toLowerCase()
-                                                .contains('expired')
-                                        ? const Color(0xFFEF4444)
-                                        : AppColors.textSecondary,
+                                        claim.remainingDays
+                                            .toLowerCase()
+                                            .contains('expired')
+                                    ? const Color(0xFFEF4444)
+                                    : AppColors.textSecondary,
                               ),
                               SizedBox(width: 4.w),
                               Text(
@@ -1485,11 +1453,11 @@ class BonusScreen extends StatelessWidget {
                                   fontWeight: FontWeight.w700,
                                   color:
                                       claim.remainingDays.isEmpty ||
-                                              claim.remainingDays
-                                                  .toLowerCase()
-                                                  .contains('expired')
-                                          ? const Color(0xFFEF4444)
-                                          : AppColors.textPrimary,
+                                          claim.remainingDays
+                                              .toLowerCase()
+                                              .contains('expired')
+                                      ? const Color(0xFFEF4444)
+                                      : AppColors.textPrimary,
                                 ),
                               ),
                             ],
@@ -1515,11 +1483,11 @@ class BonusScreen extends StatelessWidget {
                                 size: 12.h,
                                 color:
                                     claim.remainingDays.isEmpty ||
-                                            claim.remainingDays
-                                                .toLowerCase()
-                                                .contains('expired')
-                                        ? const Color(0xFFEF4444)
-                                        : AppColors.textSecondary,
+                                        claim.remainingDays
+                                            .toLowerCase()
+                                            .contains('expired')
+                                    ? const Color(0xFFEF4444)
+                                    : AppColors.textSecondary,
                               ),
                               SizedBox(width: 4.w),
                               Text(
@@ -1534,11 +1502,11 @@ class BonusScreen extends StatelessWidget {
                                   fontWeight: FontWeight.w700,
                                   color:
                                       claim.remainingDays.isEmpty ||
-                                              claim.remainingDays
-                                                  .toLowerCase()
-                                                  .contains('expired')
-                                          ? const Color(0xFFEF4444)
-                                          : AppColors.textPrimary,
+                                          claim.remainingDays
+                                              .toLowerCase()
+                                              .contains('expired')
+                                      ? const Color(0xFFEF4444)
+                                      : AppColors.textPrimary,
                                 ),
                               ),
                             ],
@@ -1735,8 +1703,9 @@ class BonusScreen extends StatelessWidget {
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
-                foregroundColor:
-                    AppColors.isDarkMode ? Colors.black : Colors.white,
+                foregroundColor: AppColors.isDarkMode
+                    ? Colors.black
+                    : Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12.r),
@@ -1871,9 +1840,9 @@ class BonusScreen extends StatelessWidget {
                           label: 'MAX CAP',
                           value:
                               bonus.maxDepositCap != null &&
-                                      bonus.maxDepositCap.toString().isNotEmpty
-                                  ? '\$${bonus.maxDepositCap}'
-                                  : 'Unlimited',
+                                  bonus.maxDepositCap.toString().isNotEmpty
+                              ? '\$${bonus.maxDepositCap}'
+                              : 'Unlimited',
                         ),
                       ),
                       SizedBox(width: 8.w),
@@ -1882,11 +1851,11 @@ class BonusScreen extends StatelessWidget {
                           label: 'DURATION',
                           value:
                               bonus.maxBonusDurationDays != null &&
-                                      bonus.maxBonusDurationDays
-                                          .toString()
-                                          .isNotEmpty
-                                  ? '${bonus.maxBonusDurationDays} days'
-                                  : 'Unlimited',
+                                  bonus.maxBonusDurationDays
+                                      .toString()
+                                      .isNotEmpty
+                              ? '${bonus.maxBonusDurationDays} days'
+                              : 'Unlimited',
                         ),
                       ),
                       SizedBox(width: 8.w),
@@ -1895,11 +1864,9 @@ class BonusScreen extends StatelessWidget {
                           label: 'MIN DEPOSIT',
                           value:
                               bonus.minDepositAmount != null &&
-                                      bonus.minDepositAmount
-                                          .toString()
-                                          .isNotEmpty
-                                  ? '\$${bonus.minDepositAmount}'
-                                  : 'Any',
+                                  bonus.minDepositAmount.toString().isNotEmpty
+                              ? '\$${bonus.minDepositAmount}'
+                              : 'Any',
                         ),
                       ),
                     ],
@@ -1921,10 +1888,9 @@ class BonusScreen extends StatelessWidget {
                     width: double.infinity,
                     padding: EdgeInsets.all(12.w),
                     decoration: BoxDecoration(
-                      color:
-                          AppColors.isDarkMode
-                              ? const Color(0xFF2C2C2E)
-                              : const Color(0xFFF9F9FB),
+                      color: AppColors.isDarkMode
+                          ? const Color(0xFF2C2C2E)
+                          : const Color(0xFFF9F9FB),
                       borderRadius: BorderRadius.circular(8.r),
                       border: Border.all(color: AppColors.border),
                     ),
@@ -1958,14 +1924,14 @@ class BonusScreen extends StatelessWidget {
                           child: SizedBox(
                             height: 44.h,
                             child: OutlinedButton(
-                              onPressed:
-                                  claimLoading.value ? null : () => Get.back(),
+                              onPressed: claimLoading.value
+                                  ? null
+                                  : () => Get.back(),
                               style: OutlinedButton.styleFrom(
                                 side: BorderSide(
-                                  color:
-                                      AppColors.isDarkMode
-                                          ? AppColors.border
-                                          : Colors.grey.shade300,
+                                  color: AppColors.isDarkMode
+                                      ? AppColors.border
+                                      : Colors.grey.shade300,
                                 ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8.r),
@@ -1991,24 +1957,22 @@ class BonusScreen extends StatelessWidget {
                           child: SizedBox(
                             height: 44.h,
                             child: ElevatedButton(
-                              onPressed:
-                                  claimLoading.value
-                                      ? null
-                                      : () async {
-                                        claimLoading.value = true;
-                                        final success = await controller
-                                            .claimBonusSubmit(
-                                              bonusId: bonus.id,
-                                              depositId: deposit.id,
-                                              percentage: bonus.bonusPercentage,
-                                              targetAccount:
-                                                  deposit.mt5AccountId,
-                                            );
-                                        claimLoading.value = false;
-                                        if (success) {
-                                          Get.back();
-                                        }
-                                      },
+                              onPressed: claimLoading.value
+                                  ? null
+                                  : () async {
+                                      claimLoading.value = true;
+                                      final success = await controller
+                                          .claimBonusSubmit(
+                                            bonusId: bonus.id,
+                                            depositId: deposit.id,
+                                            percentage: bonus.bonusPercentage,
+                                            targetAccount: deposit.mt5AccountId,
+                                          );
+                                      claimLoading.value = false;
+                                      if (success) {
+                                        Get.back();
+                                      }
+                                    },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.primary,
                                 disabledBackgroundColor: AppColors.border,
@@ -2017,37 +1981,34 @@ class BonusScreen extends StatelessWidget {
                                 ),
                                 elevation: 0,
                               ),
-                              child:
-                                  claimLoading.value
-                                      ? SizedBox(
-                                        width: 20.w,
-                                        height: 20.h,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          valueColor:
-                                              AlwaysStoppedAnimation<Color>(
-                                                AppColors.isDarkMode
-                                                    ? Colors.black
-                                                    : Colors.white,
-                                              ),
-                                        ),
-                                      )
-                                      : FittedBox(
-                                        fit: BoxFit.scaleDown,
-                                        child: Text(
-                                          'Confirm & Claim',
-                                          maxLines: 1,
-                                          style: AppTextStyles.bodyText
-                                              .copyWith(
-                                                fontSize: 14.sp,
-                                                fontWeight: FontWeight.w600,
-                                                color:
-                                                    AppColors.isDarkMode
-                                                        ? Colors.black
-                                                        : Colors.white,
-                                              ),
+                              child: claimLoading.value
+                                  ? SizedBox(
+                                      width: 20.w,
+                                      height: 20.h,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                              AppColors.isDarkMode
+                                                  ? Colors.black
+                                                  : Colors.white,
+                                            ),
+                                      ),
+                                    )
+                                  : FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      child: Text(
+                                        'Confirm & Claim',
+                                        maxLines: 1,
+                                        style: AppTextStyles.bodyText.copyWith(
+                                          fontSize: 14.sp,
+                                          fontWeight: FontWeight.w600,
+                                          color: AppColors.isDarkMode
+                                              ? Colors.black
+                                              : Colors.white,
                                         ),
                                       ),
+                                    ),
                             ),
                           ),
                         ),
@@ -2081,10 +2042,9 @@ class BonusScreen extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 4.w),
       decoration: BoxDecoration(
-        color:
-            AppColors.isDarkMode
-                ? const Color(0xFF2C2C2E)
-                : const Color(0xFFF9F9FB),
+        color: AppColors.isDarkMode
+            ? const Color(0xFF2C2C2E)
+            : const Color(0xFFF9F9FB),
         borderRadius: BorderRadius.circular(8.r),
         border: Border.all(color: AppColors.border),
       ),

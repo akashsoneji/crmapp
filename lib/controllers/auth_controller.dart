@@ -15,6 +15,7 @@ import 'dart:convert';
 import 'dashboard_controller.dart';
 import 'account_controller.dart';
 import 'package:crm_app/services/api_service.dart';
+import 'package:crm_app/services/language_service.dart';
 import 'trading_controller.dart';
 import 'package:crm_app/services/trading_websocket_service.dart';
 import 'package:crm_app/services/websocket_endpoint_helper.dart';
@@ -212,10 +213,9 @@ class AuthController extends GetxController {
         print('   response.message: ${response.message}');
         print('   response.data: ${response.data}');
 
-        final errorMessage =
-            response.message?.isNotEmpty == true
-                ? response.message!
-                : 'Login failed. Please check your credentials and try again.';
+        final errorMessage = response.message?.isNotEmpty == true
+            ? response.message!
+            : 'Login failed. Please check your credentials and try again.';
 
         print('   Setting error message: $errorMessage');
         _setError(errorMessage);
@@ -243,10 +243,9 @@ class AuthController extends GetxController {
       if (response.success && response.data != null) {
         await _completeLogin(response.data!, email: email);
       } else {
-        final errorMessage =
-            response.message?.isNotEmpty == true
-                ? response.message!
-                : 'OTP verification failed. Please try again.';
+        final errorMessage = response.message?.isNotEmpty == true
+            ? response.message!
+            : 'OTP verification failed. Please try again.';
         _setError(errorMessage);
       }
     } catch (e) {
@@ -279,232 +278,216 @@ class AuthController extends GetxController {
     required String email,
     bool enableBiometricAfterLogin = false,
   }) async {
-        // Save login data to secure storage
-        final loginData = {
-          'token': response.data.token,
-          'websocket_token': response.data.websocketToken,
-          'user': response.data.user.toJson(),
-          'is_logged_in': true,
-        };
+    // Save login data to secure storage
+    final loginData = {
+      'token': response.data.token,
+      'websocket_token': response.data.websocketToken,
+      'user': response.data.user.toJson(),
+      'is_logged_in': true,
+    };
 
-        // Save tokens and update state in parallel
-        await Future.wait([
-          SecureStorageService.saveUserData(jsonEncode(loginData)),
-          SecureStorageService.saveAuthToken(response.data.token),
-          SecureStorageService.saveWebsocketToken(response.data.websocketToken),
-          SecureStorageService.saveLoginStatus(true),
-        ]);
+    // Save tokens and update state in parallel
+    await Future.wait([
+      SecureStorageService.saveUserData(jsonEncode(loginData)),
+      SecureStorageService.saveAuthToken(response.data.token),
+      SecureStorageService.saveWebsocketToken(response.data.websocketToken),
+      SecureStorageService.saveLoginStatus(true),
+    ]);
 
-        _loginResponse.value = response;
-        _userData.value = response.data.user;
+    _loginResponse.value = response;
+    _userData.value = response.data.user;
 
-        // Apply staged Tenax broker branding (if any) BEFORE the controller
-        // re-init / persistTenaxUserBrokerProfile so the new (email, broker)
-        // record picks up the right broker.
-        try {
-          await _commitPendingBrokerIfAny();
-        } catch (e) {
-          print('AuthController: commitPendingBroker failed: $e');
-        }
+    // Apply staged Tenax broker branding (if any) BEFORE the controller
+    // re-init / persistTenaxUserBrokerProfile so the new (email, broker)
+    // record picks up the right broker.
+    try {
+      await _commitPendingBrokerIfAny();
+    } catch (e) {
+      print('AuthController: commitPendingBroker failed: $e');
+    }
 
-        if (enableBiometricAfterLogin) {
-          try {
-            // Only enable if device supports + enrolled and user confirms.
-            final supported = await BiometricService.instance.isDeviceSupported();
-            final enrolled = await BiometricService.instance.isEnrolled();
-            if (supported && enrolled) {
-              final ok = await BiometricService.instance.authenticate(
-                reason: 'Confirm biometric to enable login.',
-              );
-              if (ok) {
-                try {
-                  if (Get.isRegistered<AppLockService>()) {
-                    Get.find<AppLockService>().markJustAuthenticated();
-                  }
-                } catch (_) {}
-                await SecureStorageService.setBiometricEnabled(
-                  true,
-                  userIdentifier: email.trim().toLowerCase(),
-                );
+    if (enableBiometricAfterLogin) {
+      try {
+        // Only enable if device supports + enrolled and user confirms.
+        final supported = await BiometricService.instance.isDeviceSupported();
+        final enrolled = await BiometricService.instance.isEnrolled();
+        if (supported && enrolled) {
+          final ok = await BiometricService.instance.authenticate(
+            reason: 'Confirm biometric to enable login.',
+          );
+          if (ok) {
+            try {
+              if (Get.isRegistered<AppLockService>()) {
+                Get.find<AppLockService>().markJustAuthenticated();
               }
-            }
-          } catch (e) {
-            // Keep login flow safe even if biometrics fail.
-            print('AuthController: Failed to enable biometrics after login: $e');
-          }
-        }
-
-        // Enable one-click trading by default after login
-        OneClickTradingService.instance.setOneClickTradingEnabled(true);
-
-        // ✅ FIX: Wait for account check before connecting sockets
-        try {
-          AccountController? accountController;
-          final dashboardController = Get.put(DashboardController());
-          try {
-            if (Get.isRegistered<AccountController>()) {
-              accountController = Get.find<AccountController>();
-            }
-          } catch (e) {
-            print('AuthController: AccountController not registered yet: $e');
-          }
-
-          final futures = <Future>[dashboardController.forceCheckMT5Accounts()];
-
-          if (accountController != null) {
-            futures.add(accountController.forceRefreshAccountData());
-          }
-
-          await Future.wait(futures, eagerError: false);
-
-          // ✅ FIX: Check if account exists and set primary account
-          final primaryAccount = dashboardController.primaryMT5Account;
-          if (primaryAccount != null) {
-            // Account exists - set it in WebSocketEndpointHelper
-            WebSocketEndpointHelper.setPrimaryAccount(primaryAccount);
-            print(
-              'AuthController: Primary account set: ${primaryAccount.metaAccountNumber} (${primaryAccount.tradingServer})',
-            );
-          } else {
-            // No account - set to null (will use self-hosted endpoints)
-            WebSocketEndpointHelper.setPrimaryAccount(null);
-            print(
-              'AuthController: No account found, using self-hosted endpoints',
+            } catch (_) {}
+            await SecureStorageService.setBiometricEnabled(
+              true,
+              userIdentifier: email.trim().toLowerCase(),
             );
           }
-
-          print('AuthController: All account data loaded after login');
-        } catch (e) {
-          print('AuthController: Error initializing dashboard: $e');
-          // Set to null on error to use self-hosted endpoints
-          WebSocketEndpointHelper.setPrimaryAccount(null);
         }
+      } catch (e) {
+        // Keep login flow safe even if biometrics fail.
+        print('AuthController: Failed to enable biometrics after login: $e');
+      }
+    }
 
-        // ✅ FIX: Re-initialize ALL controllers and WebSocket services BEFORE navigation
-        // This ensures everything is ready when the UI loads
+    // Enable one-click trading by default after login
+    OneClickTradingService.instance.setOneClickTradingEnabled(true);
+
+    // ✅ FIX: Wait for account check before connecting sockets
+    try {
+      AccountController? accountController;
+      final dashboardController = Get.put(DashboardController());
+      try {
+        if (Get.isRegistered<AccountController>()) {
+          accountController = Get.find<AccountController>();
+        }
+      } catch (e) {
+        print('AuthController: AccountController not registered yet: $e');
+      }
+
+      final futures = <Future>[dashboardController.forceCheckMT5Accounts()];
+
+      if (accountController != null) {
+        futures.add(accountController.forceRefreshAccountData());
+      }
+
+      await Future.wait(futures, eagerError: false);
+
+      // ✅ FIX: Check if account exists and set primary account
+      final primaryAccount = dashboardController.primaryMT5Account;
+      if (primaryAccount != null) {
+        // Account exists - set it in WebSocketEndpointHelper
+        WebSocketEndpointHelper.setPrimaryAccount(primaryAccount);
         print(
-          'AuthController: Re-initializing all controllers and services...',
+          'AuthController: Primary account set: ${primaryAccount.metaAccountNumber} (${primaryAccount.tradingServer})',
         );
+      } else {
+        // No account - set to null (will use self-hosted endpoints)
+        WebSocketEndpointHelper.setPrimaryAccount(null);
+        print('AuthController: No account found, using self-hosted endpoints');
+      }
 
-        // 1. Re-initialize DashboardController
-        try {
-          if (Get.isRegistered<DashboardController>()) {
-            Get.delete<DashboardController>(force: true);
-          }
-          Get.put<DashboardController>(DashboardController(), permanent: true);
-          print('AuthController: DashboardController re-initialized');
-        } catch (e) {
-          print(
-            'AuthController: Error re-initializing DashboardController: $e',
-          );
-        }
+      print('AuthController: All account data loaded after login');
+    } catch (e) {
+      print('AuthController: Error initializing dashboard: $e');
+      // Set to null on error to use self-hosted endpoints
+      WebSocketEndpointHelper.setPrimaryAccount(null);
+    }
 
-        // 2. Re-initialize AccountController
-        try {
-          if (Get.isRegistered<AccountController>()) {
-            Get.delete<AccountController>(force: true);
-          }
-          Get.put<AccountController>(AccountController(), permanent: true);
-          print('AuthController: AccountController re-initialized');
-        } catch (e) {
-          print('AuthController: Error re-initializing AccountController: $e');
-        }
+    // ✅ FIX: Re-initialize ALL controllers and WebSocket services BEFORE navigation
+    // This ensures everything is ready when the UI loads
+    print('AuthController: Re-initializing all controllers and services...');
 
-        // 3. Re-initialize InstrumentsController (has WebSocket)
-        try {
-          if (Get.isRegistered<InstrumentsController>()) {
-            Get.delete<InstrumentsController>(force: true);
-          }
-          Get.put<InstrumentsController>(
-            InstrumentsController(),
-            permanent: true,
-          );
-          print('AuthController: InstrumentsController re-initialized');
-        } catch (e) {
-          print(
-            'AuthController: Error re-initializing InstrumentsController: $e',
-          );
-        }
+    // 1. Re-initialize DashboardController
+    try {
+      if (Get.isRegistered<DashboardController>()) {
+        Get.delete<DashboardController>(force: true);
+      }
+      Get.put<DashboardController>(DashboardController(), permanent: true);
+      print('AuthController: DashboardController re-initialized');
+    } catch (e) {
+      print('AuthController: Error re-initializing DashboardController: $e');
+    }
 
-        // 4. Re-initialize ChartSocketController (has WebSocket)
-        try {
-          if (Get.isRegistered<ChartSocketController>()) {
-            Get.delete<ChartSocketController>(force: true);
-          }
-          Get.put<ChartSocketController>(
-            ChartSocketController(),
-            permanent: true,
-          );
-          print('AuthController: ChartSocketController re-initialized');
-        } catch (e) {
-          print(
-            'AuthController: Error re-initializing ChartSocketController: $e',
-          );
-        }
+    // 2. Re-initialize AccountController
+    try {
+      if (Get.isRegistered<AccountController>()) {
+        Get.delete<AccountController>(force: true);
+      }
+      Get.put<AccountController>(AccountController(), permanent: true);
+      print('AuthController: AccountController re-initialized');
+    } catch (e) {
+      print('AuthController: Error re-initializing AccountController: $e');
+    }
 
-        // 5. Re-initialize TradingController
-        try {
-          if (Get.isRegistered<TradingController>()) {
-            Get.delete<TradingController>(force: true);
-          }
-          Get.put<TradingController>(TradingController(), permanent: true);
-          print('AuthController: TradingController re-initialized');
-        } catch (e) {
-          print('AuthController: Error re-initializing TradingController: $e');
-        }
+    // 3. Re-initialize InstrumentsController (has WebSocket)
+    try {
+      if (Get.isRegistered<InstrumentsController>()) {
+        Get.delete<InstrumentsController>(force: true);
+      }
+      Get.put<InstrumentsController>(InstrumentsController(), permanent: true);
+      print('AuthController: InstrumentsController re-initialized');
+    } catch (e) {
+      print('AuthController: Error re-initializing InstrumentsController: $e');
+    }
 
-        // 6. Re-initialize TradingWebSocketService
-        try {
-          if (Get.isRegistered<TradingWebSocketService>()) {
-            Get.delete<TradingWebSocketService>(force: true);
-          }
-          Get.put<TradingWebSocketService>(
-            TradingWebSocketService(),
-            permanent: true,
-          );
-          print('AuthController: TradingWebSocketService re-initialized');
-        } catch (e) {
-          print(
-            'AuthController: Error re-initializing TradingWebSocketService: $e',
-          );
-        }
+    // 4. Re-initialize ChartSocketController (has WebSocket)
+    try {
+      if (Get.isRegistered<ChartSocketController>()) {
+        Get.delete<ChartSocketController>(force: true);
+      }
+      Get.put<ChartSocketController>(ChartSocketController(), permanent: true);
+      print('AuthController: ChartSocketController re-initialized');
+    } catch (e) {
+      print('AuthController: Error re-initializing ChartSocketController: $e');
+    }
 
-        // 7. Re-initialize AccountWebSocketService
-        try {
-          if (Get.isRegistered<AccountWebSocketService>()) {
-            Get.delete<AccountWebSocketService>(force: true);
-          }
-          Get.put<AccountWebSocketService>(
-            AccountWebSocketService(),
-            permanent: true,
-          );
-          print('AuthController: AccountWebSocketService re-initialized');
-        } catch (e) {
-          print(
-            'AuthController: Error re-initializing AccountWebSocketService: $e',
-          );
-        }
+    // 5. Re-initialize TradingController
+    try {
+      if (Get.isRegistered<TradingController>()) {
+        Get.delete<TradingController>(force: true);
+      }
+      Get.put<TradingController>(TradingController(), permanent: true);
+      print('AuthController: TradingController re-initialized');
+    } catch (e) {
+      print('AuthController: Error re-initializing TradingController: $e');
+    }
 
-        print(
-          'AuthController: All controllers and services re-initialized with new user token',
-        );
+    // 6. Re-initialize TradingWebSocketService
+    try {
+      if (Get.isRegistered<TradingWebSocketService>()) {
+        Get.delete<TradingWebSocketService>(force: true);
+      }
+      Get.put<TradingWebSocketService>(
+        TradingWebSocketService(),
+        permanent: true,
+      );
+      print('AuthController: TradingWebSocketService re-initialized');
+    } catch (e) {
+      print(
+        'AuthController: Error re-initializing TradingWebSocketService: $e',
+      );
+    }
 
-        _fetchEnabledModulesInBackground();
+    // 7. Re-initialize AccountWebSocketService
+    try {
+      if (Get.isRegistered<AccountWebSocketService>()) {
+        Get.delete<AccountWebSocketService>(force: true);
+      }
+      Get.put<AccountWebSocketService>(
+        AccountWebSocketService(),
+        permanent: true,
+      );
+      print('AuthController: AccountWebSocketService re-initialized');
+    } catch (e) {
+      print(
+        'AuthController: Error re-initializing AccountWebSocketService: $e',
+      );
+    }
 
-        // 🚀 CHART PRELOAD: Background me chart WebSocket pre-connect karo after login
-        // Isse chart tab pe pehli baar jane pe data already ready hoga
-        Future.delayed(const Duration(milliseconds: 500), () {
-          ChartSocketController.preloadForDefaultSymbol().catchError((e) {
-            print('AuthController: Chart preload error (non-critical): $e');
-          });
-        });
+    print(
+      'AuthController: All controllers and services re-initialized with new user token',
+    );
 
-        // Always clear any staged broker on successful login.
-        try {
-          TenaxBrokerSelectionController.clearPendingBroker();
-        } catch (_) {}
+    _fetchEnabledModulesInBackground();
 
-        Get.offAllNamed(AppPages.TRADING);
+    // 🚀 CHART PRELOAD: Background me chart WebSocket pre-connect karo after login
+    // Isse chart tab pe pehli baar jane pe data already ready hoga
+    Future.delayed(const Duration(milliseconds: 500), () {
+      ChartSocketController.preloadForDefaultSymbol().catchError((e) {
+        print('AuthController: Chart preload error (non-critical): $e');
+      });
+    });
+
+    // Always clear any staged broker on successful login.
+    try {
+      TenaxBrokerSelectionController.clearPendingBroker();
+    } catch (_) {}
+
+    Get.offAllNamed(AppPages.TRADING);
   }
 
   // ==================== REGISTRATION METHODS ====================
@@ -519,8 +502,8 @@ class AuthController extends GetxController {
         // _registerData.value = response.data;
 
         CustomToastService.showSuccess(
-          message: 'Registration initiated successfully',
-          title: 'Success',
+          message: TranslationUtils.tr('auth_registration_initiated'),
+          title: TranslationUtils.tr('common_success'),
         );
 
         return true; // Return success for OTP flow
@@ -532,7 +515,7 @@ class AuthController extends GetxController {
         // Show error toast with validation details
         CustomToastService.showError(
           message: errorMessage,
-          title: 'Validation Error',
+          title: TranslationUtils.tr('validation_title'),
         );
 
         return false;
@@ -1133,8 +1116,9 @@ class AuthController extends GetxController {
     profiles.removeAt(currentIndex);
     await SecureStorageService.saveTenaxUserBrokerProfiles(profiles);
 
-    final fallback =
-        profiles.where(_hasValidTenaxLoginProfile).cast<Map<String, dynamic>>();
+    final fallback = profiles
+        .where(_hasValidTenaxLoginProfile)
+        .cast<Map<String, dynamic>>();
     if (fallback.isEmpty) {
       await SecureStorageService.setTenaxCurrentProfileKey('');
       return null;
@@ -1150,10 +1134,9 @@ class AuthController extends GetxController {
 
   Future<void> _restoreTenaxProfileSession(Map<String, dynamic> profile) async {
     if (!FlavorConfig.isMultiBrokerEnabled) return;
-    final brokerData =
-        profile['broker_data'] is Map<String, dynamic>
-            ? profile['broker_data'] as Map<String, dynamic>
-            : null;
+    final brokerData = profile['broker_data'] is Map<String, dynamic>
+        ? profile['broker_data'] as Map<String, dynamic>
+        : null;
     final loginData = profile['login_data'];
     if (brokerData == null || loginData is! Map) return;
 
@@ -1164,8 +1147,8 @@ class AuthController extends GetxController {
     final userData = loginData['user'];
     final runtimeConfig =
         brokerData['broker_runtime_config'] is Map<String, dynamic>
-            ? brokerData['broker_runtime_config'] as Map<String, dynamic>
-            : brokerData;
+        ? brokerData['broker_runtime_config'] as Map<String, dynamic>
+        : brokerData;
     final selectedName = (brokerData['selected_name'] ?? '').toString().trim();
     final selectedLogo =
         (brokerData['selected_logo_local_path'] ??
@@ -1236,10 +1219,9 @@ class AuthController extends GetxController {
           isTenaxBrokerFlow
               ? AppPages.TENAX_BROKER_SELECTION
               : AppPages.GET_STARTED,
-          arguments:
-              isTenaxBrokerFlow
-                  ? {'allowBack': false, 'nextRoute': AppPages.LOGIN}
-                  : null,
+          arguments: isTenaxBrokerFlow
+              ? {'allowBack': false, 'nextRoute': AppPages.LOGIN}
+              : null,
         );
       } else {
         print('AuthController: Logout failed - ${response.message}');
@@ -1248,10 +1230,9 @@ class AuthController extends GetxController {
           isTenaxBrokerFlow
               ? AppPages.TENAX_BROKER_SELECTION
               : AppPages.GET_STARTED,
-          arguments:
-              isTenaxBrokerFlow
-                  ? {'allowBack': false, 'nextRoute': AppPages.LOGIN}
-                  : null,
+          arguments: isTenaxBrokerFlow
+              ? {'allowBack': false, 'nextRoute': AppPages.LOGIN}
+              : null,
         );
       }
     } catch (e) {
@@ -1276,10 +1257,9 @@ class AuthController extends GetxController {
           isTenaxBrokerFlow
               ? AppPages.TENAX_BROKER_SELECTION
               : AppPages.GET_STARTED,
-          arguments:
-              isTenaxBrokerFlow
-                  ? {'allowBack': false, 'nextRoute': AppPages.LOGIN}
-                  : null,
+          arguments: isTenaxBrokerFlow
+              ? {'allowBack': false, 'nextRoute': AppPages.LOGIN}
+              : null,
         );
       } catch (cleanupError) {
         print('AuthController: Cleanup error: $cleanupError');
@@ -1351,10 +1331,9 @@ class AuthController extends GetxController {
         isTenaxBrokerFlow
             ? AppPages.TENAX_BROKER_SELECTION
             : AppPages.GET_STARTED,
-        arguments:
-            isTenaxBrokerFlow
-                ? {'allowBack': false, 'nextRoute': AppPages.LOGIN}
-                : null,
+        arguments: isTenaxBrokerFlow
+            ? {'allowBack': false, 'nextRoute': AppPages.LOGIN}
+            : null,
       );
     } catch (e) {
       print('AuthController: Logout without API error: $e');

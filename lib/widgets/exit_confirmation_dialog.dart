@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
+import 'package:crm_app/services/language_service.dart';
+import 'package:get/get.dart';
 
 class ExitConfirmationDialog extends StatelessWidget {
   const ExitConfirmationDialog({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final languageService = Get.find<LanguageService>();
     return AlertDialog(
       backgroundColor: AppColors.whiteColor,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
@@ -20,7 +23,7 @@ class ExitConfirmationDialog extends StatelessWidget {
           Icon(Icons.exit_to_app, color: AppColors.primary, size: 26.w),
           SizedBox(width: 12.w),
           Text(
-            'Exit App',
+            languageService.tr('exit_app_title'),
             style: AppTextStyles.heading.copyWith(
               fontSize: 18.sp,
               fontWeight: FontWeight.w600,
@@ -30,7 +33,7 @@ class ExitConfirmationDialog extends StatelessWidget {
         ],
       ),
       content: Text(
-        'Do you want to exit the app?',
+        languageService.tr('exit_app_message'),
         style: TextStyle(
           fontSize: 15.sp,
           color: AppColors.textSecondary,
@@ -53,7 +56,7 @@ class ExitConfirmationDialog extends StatelessWidget {
                   ),
                 ),
                 child: Text(
-                  'Cancel',
+                  languageService.tr('cancel'),
                   style: TextStyle(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w500,
@@ -76,7 +79,7 @@ class ExitConfirmationDialog extends StatelessWidget {
                   ),
                 ),
                 child: Text(
-                  'Exit',
+                  languageService.tr('exit'),
                   style: TextStyle(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w600,

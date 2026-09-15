@@ -3,7 +3,9 @@ import 'dart:io';
 
 import 'package:crm_app/constants/api_const.dart';
 import 'package:crm_app/models/ticket_model.dart';
+import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/services/api_service.dart';
+import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/services/secure_storage_service.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
 import 'package:get/get.dart';
@@ -54,8 +56,7 @@ class TicketController extends GetxController {
         departments.assignAll(
           data
               .whereType<Map>()
-              .map((e) =>
-                  TicketDepartment.fromJson(e.cast<String, dynamic>()))
+              .map((e) => TicketDepartment.fromJson(e.cast<String, dynamic>()))
               .toList(),
         );
       }
@@ -112,9 +113,9 @@ class TicketController extends GetxController {
           : payload; // tolerate a flat { data: [...] } shape too
       final parsed = list is List
           ? list
-              .whereType<Map>()
-              .map((e) => Ticket.fromJson(e.cast<String, dynamic>()))
-              .toList()
+                .whereType<Map>()
+                .map((e) => Ticket.fromJson(e.cast<String, dynamic>()))
+                .toList()
           : <Ticket>[];
 
       if (refresh) {
@@ -127,7 +128,8 @@ class TicketController extends GetxController {
           ? payload['pagination']
           : (res.data is Map ? (res.data as Map)['pagination'] : null);
       final pagination = TicketPagination.fromJson(
-          paginationJson is Map ? paginationJson.cast<String, dynamic>() : null);
+        paginationJson is Map ? paginationJson.cast<String, dynamic>() : null,
+      );
       hasMorePages.value = pagination.hasMore;
     } catch (e) {
       if (refresh) tickets.clear();
@@ -207,11 +209,13 @@ class TicketController extends GetxController {
         return true;
       }
       CustomToastService.showError(
-        message: res.message ?? 'Failed to create ticket',
+        message: res.message ?? TranslationUtils.tr('ticket_create_failed'),
       );
       return false;
     } catch (e) {
-      CustomToastService.showError(message: 'Failed to create ticket: $e');
+      CustomToastService.showError(
+        message: '${TranslationUtils.tr('ticket_create_failed')}: $e',
+      );
       return false;
     } finally {
       isSubmitting.value = false;
@@ -246,10 +250,7 @@ class TicketController extends GetxController {
   /// Sends a reply to a ticket. The backend expects a JSON body
   /// `{ "reply_text": "..." }` (verified against the live
   /// `/api/user/tickets/{id}/reply` request) — NOT multipart form data.
-  Future<bool> replyToTicket(
-    String ticketId,
-    String message,
-  ) async {
+  Future<bool> replyToTicket(String ticketId, String message) async {
     if (message.trim().isEmpty) return false;
     isSubmitting.value = true;
     try {
@@ -321,10 +322,14 @@ class TicketController extends GetxController {
       });
       formData.forEach((key, value) => request.fields[key] = value.toString());
       if (file != null) {
-        request.files.add(await http.MultipartFile.fromPath(fileField, file.path));
+        request.files.add(
+          await http.MultipartFile.fromPath(fileField, file.path),
+        );
       }
 
-      final streamed = await request.send().timeout(const Duration(seconds: 60));
+      final streamed = await request.send().timeout(
+        const Duration(seconds: 60),
+      );
       final response = await http.Response.fromStream(streamed);
       if (response.statusCode == 401) {
         return ApiResponse.error('Authentication failed. Please login again.');
@@ -332,12 +337,18 @@ class TicketController extends GetxController {
       if (response.statusCode < 200 || response.statusCode >= 300) {
         return ApiResponse.error('Request failed (${response.statusCode})');
       }
-      final decoded = response.body.isEmpty ? <String, dynamic>{} : jsonDecode(response.body);
+      final decoded = response.body.isEmpty
+          ? <String, dynamic>{}
+          : jsonDecode(response.body);
       if (decoded is Map<String, dynamic>) {
-        final isError = decoded['status'] == false || decoded['success'] == false;
+        final isError =
+            decoded['status'] == false || decoded['success'] == false;
         final message = decoded['message']?.toString();
         if (isError) {
-          return ApiResponse.error(message ?? 'Request failed', data: decoded['data']);
+          return ApiResponse.error(
+            message ?? 'Request failed',
+            data: decoded['data'],
+          );
         }
         return ApiResponse.success(decoded);
       }
@@ -367,14 +378,16 @@ class TicketController extends GetxController {
     isDownloading.value = true;
     try {
       final token = await SecureStorageService.getAuthToken();
-      final response = await http.get(
-        Uri.parse(url),
-        headers: {
-          'Accept': '*/*',
-          if (token != null && token.isNotEmpty)
-            'Authorization': 'Bearer $token',
-        },
-      ).timeout(const Duration(seconds: 60));
+      final response = await http
+          .get(
+            Uri.parse(url),
+            headers: {
+              'Accept': '*/*',
+              if (token != null && token.isNotEmpty)
+                'Authorization': 'Bearer $token',
+            },
+          )
+          .timeout(const Duration(seconds: 60));
 
       if (response.statusCode != 200) {
         CustomToastService.showError(

@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'subscription_setup_screen.dart';
+import 'package:crm_app/services/language_service.dart';
 
 class TraderDetailsScreen extends StatefulWidget {
   const TraderDetailsScreen({super.key});
@@ -84,7 +85,7 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
       backgroundColor: AppColors.whiteColor, // theme-aware
       appBar: AppBar(
         title: Text(
-          "Master's Performance",
+          TranslationUtils.tr("master_performance"),
           style: TextStyle(
             color: AppColors.textPrimary,
             fontSize: 18,
@@ -98,7 +99,10 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
         leading: IconButton(
           icon: SvgPicture.asset(
             'assets/svg/trade/arro_back.svg',
-            colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn),
+            colorFilter: ColorFilter.mode(
+              AppColors.textPrimary,
+              BlendMode.srcIn,
+            ),
           ),
           onPressed: () => Get.back(),
         ),
@@ -153,8 +157,8 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
             ),
             elevation: 0,
           ),
-          child:   Text(
-            'Set Up Copying',
+          child: Text(
+            TranslationUtils.tr('set_up_copying'),
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
@@ -202,15 +206,19 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 8),
               decoration: BoxDecoration(
-                color: _tabIndex == 0 ? AppColors.primary : AppColors.whiteColor,
+                color: _tabIndex == 0
+                    ? AppColors.primary
+                    : AppColors.whiteColor,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: AppColors.primary),
               ),
               child: Center(
                 child: Text(
-                  'Summary',
+                  TranslationUtils.tr('summary'),
                   style: TextStyle(
-                    color: _tabIndex == 0 ? AppColors.whiteColor : AppColors.primary,
+                    color: _tabIndex == 0
+                        ? AppColors.whiteColor
+                        : AppColors.primary,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -229,15 +237,19 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 8),
               decoration: BoxDecoration(
-                color: _tabIndex == 1 ? AppColors.primary : AppColors.whiteColor,
+                color: _tabIndex == 1
+                    ? AppColors.primary
+                    : AppColors.whiteColor,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: AppColors.primary),
               ),
               child: Center(
                 child: Text(
-                  'Trades',
+                  TranslationUtils.tr('trades'),
                   style: TextStyle(
-                    color: _tabIndex == 1 ? AppColors.whiteColor : AppColors.primary,
+                    color: _tabIndex == 1
+                        ? AppColors.whiteColor
+                        : AppColors.primary,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -289,15 +301,14 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
                                   vertical: 2,
                                 ),
                                 decoration: BoxDecoration(
-                                  color:
-                                      trade.type == 'BUY'
-                                          ? AppColors.green
-                                          : AppColors.error,
+                                  color: trade.type == 'BUY'
+                                      ? AppColors.green
+                                      : AppColors.error,
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
                                   trade.type,
-                                  style:   TextStyle(
+                                  style: TextStyle(
                                     color: AppColors.whiteColor,
                                     fontSize: 10,
                                     fontWeight: FontWeight.w600,
@@ -438,16 +449,19 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
 
   Widget _buildAccountDetailsCard() {
     return _buildBaseCard(
-      title: 'Account Details',
+      title: TranslationUtils.tr('copy_account_details'),
       child: Column(
         children: [
-          _buildInfoRow('Floating Profit', r'$0.00'),
+          _buildInfoRow(TranslationUtils.tr('copy_profit'), r'$0.00'),
           const SizedBox(height: 16),
-          _buildInfoRow('Balance', r'$510.01'),
+          _buildInfoRow(TranslationUtils.tr('balance'), r'$510.01'),
           const SizedBox(height: 16),
-          _buildInfoRow("Master Trader's Bonus", r'$0.00'),
+          _buildInfoRow(
+            TranslationUtils.tr('copy_master_trader_bonus'),
+            r'$0.00',
+          ),
           const SizedBox(height: 16),
-          _buildInfoRow('Leverage', '1:500'),
+          _buildInfoRow(TranslationUtils.tr('copy_leverage'), '1:500'),
         ],
       ),
     );
@@ -455,12 +469,18 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
 
   Widget _buildRiskManagementCard() {
     return _buildBaseCard(
-      title: 'Risk Management',
+      title: TranslationUtils.tr('copy_risk_management'),
       child: Column(
         children: [
-          _buildInfoRow('Maximum Unrealised Loss', r'-$20 555.00'),
+          _buildInfoRow(
+            TranslationUtils.tr('copy_max_unrealised_loss'),
+            r'-$20 555.00',
+          ),
           const SizedBox(height: 16),
-          _buildInfoRow('Maximum Drawdown Duration', '21d'),
+          _buildInfoRow(
+            TranslationUtils.tr('copy_max_drawdown_duration'),
+            '21d',
+          ),
         ],
       ),
     );
@@ -468,7 +488,7 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
 
   Widget _buildActivityCard() {
     return _buildBaseCard(
-      title: 'Activity',
+      title: TranslationUtils.tr('copy_activity'),
       child: Column(
         children: [const SizedBox(height: 8), SteppedActivityChart()],
       ),
@@ -487,7 +507,7 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
 
   Widget _buildMinimumInvestmentCard() {
     return _buildBaseCard(
-      title: 'Minimum Investment',
+      title: TranslationUtils.tr('copy_minimum_investment'),
       titleTrailing: const Text(
         r'$25',
         style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
@@ -513,7 +533,7 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
             ],
           ),
           const SizedBox(height: 8),
-            Divider(color: AppColors.dashLineColor),
+          Divider(color: AppColors.dashLineColor),
           const SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -532,18 +552,18 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
                   ),
                 ],
               ),
-              Icon(
-                Icons.info_outline,
-                color: AppColors.icongrey,
-                size: 16,
-              ),
+              Icon(Icons.info_outline, color: AppColors.icongrey, size: 16),
             ],
           ),
           const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildMetricColumn('Equity', r'$567.89', isPrimaryValue: true),
+              _buildMetricColumn(
+                TranslationUtils.tr('copy_equity'),
+                r'$567.89',
+                isPrimaryValue: true,
+              ),
               _buildMetricColumn('Commission', '40%', isPrimaryValue: true),
               _buildMetricColumn('With Us', '645D', isPrimaryValue: true),
             ],
@@ -560,7 +580,11 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
           const SizedBox(height: 8),
           Text(
             'welcome to Pipze (A group expert traders.) We are providing safe and secure trading strategies to make profit for our copiers, stay with us and make safe profit.',
-            style: TextStyle(color: AppColors.textGrey, fontSize: 12, height: 1.4),
+            style: TextStyle(
+              color: AppColors.textGrey,
+              fontSize: 12,
+              height: 1.4,
+            ),
           ),
         ],
       ),
@@ -580,8 +604,8 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Copiers',
+                  Text(
+                    TranslationUtils.tr('copy_copiers'),
                     style: TextStyle(
                       color: AppColors.icongrey,
                       fontSize: 12,
@@ -678,10 +702,9 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color:
-            isSelected
-                ? AppColors.primary
-                : AppColors.primary.withOpacity(0.05),
+        color: isSelected
+            ? AppColors.primary
+            : AppColors.primary.withOpacity(0.05),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
@@ -754,7 +777,7 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
               ],
             ),
             const SizedBox(height: 8),
-              Divider(color: AppColors.dashLineColor),
+            Divider(color: AppColors.dashLineColor),
             const SizedBox(height: 8),
             child,
           ],

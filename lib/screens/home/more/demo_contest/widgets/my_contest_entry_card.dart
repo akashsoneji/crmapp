@@ -59,7 +59,9 @@ class MyContestEntryCard extends StatelessWidget {
                       vertical: 3.h,
                     ),
                     decoration: BoxDecoration(
-                      color: _badgeColor(entry.status.name).withValues(alpha: 0.12),
+                      color: _badgeColor(
+                        entry.status.name,
+                      ).withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(6.r),
                     ),
                     child: Text(
@@ -96,10 +98,7 @@ class MyContestEntryCard extends StatelessWidget {
               SizedBox(height: 4.h),
               Text(
                 entry.contestSubtitle,
-                style: TextStyle(
-                  fontSize: 12.sp,
-                  color: AppColors.textGrey,
-                ),
+                style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey),
               ),
               SizedBox(height: 14.h),
               Row(
@@ -107,26 +106,19 @@ class MyContestEntryCard extends StatelessWidget {
                   Expanded(
                     child: _StatBlock(
                       label: translate('dc_pnl'),
-                      value: '${entry.pnlPercent >= 0 ? '+' : ''}${entry.pnlPercent.toStringAsFixed(2)}%',
+                      value:
+                          '${entry.pnlPercent >= 0 ? '+' : ''}${entry.pnlPercent.toStringAsFixed(2)}%',
                       color: pnlColor,
                     ),
                   ),
-                  Container(
-                    width: 1,
-                    height: 32.h,
-                    color: AppColors.border,
-                  ),
+                  Container(width: 1, height: 32.h, color: AppColors.border),
                   Expanded(
                     child: _StatBlock(
                       label: translate('dc_equity'),
                       value: '\$${entry.equity.toStringAsFixed(0)}',
                     ),
                   ),
-                  Container(
-                    width: 1,
-                    height: 32.h,
-                    color: AppColors.border,
-                  ),
+                  Container(width: 1, height: 32.h, color: AppColors.border),
                   Expanded(
                     child: _StatBlock(
                       label: translate('dc_rank'),
@@ -137,10 +129,7 @@ class MyContestEntryCard extends StatelessWidget {
               ),
               SizedBox(height: 12.h),
               Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 10.w,
-                  vertical: 6.h,
-                ),
+                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
                 decoration: BoxDecoration(
                   color: AppColors.tradeBackgroundCenterColor,
                   borderRadius: BorderRadius.circular(10.r),
@@ -151,8 +140,8 @@ class MyContestEntryCard extends StatelessWidget {
                       isLive
                           ? Icons.timer_outlined
                           : isFinished
-                              ? Icons.flag_outlined
-                              : Icons.event_outlined,
+                          ? Icons.flag_outlined
+                          : Icons.event_outlined,
                       size: 14.sp,
                       color: AppColors.textGrey,
                     ),
@@ -162,8 +151,8 @@ class MyContestEntryCard extends StatelessWidget {
                         isLive
                             ? '${translate('dc_ends_in')}:'
                             : isFinished
-                                ? translate('dc_finished_on')
-                                : '${translate('dc_starts_in')}:',
+                            ? translate('dc_finished_on')
+                            : '${translate('dc_starts_in')}:',
                         style: TextStyle(
                           fontSize: 12.sp,
                           color: AppColors.textGrey,
@@ -172,15 +161,9 @@ class MyContestEntryCard extends StatelessWidget {
                       ),
                     ),
                     if (isLive)
-                      ContestCountdownTimer(
-                        endsAt: entry.endsAt,
-                        compact: true,
-                      )
+                      ContestCountdownTimer(endsAt: entry.endsAt, compact: true)
                     else if (!isFinished)
-                      ContestCountdownTimer(
-                        endsAt: entry.endsAt,
-                        compact: true,
-                      )
+                      ContestCountdownTimer(endsAt: entry.endsAt, compact: true)
                     else
                       Text(
                         _formatDate(entry.endsAt),
@@ -263,8 +246,18 @@ class MyContestEntryCard extends StatelessWidget {
 
   String _monthName(int m) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return months[m - 1];
   }
@@ -275,11 +268,7 @@ class _StatBlock extends StatelessWidget {
   final String value;
   final Color? color;
 
-  const _StatBlock({
-    required this.label,
-    required this.value,
-    this.color,
-  });
+  const _StatBlock({required this.label, required this.value, this.color});
 
   @override
   Widget build(BuildContext context) {

@@ -8,6 +8,7 @@ import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/controllers/ib_controller.dart';
 import 'package:crm_app/screens/home/trading_main_screen.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:crm_app/services/language_service.dart';
 
 enum CommissionPeriod { thisMonth, thisQuarter, thisYear }
 
@@ -107,7 +108,8 @@ class _IbDashboardNewScreenState extends State<IbDashboardNewScreen> {
             fontSize: 20.sp,
             fontWeight: FontWeight.w400,
             color: AppColors.textPrimary,
-          fontFamily: 'SF UI'),
+            fontFamily: 'SF UI',
+          ),
         ),
         centerTitle: true,
         leadingWidth: 75.w,
@@ -126,7 +128,7 @@ class _IbDashboardNewScreenState extends State<IbDashboardNewScreen> {
         if (ibController.isLoading.value) {
           return Center(
             child: CommonLoadingWidget(
-              message: 'Loading dashboard...',
+              message: TranslationUtils.tr('ib_loading_dashboard'),
               size: 50.0,
               color: AppColors.primary,
             ),
@@ -185,7 +187,10 @@ class _IbDashboardNewScreenState extends State<IbDashboardNewScreen> {
                   ),
                 ),
               SliverPadding(
-                padding: EdgeInsets.only(bottom: _fabScrollExtent(context)+kBottomNavigationBarHeight),
+                padding: EdgeInsets.only(
+                  bottom:
+                      _fabScrollExtent(context) + kBottomNavigationBarHeight,
+                ),
               ),
             ],
           ),
@@ -204,7 +209,8 @@ class _IbDashboardNewScreenState extends State<IbDashboardNewScreen> {
               fontSize: 19.sp,
               fontWeight: FontWeight.w400,
               color: AppColors.textPrimary,
-            fontFamily: 'SF UI'),
+              fontFamily: 'SF UI',
+            ),
           ),
         ),
         if (trailing != null) trailing,
@@ -243,7 +249,8 @@ class _IbDashboardNewScreenState extends State<IbDashboardNewScreen> {
                   fontSize: 14.sp,
                   fontWeight: FontWeight.w400,
                   color: AppColors.textGrey,
-                fontFamily: 'SF UI'),
+                  fontFamily: 'SF UI',
+                ),
               ),
               Text(
                 count.toString(),
@@ -251,7 +258,8 @@ class _IbDashboardNewScreenState extends State<IbDashboardNewScreen> {
                   fontSize: 16.sp,
                   fontWeight: FontWeight.w400,
                   color: AppColors.primary,
-                fontFamily: 'SF UI'),
+                  fontFamily: 'SF UI',
+                ),
               ),
             ],
           ),
@@ -308,7 +316,8 @@ class _IbDashboardNewScreenState extends State<IbDashboardNewScreen> {
                                 fontSize: 13.sp,
                                 fontWeight: FontWeight.w400,
                                 color: AppColors.whiteColor,
-                              fontFamily: 'SF UI'),
+                                fontFamily: 'SF UI',
+                              ),
                             ),
                           ],
                         ),
@@ -330,30 +339,31 @@ class _IbDashboardNewScreenState extends State<IbDashboardNewScreen> {
       decoration: BoxDecoration(
         color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(20.r),
-        border: Border.all(
-          color: AppColors.primary.withValues(alpha: 0.35),
-        ),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.35)),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<CommissionPeriod>(
           value: _selectedPeriod,
           isDense: true,
-          icon: Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.primary),
+          icon: Icon(
+            Icons.keyboard_arrow_down_rounded,
+            color: AppColors.primary,
+          ),
           borderRadius: BorderRadius.circular(12.r),
-          items:
-              CommissionPeriod.values.map((period) {
-                return DropdownMenuItem(
-                  value: period,
-                  child: Text(
-                    _getPeriodLabel(period),
-                    style: TextStyle(
-                      fontSize: 15.sp,
-                      fontWeight: FontWeight.w400,
-                      color: AppColors.primary,
-                    fontFamily: 'SF UI'),
-                  ),
-                );
-              }).toList(),
+          items: CommissionPeriod.values.map((period) {
+            return DropdownMenuItem(
+              value: period,
+              child: Text(
+                _getPeriodLabel(period),
+                style: TextStyle(
+                  fontSize: 15.sp,
+                  fontWeight: FontWeight.w400,
+                  color: AppColors.primary,
+                  fontFamily: 'SF UI',
+                ),
+              ),
+            );
+          }).toList(),
           onChanged: (value) {
             if (value != null) {
               setState(() => _selectedPeriod = value);
@@ -415,7 +425,8 @@ class _IbDashboardNewScreenState extends State<IbDashboardNewScreen> {
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w400,
                     color: AppColors.textGrey,
-                  fontFamily: 'SF UI'),
+                    fontFamily: 'SF UI',
+                  ),
                 ),
                 SizedBox(height: 6.h),
                 Text(
@@ -425,17 +436,17 @@ class _IbDashboardNewScreenState extends State<IbDashboardNewScreen> {
                     fontWeight: FontWeight.w400,
                     color: AppColors.primary,
                     height: 1.1,
-                  fontFamily: 'SF UI'),
+                    fontFamily: 'SF UI',
+                  ),
                 ),
               ],
             ),
           ),
           Container(
             height: 4.h,
-            color:
-                isPrimary
-                    ? AppColors.primary
-                    : AppColors.border.withValues(alpha: 0.55),
+            color: isPrimary
+                ? AppColors.primary
+                : AppColors.border.withValues(alpha: 0.55),
           ),
         ],
       ),
@@ -443,27 +454,25 @@ class _IbDashboardNewScreenState extends State<IbDashboardNewScreen> {
   }
 
   List<Widget> _buildStatGridChildren(dynamic stats) {
-    final ibType = ibController.ibStatusResponse.value?.data?.ibType ?? 'dynamic';
+    final ibType =
+        ibController.ibStatusResponse.value?.data?.ibType ?? 'dynamic';
     final isTraditional = ibType == 'traditional';
 
-    final availableRebate =
-        stats.availableRebate != null
-            ? double.tryParse(stats.availableRebate.toString()) ?? 0.0
-            : 0.0;
-    final totalRebate =
-        stats.totalRebateGenerated != null
-            ? double.tryParse(stats.totalRebateGenerated.toString()) ?? 0.0
-            : 0.0;
+    final availableRebate = stats.availableRebate != null
+        ? double.tryParse(stats.availableRebate.toString()) ?? 0.0
+        : 0.0;
+    final totalRebate = stats.totalRebateGenerated != null
+        ? double.tryParse(stats.totalRebateGenerated.toString()) ?? 0.0
+        : 0.0;
 
     // 3×3 grid — order matches reference UI (left → right, top → bottom).
     return [
       _buildStatTile(
         title: 'Total Clients',
         value: (stats.totalClients ?? 0).toString(),
-        onTap:
-            widget.onNavigateToTab != null
-                ? () => widget.onNavigateToTab!(isTraditional ? 2 : 3)
-                : null,
+        onTap: widget.onNavigateToTab != null
+            ? () => widget.onNavigateToTab!(isTraditional ? 2 : 3)
+            : null,
       ),
       _buildStatTile(
         title: 'Total Lot',
@@ -497,10 +506,9 @@ class _IbDashboardNewScreenState extends State<IbDashboardNewScreen> {
       _buildStatTile(
         title: 'Pending Request',
         value: (stats.ibPendingRequests ?? 0).toString(),
-        onTap:
-            widget.onNavigateToTab != null && !isTraditional
-                ? () => widget.onNavigateToTab!(3)
-                : null,
+        onTap: widget.onNavigateToTab != null && !isTraditional
+            ? () => widget.onNavigateToTab!(3)
+            : null,
       ),
     ];
   }
@@ -537,7 +545,8 @@ class _IbDashboardNewScreenState extends State<IbDashboardNewScreen> {
                     fontWeight: FontWeight.w400,
                     color: AppColors.textGrey,
                     height: 1.15,
-                  fontFamily: 'SF UI'),
+                    fontFamily: 'SF UI',
+                  ),
                 ),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.end,
@@ -552,7 +561,8 @@ class _IbDashboardNewScreenState extends State<IbDashboardNewScreen> {
                           fontWeight: FontWeight.w400,
                           color: AppColors.primary,
                           height: 1.1,
-                        fontFamily: 'SF UI'),
+                          fontFamily: 'SF UI',
+                        ),
                       ),
                     ),
                     if (onTap != null)
@@ -574,4 +584,3 @@ class _IbDashboardNewScreenState extends State<IbDashboardNewScreen> {
     );
   }
 }
-

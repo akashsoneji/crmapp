@@ -168,7 +168,9 @@ class _CommissionRow extends StatelessWidget {
                       if (item.inGracePeriod)
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 2),
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: tokens.brandSoft,
                             borderRadius: BorderRadius.circular(4),
@@ -187,18 +189,12 @@ class _CommissionRow extends StatelessWidget {
                   const SizedBox(height: 3),
                   Text(
                     'Trade #${item.tradeMappingId} • ${item.copierAccount}',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: tokens.mutedText,
-                    ),
+                    style: TextStyle(fontSize: 11, color: tokens.mutedText),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     _formatDate(item.settledAt),
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: tokens.mutedText,
-                    ),
+                    style: TextStyle(fontSize: 10, color: tokens.mutedText),
                   ),
                 ],
               ),
@@ -217,10 +213,7 @@ class _CommissionRow extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   'Profit share ${PlanFormat.money(item.grossProfitShare)}',
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: tokens.mutedText,
-                  ),
+                  style: TextStyle(fontSize: 10, color: tokens.mutedText),
                 ),
               ],
             ),
@@ -233,8 +226,9 @@ class _CommissionRow extends StatelessWidget {
   String _formatDate(String iso) {
     if (iso.isEmpty) return '—';
     try {
-      return DateFormat('d MMM yyyy, HH:mm')
-          .format(DateTime.parse(iso).toLocal());
+      return DateFormat(
+        'd MMM yyyy, HH:mm',
+      ).format(DateTime.parse(iso).toLocal());
     } catch (_) {
       return iso;
     }

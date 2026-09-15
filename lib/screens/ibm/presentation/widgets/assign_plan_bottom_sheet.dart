@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:crm_app/screens/ibm/data/ibm_api_provider.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
+import 'package:crm_app/services/language_service.dart' show TranslationUtils;
 
 class AssignPlanBottomSheet extends StatefulWidget {
   final int planId;
@@ -46,10 +47,11 @@ class _AssignPlanBottomSheetState extends State<AssignPlanBottomSheet> {
           _subIbs = data['sub_ibs'];
         }
       } else {
-        _error = res.message ?? 'Failed to load Sub-IBs';
+        _error =
+            res.message ?? TranslationUtils.tr('ibm_failed_to_load_sub_ibs');
       }
     } catch (e) {
-      _error = 'Error loading Sub-IBs';
+      _error = TranslationUtils.tr('ibm_error_loading_sub_ibs');
     } finally {
       if (mounted) {
         setState(() {
@@ -72,16 +74,21 @@ class _AssignPlanBottomSheetState extends State<AssignPlanBottomSheet> {
         _selectedSubIbId!,
       );
       if (res.success) {
-        CustomToastService.show(message: 'Plan assigned successfully');
+        CustomToastService.show(
+          message: TranslationUtils.tr('ibm_plan_assigned_successfully'),
+        );
         widget.onAssigned();
         if (mounted) Navigator.pop(context);
       } else {
         CustomToastService.show(
-          message: res.message ?? 'Failed to assign plan',
+          message:
+              res.message ?? TranslationUtils.tr('ibm_failed_to_assign_plan'),
         );
       }
     } catch (e) {
-      CustomToastService.show(message: 'Error assigning plan');
+      CustomToastService.show(
+        message: TranslationUtils.tr('ibm_error_assigning_plan'),
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -122,13 +129,13 @@ class _AssignPlanBottomSheetState extends State<AssignPlanBottomSheet> {
             )
           else if (_subIbs.isEmpty)
             Text(
-              'No assignable Sub-IBs found.',
+              TranslationUtils.tr('ibm_no_assignable_sub_ibs'),
               style: TextStyle(color: AppColors.textSecondary, fontSize: 14.sp),
               textAlign: TextAlign.center,
             )
           else ...[
             Text(
-              'Select a Sub-IB',
+              TranslationUtils.tr('ibm_select_sub_ib'),
               style: TextStyle(color: AppColors.textSecondary, fontSize: 14.sp),
             ),
             SizedBox(height: 8.h),
@@ -143,18 +150,13 @@ class _AssignPlanBottomSheetState extends State<AssignPlanBottomSheet> {
                 ),
               ),
               value: _selectedSubIbId,
-              hint: const Text('Choose a Sub-IB'),
-              items:
-                  _subIbs.map<DropdownMenuItem<int>>((sub) {
-                    final int id =
-                        sub['partner_user_id'] ??
-                        sub['id'] ??
-                        sub['user_id'] ??
-                        0;
-                    final String name =
-                        sub['name'] ?? sub['email'] ?? 'Unknown';
-                    return DropdownMenuItem<int>(value: id, child: Text(name));
-                  }).toList(),
+              hint: Text(TranslationUtils.tr('ibm_choose_sub_ib')),
+              items: _subIbs.map<DropdownMenuItem<int>>((sub) {
+                final int id =
+                    sub['partner_user_id'] ?? sub['id'] ?? sub['user_id'] ?? 0;
+                final String name = sub['name'] ?? sub['email'] ?? 'Unknown';
+                return DropdownMenuItem<int>(value: id, child: Text(name));
+              }).toList(),
               onChanged: (val) {
                 setState(() {
                   _selectedSubIbId = val;
@@ -163,10 +165,9 @@ class _AssignPlanBottomSheetState extends State<AssignPlanBottomSheet> {
             ),
             SizedBox(height: 24.h),
             ElevatedButton(
-              onPressed:
-                  _isSubmitting || _selectedSubIbId == null
-                      ? null
-                      : _assignPlan,
+              onPressed: _isSubmitting || _selectedSubIbId == null
+                  ? null
+                  : _assignPlan,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.purple,
                 padding: EdgeInsets.symmetric(vertical: 14.h),
@@ -174,24 +175,23 @@ class _AssignPlanBottomSheetState extends State<AssignPlanBottomSheet> {
                   borderRadius: BorderRadius.circular(8.r),
                 ),
               ),
-              child:
-                  _isSubmitting
-                      ? SizedBox(
-                        width: 20.w,
-                        height: 20.w,
-                        child: const CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2,
-                        ),
-                      )
-                      : Text(
-                        'Assign Plan',
-                        style: TextStyle(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
+              child: _isSubmitting
+                  ? SizedBox(
+                      width: 20.w,
+                      height: 20.w,
+                      child: const CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
                       ),
+                    )
+                  : Text(
+                      'Assign Plan',
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
             ),
           ],
           SizedBox(height: MediaQuery.of(context).viewInsets.bottom),

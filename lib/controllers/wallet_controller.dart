@@ -1,6 +1,7 @@
 import '../../constants/api_const.dart';
 import '../../services/api_service.dart';
 import '../../services/secure_storage_service.dart';
+import '../../services/language_service.dart';
 import '../../widgets/custom_toast.dart';
 import '../../utils/precision_helper.dart';
 import '../../controllers/app_notification_controller.dart';
@@ -30,20 +31,18 @@ class WalletResponse {
     return WalletResponse(
       status: json['status'] ?? false,
       message: json['message'] ?? "",
-      userMT5Accounts:
-          (json['data']?['userMT5Accounts'] as List? ?? [])
-              .map((e) => UserMT5Account.fromJson(e))
-              .toList(),
+      userMT5Accounts: (json['data']?['userMT5Accounts'] as List? ?? [])
+          .map((e) => UserMT5Account.fromJson(e))
+          .toList(),
       wallet: Wallet.fromJson(json['data']?['wallet'] ?? {}),
-      ibAccount:
-          ibaccountData is Map<String, dynamic>
-              ? IbAccount.fromJson(ibaccountData)
-              : IbAccount(
-                id: 0,
-                promotionTool: "",
-                status: "",
-                referenceLinkId: "",
-              ),
+      ibAccount: ibaccountData is Map<String, dynamic>
+          ? IbAccount.fromJson(ibaccountData)
+          : IbAccount(
+              id: 0,
+              promotionTool: "",
+              status: "",
+              referenceLinkId: "",
+            ),
     );
   }
 }
@@ -162,10 +161,9 @@ class Data {
 
   Data.fromJson(Map<String, dynamic> json) {
     id = json['id']?.toString();
-    userId =
-        json['user_id'] is int
-            ? json['user_id']
-            : int.tryParse(json['user_id']?.toString() ?? '');
+    userId = json['user_id'] is int
+        ? json['user_id']
+        : int.tryParse(json['user_id']?.toString() ?? '');
     mt5AccountId = json['mt5_account_id']?.toString();
     referenceNumber = json['reference_number']?.toString();
     amount = json['amount']?.toString();
@@ -175,7 +173,8 @@ class Data {
     proof = json['proof']?.toString();
     proofUrl = json['proof_url']?.toString();
     paymentDetails = json['payment_details']?.toString();
-    createdAt = json['created_at_iso']?.toString() ?? json['created_at']?.toString();
+    createdAt =
+        json['created_at_iso']?.toString() ?? json['created_at']?.toString();
     transactionType = json['transaction_type']?.toString();
     type = json['type']?.toString();
   }
@@ -283,16 +282,14 @@ class WalletController extends GetxController {
 
   Future<void> depositWallet() async {
     if (transferFromAccount.value.isEmpty) {
-      CustomToastService.showError(
-        message: 'Please select Transfer From',
-      );
+      CustomToastService.showError(message: 'wallet_transfer_select_from'.tr);
       return;
     }
 
     final rawText = amountController.text.trim();
     if (rawText.isEmpty) {
       CustomToastService.showError(
-        message: 'Please enter amount',
+        message: 'wallet_validation_enter_amount'.tr,
       );
       return;
     }
@@ -302,7 +299,7 @@ class WalletController extends GetxController {
     final parsedAmount = PrecisionHelper.parseDouble(cleanedText);
     if (parsedAmount <= 0.0) {
       CustomToastService.showError(
-        message: 'Amount must be greater than 0.00',
+        message: 'wallet_validation_amount_positive'.tr,
       );
       return;
     }
@@ -349,9 +346,7 @@ class WalletController extends GetxController {
         return false;
       }
     } catch (e) {
-      CustomToastService.showError(
-        message: 'Error checking balance: $e',
-      );
+      CustomToastService.showError(message: 'Error checking balance: $e');
       return false;
     }
   }
@@ -372,9 +367,7 @@ class WalletController extends GetxController {
       if (response.success && response.data != null) {
         isOtpSent.value = true;
         otpMessage.value = response.data['message'] ?? 'OTP sent successfully';
-        CustomToastService.showSuccess(
-          message: 'OTP sent successfully',
-        );
+        CustomToastService.showSuccess(message: 'OTP sent successfully');
         return true;
       } else {
         otpMessage.value = response.message ?? 'Failed to send OTP';
@@ -385,9 +378,7 @@ class WalletController extends GetxController {
       }
     } catch (e) {
       otpMessage.value = 'Error: $e';
-      CustomToastService.showError(
-        message: 'Error sending OTP: $e',
-      );
+      CustomToastService.showError(message: 'Error sending OTP: $e');
       return false;
     } finally {
       isOtpLoading.value = false;
@@ -402,9 +393,7 @@ class WalletController extends GetxController {
     String amount,
   ) async {
     if (otp.isEmpty) {
-      CustomToastService.showError(
-        message: 'Please enter OTP',
-      );
+      CustomToastService.showError(message: 'Please enter OTP');
       return false;
     }
 
@@ -416,9 +405,7 @@ class WalletController extends GetxController {
     }
 
     if (amount.isEmpty) {
-      CustomToastService.showError(
-        message: 'Please enter amount',
-      );
+      CustomToastService.showError(message: 'Please enter amount');
       return false;
     }
 
@@ -453,9 +440,7 @@ class WalletController extends GetxController {
         return false;
       }
     } catch (e) {
-      CustomToastService.showError(
-        message: 'Error processing transfer: $e',
-      );
+      CustomToastService.showError(message: 'Error processing transfer: $e');
       return false;
     } finally {
       isTransferLoading.value = false;
@@ -476,16 +461,12 @@ class WalletController extends GetxController {
 
   bool _validateRequiredFields() {
     if (transferFromAccount.value.isEmpty) {
-      CustomToastService.showError(
-        message: 'Please select Transfer From',
-      );
+      CustomToastService.showError(message: 'Please select Transfer From');
       return false;
     }
 
     if (amount.value.isEmpty) {
-      CustomToastService.showError(
-        message: 'Please Enter amount',
-      );
+      CustomToastService.showError(message: 'Please Enter amount');
       return false;
     }
 
@@ -517,9 +498,7 @@ class WalletController extends GetxController {
       }
     } catch (e) {
       print('❌ Error sending OTP: $e');
-      CustomToastService.showError(
-        message: 'Error sending OTP: $e',
-      );
+      CustomToastService.showError(message: 'Error sending OTP: $e');
     } finally {
       isLoading.value = false;
     }
@@ -577,7 +556,9 @@ class WalletController extends GetxController {
             walletBalance: balanceStr,
           );
           balance.value = balanceStr;
-          print("Fetched wallet Details: ID = $walletIdStr, Balance = $balanceStr");
+          print(
+            "Fetched wallet Details: ID = $walletIdStr, Balance = $balanceStr",
+          );
         }
       } else {
         print("Failed to fetch fresh wallet details: ${freshResponse.message}");
@@ -604,13 +585,17 @@ class WalletController extends GetxController {
       }
 
       final token = await SecureStorageService.getAuthToken();
-      
+
       final typeQuery = filterType.value != 'All Types' ? filterType.value : '';
-      final statusQuery = filterStatus.value != 'All Status' ? filterStatus.value : '';
+      final statusQuery = filterStatus.value != 'All Status'
+          ? filterStatus.value
+          : '';
       final fromQuery = filterDateFrom.value;
       final toQuery = filterDateTo.value;
 
-      print('DEBUG: calling getTransactions with type: $typeQuery, status: $statusQuery');
+      print(
+        'DEBUG: calling getTransactions with type: $typeQuery, status: $statusQuery',
+      );
       final Map<String, dynamic> queryParams = {
         'page': page.toString(),
         'perPage': '10',
@@ -631,7 +616,9 @@ class WalletController extends GetxController {
       print('DEBUG: getTransactions response success = ${response.success}');
       if (response.success && response.data != null) {
         final data = response.data;
-        print('DEBUG: getTransactions data keys = ${data is Map ? data.keys : "Not a Map"}');
+        print(
+          'DEBUG: getTransactions data keys = ${data is Map ? data.keys : "Not a Map"}',
+        );
         List<Data> newItems = [];
         if (data['data'] != null) {
           final List transactionsList = data['data'];
@@ -643,7 +630,9 @@ class WalletController extends GetxController {
           currentPage.value = data['pagination']['current_page'] ?? page;
           lastPage.value = data['pagination']['last_page'] ?? 1;
           totalItems.value = data['pagination']['total'] ?? 0;
-          print('DEBUG: pagination: current = ${currentPage.value}, last = ${lastPage.value}');
+          print(
+            'DEBUG: pagination: current = ${currentPage.value}, last = ${lastPage.value}',
+          );
         }
 
         if (page == 1) {
@@ -656,7 +645,9 @@ class WalletController extends GetxController {
           hasMore.value = false;
         }
       } else {
-        print('DEBUG: getTransactions failed with message: ${response.message}');
+        print(
+          'DEBUG: getTransactions failed with message: ${response.message}',
+        );
         if (page == 1) {
           hasMore.value = false;
         }

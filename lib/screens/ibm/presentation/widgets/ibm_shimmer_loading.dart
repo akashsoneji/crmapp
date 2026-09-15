@@ -9,10 +9,12 @@ class IbmClientsShimmerLoading extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = AppColors.isDarkMode;
-    final baseColor =
-        isDark ? const Color(0xFF2C2C2C) : const Color(0xFFE8E8E8);
-    final highlightColor =
-        isDark ? const Color(0xFF3D3D3D) : const Color(0xFFF5F5F5);
+    final baseColor = isDark
+        ? const Color(0xFF2C2C2C)
+        : const Color(0xFFE8E8E8);
+    final highlightColor = isDark
+        ? const Color(0xFF3D3D3D)
+        : const Color(0xFFF5F5F5);
 
     return Shimmer.fromColors(
       baseColor: baseColor,
@@ -159,25 +161,13 @@ class IbmClientsShimmerLoading extends StatelessWidget {
                 ),
               ),
               SizedBox(width: 8.w),
-              Container(
-                width: 60.w,
-                height: 10.h,
-                color: Colors.white,
-              ),
+              Container(width: 60.w, height: 10.h, color: Colors.white),
             ],
           ),
           SizedBox(height: 12.h),
-          Container(
-            width: 50.w,
-            height: 18.h,
-            color: Colors.white,
-          ),
+          Container(width: 50.w, height: 18.h, color: Colors.white),
           SizedBox(height: 4.h),
-          Container(
-            width: 80.w,
-            height: 8.h,
-            color: Colors.white,
-          ),
+          Container(width: 80.w, height: 8.h, color: Colors.white),
         ],
       ),
     );
@@ -210,7 +200,11 @@ class IbmClientsShimmerLoading extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(width: 100.w, height: 12.h, color: Colors.white),
+                      Container(
+                        width: 100.w,
+                        height: 12.h,
+                        color: Colors.white,
+                      ),
                       SizedBox(height: 4.h),
                       Container(width: 150.w, height: 8.h, color: Colors.white),
                     ],

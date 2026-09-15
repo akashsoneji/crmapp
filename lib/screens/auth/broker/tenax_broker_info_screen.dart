@@ -46,13 +46,12 @@ class TenaxBrokerInfoScreen extends StatelessWidget {
           Expanded(
             child: ListView.separated(
               itemCount: rows.length,
-              separatorBuilder:
-                  (_, __) => Divider(
-                    height: 1.h,
-                    color: AppColors.border,
-                    indent: 20.w,
-                    endIndent: 20.w,
-                  ),
+              separatorBuilder: (_, __) => Divider(
+                height: 1.h,
+                color: AppColors.border,
+                indent: 20.w,
+                endIndent: 20.w,
+              ),
               itemBuilder: (context, index) {
                 return _InfoRow(
                   value: rows[index].value,
@@ -146,7 +145,9 @@ class TenaxBrokerInfoScreen extends StatelessWidget {
             ),
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.isDarkMode ? Color(0xFFFFFFFF) : Color(0xFF4A0C54),
+                backgroundColor: AppColors.isDarkMode
+                    ? Color(0xFFFFFFFF)
+                    : Color(0xFF4A0C54),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14.r),
                 ),

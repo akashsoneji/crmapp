@@ -19,6 +19,7 @@ import 'package:crm_app/widgets/common_loading_widget.dart';
 import 'package:crm_app/utils/precision_helper.dart';
 import 'package:flutter/foundation.dart';
 import 'package:crm_app/flavor_config.dart';
+import 'package:crm_app/services/language_service.dart';
 
 class ClosePositionScreen extends StatefulWidget {
   final TradePosition position;
@@ -314,8 +315,9 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
 
       // Calculate proportional profit based on close volume
       final totalVolume = _positionVolume;
-      final closeVolumeRatio =
-          totalVolume > 0 ? closeVolume / totalVolume : 0.0;
+      final closeVolumeRatio = totalVolume > 0
+          ? closeVolume / totalVolume
+          : 0.0;
       final proportionalProfit = realTimeProfit * closeVolumeRatio;
 
       return proportionalProfit;
@@ -342,8 +344,11 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
       final activeAccount = accountController.activeMT5Account;
       if (activeAccount == null) {
         CustomToastService.showError(
-          title: 'Error',
-          message: 'No active account found',
+          title: TranslationUtils.trf('common_error', 'Error'),
+          message: TranslationUtils.trf(
+            'trading_no_active_account',
+            'No active account found',
+          ),
         );
         return;
       }
@@ -476,8 +481,11 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
       final activeAccount = accountController.activeMT5Account;
       if (activeAccount == null) {
         CustomToastService.showError(
-          title: 'Error',
-          message: 'No active account found',
+          title: TranslationUtils.trf('common_error', 'Error'),
+          message: TranslationUtils.trf(
+            'trading_no_active_account',
+            'No active account found',
+          ),
         );
         return;
       }
@@ -504,7 +512,7 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
       }
     } catch (e) {
       CustomToastService.showError(
-        title: 'Error',
+        title: TranslationUtils.trf('common_error', 'Error'),
         message: 'Failed to close position: ${e.toString()}',
       );
     } finally {
@@ -519,10 +527,9 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
   /// Returns path like 'assets/svg/flags/eurusd.svg'
   String _getFlagPath(String symbol) {
     // Remove suffix if present (e.g., EURUSD.c -> EURUSD)
-    String cleanSymbol =
-        symbol.contains('.')
-            ? symbol.substring(0, symbol.lastIndexOf('.'))
-            : symbol;
+    String cleanSymbol = symbol.contains('.')
+        ? symbol.substring(0, symbol.lastIndexOf('.'))
+        : symbol;
 
     // Return path with full symbol lowercase
     return 'assets/svg/flags/${cleanSymbol.toLowerCase()}.svg';
@@ -666,9 +673,8 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
                       Text(
                         'Close / Modify Position',
                         maxLines: 1,
-                        overflow:
-                            TextOverflow
-                                .ellipsis, // <-- no overflow, show "..."
+                        overflow: TextOverflow
+                            .ellipsis, // <-- no overflow, show "..."
                         style: AppTextStyles.heading.copyWith(
                           fontSize: 18.sp,
                           fontWeight: FontWeight.w600,
@@ -679,9 +685,8 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
                       Text(
                         '${widget.position.action} ${widget.position.volume} $_displaySymbol at ${widget.position.openPrice}',
                         maxLines: 1,
-                        overflow:
-                            TextOverflow
-                                .ellipsis, // <-- also protect second line
+                        overflow: TextOverflow
+                            .ellipsis, // <-- also protect second line
                         style: AppTextStyles.label.copyWith(
                           fontSize: 12.sp,
                           fontWeight: FontWeight.w400,
@@ -753,11 +758,9 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
 
                         // Extra padding for keyboard
                         SizedBox(
-                          height:
-                              MediaQuery.of(context).viewInsets.bottom > 0
-                                  ? MediaQuery.of(context).viewInsets.bottom +
-                                      20.h
-                                  : 20.h,
+                          height: MediaQuery.of(context).viewInsets.bottom > 0
+                              ? MediaQuery.of(context).viewInsets.bottom + 20.h
+                              : 20.h,
                         ),
                       ],
                     ),
@@ -1353,14 +1356,13 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
                             // Use standard 50 pips risk (0.0050 for most pairs, 0.50 for JPY)
                             final standardRisk =
                                 widget.position.symbol.contains('JPY')
-                                    ? 0.50
-                                    : 0.0050;
+                                ? 0.50
+                                : 0.0050;
                             final reward =
                                 standardRisk * 2; // 1:2 ratio = 100 pips reward
-                            final defaultTP =
-                                isBuy
-                                    ? entryPrice + reward
-                                    : entryPrice - reward;
+                            final defaultTP = isBuy
+                                ? entryPrice + reward
+                                : entryPrice - reward;
                             takeProfitController.text = _formatPrice(defaultTP);
                             takeProfitPrice = defaultTP;
                             setState(() {
@@ -1446,12 +1448,11 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
                           // Use standard 50 pips risk (0.0050 for most pairs, 0.50 for JPY)
                           final standardRisk =
                               widget.position.symbol.contains('JPY')
-                                  ? 0.50
-                                  : 0.0050;
-                          final defaultSL =
-                              isBuy
-                                  ? entryPrice - standardRisk
-                                  : entryPrice + standardRisk;
+                              ? 0.50
+                              : 0.0050;
+                          final defaultSL = isBuy
+                              ? entryPrice - standardRisk
+                              : entryPrice + standardRisk;
                           stopLossController.text = _formatPrice(defaultSL);
                           stopLossPrice = defaultSL;
                           setState(() {
@@ -1538,16 +1539,14 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
     return Container(
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
-        color:
-            isPositive
-                ? AppColors.success.withOpacity(0.1)
-                : AppColors.error.withOpacity(0.1),
+        color: isPositive
+            ? AppColors.success.withOpacity(0.1)
+            : AppColors.error.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12.r),
         border: Border.all(
-          color:
-              isPositive
-                  ? AppColors.success.withOpacity(0.3)
-                  : AppColors.error.withOpacity(0.3),
+          color: isPositive
+              ? AppColors.success.withOpacity(0.3)
+              : AppColors.error.withOpacity(0.3),
         ),
       ),
       child: Column(
@@ -1588,10 +1587,9 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
                 style: AppTextStyles.label.copyWith(
                   fontSize: 12.sp,
                   fontWeight: FontWeight.w600,
-                  color:
-                      fullPositionProfit >= 0
-                          ? AppColors.success
-                          : AppColors.error,
+                  color: fullPositionProfit >= 0
+                      ? AppColors.success
+                      : AppColors.error,
                 ),
               ),
             ],
@@ -1672,15 +1670,13 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
       // SL/TP enabled but not modified - show "Close Trade"
       buttonText = 'CLOSE TRADE';
     } else if (isPartialClose) {
-      buttonText =
-          isPositive
-              ? 'Close ${PrecisionHelper.formatVolume(closeVolume)} Lots with Profit +$formattedProfitLoss'
-              : 'Close ${PrecisionHelper.formatVolume(closeVolume)} Lots with Loss $formattedProfitLoss';
+      buttonText = isPositive
+          ? 'Close ${PrecisionHelper.formatVolume(closeVolume)} Lots with Profit +$formattedProfitLoss'
+          : 'Close ${PrecisionHelper.formatVolume(closeVolume)} Lots with Loss $formattedProfitLoss';
     } else {
-      buttonText =
-          isPositive
-              ? 'Close with Profit +$formattedProfitLoss'
-              : 'Close with Loss $formattedProfitLoss';
+      buttonText = isPositive
+          ? 'Close with Profit +$formattedProfitLoss'
+          : 'Close with Loss $formattedProfitLoss';
     }
 
     // Check if SL/TP values are valid (20 points from current price)
@@ -1695,46 +1691,41 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
         onPressed: (isProcessing || hasInvalidSLTP) ? null : _onButtonPressed,
         style: ElevatedButton.styleFrom(
           padding: EdgeInsets.zero,
-          backgroundColor:
-              (hasTPSL && isSLTPModified)
-                  ? AppColors.primary
-                  : hasTPSL
-                  ? AppColors
-                      .textGrey // Grey for "Close Trade" when SL/TP not modified
-                  : (isPositive ? AppColors.success : AppColors.error),
+          backgroundColor: (hasTPSL && isSLTPModified)
+              ? AppColors.primary
+              : hasTPSL
+              ? AppColors
+                    .textGrey // Grey for "Close Trade" when SL/TP not modified
+              : (isPositive ? AppColors.success : AppColors.error),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12.r),
           ),
           elevation: 2,
         ),
-        child:
-            isProcessing
-                ? Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    ButtonLoadingWidget(
-                      size: 20.0,
+        child: isProcessing
+            ? Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ButtonLoadingWidget(size: 20.0, color: AppColors.whiteColor),
+                  SizedBox(width: 12.w),
+                  Text(
+                    'Processing...',
+                    style: AppTextStyles.label.copyWith(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w700,
                       color: AppColors.whiteColor,
                     ),
-                    SizedBox(width: 12.w),
-                    Text(
-                      'Processing...',
-                      style: AppTextStyles.label.copyWith(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.whiteColor,
-                      ),
-                    ),
-                  ],
-                )
-                : Text(
-                  buttonText,
-                  style: AppTextStyles.label.copyWith(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.whiteColor,
                   ),
+                ],
+              )
+            : Text(
+                buttonText,
+                style: AppTextStyles.label.copyWith(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.whiteColor,
                 ),
+              ),
       ),
     );
   }
@@ -2176,10 +2167,9 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
 
     // For TP: positive = profit (green), negative = loss (red)
     // For SL: ALWAYS show in red (it's always a loss)
-    final color =
-        isProfit
-            ? (isPositive ? AppColors.success : AppColors.error)
-            : AppColors.error; // SL is always a loss, always show in red
+    final color = isProfit
+        ? (isPositive ? AppColors.success : AppColors.error)
+        : AppColors.error; // SL is always a loss, always show in red
 
     return Padding(
       padding: EdgeInsets.only(top: 8.h, left: 12.w, right: 12.w),

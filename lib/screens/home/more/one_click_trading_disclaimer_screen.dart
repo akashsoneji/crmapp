@@ -194,25 +194,25 @@ class _OneClickTradingDisclaimerScreenState
                   // OK Button
                   Expanded(
                     child: ElevatedButton(
-                      onPressed:
-                          _isAccepted
-                              ? () async {
-                                // Save preference
-                                await _oneClickService
-                                    .setOneClickTradingEnabled(true);
-                                // Navigate back
-                                if (context.mounted) {
-                                  Navigator.of(context).pop();
-                                }
+                      onPressed: _isAccepted
+                          ? () async {
+                              // Save preference
+                              await _oneClickService.setOneClickTradingEnabled(
+                                true,
+                              );
+                              // Navigate back
+                              if (context.mounted) {
+                                Navigator.of(context).pop();
                               }
-                              : null,
+                            }
+                          : null,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                            _isAccepted
-                                ? AppColors.primary
-                                : AppColors.border,
-                        foregroundColor:
-                            _isAccepted ? AppColors.whiteColor : AppColors.textGrey,
+                        backgroundColor: _isAccepted
+                            ? AppColors.primary
+                            : AppColors.border,
+                        foregroundColor: _isAccepted
+                            ? AppColors.whiteColor
+                            : AppColors.textGrey,
                         padding: EdgeInsets.symmetric(vertical: 14.h),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8.r),
@@ -223,10 +223,9 @@ class _OneClickTradingDisclaimerScreenState
                         'OK',
                         style: AppTextStyles.label.copyWith(
                           fontSize: 16.sp,
-                          color:
-                              _isAccepted
-                                  ? AppColors.whiteColor
-                                  : AppColors.textPrimary,
+                          color: _isAccepted
+                              ? AppColors.whiteColor
+                              : AppColors.textPrimary,
                           fontWeight: FontWeight.w600,
                         ),
                       ),

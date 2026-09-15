@@ -9,6 +9,7 @@ import 'package:crm_app/widgets/custom_toast.dart';
 import '../../constants/api_const.dart';
 import '../../screens/home/more/finance/deposit_real_screen.dart';
 import '../../services/secure_storage_service.dart';
+import '../../services/language_service.dart' show TranslationUtils;
 
 class PaymentMethodController extends GetxController {
   // Observable states
@@ -69,7 +70,9 @@ class PaymentMethodController extends GetxController {
     } catch (e) {
       _setLoading(false);
       kycDeposits.clear();
-      CustomToastService.showError(message: "Error: $e");
+      CustomToastService.showError(
+        message: '${TranslationUtils.tr('common_error')}: $e',
+      );
     } finally {
       _setLoading(false);
     }
@@ -86,10 +89,9 @@ class PaymentMethodController extends GetxController {
       Uint8List? placeholderBytes;
 
       try {
-        placeholderBytes =
-            (await rootBundle.load(
-              'assets/images/placeholder.png',
-            )).buffer.asUint8List();
+        placeholderBytes = (await rootBundle.load(
+          'assets/images/placeholder.png',
+        )).buffer.asUint8List();
       } catch (e) {
         print('Error loading placeholder: $e');
       }
@@ -106,17 +108,18 @@ class PaymentMethodController extends GetxController {
 
       // Then load actual images in parallel
       if (token != null && token.isNotEmpty) {
-        final List<Future<Map<String, dynamic>>> imageFutures =
-            methods.map((method) async {
-              final iconUrl = method['icon'] ?? '';
-              Uint8List? bytes;
+        final List<Future<Map<String, dynamic>>> imageFutures = methods.map((
+          method,
+        ) async {
+          final iconUrl = method['icon'] ?? '';
+          Uint8List? bytes;
 
-              if (iconUrl.isNotEmpty) {
-                bytes = await fetchImageBytes(iconUrl, token);
-              }
+          if (iconUrl.isNotEmpty) {
+            bytes = await fetchImageBytes(iconUrl, token);
+          }
 
-              return {...method, 'iconBytes': bytes ?? placeholderBytes};
-            }).toList();
+          return {...method, 'iconBytes': bytes ?? placeholderBytes};
+        }).toList();
 
         // Load all images in parallel
         final updatedMethods = await Future.wait(imageFutures);
@@ -152,11 +155,13 @@ class PaymentMethodController extends GetxController {
       final streamedResponse = await request.send();
 
       // Log response
-      final statusEmoji = streamedResponse.statusCode >= 200 && streamedResponse.statusCode < 300 
-          ? '✅' 
-          : streamedResponse.statusCode >= 400 
-              ? '❌' 
-              : '⚠️';
+      final statusEmoji =
+          streamedResponse.statusCode >= 200 &&
+              streamedResponse.statusCode < 300
+          ? '✅'
+          : streamedResponse.statusCode >= 400
+          ? '❌'
+          : '⚠️';
       print('═══════════════════════════════════════════════════════════');
       print('$statusEmoji DIRECT HTTP RESPONSE [$timestamp]');
       print('═══════════════════════════════════════════════════════════');

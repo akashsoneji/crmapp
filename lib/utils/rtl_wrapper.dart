@@ -13,9 +13,11 @@ class RTLWrapper extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final service = languageService ?? Get.find<LanguageService>();
-    return Directionality(
-      textDirection: service.getTextDirection(),
-      child: child,
+    return Obx(
+      () => Directionality(
+        textDirection: service.getTextDirection(),
+        child: child,
+      ),
     );
   }
 }
@@ -105,14 +107,12 @@ class RTLRow extends StatelessWidget {
     final service = languageService ?? Get.find<LanguageService>();
     final isRTL = service.isRTL();
 
-    // Reverse children order for RTL
-    final adjustedChildren = isRTL ? children.reversed.toList() : children;
-
     return Row(
       mainAxisAlignment: mainAxisAlignment,
       crossAxisAlignment: crossAxisAlignment,
       mainAxisSize: mainAxisSize,
-      children: adjustedChildren,
+      textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
+      children: children,
     );
   }
 }
@@ -272,14 +272,11 @@ class RTLListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final service = languageService ?? Get.find<LanguageService>();
-    final isRTL = service.isRTL();
-
     return ListTile(
-      leading: isRTL ? trailing : leading,
+      leading: leading,
       title: title,
       subtitle: subtitle,
-      trailing: isRTL ? leading : trailing,
+      trailing: trailing,
       onTap: onTap,
     );
   }

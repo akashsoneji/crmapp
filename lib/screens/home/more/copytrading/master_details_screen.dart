@@ -4,6 +4,7 @@ import 'package:crm_app/widgets/common_loading_widget.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/copy_trading/copy_trading_master_details_controller.dart';
 import 'package:crm_app/controllers/copy_trading/copy_trading_hub_controller.dart';
+import 'package:crm_app/services/language_service.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -40,12 +41,12 @@ class MasterDetailsScreen extends StatelessWidget {
             fontWeight: FontWeight.w600,
           ),
         ),
-        leading:  AppSvgBackButton(
+        leading: AppSvgBackButton(
           onPressed: () => AppSvgBackButton.popRoute(context),
           iconWidth: 30.w,
           iconHeight: 30.h,
         ),
-        
+
         actions: [
           IconButton(
             onPressed: () => controller.loadProfile(showLoading: true),
@@ -66,7 +67,9 @@ class MasterDetailsScreen extends StatelessWidget {
 
         final profile = controller.profile.value;
         if (profile == null) {
-          return const Center(child: Text('No data'));
+          return Center(
+            child: Text(Get.find<LanguageService>().tr('common_no_data')),
+          );
         }
 
         return RefreshIndicator(
@@ -107,10 +110,9 @@ class _MasterHeroCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final primaryPlan = profile.plans.isNotEmpty ? profile.plans.first : null;
     final minInvestment = primaryPlan?.minimumCapital ?? 0;
-    final commission =
-        primaryPlan?.commissionLabel.isNotEmpty == true
-            ? primaryPlan!.commissionLabel
-            : (primaryPlan?.commissionType ?? '');
+    final commission = primaryPlan?.commissionLabel.isNotEmpty == true
+        ? primaryPlan!.commissionLabel
+        : (primaryPlan?.commissionType ?? '');
 
     final sinceDays = profile.withUsDays ?? _daysSince(profile.memberSince);
     final withUs = sinceDays == null ? '' : '${sinceDays}d';
@@ -208,15 +210,14 @@ class _MasterHeroCard extends StatelessWidget {
               Expanded(
                 child: _HeroStat(
                   label: 'Risk score',
-                  value:
-                      profile.riskScore == null
-                          ? '-'
-                          : 'Risk ${profile.riskScore}',
+                  value: profile.riskScore == null
+                      ? '-'
+                      : 'Risk ${profile.riskScore}',
                 ),
               ),
               Expanded(
                 child: _HeroStat(
-                  label: 'Equity',
+                  label: TranslationUtils.tr('copy_equity'),
                   value: '\$${profile.masterEquity.toStringAsFixed(2)}',
                 ),
               ),
@@ -241,20 +242,20 @@ class _MasterHeroCard extends StatelessWidget {
             child: ElevatedButton(
               onPressed:
                   primaryPlan == null ||
-                          primaryPlan.isFull ||
-                          primaryPlan.isEnrolled
-                      ? null
-                      : () async {
-                        if (!Get.isRegistered<CopyTradingHubController>()) {
-                          Get.put(CopyTradingHubController());
-                        }
-                        await Get.to(
-                          () => SubscribeToPlanScreen(
-                            masterCode: masterCode,
-                            plan: primaryPlan,
-                          ),
-                        );
-                      },
+                      primaryPlan.isFull ||
+                      primaryPlan.isEnrolled
+                  ? null
+                  : () async {
+                      if (!Get.isRegistered<CopyTradingHubController>()) {
+                        Get.put(CopyTradingHubController());
+                      }
+                      await Get.to(
+                        () => SubscribeToPlanScreen(
+                          masterCode: masterCode,
+                          plan: primaryPlan,
+                        ),
+                      );
+                    },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.brandPrimary,
                 foregroundColor: AppColors.onColoredBackground,
@@ -412,8 +413,8 @@ class _ViewByPlanCard extends StatelessWidget {
                         selected:
                             controller.selectedPlanId.value ==
                             plan.planId.toString(),
-                        onTap:
-                            () => controller.selectPlan(plan.planId.toString()),
+                        onTap: () =>
+                            controller.selectPlan(plan.planId.toString()),
                       ),
                     ),
                   ),
@@ -447,7 +448,9 @@ class _PlanChip extends StatelessWidget {
           color: selected ? AppColors.primary : AppColors.card,
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
-            color: selected ? AppColors.primary : AppColors.border.withValues(alpha: 0.22),
+            color: selected
+                ? AppColors.primary
+                : AppColors.border.withValues(alpha: 0.22),
           ),
         ),
         child: Text(
@@ -455,7 +458,9 @@ class _PlanChip extends StatelessWidget {
           style: TextStyle(
             fontSize: 12.sp,
             fontWeight: FontWeight.w600,
-            color: selected ? AppColors.onColoredBackground : AppColors.textPrimary,
+            color: selected
+                ? AppColors.onColoredBackground
+                : AppColors.textPrimary,
           ),
         ),
       ),
@@ -475,11 +480,13 @@ class _PerformanceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final gainColor =
-        profile.totalGainPercent >= 0 ? AppColors.green : AppColors.error;
+    final gainColor = profile.totalGainPercent >= 0
+        ? AppColors.green
+        : AppColors.error;
     final pnlColor = profile.totalPnl >= 0 ? AppColors.green : AppColors.error;
-    final ddColor =
-        profile.maxDrawdown > 0 ? AppColors.error : AppColors.textPrimary;
+    final ddColor = profile.maxDrawdown > 0
+        ? AppColors.error
+        : AppColors.textPrimary;
     return Obx(() {
       if (controller.isPlanOrTimeframeLoading.value) {
         return Container(
@@ -639,10 +646,9 @@ class _PerfStat extends StatelessWidget {
               fontSize: 11.sp,
               color: AppColors.textGrey,
               fontWeight: FontWeight.w700,
-              decoration:
-                  showUnderline
-                      ? TextDecoration.underline
-                      : TextDecoration.none,
+              decoration: showUnderline
+                  ? TextDecoration.underline
+                  : TextDecoration.none,
               decorationColor: AppColors.textGrey,
               decorationStyle: TextDecorationStyle.dotted,
             ),
@@ -675,10 +681,9 @@ class _TimeChip extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
         decoration: BoxDecoration(
-          color:
-              selected
-                  ? AppColors.textPrimary
-                  : AppColors.tradeBackgroundCenterColor.withOpacity(0.35),
+          color: selected
+              ? AppColors.textPrimary
+              : AppColors.tradeBackgroundCenterColor.withOpacity(0.35),
           borderRadius: BorderRadius.circular(999),
           border: Border.all(color: AppColors.border),
         ),
@@ -687,7 +692,9 @@ class _TimeChip extends StatelessWidget {
           style: TextStyle(
             fontSize: 11.sp,
             fontWeight: FontWeight.w600,
-            color: selected ? AppColors.onColoredBackground : AppColors.textPrimary,
+            color: selected
+                ? AppColors.onColoredBackground
+                : AppColors.textPrimary,
           ),
         ),
       ),
@@ -707,7 +714,9 @@ class _PerformanceChart extends StatelessWidget {
     final lineSpots = <FlSpot>[];
     final barGroups = <BarChartGroupData>[];
     for (var i = 0; i < series.length; i++) {
-      lineSpots.add(FlSpot(i.toDouble(), series[i].cumulativeProfit.toDouble()));
+      lineSpots.add(
+        FlSpot(i.toDouble(), series[i].cumulativeProfit.toDouble()),
+      );
       barGroups.add(
         BarChartGroupData(
           x: i,
@@ -718,14 +727,18 @@ class _PerformanceChart extends StatelessWidget {
                   ? AppColors.green.withValues(alpha: 0.60)
                   : AppColors.error.withValues(alpha: 0.60),
               width: 10,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(2)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(2),
+              ),
             ),
           ],
         ),
       );
     }
 
-    final cumulativeValues = series.map((e) => e.cumulativeProfit.toDouble()).toList();
+    final cumulativeValues = series
+        .map((e) => e.cumulativeProfit.toDouble())
+        .toList();
     final tradeValues = series.map((e) => e.profit.toDouble()).toList();
     final allValues = [...cumulativeValues, ...tradeValues];
     final minAll = allValues.reduce((a, b) => a < b ? a : b);
@@ -736,7 +749,8 @@ class _PerformanceChart extends StatelessWidget {
     final firstDate = DateTime.tryParse(series.first.closeTime);
     String dateLabel = series.first.closeTime;
     if (firstDate != null) {
-      dateLabel = '${firstDate.day.toString().padLeft(2, '0')} ${_monthName(firstDate.month)}';
+      dateLabel =
+          '${firstDate.day.toString().padLeft(2, '0')} ${_monthName(firstDate.month)}';
     }
 
     return Column(
@@ -744,14 +758,25 @@ class _PerformanceChart extends StatelessWidget {
       children: [
         Text(
           'From master account closed trades (user trade history), not copier copies.',
-          style: TextStyle(fontSize: 9.sp, color: AppColors.textGrey, fontWeight: FontWeight.w500),
+          style: TextStyle(
+            fontSize: 9.sp,
+            color: AppColors.textGrey,
+            fontWeight: FontWeight.w500,
+          ),
         ),
         SizedBox(height: 6.h),
         Row(
           children: [
-            _LegendItem(color: AppColors.primary, label: 'Cumulative P&L', outlined: true),
+            _LegendItem(
+              color: AppColors.primary,
+              label: 'Cumulative P&L',
+              outlined: true,
+            ),
             SizedBox(width: 16.w),
-            _LegendItem(color: AppColors.green.withValues(alpha: 0.60), label: 'Trade P&L'),
+            _LegendItem(
+              color: AppColors.green.withValues(alpha: 0.60),
+              label: 'Trade P&L',
+            ),
           ],
         ),
         SizedBox(height: 8.h),
@@ -777,7 +802,14 @@ class _PerformanceChart extends StatelessWidget {
                 rightTitles: AxisTitles(
                   axisNameWidget: Padding(
                     padding: EdgeInsets.only(bottom: 4.h),
-                    child: Text('Per trade', style: TextStyle(fontSize: 9.sp, color: AppColors.textGrey, fontWeight: FontWeight.w600)),
+                    child: Text(
+                      'Per trade',
+                      style: TextStyle(
+                        fontSize: 9.sp,
+                        color: AppColors.textGrey,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                   sideTitles: SideTitles(
                     showTitles: true,
@@ -788,17 +820,29 @@ class _PerformanceChart extends StatelessWidget {
                         padding: EdgeInsets.only(left: 4.w),
                         child: Text(
                           '\$${value.toStringAsFixed(1)}',
-                          style: TextStyle(fontSize: 9.sp, color: AppColors.textGrey),
+                          style: TextStyle(
+                            fontSize: 9.sp,
+                            color: AppColors.textGrey,
+                          ),
                         ),
                       );
                     },
                   ),
                 ),
-                topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                topTitles: const AxisTitles(
+                  sideTitles: SideTitles(showTitles: false),
+                ),
                 bottomTitles: AxisTitles(
                   axisNameWidget: Padding(
                     padding: EdgeInsets.only(top: 4.h),
-                    child: Text('Cumulative P&L', style: TextStyle(fontSize: 9.sp, color: AppColors.textGrey, fontWeight: FontWeight.w600)),
+                    child: Text(
+                      'Cumulative P&L',
+                      style: TextStyle(
+                        fontSize: 9.sp,
+                        color: AppColors.textGrey,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                   sideTitles: SideTitles(
                     showTitles: true,
@@ -806,7 +850,13 @@ class _PerformanceChart extends StatelessWidget {
                     getTitlesWidget: (value, meta) {
                       return Padding(
                         padding: EdgeInsets.only(top: 4.h),
-                        child: Text(dateLabel, style: TextStyle(fontSize: 9.sp, color: AppColors.textGrey)),
+                        child: Text(
+                          dateLabel,
+                          style: TextStyle(
+                            fontSize: 9.sp,
+                            color: AppColors.textGrey,
+                          ),
+                        ),
                       );
                     },
                   ),
@@ -821,7 +871,10 @@ class _PerformanceChart extends StatelessWidget {
                         padding: EdgeInsets.only(right: 4.w),
                         child: Text(
                           '\$${value.toStringAsFixed(1)}',
-                          style: TextStyle(fontSize: 9.sp, color: AppColors.textGrey),
+                          style: TextStyle(
+                            fontSize: 9.sp,
+                            color: AppColors.textGrey,
+                          ),
                         ),
                       );
                     },
@@ -843,7 +896,11 @@ class _PerformanceChart extends StatelessWidget {
                     }
                     return BarTooltipItem(
                       '$t\nTrade: \$${point.profit.toStringAsFixed(2)}\nCumulative: \$${point.cumulativeProfit.toStringAsFixed(2)}',
-                      TextStyle(fontSize: 10.sp, color: AppColors.onColoredBackground, fontWeight: FontWeight.w600),
+                      TextStyle(
+                        fontSize: 10.sp,
+                        color: AppColors.onColoredBackground,
+                        fontWeight: FontWeight.w600,
+                      ),
                     );
                   },
                 ),
@@ -866,7 +923,21 @@ class _PerformanceChart extends StatelessWidget {
   }
 
   String _monthName(int month) {
-    const months = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const months = [
+      '',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
     return months[month.clamp(1, 12)];
   }
 }
@@ -876,7 +947,11 @@ class _LegendItem extends StatelessWidget {
   final String label;
   final bool outlined;
 
-  const _LegendItem({required this.color, required this.label, this.outlined = false});
+  const _LegendItem({
+    required this.color,
+    required this.label,
+    this.outlined = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -893,7 +968,14 @@ class _LegendItem extends StatelessWidget {
           ),
         ),
         SizedBox(width: 4.w),
-        Text(label, style: TextStyle(fontSize: 10.sp, color: AppColors.textGrey, fontWeight: FontWeight.w500)),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 10.sp,
+            color: AppColors.textGrey,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
       ],
     );
   }
@@ -915,35 +997,45 @@ class _OrdersCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Obx(() => TabBar(
-            labelColor: AppColors.textPrimary,
-            unselectedLabelColor: AppColors.textGrey,
-            indicatorColor: AppColors.primary,
-            indicatorWeight: 2,
-            tabs: [
-              Tab(text: 'Closed orders (${controller.tradeHistory.length})'),
-              Tab(text: 'Open orders (${controller.profile.value?.openPositions.length ?? 0})'),
-            ],
-          )),
+          Obx(
+            () => TabBar(
+              labelColor: AppColors.textPrimary,
+              unselectedLabelColor: AppColors.textGrey,
+              indicatorColor: AppColors.primary,
+              indicatorWeight: 2,
+              tabs: [
+                Tab(text: 'Closed orders (${controller.tradeHistory.length})'),
+                Tab(
+                  text:
+                      'Open orders (${controller.profile.value?.openPositions.length ?? 0})',
+                ),
+              ],
+            ),
+          ),
           SizedBox(
             height: 360.h,
             child: TabBarView(
               children: [
-                Obx(() => _OrdersTable(
-                  items: controller.tradeHistory.toList(),
-                  statusLabel: 'Closed',
-                  isLoading: controller.isTradeHistoryLoading.value,
-                  hasMore: controller.hasMoreTradeHistory.value,
-                  isLoadingMore: controller.isLoadingMoreTradeHistory.value,
-                  onLoadMore: () => controller.loadTradeHistory(isLoadMore: true),
-                )),
-                Obx(() => _OrdersTable(
-                  items: controller.profile.value?.openPositions ?? [],
-                  statusLabel: 'Open',
-                  isLoading: false,
-                  hasMore: false,
-                  isLoadingMore: false,
-                )),
+                Obx(
+                  () => _OrdersTable(
+                    items: controller.tradeHistory.toList(),
+                    statusLabel: 'Closed',
+                    isLoading: controller.isTradeHistoryLoading.value,
+                    hasMore: controller.hasMoreTradeHistory.value,
+                    isLoadingMore: controller.isLoadingMoreTradeHistory.value,
+                    onLoadMore: () =>
+                        controller.loadTradeHistory(isLoadMore: true),
+                  ),
+                ),
+                Obx(
+                  () => _OrdersTable(
+                    items: controller.profile.value?.openPositions ?? [],
+                    statusLabel: 'Open',
+                    isLoading: false,
+                    hasMore: false,
+                    isLoadingMore: false,
+                  ),
+                ),
               ],
             ),
           ),
@@ -990,8 +1082,11 @@ class _OrdersTableState extends State<_OrdersTable> {
   }
 
   void _onScroll() {
-    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 50) {
-      if (widget.hasMore && !widget.isLoadingMore && widget.onLoadMore != null) {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 50) {
+      if (widget.hasMore &&
+          !widget.isLoadingMore &&
+          widget.onLoadMore != null) {
         widget.onLoadMore!();
       }
     }
@@ -1000,9 +1095,7 @@ class _OrdersTableState extends State<_OrdersTable> {
   @override
   Widget build(BuildContext context) {
     if (widget.isLoading) {
-      return Center(
-        child: CircularProgressIndicator(color: AppColors.primary),
-      );
+      return Center(child: CircularProgressIndicator(color: AppColors.primary));
     }
     if (widget.items.isEmpty) {
       return Center(
@@ -1026,12 +1119,18 @@ class _OrdersTableState extends State<_OrdersTable> {
               child: SizedBox(
                 width: 24.r,
                 height: 24.r,
-                child: CircularProgressIndicator(color: AppColors.primary, strokeWidth: 2),
+                child: CircularProgressIndicator(
+                  color: AppColors.primary,
+                  strokeWidth: 2,
+                ),
               ),
             ),
           );
         }
-        return _OrderCard(item: widget.items[index], statusLabel: widget.statusLabel);
+        return _OrderCard(
+          item: widget.items[index],
+          statusLabel: widget.statusLabel,
+        );
       },
     );
   }
@@ -1161,7 +1260,10 @@ class _OrderCardState extends State<_OrderCard> {
             // ── Expanded details ──────────────────────────────────────
             if (_expanded) ...[
               SizedBox(height: 12.h),
-              Divider(color: AppColors.border.withValues(alpha: 0.12), height: 1),
+              Divider(
+                color: AppColors.border.withValues(alpha: 0.12),
+                height: 1,
+              ),
               SizedBox(height: 12.h),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1207,34 +1309,29 @@ class _OrderCardState extends State<_OrderCard> {
                 children: [
                   Expanded(
                     child: _TField(
-                      label:
-                          widget.statusLabel.toLowerCase() == 'closed'
-                              ? 'Close Price'
-                              : 'Side',
-                      value:
-                          widget.statusLabel.toLowerCase() == 'closed'
-                              ? item.closePrice.toDouble().toStringAsFixed(
-                                isXAU(item.symbol) ? 2 : 5,
-                              )
-                              : item.side.toUpperCase(),
-                      valueColor:
-                          widget.statusLabel.toLowerCase() == 'closed'
-                              ? null
-                              : sideColor,
+                      label: widget.statusLabel.toLowerCase() == 'closed'
+                          ? 'Close Price'
+                          : 'Side',
+                      value: widget.statusLabel.toLowerCase() == 'closed'
+                          ? item.closePrice.toDouble().toStringAsFixed(
+                              isXAU(item.symbol) ? 2 : 5,
+                            )
+                          : item.side.toUpperCase(),
+                      valueColor: widget.statusLabel.toLowerCase() == 'closed'
+                          ? null
+                          : sideColor,
                     ),
                   ),
                   const Spacer(),
                   Expanded(
                     flex: 2,
                     child: _TField(
-                      label:
-                          widget.statusLabel.toLowerCase() == 'closed'
-                              ? 'Closed'
-                              : 'Status',
-                      value:
-                          widget.statusLabel.toLowerCase() == 'closed'
-                              ? _formatTime(item.closeTime)
-                              : widget.statusLabel,
+                      label: widget.statusLabel.toLowerCase() == 'closed'
+                          ? 'Closed'
+                          : 'Status',
+                      value: widget.statusLabel.toLowerCase() == 'closed'
+                          ? _formatTime(item.closeTime)
+                          : widget.statusLabel,
                     ),
                   ),
                 ],
@@ -1315,7 +1412,7 @@ class _ErrorState extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.brandPrimary,
               ),
-              child: const Text('Retry'),
+              child: Text(TranslationUtils.tr('common_retry')),
             ),
           ],
         ),
@@ -1369,8 +1466,7 @@ class _StrategyDisclosureCard extends StatelessWidget {
             hasStrategy ? strategy : 'No strategy description provided.',
             style: AppTextStyles.bodyText.copyWith(
               fontSize: 12.sp,
-              color:
-                  hasStrategy ? AppColors.textPrimary : AppColors.textGrey,
+              color: hasStrategy ? AppColors.textPrimary : AppColors.textGrey,
             ),
           ),
           if (hasRisk) ...[

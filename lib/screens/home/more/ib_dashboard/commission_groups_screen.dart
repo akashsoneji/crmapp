@@ -5,6 +5,7 @@ import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/controllers/ib_controller.dart';
 import 'package:crm_app/models/ib_models.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
+import 'package:crm_app/services/language_service.dart';
 import 'package:intl/intl.dart';
 import 'commission_group_form_screen.dart';
 
@@ -57,21 +58,34 @@ class _CommissionGroupsScreenState extends State<CommissionGroupsScreen> {
     final confirm = await Get.dialog<bool>(
       AlertDialog(
         title: Text(
-          'Delete Group',
-          style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.w400, fontFamily: 'SF UI'),
+          TranslationUtils.tr('ibm_delete_group'),
+          style: TextStyle(
+            fontSize: 20.sp,
+            fontWeight: FontWeight.w400,
+            fontFamily: 'SF UI',
+          ),
         ),
         content: Text(
-          'Are you sure you want to delete "${group.groupName}"?',
+          TranslationUtils.tr(
+            'ibm_delete_group_confirmation',
+            args: {'group': group.groupName},
+          ),
           style: TextStyle(fontSize: 14.sp),
         ),
         actions: [
           TextButton(
             onPressed: () => Get.back(result: false),
-            child: Text('Cancel', style: TextStyle(color: AppColors.textGrey)),
+            child: Text(
+              TranslationUtils.tr('common_cancel'),
+              style: TextStyle(color: AppColors.textGrey),
+            ),
           ),
           TextButton(
             onPressed: () => Get.back(result: true),
-            child: Text('Delete', style: TextStyle(color: AppColors.error)),
+            child: Text(
+              TranslationUtils.tr('common_delete'),
+              style: TextStyle(color: AppColors.error),
+            ),
           ),
         ],
       ),
@@ -110,7 +124,8 @@ class _CommissionGroupsScreenState extends State<CommissionGroupsScreen> {
             fontSize: 20.sp,
             fontWeight: FontWeight.w400,
             color: AppColors.textPrimary,
-          fontFamily: 'SF UI'),
+            fontFamily: 'SF UI',
+          ),
         ),
         centerTitle: true,
       ),
@@ -183,7 +198,8 @@ class _CommissionGroupsScreenState extends State<CommissionGroupsScreen> {
                                 fontSize: 18.sp,
                                 fontWeight: FontWeight.w400,
                                 color: AppColors.primary,
-                               fontFamily: 'SF UI'),
+                                fontFamily: 'SF UI',
+                              ),
                             ),
                           ),
                         ],
@@ -202,7 +218,8 @@ class _CommissionGroupsScreenState extends State<CommissionGroupsScreen> {
                               fontSize: 18.sp,
                               fontWeight: FontWeight.w400,
                               color: AppColors.primary,
-                            fontFamily: 'SF UI'),
+                              fontFamily: 'SF UI',
+                            ),
                           ),
                         ),
                         SizedBox(width: 8.w),
@@ -227,7 +244,8 @@ class _CommissionGroupsScreenState extends State<CommissionGroupsScreen> {
                                   fontSize: 14.sp,
                                   fontWeight: FontWeight.w400,
                                   color: AppColors.whiteColor,
-                                 fontFamily: 'SF UI'),
+                                  fontFamily: 'SF UI',
+                                ),
                               ),
                             ),
                           ),
@@ -307,7 +325,8 @@ class _CommissionGroupsScreenState extends State<CommissionGroupsScreen> {
                               fontSize: 18.sp,
                               fontWeight: FontWeight.w400,
                               color: AppColors.primary,
-                             fontFamily: 'SF UI'),
+                              fontFamily: 'SF UI',
+                            ),
                           ),
                         ),
                       ],
@@ -327,7 +346,8 @@ class _CommissionGroupsScreenState extends State<CommissionGroupsScreen> {
                             fontSize: 18.sp,
                             fontWeight: FontWeight.w400,
                             color: AppColors.primary,
-                           fontFamily: 'SF UI'),
+                            fontFamily: 'SF UI',
+                          ),
                         ),
                       ),
                       SizedBox(width: 8.w),
@@ -352,7 +372,8 @@ class _CommissionGroupsScreenState extends State<CommissionGroupsScreen> {
                                 fontSize: 14.sp,
                                 fontWeight: FontWeight.w400,
                                 color: AppColors.whiteColor,
-                               fontFamily: 'SF UI'),
+                                fontFamily: 'SF UI',
+                              ),
                             ),
                           ),
                         ),
@@ -428,7 +449,8 @@ class _CommissionGroupsScreenState extends State<CommissionGroupsScreen> {
                     fontSize: 16.sp,
                     fontWeight: FontWeight.w400,
                     color: AppColors.textPrimary,
-                   fontFamily: 'SF UI'),
+                    fontFamily: 'SF UI',
+                  ),
                 ),
                 SizedBox(height: 8.h),
                 Text(
@@ -487,7 +509,8 @@ class _CommissionGroupsScreenState extends State<CommissionGroupsScreen> {
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w400,
                         color: AppColors.textPrimary,
-                      fontFamily: 'SF UI'),
+                        fontFamily: 'SF UI',
+                      ),
                     ),
                   ),
                   Expanded(
@@ -498,7 +521,8 @@ class _CommissionGroupsScreenState extends State<CommissionGroupsScreen> {
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w400,
                         color: AppColors.textPrimary,
-                      fontFamily: 'SF UI'),
+                        fontFamily: 'SF UI',
+                      ),
                     ),
                   ),
                   Expanded(
@@ -509,7 +533,8 @@ class _CommissionGroupsScreenState extends State<CommissionGroupsScreen> {
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w400,
                         color: AppColors.textPrimary,
-                       fontFamily: 'SF UI'),
+                        fontFamily: 'SF UI',
+                      ),
                     ),
                   ),
                   Expanded(
@@ -521,7 +546,8 @@ class _CommissionGroupsScreenState extends State<CommissionGroupsScreen> {
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w400,
                         color: AppColors.textPrimary,
-                       fontFamily: 'SF UI'),
+                        fontFamily: 'SF UI',
+                      ),
                     ),
                   ),
                 ],

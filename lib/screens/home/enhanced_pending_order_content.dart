@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:crm_app/services/language_service.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import '../../constants/color.dart';
@@ -7,7 +8,6 @@ import '../../controllers/account_controller.dart';
 import '../../controllers/trading_controller.dart';
 import '../../models/order_types.dart';
 import '../../utils/precision_helper.dart';
-import '../../services/language_service.dart';
 
 class EnhancedPendingOrderContent extends StatefulWidget {
   final String selectedSymbol;
@@ -139,12 +139,11 @@ class _EnhancedPendingOrderContentState
 
   void _updateSLTPBasedOnPrice() {
     final orderType = tradingController.selectedOrderType;
-    final entryPrice =
-        priceController.text.isNotEmpty
-            ? priceController.text
-            : (orderType.isBuyOrder
-                ? (currentAskPrice ?? 1.0850).toString()
-                : (currentBidPrice ?? 1.0850).toString());
+    final entryPrice = priceController.text.isNotEmpty
+        ? priceController.text
+        : (orderType.isBuyOrder
+              ? (currentAskPrice ?? 1.0850).toString()
+              : (currentBidPrice ?? 1.0850).toString());
 
     if (entryPrice.isNotEmpty) {
       final entryPriceValue = double.tryParse(entryPrice) ?? 0.0;
@@ -239,7 +238,7 @@ class _EnhancedPendingOrderContentState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Price',
+            Get.find<LanguageService>().tr('common_price'),
             style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w500),
           ),
           SizedBox(height: 8.h),
@@ -249,7 +248,10 @@ class _EnhancedPendingOrderContentState
                 child: TextField(
                   controller: priceController,
                   decoration: InputDecoration(
-                    hintText: 'Enter price',
+                    hintText: Get.find<LanguageService>().trf(
+                      'trading_enter_price',
+                      'Enter price',
+                    ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8.r),
                     ),
@@ -326,7 +328,10 @@ class _EnhancedPendingOrderContentState
                 children: [
                   Text(
                     'Stop Loss',
-                    style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey),
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      color: AppColors.textGrey,
+                    ),
                   ),
                   SizedBox(height: 4.h),
                   Row(
@@ -366,7 +371,10 @@ class _EnhancedPendingOrderContentState
                 children: [
                   Text(
                     'Take Profit',
-                    style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey),
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      color: AppColors.textGrey,
+                    ),
                   ),
                   SizedBox(height: 4.h),
                   Row(
@@ -456,7 +464,7 @@ class _EnhancedPendingOrderContentState
                   ),
                 ),
                 child: Text(
-                  'BUY',
+                  Get.find<LanguageService>().tr('trade_buy'),
                   style: TextStyle(
                     color: AppColors.onColoredBackground,
                     fontSize: 16.sp,
@@ -479,7 +487,7 @@ class _EnhancedPendingOrderContentState
                   ),
                 ),
                 child: Text(
-                  'SELL',
+                  Get.find<LanguageService>().tr('trade_sell'),
                   style: TextStyle(
                     color: AppColors.onColoredBackground,
                     fontSize: 16.sp,
@@ -500,39 +508,38 @@ class _EnhancedPendingOrderContentState
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
       ),
-      builder:
-          (context) => Container(
-            padding: EdgeInsets.all(16.w),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Select Order Type',
+      builder: (context) => Container(
+        padding: EdgeInsets.all(16.w),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Select Order Type',
+              style: TextStyle(
+                fontSize: 18.sp,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            SizedBox(height: 16.h),
+            ...tradingController.getAvailableOrderTypes().map(
+              (orderType) => ListTile(
+                title: Text(
+                  orderType.displayName,
                   style: TextStyle(
-                    fontSize: 18.sp,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 16.sp,
                     color: AppColors.textPrimary,
                   ),
                 ),
-                SizedBox(height: 16.h),
-                ...tradingController.getAvailableOrderTypes().map(
-                  (orderType) => ListTile(
-                    title: Text(
-                      orderType.displayName,
-                      style: TextStyle(
-                        fontSize: 16.sp,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    onTap: () {
-                      tradingController.setOrderType(orderType);
-                      Navigator.pop(context);
-                    },
-                  ),
-                ),
-              ],
+                onTap: () {
+                  tradingController.setOrderType(orderType);
+                  Navigator.pop(context);
+                },
+              ),
             ),
-          ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -575,12 +582,11 @@ class _EnhancedPendingOrderContentState
 
   void _adjustSLTP(bool isIncrease, String type) {
     final orderType = tradingController.selectedOrderType;
-    final entryPrice =
-        priceController.text.isNotEmpty
-            ? priceController.text
-            : (orderType.isBuyOrder
-                ? (currentAskPrice ?? 1.0850).toString()
-                : (currentBidPrice ?? 1.0850).toString());
+    final entryPrice = priceController.text.isNotEmpty
+        ? priceController.text
+        : (orderType.isBuyOrder
+              ? (currentAskPrice ?? 1.0850).toString()
+              : (currentBidPrice ?? 1.0850).toString());
 
     String newValue;
     if (type == 'sl') {
@@ -613,12 +619,12 @@ class _EnhancedPendingOrderContentState
       volume: volumeController.text,
       orderType: orderType,
       price: orderType.requiresPrice ? priceController.text : null,
-      takeProfit:
-          takeProfitController.text.isNotEmpty
-              ? takeProfitController.text
-              : null,
-      stopLoss:
-          stopLossController.text.isNotEmpty ? stopLossController.text : null,
+      takeProfit: takeProfitController.text.isNotEmpty
+          ? takeProfitController.text
+          : null,
+      stopLoss: stopLossController.text.isNotEmpty
+          ? stopLossController.text
+          : null,
     );
 
     if (success) {
@@ -633,12 +639,12 @@ class _EnhancedPendingOrderContentState
       volume: volumeController.text,
       orderType: orderType,
       price: orderType.requiresPrice ? priceController.text : null,
-      takeProfit:
-          takeProfitController.text.isNotEmpty
-              ? takeProfitController.text
-              : null,
-      stopLoss:
-          stopLossController.text.isNotEmpty ? stopLossController.text : null,
+      takeProfit: takeProfitController.text.isNotEmpty
+          ? takeProfitController.text
+          : null,
+      stopLoss: stopLossController.text.isNotEmpty
+          ? stopLossController.text
+          : null,
     );
 
     if (success) {
@@ -649,25 +655,24 @@ class _EnhancedPendingOrderContentState
   void _showSuccessDialog(String action) {
     showDialog(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            title: Text(
-              Get.find<LanguageService>().tr('pending_order_order_placed'),
-            ),
-            content: Text('$action order has been placed successfully'),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  widget.onPlaceOrder();
-                  if (widget.onClose != null) {
-                    widget.onClose!();
-                  }
-                },
-                child: Text('OK'),
-              ),
-            ],
+      builder: (context) => AlertDialog(
+        title: Text(
+          Get.find<LanguageService>().tr('pending_order_order_placed'),
+        ),
+        content: Text('$action order has been placed successfully'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              widget.onPlaceOrder();
+              if (widget.onClose != null) {
+                widget.onClose!();
+              }
+            },
+            child: Text('OK'),
           ),
+        ],
+      ),
     );
   }
 

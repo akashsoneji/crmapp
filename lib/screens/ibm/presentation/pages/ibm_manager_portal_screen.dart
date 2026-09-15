@@ -8,6 +8,7 @@ import 'package:crm_app/screens/ibm/view_models/ibm_controller.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
 import 'package:crm_app/brand_switcher.dart';
+import 'package:crm_app/services/language_service.dart';
 
 import 'package:crm_app/screens/ibm/presentation/widgets/ibm_top_header.dart';
 import 'package:crm_app/routes/app_pages.dart';
@@ -64,7 +65,8 @@ class _IbmManagerPortalScreenState extends State<IbmManagerPortalScreen> {
       final DateTime? start = await showDatePicker(
         context: context,
         helpText: 'Select start date',
-        initialDate: (customFrom != null ? DateTime.tryParse(customFrom!) : null) ??
+        initialDate:
+            (customFrom != null ? DateTime.tryParse(customFrom!) : null) ??
             now.subtract(const Duration(days: 30)),
         firstDate: DateTime(2000),
         lastDate: now,
@@ -136,7 +138,7 @@ class _IbmManagerPortalScreenState extends State<IbmManagerPortalScreen> {
     return Scaffold(
       backgroundColor: AppColors.tradeBackgroundCenterColor,
       appBar: IbmTopHeader(
-        title: 'IB Manager Portal',
+        title: TranslationUtils.tr('ib_manager_portal'),
         showBackButton: false,
         hideWallet: true,
         extraActions: [_buildHeaderCurrencySwitch()],
@@ -162,14 +164,13 @@ class _IbmManagerPortalScreenState extends State<IbmManagerPortalScreen> {
                 ),
                 SizedBox(height: 16.h),
                 ElevatedButton(
-                  onPressed:
-                      () => controller.fetchDashboard(
-                        period: selectedPeriod,
-                        scope: selectedScope,
-                        from: customFrom,
-                        to: customTo,
-                      ),
-                  child: const Text('Retry'),
+                  onPressed: () => controller.fetchDashboard(
+                    period: selectedPeriod,
+                    scope: selectedScope,
+                    from: customFrom,
+                    to: customTo,
+                  ),
+                  child: Text(TranslationUtils.tr('common_retry')),
                 ),
               ],
             ),
@@ -231,13 +232,12 @@ class _IbmManagerPortalScreenState extends State<IbmManagerPortalScreen> {
 
         return RefreshIndicator(
           color: AppColors.primary,
-          onRefresh:
-              () => controller.fetchDashboard(
-                period: selectedPeriod,
-                scope: selectedScope,
-                from: customFrom,
-                to: customTo,
-              ),
+          onRefresh: () => controller.fetchDashboard(
+            period: selectedPeriod,
+            scope: selectedScope,
+            from: customFrom,
+            to: customTo,
+          ),
           child: ListView(
             padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 20.h),
             children: [
@@ -281,11 +281,7 @@ class _IbmManagerPortalScreenState extends State<IbmManagerPortalScreen> {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         _buildToggleGroup(
-          options: {
-            'total': 'Total',
-            'network': 'Network',
-            'direct': 'Direct',
-          },
+          options: {'total': 'Total', 'network': 'Network', 'direct': 'Direct'},
           selectedValue: selectedScope,
           onChanged: _onScopeChanged,
           compact: true,
@@ -293,12 +289,7 @@ class _IbmManagerPortalScreenState extends State<IbmManagerPortalScreen> {
         SizedBox(width: 8.w),
         Expanded(
           child: _buildToggleGroup(
-            options: {
-              'today': 'Today',
-              '7d': '7D',
-              '30d': '30D',
-              'all': 'All',
-            },
+            options: {'today': 'Today', '7d': '7D', '30d': '30D', 'all': 'All'},
             selectedValue: selectedPeriod,
             onChanged: _onPeriodChanged,
             fillWidth: true,
@@ -346,9 +337,7 @@ class _IbmManagerPortalScreenState extends State<IbmManagerPortalScreen> {
         return Container(
           padding: EdgeInsets.all(3.w),
           decoration: BoxDecoration(
-            color: AppColors.isDarkMode
-                ? Colors.grey[900]
-                : AppColors.card,
+            color: AppColors.isDarkMode ? Colors.grey[900] : AppColors.card,
             borderRadius: BorderRadius.circular(20.r),
             border: Border.all(
               color: AppColors.isDarkMode
@@ -369,8 +358,7 @@ class _IbmManagerPortalScreenState extends State<IbmManagerPortalScreen> {
                     vertical: 5.h,
                   ),
                   decoration: BoxDecoration(
-                    color:
-                        isSelected ? AppColors.primary : Colors.transparent,
+                    color: isSelected ? AppColors.primary : Colors.transparent,
                     borderRadius: BorderRadius.circular(18.r),
                   ),
                   child: Text(
@@ -440,14 +428,11 @@ class _IbmManagerPortalScreenState extends State<IbmManagerPortalScreen> {
       child: Row(
         mainAxisSize: fillWidth ? MainAxisSize.max : MainAxisSize.min,
         children: fillWidth
-            ? options.entries
-                .map((e) => Expanded(child: buildItem(e)))
-                .toList()
+            ? options.entries.map((e) => Expanded(child: buildItem(e))).toList()
             : options.entries.map(buildItem).toList(),
       ),
     );
   }
-
 
   Widget _buildTopGrid(
     Map clients,
@@ -470,10 +455,10 @@ class _IbmManagerPortalScreenState extends State<IbmManagerPortalScreen> {
     final totalSubIbs = directPartners + networkPartners;
     final netFlow = deposits - withdrawals;
     // Web "Average Lots per Trader" = total lots / active traders (not / trades).
-    final activeTradersNum =
-        activeTraders is num ? activeTraders : num.tryParse('$activeTraders') ?? 0;
-    final avgLotSize =
-        activeTradersNum > 0 ? lots / activeTradersNum : 0.0;
+    final activeTradersNum = activeTraders is num
+        ? activeTraders
+        : num.tryParse('$activeTraders') ?? 0;
+    final avgLotSize = activeTradersNum > 0 ? lots / activeTradersNum : 0.0;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -496,9 +481,9 @@ class _IbmManagerPortalScreenState extends State<IbmManagerPortalScreen> {
                 icon: Icons.people_alt_rounded,
                 iconBg: AppColors.iconBgPrimary,
                 iconColor: AppColors.primary,
-                label: 'Total Clients',
+                label: TranslationUtils.tr('ibm_total_clients'),
                 value: '$totalClients',
-                hint: '$newInPeriod new this period',
+                hint: TranslationUtils.tr('ibm_new_this_period', args: {'count': '$newInPeriod'}),
               ),
             ),
             SizedBox(width: 10.w),
@@ -509,7 +494,7 @@ class _IbmManagerPortalScreenState extends State<IbmManagerPortalScreen> {
                 iconColor: const Color(0xFF00C48C),
                 label: 'Active Traders',
                 value: '$activeTraders',
-                hint: 'traded this period',
+                hint: TranslationUtils.tr('ibm_traded_this_period'),
               ),
             ),
             SizedBox(width: 10.w),
@@ -518,14 +503,14 @@ class _IbmManagerPortalScreenState extends State<IbmManagerPortalScreen> {
                 icon: Icons.account_tree_rounded,
                 iconBg: AppColors.iconBgPrimary,
                 iconColor: AppColors.primary,
-                label: 'Sub-IBs',
+                label: TranslationUtils.tr('ibm_sub_ibs'),
                 value: '$totalSubIbs',
-                hint: '$directPartners direct',
+                hint: TranslationUtils.tr('ibm_direct_partners', args: {'count': '$directPartners'}),
               ),
             ),
           ],
         ),
-        
+
         SizedBox(height: 14.h),
         _buildMoneyFlowRow(deposits, withdrawals, equity, netFlow),
         SizedBox(height: 14.h),
@@ -566,7 +551,11 @@ class _IbmManagerPortalScreenState extends State<IbmManagerPortalScreen> {
                   color: AppColors.whiteColor.withValues(alpha: 0.18),
                   borderRadius: BorderRadius.circular(10.r),
                 ),
-                child: Icon(Icons.payments_rounded, color: AppColors.whiteColor, size: 20.w),
+                child: Icon(
+                  Icons.payments_rounded,
+                  color: AppColors.whiteColor,
+                  size: 20.w,
+                ),
               ),
               SizedBox(width: 10.w),
               Expanded(
@@ -602,7 +591,11 @@ class _IbmManagerPortalScreenState extends State<IbmManagerPortalScreen> {
           SizedBox(height: 4.h),
           Row(
             children: [
-              Icon(Icons.bolt_rounded, size: 14.w, color: AppColors.whiteColor.withValues(alpha: 0.85)),
+              Icon(
+                Icons.bolt_rounded,
+                size: 14.w,
+                color: AppColors.whiteColor.withValues(alpha: 0.85),
+              ),
               SizedBox(width: 4.w),
               Text(
                 _periodLabel(),
@@ -675,8 +668,11 @@ class _IbmManagerPortalScreenState extends State<IbmManagerPortalScreen> {
                   color: AppColors.whiteColor.withValues(alpha: 0.18),
                   borderRadius: BorderRadius.circular(10.r),
                 ),
-                child: Icon(Icons.account_balance_wallet_rounded,
-                    color: AppColors.whiteColor, size: 20.w),
+                child: Icon(
+                  Icons.account_balance_wallet_rounded,
+                  color: AppColors.whiteColor,
+                  size: 20.w,
+                ),
               ),
               SizedBox(width: 10.w),
               Expanded(
@@ -710,9 +706,11 @@ class _IbmManagerPortalScreenState extends State<IbmManagerPortalScreen> {
           SizedBox(height: 4.h),
           Row(
             children: [
-              Icon(Icons.savings_rounded,
-                  size: 14.w,
-                  color: AppColors.whiteColor.withValues(alpha: 0.85)),
+              Icon(
+                Icons.savings_rounded,
+                size: 14.w,
+                color: AppColors.whiteColor.withValues(alpha: 0.85),
+              ),
               SizedBox(width: 4.w),
               Text(
                 'Unpaid balance',
@@ -732,25 +730,30 @@ class _IbmManagerPortalScreenState extends State<IbmManagerPortalScreen> {
                 (block['can_withdraw'] ?? w['can_withdraw']) != false;
             final openPayoutStatus =
                 block['open_payout_status'] ?? w['open_payout_status'];
-            final hasOpenPayout = openPayoutStatus != null &&
+            final hasOpenPayout =
+                openPayoutStatus != null &&
                 openPayoutStatus.toString().isNotEmpty;
-            final canRequest = canWithdrawFlag &&
+            final canRequest =
+                canWithdrawFlag &&
                 !isFrozen &&
                 !hasOpenPayout &&
                 rebate >= _minPayout();
             return SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed:
-                    canRequest ? () => Get.toNamed(AppPages.WITHDRAWAL) : null,
+                onPressed: canRequest
+                    ? () => Get.toNamed(AppPages.WITHDRAWAL)
+                    : null,
                 style: ElevatedButton.styleFrom(
                   minimumSize: Size.zero,
                   backgroundColor: AppColors.whiteColor,
                   foregroundColor: accent,
-                  disabledBackgroundColor:
-                      AppColors.whiteColor.withValues(alpha: 0.45),
-                  disabledForegroundColor:
-                      AppColors.whiteColor.withValues(alpha: 0.85),
+                  disabledBackgroundColor: AppColors.whiteColor.withValues(
+                    alpha: 0.45,
+                  ),
+                  disabledForegroundColor: AppColors.whiteColor.withValues(
+                    alpha: 0.85,
+                  ),
                   elevation: 0,
                   padding: EdgeInsets.symmetric(vertical: 10.h),
                   shape: RoundedRectangleBorder(
@@ -758,7 +761,7 @@ class _IbmManagerPortalScreenState extends State<IbmManagerPortalScreen> {
                   ),
                 ),
                 child: Text(
-                  'Request payout',
+                  TranslationUtils.tr('ibm_request_payout'),
                   style: TextStyle(
                     fontSize: 12.sp,
                     fontWeight: FontWeight.bold,
@@ -804,8 +807,7 @@ class _IbmManagerPortalScreenState extends State<IbmManagerPortalScreen> {
       RegExp(r'/+$'),
       '',
     );
-    final referralUrl =
-        code.isEmpty ? '' : '$baseUrl/register?ref=$code';
+    final referralUrl = code.isEmpty ? '' : '$baseUrl/register?ref=$code';
 
     return Container(
       padding: EdgeInsets.all(14.w),
@@ -832,8 +834,7 @@ class _IbmManagerPortalScreenState extends State<IbmManagerPortalScreen> {
               SizedBox(width: 8.w),
               if (isActive)
                 Container(
-                  padding:
-                      EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                  padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
                   decoration: BoxDecoration(
                     color: const Color(0xFFE8F5E9),
                     borderRadius: BorderRadius.circular(4.r),
@@ -852,8 +853,7 @@ class _IbmManagerPortalScreenState extends State<IbmManagerPortalScreen> {
                 onTap: () => controller.changeTab(4),
                 borderRadius: BorderRadius.circular(6.r),
                 child: Container(
-                  padding:
-                      EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(6.r),
                     border: Border.all(color: AppColors.primary),
@@ -906,7 +906,8 @@ class _IbmManagerPortalScreenState extends State<IbmManagerPortalScreen> {
                   onPressed: () {
                     Clipboard.setData(ClipboardData(text: referralUrl));
                     CustomToastService.showSuccess(
-                        message: 'Referral link copied!');
+                      message: 'Referral link copied!',
+                    );
                   },
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
@@ -932,7 +933,8 @@ class _IbmManagerPortalScreenState extends State<IbmManagerPortalScreen> {
       case 'all':
         return 'All time';
       case 'custom':
-        if (customFrom != null && customTo != null) return '$customFrom → $customTo';
+        if (customFrom != null && customTo != null)
+          return '$customFrom → $customTo';
         return 'Custom range';
       default:
         return 'Selected period';
@@ -995,9 +997,16 @@ class _IbmManagerPortalScreenState extends State<IbmManagerPortalScreen> {
     );
   }
 
-Widget _buildMoneyFlowRow(double deposits, double withdrawals, double equity, double netFlow) {
+  Widget _buildMoneyFlowRow(
+    double deposits,
+    double withdrawals,
+    double equity,
+    double netFlow,
+  ) {
     final netPositive = netFlow >= 0;
-    final netColor = netPositive ? const Color(0xFF00C48C) : const Color(0xFFFF647C);
+    final netColor = netPositive
+        ? const Color(0xFF00C48C)
+        : const Color(0xFFFF647C);
     final depositsColor = const Color(0xFF00C48C);
     final withdrawalsColor = const Color(0xFFFF647C);
 
@@ -1144,7 +1153,12 @@ Widget _buildMoneyFlowRow(double deposits, double withdrawals, double equity, do
     );
   }
 
-  Widget _buildPerformanceGrid(double lots, int trades, double perLot, double avgLotSize) {
+  Widget _buildPerformanceGrid(
+    double lots,
+    int trades,
+    double perLot,
+    double avgLotSize,
+  ) {
     return Container(
       padding: EdgeInsets.fromLTRB(14.w, 14.h, 14.w, 14.h),
       decoration: BoxDecoration(
@@ -1167,17 +1181,41 @@ Widget _buildMoneyFlowRow(double deposits, double withdrawals, double equity, do
           SizedBox(height: 12.h),
           Row(
             children: [
-              Expanded(child: _buildMiniStat(label: 'Total Lots', value: lots.toStringAsFixed(2), icon: Icons.bar_chart_rounded)),
+              Expanded(
+                child: _buildMiniStat(
+                  label: 'Total Lots',
+                  value: lots.toStringAsFixed(2),
+                  icon: Icons.bar_chart_rounded,
+                ),
+              ),
               SizedBox(width: 10.w),
-              Expanded(child: _buildMiniStat(label: 'Trades', value: '$trades', icon: Icons.swap_horiz_rounded)),
+              Expanded(
+                child: _buildMiniStat(
+                  label: 'Trades',
+                  value: '$trades',
+                  icon: Icons.swap_horiz_rounded,
+                ),
+              ),
             ],
           ),
           SizedBox(height: 10.h),
           Row(
             children: [
-              Expanded(child: _buildMiniStat(label: 'Per Lot', value: _fmt(perLot), icon: Icons.percent_rounded)),
+              Expanded(
+                child: _buildMiniStat(
+                  label: 'Per Lot',
+                  value: _fmt(perLot),
+                  icon: Icons.percent_rounded,
+                ),
+              ),
               SizedBox(width: 10.w),
-              Expanded(child: _buildMiniStat(label: 'Avg Lots/Trader', value: avgLotSize.toStringAsFixed(2), icon: Icons.straighten_rounded)),
+              Expanded(
+                child: _buildMiniStat(
+                  label: 'Avg Lots/Trader',
+                  value: avgLotSize.toStringAsFixed(2),
+                  icon: Icons.straighten_rounded,
+                ),
+              ),
             ],
           ),
         ],
@@ -1185,7 +1223,11 @@ Widget _buildMoneyFlowRow(double deposits, double withdrawals, double equity, do
     );
   }
 
-  Widget _buildMiniStat({required String label, required String value, required IconData icon}) {
+  Widget _buildMiniStat({
+    required String label,
+    required String value,
+    required IconData icon,
+  }) {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
       decoration: BoxDecoration(
@@ -1209,11 +1251,18 @@ Widget _buildMoneyFlowRow(double deposits, double withdrawals, double equity, do
               children: [
                 Text(
                   value,
-                  style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                Text(label, style: TextStyle(fontSize: 10.sp, color: AppColors.textGrey)),
+                Text(
+                  label,
+                  style: TextStyle(fontSize: 10.sp, color: AppColors.textGrey),
+                ),
               ],
             ),
           ),
@@ -1222,7 +1271,7 @@ Widget _buildMoneyFlowRow(double deposits, double withdrawals, double equity, do
     );
   }
 
-Widget _buildCommissionSummary(Map wallet) {
+  Widget _buildCommissionSummary(Map wallet) {
     final sum = wallet.containsKey('summary') ? wallet['summary'] : wallet;
     final earned = _parseDouble(sum['lifetime_earned'] ?? sum['total_earned']);
     final paid = _parseDouble(sum['lifetime_paid'] ?? sum['total_paid']);
@@ -1318,10 +1367,7 @@ Widget _buildCommissionSummary(Map wallet) {
             ],
           ),
           SizedBox(height: 10.h),
-          Container(
-            height: 1,
-            color: AppColors.divider.withValues(alpha: 0.5),
-          ),
+          Container(height: 1, color: AppColors.divider.withValues(alpha: 0.5)),
           SizedBox(height: 10.h),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1396,12 +1442,12 @@ Widget _buildCommissionSummary(Map wallet) {
     final funded = funnel['funded'] ?? 0;
 
     // Calculate percentages
-    final uniquePercent =
-        visits > 0 ? (uniqueVisits / visits * 100).toStringAsFixed(0) : '0';
-    final signupsPercent =
-        uniqueVisits > 0
-            ? (signUps / uniqueVisits * 100).toStringAsFixed(0)
-            : '0';
+    final uniquePercent = visits > 0
+        ? (uniqueVisits / visits * 100).toStringAsFixed(0)
+        : '0';
+    final signupsPercent = uniqueVisits > 0
+        ? (signUps / uniqueVisits * 100).toStringAsFixed(0)
+        : '0';
 
     return _buildSectionCard(
       'Client Funnel',
@@ -1477,8 +1523,7 @@ Widget _buildCommissionSummary(Map wallet) {
     final clients = row['clients'] ?? 0;
     final active = row['active_clients'] ?? row['active'] ?? 0;
 
-    final List currencies =
-        row['currencies'] is List ? row['currencies'] : [];
+    final List currencies = row['currencies'] is List ? row['currencies'] : [];
     final firstCurrency = currencies.isNotEmpty ? currencies.first : {};
 
     final netDeposit = _parseDouble(
@@ -1593,14 +1638,16 @@ Widget _buildCommissionSummary(Map wallet) {
 
   Widget _buildActivityRow(Map actData, Map requestsMap) {
     final deposits = actData['deposits'] is List ? actData['deposits'] : [];
-    final withdrawals =
-        actData['withdrawals'] is List ? actData['withdrawals'] : [];
+    final withdrawals = actData['withdrawals'] is List
+        ? actData['withdrawals']
+        : [];
     final payouts = actData['payouts'] is List ? actData['payouts'] : [];
     final accounts = actData['accounts'] is List ? actData['accounts'] : [];
 
     final List requestsList = requestsMap['rows'] ?? requestsMap['data'] ?? [];
-    final pendingRequests =
-        requestsList.where((r) => r['status'] == 'pending').toList();
+    final pendingRequests = requestsList
+        .where((r) => r['status'] == 'pending')
+        .toList();
 
     final int maxRows = [
       deposits.length,
@@ -1707,9 +1754,7 @@ Widget _buildCommissionSummary(Map wallet) {
             style: TextStyle(color: AppColors.textSecondary, fontSize: 10.sp),
           ),
           SizedBox(height: 8.h),
-          Expanded(
-            child: SingleChildScrollView(child: content),
-          ),
+          Expanded(child: SingleChildScrollView(child: content)),
         ],
       ),
     );
@@ -1732,117 +1777,110 @@ Widget _buildCommissionSummary(Map wallet) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
-      children:
-          items.map((item) {
-            final name = item['name'] ?? 'Unknown';
-            final status = item['status'] ?? '';
-            final amount = _parseDouble(item['amount']);
-            final account = item['account'] ?? '';
-            final atStr = (item['at'] ?? '').toString();
-            final dateDisplay = atStr.isNotEmpty ? atStr.split(' ').first : '';
+      children: items.map((item) {
+        final name = item['name'] ?? 'Unknown';
+        final status = item['status'] ?? '';
+        final amount = _parseDouble(item['amount']);
+        final account = item['account'] ?? '';
+        final atStr = (item['at'] ?? '').toString();
+        final dateDisplay = atStr.isNotEmpty ? atStr.split(' ').first : '';
 
-            final amountStr =
-                amount > 0
-                    ? (isPositive
-                        ? '+${_fmt(amount)}'
-                        : _fmt(amount))
-                    : '';
+        final amountStr = amount > 0
+            ? (isPositive ? '+${_fmt(amount)}' : _fmt(amount))
+            : '';
 
-            return Padding(
-              padding: EdgeInsets.only(bottom: 8.h),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+        return Padding(
+          padding: EdgeInsets.only(bottom: 8.h),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
                       children: [
-                        Row(
-                          children: [
-                            Flexible(
-                              child: Text(
-                                name,
-                                style: TextStyle(
-                                  fontSize: 10.sp,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.textPrimary,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            SizedBox(width: 4.w),
-                            if (status.isNotEmpty)
-                              Container(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 4.w,
-                                  vertical: 2.h,
-                                ),
-                                decoration: BoxDecoration(
-                                  color:
-                                      status == 'approved' || status == 'opened'
-                                          ? Colors.green.withOpacity(0.2)
-                                          : Colors.orange.withOpacity(0.2),
-                                  borderRadius: BorderRadius.circular(4.r),
-                                ),
-                                child: Text(
-                                  status.isNotEmpty
-                                      ? status[0].toUpperCase() +
-                                          status.substring(1)
-                                      : status,
-                                  style: TextStyle(
-                                    fontSize: 8.sp,
-                                    color:
-                                        status == 'approved' ||
-                                                status == 'opened'
-                                            ? Colors.green
-                                            : Colors.orange,
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                        if (account.isNotEmpty)
-                          Text(
-                            'TA#$account',
+                        Flexible(
+                          child: Text(
+                            name,
                             style: TextStyle(
-                              fontSize: 9.sp,
-                              color: AppColors.textGrey,
+                              fontSize: 10.sp,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textPrimary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        SizedBox(width: 4.w),
+                        if (status.isNotEmpty)
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 4.w,
+                              vertical: 2.h,
+                            ),
+                            decoration: BoxDecoration(
+                              color: status == 'approved' || status == 'opened'
+                                  ? Colors.green.withOpacity(0.2)
+                                  : Colors.orange.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(4.r),
+                            ),
+                            child: Text(
+                              status.isNotEmpty
+                                  ? status[0].toUpperCase() +
+                                        status.substring(1)
+                                  : status,
+                              style: TextStyle(
+                                fontSize: 8.sp,
+                                color:
+                                    status == 'approved' || status == 'opened'
+                                    ? Colors.green
+                                    : Colors.orange,
+                              ),
                             ),
                           ),
                       ],
                     ),
-                  ),
-                  SizedBox(width: 8.w),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      if (amountStr.isNotEmpty)
-                        Text(
-                          amountStr,
-                          style: TextStyle(
-                            fontSize: 10.sp,
-                            fontWeight: FontWeight.bold,
-                            color:
-                                isPositive
-                                    ? Colors.green
-                                    : AppColors.textPrimary,
-                          ),
+                    if (account.isNotEmpty)
+                      Text(
+                        'TA#$account',
+                        style: TextStyle(
+                          fontSize: 9.sp,
+                          color: AppColors.textGrey,
                         ),
-                      if (dateDisplay.isNotEmpty)
-                        Text(
-                          dateDisplay,
-                          style: TextStyle(
-                            fontSize: 8.sp,
-                            color: AppColors.textGrey,
-                          ),
-                        ),
-                    ],
-                  ),
+                      ),
+                  ],
+                ),
+              ),
+              SizedBox(width: 8.w),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  if (amountStr.isNotEmpty)
+                    Text(
+                      amountStr,
+                      style: TextStyle(
+                        fontSize: 10.sp,
+                        fontWeight: FontWeight.bold,
+                        color: isPositive
+                            ? Colors.green
+                            : AppColors.textPrimary,
+                      ),
+                    ),
+                  if (dateDisplay.isNotEmpty)
+                    Text(
+                      dateDisplay,
+                      style: TextStyle(
+                        fontSize: 8.sp,
+                        color: AppColors.textGrey,
+                      ),
+                    ),
                 ],
               ),
-            );
-          }).toList(),
+            ],
+          ),
+        );
+      }).toList(),
     );
   }
 
@@ -1878,8 +1916,9 @@ Widget _buildCommissionSummary(Map wallet) {
                         ? AppColors.primary
                         : AppColors.textSecondary,
                     fontSize: 11.sp,
-                    fontWeight:
-                        onAction != null ? FontWeight.w600 : FontWeight.normal,
+                    fontWeight: onAction != null
+                        ? FontWeight.w600
+                        : FontWeight.normal,
                   ),
                 ),
               ),

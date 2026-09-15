@@ -64,10 +64,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen>
         ),
         content: Text(
           lang.tr('ticket_close_confirm'),
-          style: TextStyle(
-            color: AppColors.textSecondary,
-            fontSize: 14.sp,
-          ),
+          style: TextStyle(color: AppColors.textSecondary, fontSize: 14.sp),
         ),
         actions: [
           TextButton(
@@ -108,9 +105,13 @@ class _TicketDetailScreenState extends State<TicketDetailScreen>
         backgroundColor: AppColors.background,
         elevation: 0,
         centerTitle: true,
-        leading: AppSvgBackButton(onPressed: () => AppSvgBackButton.popRoute(context)),
-        title: Text('${lang.tr('ticket_detail')} #$_ticketId',
-            style: AppTextStyles.screenTitle),
+        leading: AppSvgBackButton(
+          onPressed: () => AppSvgBackButton.popRoute(context),
+        ),
+        title: Text(
+          '${lang.tr('ticket_detail')} #$_ticketId',
+          style: AppTextStyles.screenTitle,
+        ),
       ),
       body: Obx(() {
         if (controller.isDetailLoading.value &&
@@ -139,8 +140,9 @@ class _TicketDetailScreenState extends State<TicketDetailScreen>
               tabs: [
                 Tab(text: lang.tr('ticket_tab_all')),
                 Tab(
-                    text:
-                        '${lang.tr('ticket_tab_attachments')} (${detail.attachments.length})'),
+                  text:
+                      '${lang.tr('ticket_tab_attachments')} (${detail.attachments.length})',
+                ),
               ],
             ),
             Expanded(
@@ -199,10 +201,15 @@ class _TicketDetailScreenState extends State<TicketDetailScreen>
                 width: double.infinity,
                 child: OutlinedButton.icon(
                   onPressed: _confirmClose,
-                  icon: Icon(Icons.lock_outline,
-                      size: 18.sp, color: AppColors.red),
-                  label: Text(lang.tr('ticket_close'),
-                      style: TextStyle(color: AppColors.red)),
+                  icon: Icon(
+                    Icons.lock_outline,
+                    size: 18.sp,
+                    color: AppColors.red,
+                  ),
+                  label: Text(
+                    lang.tr('ticket_close'),
+                    style: TextStyle(color: AppColors.red),
+                  ),
                   style: OutlinedButton.styleFrom(
                     side: BorderSide(color: AppColors.red),
                   ),
@@ -218,8 +225,10 @@ class _TicketDetailScreenState extends State<TicketDetailScreen>
   Widget _buildConversation(TicketDetail detail) {
     if (detail.conversation.isEmpty) {
       return Center(
-        child: Text(lang.tr('ticket_no_data'),
-            style: TextStyle(color: AppColors.textSecondary)),
+        child: Text(
+          lang.tr('ticket_no_data'),
+          style: TextStyle(color: AppColors.textSecondary),
+        ),
       );
     }
     return ListView.builder(
@@ -235,22 +244,31 @@ class _TicketDetailScreenState extends State<TicketDetailScreen>
             margin: EdgeInsets.only(bottom: 12.h),
             padding: EdgeInsets.all(12.w),
             decoration: BoxDecoration(
-              color: isUser ? AppColors.surface : AppColors.primary.withValues(alpha: 0.08),
+              color: isUser
+                  ? AppColors.surface
+                  : AppColors.primary.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(12.r),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (c.author.name.isNotEmpty)
-                  Text(c.author.name,
-                      style: TextStyle(
-                          fontSize: 11.sp,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.primary)),
-                SizedBox(height: 4.h),
-                Text(c.content,
+                  Text(
+                    c.author.name,
                     style: TextStyle(
-                        fontSize: 13.sp, color: AppColors.textPrimary)),
+                      fontSize: 11.sp,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                SizedBox(height: 4.h),
+                Text(
+                  c.content,
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
                 if (c.attachment != null) ...[
                   SizedBox(height: 6.h),
                   GestureDetector(
@@ -258,17 +276,21 @@ class _TicketDetailScreenState extends State<TicketDetailScreen>
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.attach_file,
-                            size: 14.sp, color: AppColors.primary),
+                        Icon(
+                          Icons.attach_file,
+                          size: 14.sp,
+                          color: AppColors.primary,
+                        ),
                         SizedBox(width: 4.w),
                         Flexible(
                           child: Text(
                             c.attachment!.filename,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                                fontSize: 12.sp,
-                                color: AppColors.primary,
-                                decoration: TextDecoration.underline),
+                              fontSize: 12.sp,
+                              color: AppColors.primary,
+                              decoration: TextDecoration.underline,
+                            ),
                           ),
                         ),
                       ],
@@ -276,9 +298,13 @@ class _TicketDetailScreenState extends State<TicketDetailScreen>
                   ),
                 ],
                 SizedBox(height: 4.h),
-                Text(c.timestamp,
-                    style: TextStyle(
-                        fontSize: 10.sp, color: AppColors.textSecondary)),
+                Text(
+                  c.timestamp,
+                  style: TextStyle(
+                    fontSize: 10.sp,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
               ],
             ),
           ),
@@ -291,8 +317,10 @@ class _TicketDetailScreenState extends State<TicketDetailScreen>
     final attachments = detail.attachments;
     if (attachments.isEmpty) {
       return Center(
-        child: Text(lang.tr('ticket_no_data'),
-            style: TextStyle(color: AppColors.textSecondary)),
+        child: Text(
+          lang.tr('ticket_no_data'),
+          style: TextStyle(color: AppColors.textSecondary),
+        ),
       );
     }
     return ListView.separated(
@@ -310,16 +338,21 @@ class _TicketDetailScreenState extends State<TicketDetailScreen>
           ),
           child: Row(
             children: [
-              Icon(Icons.insert_drive_file_outlined,
-                  color: AppColors.primary, size: 24.sp),
+              Icon(
+                Icons.insert_drive_file_outlined,
+                color: AppColors.primary,
+                size: 24.sp,
+              ),
               SizedBox(width: 10.w),
               Expanded(
                 child: Text(
                   a.filename,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style:
-                      TextStyle(fontSize: 13.sp, color: AppColors.textPrimary),
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
               ),
               Obx(
@@ -328,12 +361,16 @@ class _TicketDetailScreenState extends State<TicketDetailScreen>
                         width: 20.w,
                         height: 20.w,
                         child: CircularProgressIndicator(
-                            strokeWidth: 2, color: AppColors.primary),
+                          strokeWidth: 2,
+                          color: AppColors.primary,
+                        ),
                       )
                     : IconButton(
                         onPressed: () => controller.openAttachment(a),
-                        icon: Icon(Icons.download_outlined,
-                            color: AppColors.primary),
+                        icon: Icon(
+                          Icons.download_outlined,
+                          color: AppColors.primary,
+                        ),
                         tooltip: lang.tr('ticket_download'),
                       ),
               ),
@@ -354,65 +391,64 @@ class _TicketDetailScreenState extends State<TicketDetailScreen>
       child: SafeArea(
         top: false,
         child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _replyController,
-                    minLines: 1,
-                    maxLines: 4,
-                    cursorColor: AppColors.primary,
-                    style: TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 14.sp,
-                    ),
-                    decoration: InputDecoration(
-                      hintText: lang.tr('ticket_reply_placeholder'),
-                      hintStyle: TextStyle(
-                        color: AppColors.hint,
-                        fontSize: 13.sp,
-                      ),
-                      isDense: true,
-                      filled: true,
-                      fillColor: AppColors.surface,
-                      contentPadding: EdgeInsets.symmetric(
-                          horizontal: 12.w, vertical: 10.h),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(20.r),
-                        borderSide: BorderSide(color: AppColors.border),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(20.r),
-                        borderSide: BorderSide(color: AppColors.border),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(20.r),
-                        borderSide:
-                            BorderSide(color: AppColors.border, width: 1),
-                      ),
-                    ),
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _replyController,
+                minLines: 1,
+                maxLines: 4,
+                cursorColor: AppColors.primary,
+                style: TextStyle(color: AppColors.textPrimary, fontSize: 14.sp),
+                decoration: InputDecoration(
+                  hintText: lang.tr('ticket_reply_placeholder'),
+                  hintStyle: TextStyle(color: AppColors.hint, fontSize: 13.sp),
+                  isDense: true,
+                  filled: true,
+                  fillColor: AppColors.surface,
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 12.w,
+                    vertical: 10.h,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20.r),
+                    borderSide: BorderSide(color: AppColors.border),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20.r),
+                    borderSide: BorderSide(color: AppColors.border),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20.r),
+                    borderSide: BorderSide(color: AppColors.border, width: 1),
                   ),
                 ),
-                SizedBox(width: 6.w),
-                Obx(
-                  () => CircleAvatar(
-                    backgroundColor: AppColors.primary,
-                    child: controller.isSubmitting.value
-                        ? SizedBox(
-                            height: 18.h,
-                            width: 18.h,
-                            child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: AppColors.whiteColor),
-                          )
-                        : IconButton(
-                            onPressed: _sendReply,
-                            icon: Icon(Icons.send,
-                                color: AppColors.whiteColor, size: 18.sp),
-                          ),
-                  ),
-                ),
-              ],
+              ),
             ),
+            SizedBox(width: 6.w),
+            Obx(
+              () => CircleAvatar(
+                backgroundColor: AppColors.primary,
+                child: controller.isSubmitting.value
+                    ? SizedBox(
+                        height: 18.h,
+                        width: 18.h,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppColors.whiteColor,
+                        ),
+                      )
+                    : IconButton(
+                        onPressed: _sendReply,
+                        icon: Icon(
+                          Icons.send,
+                          color: AppColors.whiteColor,
+                          size: 18.sp,
+                        ),
+                      ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -425,14 +461,16 @@ class _TicketDetailScreenState extends State<TicketDetailScreen>
         children: [
           SizedBox(
             width: 110.w,
-            child: Text(label,
-                style: TextStyle(
-                    fontSize: 12.sp, color: AppColors.textSecondary)),
+            child: Text(
+              label,
+              style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary),
+            ),
           ),
           Expanded(
-            child: Text(value,
-                style:
-                    TextStyle(fontSize: 12.sp, color: AppColors.textPrimary)),
+            child: Text(
+              value,
+              style: TextStyle(fontSize: 12.sp, color: AppColors.textPrimary),
+            ),
           ),
         ],
       ),
@@ -446,9 +484,14 @@ class _TicketDetailScreenState extends State<TicketDetailScreen>
         color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(6.r),
       ),
-      child: Text(text,
-          style: TextStyle(
-              color: color, fontSize: 10.sp, fontWeight: FontWeight.w600)),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: color,
+          fontSize: 10.sp,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
     );
   }
 }

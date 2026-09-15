@@ -105,7 +105,10 @@ class ContestRulesScreen extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  Text('📜', style: AppTextStyles.bodyText.copyWith(fontSize: 30.sp)),
+                  Text(
+                    '📜',
+                    style: AppTextStyles.bodyText.copyWith(fontSize: 30.sp),
+                  ),
                   SizedBox(width: 12.w),
                   Expanded(
                     child: Column(
@@ -161,10 +164,7 @@ class ContestRulesScreen extends StatelessWidget {
             SizedBox(height: 28.h),
             Center(
               child: Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 14.w,
-                  vertical: 10.h,
-                ),
+                padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
                 decoration: BoxDecoration(
                   color: AppColors.textGrey.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(10.r),
@@ -210,9 +210,7 @@ class _RuleCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(14.r),
-        border: Border.all(
-          color: AppColors.icongrey.withValues(alpha: 0.18),
-        ),
+        border: Border.all(color: AppColors.icongrey.withValues(alpha: 0.18)),
         boxShadow: [
           BoxShadow(
             color: AppColors.border.withValues(alpha: 0.04),
@@ -232,7 +230,10 @@ class _RuleCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(10.r),
             ),
             alignment: Alignment.center,
-            child: Text(rule.emoji, style: AppTextStyles.bodyText.copyWith(fontSize: 18.sp)),
+            child: Text(
+              rule.emoji,
+              style: AppTextStyles.bodyText.copyWith(fontSize: 18.sp),
+            ),
           ),
           SizedBox(width: 12.w),
           Expanded(

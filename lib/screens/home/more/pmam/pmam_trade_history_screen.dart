@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/controllers/pmam/pmam_controller.dart';
+import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
 import 'package:crm_app/utils/app_picker_theme.dart';
 
@@ -395,7 +396,7 @@ class _PmamTradeHistoryScreenState extends State<PmamTradeHistoryScreen> {
                   if (rows.isEmpty) {
                     return Center(
                       child: Text(
-                        'No trades found for the selected dates.',
+                        Get.find<LanguageService>().tr('common_no_data'),
                         style: TextStyle(
                           fontSize: 13.sp,
                           color: AppColors.textGrey,
@@ -419,10 +420,9 @@ class _PmamTradeHistoryScreenState extends State<PmamTradeHistoryScreen> {
                           padding: EdgeInsets.symmetric(vertical: 8.h),
                           child: Center(
                             child: OutlinedButton(
-                              onPressed:
-                                  _ctrl.isTradesLoading.value
-                                      ? null
-                                      : () => _loadMoreIfNeeded(),
+                              onPressed: _ctrl.isTradesLoading.value
+                                  ? null
+                                  : () => _loadMoreIfNeeded(),
                               style: OutlinedButton.styleFrom(
                                 side: BorderSide(
                                   color: AppColors.primary.withOpacity(0.55),
@@ -435,23 +435,22 @@ class _PmamTradeHistoryScreenState extends State<PmamTradeHistoryScreen> {
                                   vertical: 10.h,
                                 ),
                               ),
-                              child:
-                                  _ctrl.isTradesLoading.value
-                                      ? SizedBox(
-                                        width: 16.sp,
-                                        height: 16.sp,
-                                        child: const CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                        ),
-                                      )
-                                      : Text(
-                                        'Load more',
-                                        style: TextStyle(
-                                          fontSize: 12.sp,
-                                          fontWeight: FontWeight.w700,
-                                          color: AppColors.primary,
-                                        ),
+                              child: _ctrl.isTradesLoading.value
+                                  ? SizedBox(
+                                      width: 16.sp,
+                                      height: 16.sp,
+                                      child: const CircularProgressIndicator(
+                                        strokeWidth: 2,
                                       ),
+                                    )
+                                  : Text(
+                                      'Load more',
+                                      style: TextStyle(
+                                        fontSize: 12.sp,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.primary,
+                                      ),
+                                    ),
                             ),
                           ),
                         );
@@ -473,11 +472,12 @@ class _PmamTradeHistoryScreenState extends State<PmamTradeHistoryScreen> {
 
                       final isBuy = type.toLowerCase() == 'buy';
                       final pnlPos = profit >= 0;
-                      final pnlColor = pnlPos ? AppColors.green : AppColors.error;
-                      final typeBg =
-                          isBuy
-                              ? AppColors.green.withValues(alpha: 0.12)
-                              : AppColors.error.withValues(alpha: 0.12);
+                      final pnlColor = pnlPos
+                          ? AppColors.green
+                          : AppColors.error;
+                      final typeBg = isBuy
+                          ? AppColors.green.withValues(alpha: 0.12)
+                          : AppColors.error.withValues(alpha: 0.12);
                       final typeFg = isBuy ? AppColors.green : AppColors.error;
 
                       Widget kv(String k, String v, {Color? vColor}) {
@@ -596,10 +596,9 @@ class _PmamTradeHistoryScreenState extends State<PmamTradeHistoryScreen> {
                                 kv(
                                   'Commission',
                                   '${comm >= 0 ? '+' : ''}\$${comm.abs().toStringAsFixed(2)}',
-                                  vColor:
-                                      comm >= 0
-                                          ? AppColors.green
-                                          : AppColors.error,
+                                  vColor: comm >= 0
+                                      ? AppColors.green
+                                      : AppColors.error,
                                 ),
                               ],
                             ),

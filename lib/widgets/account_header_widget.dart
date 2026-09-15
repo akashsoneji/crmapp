@@ -7,6 +7,7 @@ import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/flavor_config.dart';
+import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/controllers/account_controller.dart';
 import 'package:crm_app/controllers/dashboard_controller.dart';
 import 'package:crm_app/models/mt5_account.dart';
@@ -36,11 +37,12 @@ class AccountHeaderWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AccountController accountController = Get.find<AccountController>();
+    final languageService = Get.find<LanguageService>();
     // Get DashboardController for primary account (like dashboard screen)
     final DashboardController? dashboardController =
         Get.isRegistered<DashboardController>()
-            ? Get.find<DashboardController>()
-            : null;
+        ? Get.find<DashboardController>()
+        : null;
 
     return SafeArea(
       child: Container(
@@ -94,10 +96,9 @@ class AccountHeaderWidget extends StatelessWidget {
 
                     // Get equity from WebSocket AccountInfo (real-time) if available, otherwise from account's equity
                     final double? realTimeEquity = accountInfo?.equity;
-                    final double? apiEquity =
-                        primaryAccount != null
-                            ? double.tryParse(primaryAccount.equity)
-                            : null;
+                    final double? apiEquity = primaryAccount != null
+                        ? double.tryParse(primaryAccount.equity)
+                        : null;
 
                     // Use real-time equity if available, otherwise fallback to API equity
                     final double displayEquity =
@@ -108,7 +109,8 @@ class AccountHeaderWidget extends StatelessWidget {
                     // full loading state (spinner only, no $0.00 / blank account
                     // number) instead of empty placeholders.
                     final bool isFetchingAccounts =
-                        dashboardController?.isLoadingMT5Accounts.value ?? false;
+                        dashboardController?.isLoadingMT5Accounts.value ??
+                        false;
                     final bool isWaitingForAccounts =
                         primaryAccount == null && isFetchingAccounts;
 
@@ -142,7 +144,7 @@ class AccountHeaderWidget extends StatelessWidget {
                           ),
                           SizedBox(width: 8.w),
                           Text(
-                            'Loading account...',
+                            languageService.tr('common_loading_account'),
                             style: AppTextStyles.subheading.copyWith(
                               fontSize: 12.sp,
                               color: AppColors.textGrey,
@@ -163,8 +165,9 @@ class AccountHeaderWidget extends StatelessWidget {
 
                     // If floatingProfit is provided, use it instead of equity
                     final bool useFloatingProfit = floatingProfit != null;
-                    final double displayValue =
-                        useFloatingProfit ? floatingProfit! : displayEquity;
+                    final double displayValue = useFloatingProfit
+                        ? floatingProfit!
+                        : displayEquity;
                     final bool isPositive = displayValue >= 0;
 
                     return Column(
@@ -186,12 +189,11 @@ class AccountHeaderWidget extends StatelessWidget {
                               style: AppTextStyles.heading.copyWith(
                                 fontSize: 18.sp,
                                 fontWeight: FontWeight.w700,
-                                color:
-                                    useFloatingProfit
-                                        ? (isPositive
-                                            ? AppColors.success
-                                            : AppColors.error)
-                                        : null,
+                                color: useFloatingProfit
+                                    ? (isPositive
+                                          ? AppColors.success
+                                          : AppColors.error)
+                                    : null,
                               ),
                             ),
                             SizedBox(width: 8.w),
@@ -284,8 +286,8 @@ class AccountHeaderWidget extends StatelessWidget {
                               // SizedBox(width: 3.w), // 10px space as requested
                               Icon(
                                 Icons.arrow_drop_down,
-                                size:
-                                    20.h, // Increased size (approx 25% larger than 16.h)
+                                size: 20
+                                    .h, // Increased size (approx 25% larger than 16.h)
                                 color: AppColors.textGrey,
                               ),
                             ],
@@ -387,6 +389,7 @@ class AccountHeaderWidget extends StatelessWidget {
     BuildContext context,
     AccountController accountController,
   ) {
+    final languageService = Get.find<LanguageService>();
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -408,17 +411,15 @@ class AccountHeaderWidget extends StatelessWidget {
           final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
           return Padding(
-            padding: EdgeInsets.only(
-              bottom: bottomInset,
-            ),
+            padding: EdgeInsets.only(bottom: bottomInset),
             child: Container(
               height: dynamicHeight,
               decoration: BoxDecoration(
                 color: AppColors.bottomSheetSurface,
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(20.r),
-                  topRight: Radius.circular(20.r),
-                  // bottomLeft and bottomRight are not set, so only top corners are rounded
+                borderRadius: BorderRadiusDirectional.only(
+                  topStart: Radius.circular(20.r),
+                  topEnd: Radius.circular(20.r),
+                  // bottomStart and bottomEnd are not set, so only top corners are rounded
                 ),
               ),
               child: Column(
@@ -439,7 +440,7 @@ class AccountHeaderWidget extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'Select Account',
+                          languageService.tr('create_account_select_account'),
                           style: AppTextStyles.heading.copyWith(
                             fontSize: 18.sp,
                             fontWeight: FontWeight.w700,
@@ -454,120 +455,120 @@ class AccountHeaderWidget extends StatelessWidget {
                   ),
                   accountController.isLoading
                       ? Expanded(
-                        child: Container(
-                          padding: EdgeInsets.all(20.w),
-                          child: Center(child: CircularProgressIndicator()),
-                        ),
-                      )
-                      : Expanded(
-                        child: ListView.builder(
-                          padding: EdgeInsets.only(
-                            bottom: MediaQuery.of(context).padding.bottom,
+                          child: Container(
+                            padding: EdgeInsets.all(20.w),
+                            child: Center(child: CircularProgressIndicator()),
                           ),
-                          itemCount: accountController.mt5Accounts.length,
-                          itemBuilder: (context, index) {
-                            final account =
-                                accountController.mt5Accounts[index];
-                            final isActive =
-                                accountController
-                                    .activeMT5Account
-                                    ?.metaAccountNumber ==
-                                account.metaAccountNumber;
-                            final isDemo =
-                                account.accountType.toLowerCase() == 'demo';
-                            final leadingBg =
-                                AppColors.accountSheetLeadingBackground(
-                                  isDemo: isDemo,
-                                );
-                            final leadingIconColor =
-                                AppColors.accountSheetLeadingIcon(
-                                  isDemo: isDemo,
-                                );
+                        )
+                      : Expanded(
+                          child: ListView.builder(
+                            padding: EdgeInsets.only(
+                              bottom: MediaQuery.of(context).padding.bottom,
+                            ),
+                            itemCount: accountController.mt5Accounts.length,
+                            itemBuilder: (context, index) {
+                              final account =
+                                  accountController.mt5Accounts[index];
+                              final isActive =
+                                  accountController
+                                      .activeMT5Account
+                                      ?.metaAccountNumber ==
+                                  account.metaAccountNumber;
+                              final isDemo =
+                                  account.accountType.toLowerCase() == 'demo';
+                              final leadingBg =
+                                  AppColors.accountSheetLeadingBackground(
+                                    isDemo: isDemo,
+                                  );
+                              final leadingIconColor =
+                                  AppColors.accountSheetLeadingIcon(
+                                    isDemo: isDemo,
+                                  );
 
-                            return Container(
-                              child: ListTile(
-                                leading: Container(
-                                  padding: EdgeInsets.all(8.w),
-                                  decoration: BoxDecoration(
-                                    color: leadingBg,
-                                    borderRadius: BorderRadius.circular(8.r),
-                                  ),
-                                  child: SvgPicture.asset(
-                                    'assets/svg/empty-wallet.svg',
-                                    height: 20.h,
-                                    width: 20.h,
-                                    colorFilter: ColorFilter.mode(
-                                      leadingIconColor,
-                                      BlendMode.srcIn,
+                              return Container(
+                                child: ListTile(
+                                  leading: Container(
+                                    padding: EdgeInsets.all(8.w),
+                                    decoration: BoxDecoration(
+                                      color: leadingBg,
+                                      borderRadius: BorderRadius.circular(8.r),
                                     ),
-                                  ),
-                                ),
-                                title: Row(
-                                  children: [
-                                    Text(
-                                      account.accountType.capitalizeFirst ?? '',
-                                      style: AppTextStyles.label.copyWith(
-                                        fontSize: 16.sp,
-                                        fontWeight: FontWeight.w600,
-                                        color: AppColors.textPrimary,
+                                    child: SvgPicture.asset(
+                                      'assets/svg/empty-wallet.svg',
+                                      height: 20.h,
+                                      width: 20.h,
+                                      colorFilter: ColorFilter.mode(
+                                        leadingIconColor,
+                                        BlendMode.srcIn,
                                       ),
                                     ),
-                                    if (isActive) ...[
-                                      SizedBox(width: 8.w),
-                                      Container(
-                                        padding: EdgeInsets.symmetric(
-                                          horizontal: 6.w,
-                                          vertical: 2.h,
+                                  ),
+                                  title: Row(
+                                    children: [
+                                      Text(
+                                        account.accountType.capitalizeFirst ??
+                                            '',
+                                        style: AppTextStyles.label.copyWith(
+                                          fontSize: 16.sp,
+                                          fontWeight: FontWeight.w600,
+                                          color: AppColors.textPrimary,
                                         ),
-                                        decoration: BoxDecoration(
-                                          color: AppColors.success,
-                                          borderRadius: BorderRadius.circular(
-                                            8.r,
+                                      ),
+                                      if (isActive) ...[
+                                        SizedBox(width: 8.w),
+                                        Container(
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: 6.w,
+                                            vertical: 2.h,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.success,
+                                            borderRadius: BorderRadius.circular(
+                                              8.r,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            languageService.tr('wallet_active'),
+                                            style: AppTextStyles.label.copyWith(
+                                              fontSize: 8.sp,
+                                              fontWeight: FontWeight.w600,
+                                              color:
+                                                  AppColors.onColoredBackground,
+                                            ),
                                           ),
                                         ),
-                                        child: Text(
-                                          'ACTIVE',
-                                          style: AppTextStyles.label.copyWith(
-                                            fontSize: 8.sp,
-                                            fontWeight: FontWeight.w600,
-                                            color:
-                                                AppColors.onColoredBackground,
-                                          ),
+                                      ],
+                                    ],
+                                  ),
+                                  subtitle: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        '${languageService.tr('common_id')}: ${account.metaAccountNumber}',
+                                        style: AppTextStyles.label.copyWith(
+                                          fontSize: 12.sp,
+                                          color: AppColors.textGrey,
+                                        ),
+                                      ),
+                                      Text(
+                                        '\$${account.balance}',
+                                        style: AppTextStyles.label.copyWith(
+                                          fontSize: 14.sp,
+                                          fontWeight: FontWeight.w600,
+                                          color: AppColors.textPrimary,
                                         ),
                                       ),
                                     ],
-                                  ],
-                                ),
-                                subtitle: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'ID: ${account.metaAccountNumber}',
-                                      style: AppTextStyles.label.copyWith(
-                                        fontSize: 12.sp,
-                                        color: AppColors.textGrey,
-                                      ),
-                                    ),
-                                    Text(
-                                      '\$${account.balance}',
-                                      style: AppTextStyles.label.copyWith(
-                                        fontSize: 14.sp,
-                                        fontWeight: FontWeight.w600,
-                                        color: AppColors.textPrimary,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                trailing: Radio<String>(
-                                  value: account.metaAccountNumber,
-                                  groupValue:
-                                      accountController
-                                          .activeMT5Account
-                                          ?.metaAccountNumber,
-                                  onChanged:
-                                      accountController.isLoading
-                                          ? null
-                                          : (value) async {
+                                  ),
+                                  trailing: Radio<String>(
+                                    value: account.metaAccountNumber,
+                                    groupValue: accountController
+                                        .activeMT5Account
+                                        ?.metaAccountNumber,
+                                    onChanged: accountController.isLoading
+                                        ? null
+                                        : (value) async {
                                             if (Navigator.of(
                                               context,
                                             ).canPop()) {
@@ -585,32 +586,35 @@ class AccountHeaderWidget extends StatelessWidget {
                                               }
                                             }
                                           },
-                                  fillColor: WidgetStateProperty.resolveWith<
-                                    Color?
-                                  >((states) {
-                                    if (states.contains(WidgetState.disabled)) {
-                                      return AppColors.textGreyLight.withValues(
-                                        alpha: 0.5,
-                                      );
-                                    }
-                                    if (states.contains(WidgetState.selected)) {
-                                      return AppColors.controlActive;
-                                    }
-                                    return AppColors.textGreyLight;
-                                  }),
+                                    fillColor:
+                                        WidgetStateProperty.resolveWith<Color?>(
+                                          (states) {
+                                            if (states.contains(
+                                              WidgetState.disabled,
+                                            )) {
+                                              return AppColors.textGreyLight
+                                                  .withValues(alpha: 0.5);
+                                            }
+                                            if (states.contains(
+                                              WidgetState.selected,
+                                            )) {
+                                              return AppColors.controlActive;
+                                            }
+                                            return AppColors.textGreyLight;
+                                          },
+                                        ),
+                                  ),
+                                  tileColor: isActive
+                                      ? AppColors.accountSheetSelectedTile
+                                      : null,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8.r),
+                                  ),
                                 ),
-                                tileColor:
-                                    isActive
-                                        ? AppColors.accountSheetSelectedTile
-                                        : null,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8.r),
-                                ),
-                              ),
-                            );
-                          },
+                              );
+                            },
+                          ),
                         ),
-                      ),
                 ],
               ),
             ),

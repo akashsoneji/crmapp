@@ -65,7 +65,10 @@ class WinnersScreen extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  Text('🏆', style: AppTextStyles.bodyText.copyWith(fontSize: 30.sp)),
+                  Text(
+                    '🏆',
+                    style: AppTextStyles.bodyText.copyWith(fontSize: 30.sp),
+                  ),
                   SizedBox(width: 12.w),
                   Expanded(
                     child: Column(
@@ -119,14 +122,17 @@ class WinnersScreen extends StatelessWidget {
                               width: 36.w,
                               height: 36.w,
                               decoration: BoxDecoration(
-                                color:
-                                    AppColors.warning.withValues(alpha: 0.12),
+                                color: AppColors.warning.withValues(
+                                  alpha: 0.12,
+                                ),
                                 shape: BoxShape.circle,
                               ),
                               alignment: Alignment.center,
                               child: Text(
                                 '🏅',
-                                style: AppTextStyles.bodyText.copyWith(fontSize: 16.sp),
+                                style: AppTextStyles.bodyText.copyWith(
+                                  fontSize: 16.sp,
+                                ),
                               ),
                             ),
                             SizedBox(width: 10.w),
@@ -164,15 +170,15 @@ class _WinnerRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pnlColor = winner.pnlPercent >= 0 ? AppColors.success : AppColors.error;
+    final pnlColor = winner.pnlPercent >= 0
+        ? AppColors.success
+        : AppColors.error;
     final medal = winner.rank <= 3 ? ['🥇', '🥈', '🥉'][winner.rank - 1] : null;
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
       decoration: BoxDecoration(
         border: Border(
-          top: BorderSide(
-            color: AppColors.border.withValues(alpha: 0.5),
-          ),
+          top: BorderSide(color: AppColors.border.withValues(alpha: 0.5)),
         ),
       ),
       child: Row(
@@ -181,7 +187,10 @@ class _WinnerRow extends StatelessWidget {
             width: 28.w,
             child: Center(
               child: medal != null
-                  ? Text(medal, style: AppTextStyles.bodyText.copyWith(fontSize: 16.sp))
+                  ? Text(
+                      medal,
+                      style: AppTextStyles.bodyText.copyWith(fontSize: 16.sp),
+                    )
                   : Text(
                       '#${winner.rank}',
                       style: AppTextStyles.bodyText.copyWith(

@@ -16,7 +16,7 @@ class _TradersFilterScreenState extends State<TradersFilterScreen> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration:   BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.whiteColor,
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(40),
@@ -53,7 +53,7 @@ class _TradersFilterScreenState extends State<TradersFilterScreen> {
                         color: AppColors.icongrey,
                         shape: BoxShape.circle,
                       ),
-                      child:   Icon(
+                      child: Icon(
                         Icons.close,
                         size: 16,
                         color: AppColors.whiteColor,
@@ -64,7 +64,7 @@ class _TradersFilterScreenState extends State<TradersFilterScreen> {
                     padding: EdgeInsets.only(
                       left: MediaQuery.of(context).size.width * 0.1,
                     ),
-                    child:   Text(
+                    child: Text(
                       'Filters',
                       style: TextStyle(
                         fontSize: 20,
@@ -80,7 +80,7 @@ class _TradersFilterScreenState extends State<TradersFilterScreen> {
                         minExpertise = 'All';
                       });
                     },
-                    child:   Text(
+                    child: Text(
                       'Reset all',
                       style: TextStyle(
                         fontSize: 14,
@@ -183,26 +183,23 @@ class _TradersFilterScreenState extends State<TradersFilterScreen> {
                               height: 20,
                               decoration: BoxDecoration(
                                 border: Border.all(
-                                  color:
-                                      freeTrial
-                                          ? AppColors.primary
-                                          : AppColors.textGrey,
+                                  color: freeTrial
+                                      ? AppColors.primary
+                                      : AppColors.textGrey,
                                   width: 1.5,
                                 ),
                                 borderRadius: BorderRadius.circular(4),
-                                color:
-                                    freeTrial
-                                        ? AppColors.primary
-                                        : Colors.transparent,
+                                color: freeTrial
+                                    ? AppColors.primary
+                                    : Colors.transparent,
                               ),
-                              child:
-                                  freeTrial
-                                      ?   Icon(
-                                        Icons.check,
-                                        size: 14,
-                                        color: AppColors.whiteColor,
-                                      )
-                                      : null,
+                              child: freeTrial
+                                  ? Icon(
+                                      Icons.check,
+                                      size: 14,
+                                      color: AppColors.whiteColor,
+                                    )
+                                  : null,
                             ),
                           ],
                         ),
@@ -339,7 +336,7 @@ class _TradersFilterScreenState extends State<TradersFilterScreen> {
                     onPressed: () {
                       Navigator.pop(context);
                     },
-                    child:   Text(
+                    child: Text(
                       'Show 108 Master Traders',
                       style: TextStyle(
                         fontSize: 16,

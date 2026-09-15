@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/controllers/tenax_broker_selection_controller.dart';
 import 'package:crm_app/models/tenax_broker_model.dart';
+import 'package:crm_app/services/language_service.dart';
 
 class TenaxBrokerSelectionScreen
     extends GetView<TenaxBrokerSelectionController> {
@@ -12,6 +13,7 @@ class TenaxBrokerSelectionScreen
 
   @override
   Widget build(BuildContext context) {
+    final languageService = Get.find<LanguageService>();
     final args = Get.arguments as Map<String, dynamic>?;
     final allowBack = args?['allowBack'] == true;
 
@@ -21,13 +23,15 @@ class TenaxBrokerSelectionScreen
         backgroundColor: AppColors.surface,
         appBar: AppBar(
           automaticallyImplyLeading: allowBack,
-          leading:
-              allowBack
-                  ? IconButton(
-                    icon: Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textPrimary),
-                    onPressed: () => Get.back(),
-                  )
-                  : null,
+          leading: allowBack
+              ? IconButton(
+                  icon: Icon(
+                    Icons.arrow_back_ios_new_rounded,
+                    color: AppColors.textPrimary,
+                  ),
+                  onPressed: () => Get.back(),
+                )
+              : null,
           elevation: 0,
           centerTitle: false,
           backgroundColor: AppColors.surface,
@@ -80,7 +84,9 @@ class TenaxBrokerSelectionScreen
                                   color: AppColors.textPrimary,
                                 ),
                                 decoration: InputDecoration(
-                                  hintText: 'Find broker...',
+                                  hintText: languageService.tr(
+                                    'auth_find_broker',
+                                  ),
                                   hintStyle: TextStyle(
                                     color: AppColors.textGrey,
                                     fontSize: 14.sp,
@@ -123,59 +129,62 @@ class TenaxBrokerSelectionScreen
             ],
           );
         }),
-        bottomNavigationBar:
-            controller.isDemoMode
-                ? null
-                : SafeArea(
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 12.h),
-                    child: SizedBox(
-                      height: 50.h,
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: AppColors.isDarkMode ? Color(0xFFFFFFFF) : Color(0xFF4A0C54),
-                          borderRadius: BorderRadius.circular(14.r),
-                        ),
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.transparent,
-                            shadowColor: Colors.transparent,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14.r),
-                            ),
+        bottomNavigationBar: controller.isDemoMode
+            ? null
+            : SafeArea(
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 12.h),
+                  child: SizedBox(
+                    height: 50.h,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: AppColors.isDarkMode
+                            ? Color(0xFFFFFFFF)
+                            : Color(0xFF4A0C54),
+                        borderRadius: BorderRadius.circular(14.r),
+                      ),
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          shadowColor: Colors.transparent,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14.r),
                           ),
-                          onPressed: () {
-                            showDialog<void>(
-                              context: context,
-                              builder:
-                                  (ctx) => AlertDialog(
-                                    title: const Text('Contact Support'),
-                                    content: const Text(
-                                      'Please contact our support team to add your broker.',
-                                    ),
-                                    actions: [
-                                      TextButton(
-                                        onPressed:
-                                            () => Navigator.of(ctx).pop(),
-                                        child: const Text('OK'),
-                                      ),
-                                    ],
-                                  ),
-                            );
-                          },
-                          child: Text(
-                            "Can't Find Your Broker?",
-                            style: TextStyle(
-                              color: AppColors.whiteColor,
-                              fontSize: 15.sp,
-                              fontWeight: FontWeight.w600,
+                        ),
+                        onPressed: () {
+                          showDialog<void>(
+                            context: context,
+                            builder: (ctx) => AlertDialog(
+                              title: Text(
+                                languageService.tr('auth_contact_support'),
+                              ),
+                              content: Text(
+                                languageService.tr(
+                                  'auth_contact_support_message',
+                                ),
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.of(ctx).pop(),
+                                  child: Text(languageService.tr('common_ok')),
+                                ),
+                              ],
                             ),
+                          );
+                        },
+                        child: Text(
+                          languageService.tr('auth_cannot_find_broker'),
+                          style: TextStyle(
+                            color: AppColors.whiteColor,
+                            fontSize: 15.sp,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
                     ),
                   ),
                 ),
+              ),
       ),
     );
   }
@@ -238,27 +247,25 @@ class TenaxBrokerSelectionScreen
               final isThisLoading =
                   controller.loadingInfoSlug.value == broker.slug;
               return GestureDetector(
-                onTap:
-                    controller.loadingInfoSlug.value.isNotEmpty
-                        ? null
-                        : () => controller.fetchBrokerInfo(broker),
+                onTap: controller.loadingInfoSlug.value.isNotEmpty
+                    ? null
+                    : () => controller.fetchBrokerInfo(broker),
                 child: Padding(
                   padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 4.h),
-                  child:
-                      isThisLoading
-                          ? SizedBox(
-                            width: 22.w,
-                            height: 22.w,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: const Color(0xFF6B3FA0),
-                            ),
-                          )
-                          : Icon(
-                            Icons.info_outline,
-                            size: 22.w,
-                            color: AppColors.textGrey,
+                  child: isThisLoading
+                      ? SizedBox(
+                          width: 22.w,
+                          height: 22.w,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: const Color(0xFF6B3FA0),
                           ),
+                        )
+                      : Icon(
+                          Icons.info_outline,
+                          size: 22.w,
+                          color: AppColors.textGrey,
+                        ),
                 ),
               );
             }),
@@ -291,16 +298,15 @@ class TenaxBrokerSelectionScreen
         width: 46.w,
         height: 46.w,
         fit: BoxFit.cover,
-        errorBuilder:
-            (context, error, stackTrace) => Container(
-              width: 46.w,
-              height: 46.w,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                color: Color(0xFFE3E5EA),
-              ),
-              child: const Icon(Icons.business, color: Color(0xFF6F7380)),
-            ),
+        errorBuilder: (context, error, stackTrace) => Container(
+          width: 46.w,
+          height: 46.w,
+          decoration: const BoxDecoration(
+            shape: BoxShape.circle,
+            color: Color(0xFFE3E5EA),
+          ),
+          child: const Icon(Icons.business, color: Color(0xFF6F7380)),
+        ),
       ),
     );
   }

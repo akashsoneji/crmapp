@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:crm_app/controllers/chart_controller.dart';
 import 'package:crm_app/controllers/account_controller.dart';
 import 'package:crm_app/services/audio_service.dart';
+import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
 import 'package:get/get.dart';
 
@@ -107,11 +108,13 @@ class OneClickTradingQueueService {
           type,
           volume,
           false,
-          'No trading account available',
+          Get.find<LanguageService>().tr('trading_no_account_available'),
         );
       } else {
         CustomToastService.showError(
-          message: 'No trading account available',
+          message: Get.find<LanguageService>().tr(
+            'trading_no_account_available',
+          ),
           duration: const Duration(seconds: 2),
         );
       }
@@ -176,8 +179,9 @@ class OneClickTradingQueueService {
       } catch (e) {
         print('❌ OneClickTradingQueueService: Error processing trade: $e');
         // Show error notification
-        final typeText =
-            tradeRequest.type.toLowerCase() == 'buy' ? 'Buy' : 'Sell';
+        final typeText = tradeRequest.type.toLowerCase() == 'buy'
+            ? 'Buy'
+            : 'Sell';
 
         // Use callback if provided, otherwise use toast
         if (tradeRequest.onTradeComplete != null &&
@@ -244,8 +248,9 @@ class OneClickTradingQueueService {
         }
 
         // Show success notification
-        final typeText =
-            tradeRequest.type.toLowerCase() == 'buy' ? 'Buy' : 'Sell';
+        final typeText = tradeRequest.type.toLowerCase() == 'buy'
+            ? 'Buy'
+            : 'Sell';
         final message =
             '${tradeRequest.symbol} $typeText ${tradeRequest.volume} done';
 
@@ -273,8 +278,9 @@ class OneClickTradingQueueService {
       } else {
         // Show error notification
         final errorMessage = result['error'] ?? 'Failed to place order';
-        final typeText =
-            tradeRequest.type.toLowerCase() == 'buy' ? 'Buy' : 'Sell';
+        final typeText = tradeRequest.type.toLowerCase() == 'buy'
+            ? 'Buy'
+            : 'Sell';
 
         // Use callback if provided, otherwise use toast
         if (tradeRequest.onTradeComplete != null &&
@@ -305,8 +311,9 @@ class OneClickTradingQueueService {
       );
 
       // Show error notification
-      final typeText =
-          tradeRequest.type.toLowerCase() == 'buy' ? 'Buy' : 'Sell';
+      final typeText = tradeRequest.type.toLowerCase() == 'buy'
+          ? 'Buy'
+          : 'Sell';
 
       // Use callback if provided, otherwise use toast
       if (tradeRequest.onTradeComplete != null &&

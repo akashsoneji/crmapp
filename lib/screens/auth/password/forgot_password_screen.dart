@@ -57,10 +57,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           children: [
             Column(
               children: [
-                        Padding(
-                          padding:  EdgeInsets.only(top:24.h,left: 24.0),
-                          child: Align(alignment: Alignment.topLeft,child: _buildHeader()),
-                        ),
+                Padding(
+                  padding: EdgeInsets.only(top: 24.h, left: 24.0),
+                  child: Align(
+                    alignment: Alignment.topLeft,
+                    child: _buildHeader(),
+                  ),
+                ),
                 Expanded(
                   child: LayoutBuilder(
                     builder: (context, constraints) {
@@ -81,7 +84,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                                   Center(
                                     child: BrandLogo(
                                       source: FlavorConfig.effectiveLogo,
-                                      color: FlavorConfig.isONSA() &&
+                                      color:
+                                          FlavorConfig.isONSA() &&
                                               !FlavorConfig.hasRemoteLogo
                                           ? AppColors.primary
                                           : null,
@@ -92,7 +96,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                                   Padding(
                                     padding: EdgeInsets.only(top: 70.h),
                                     child: Text(
-                                      languageService.tr("forgot_password_title"),
+                                      languageService.tr(
+                                        "forgot_password_title",
+                                      ),
                                       style: TextStyle(
                                         fontSize: 28,
                                         fontWeight: FontWeight.bold,
@@ -101,56 +107,70 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                                     ),
                                   ),
                                   SizedBox(height: 16.h),
-                                    RTLHelper.rtlTextField(
-          controller: _emailController,
-          keyboardType: TextInputType.emailAddress,
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return languageService.tr('forgot_password_enter_your_email');
-            }
-            if (!value.contains('@')) {
-              return languageService.tr(
-                "forgot_password_Please_enter_a_valid_email",
-              );
-            }
-            return null;
-          },
-          labelText: languageService.tr("forgot_password_email"),
-        ),
-     
-                                  
+                                  RTLHelper.rtlTextField(
+                                    controller: _emailController,
+                                    keyboardType: TextInputType.emailAddress,
+                                    validator: (value) {
+                                      if (value == null || value.isEmpty) {
+                                        return languageService.tr(
+                                          'forgot_password_enter_your_email',
+                                        );
+                                      }
+                                      if (!value.contains('@')) {
+                                        return languageService.tr(
+                                          "forgot_password_Please_enter_a_valid_email",
+                                        );
+                                      }
+                                      return null;
+                                    },
+                                    labelText: languageService.tr(
+                                      "forgot_password_email",
+                                    ),
+                                  ),
+
                                   SizedBox(height: 35.h),
                                   Obx(() {
                                     final isLoading = authController.isLoading;
                                     return ElevatedButton(
-                                      onPressed:
-                                          authController.isLoading
-                  ? null
-                  : _isFormValid
-                  ? () {
-                    if (_formKey.currentState!.validate()) {
-                      authController.requestPasswordResetOTP(
-                        email: _emailController.text.trim(),
-                      );
-                    }
-                  }
-                  : null,
+                                      onPressed: authController.isLoading
+                                          ? null
+                                          : _isFormValid
+                                          ? () {
+                                              if (_formKey.currentState!
+                                                  .validate()) {
+                                                authController
+                                                    .requestPasswordResetOTP(
+                                                      email: _emailController
+                                                          .text
+                                                          .trim(),
+                                                    );
+                                              }
+                                            }
+                                          : null,
                                       style: ElevatedButton.styleFrom(
-                                        minimumSize:
-                                            Size(double.infinity, 40.h),
+                                        minimumSize: Size(
+                                          double.infinity,
+                                          40.h,
+                                        ),
                                         backgroundColor: AppColors.primary,
-                                        disabledBackgroundColor: AppColors.surface,
+                                        disabledBackgroundColor:
+                                            AppColors.surface,
                                         shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(10),
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
                                         ),
                                       ),
                                       child: Text(
-                                        languageService.tr("forgot_password_send_otp"),
+                                        languageService.tr(
+                                          "forgot_password_send_otp",
+                                        ),
                                         style: TextStyle(
                                           fontSize: 16,
                                           fontWeight: FontWeight.w600,
-                                          color: _isFormValid ? AppColors.whiteColor : AppColors.textGrey,
+                                          color: _isFormValid
+                                              ? AppColors.whiteColor
+                                              : AppColors.textGrey,
                                         ),
                                       ),
                                     );
@@ -169,38 +189,42 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
                   child: Center(
                     child: RichText(
-        text: TextSpan(
-          text: languageService.tr("forgot_password_remember_password"),
-          style: TextStyle(color: AppColors.textGrey, fontSize: 14.sp),
-          children: [
-            TextSpan(
-              text: languageService.tr("forgot_password_login"),
-              style: TextStyle(
-                color: AppColors.primary,
-                fontWeight: FontWeight.w600,
-              ),
-              recognizer:
-                  TapGestureRecognizer()
-                    ..onTap = () {
-                      Navigator.pushAndRemoveUntil(
-                        context,
-                        MaterialPageRoute(builder: (context) => LoginScreen()),
-                        (route) => false,
-                      );
-                    },
-            ),
-          ],
-        ),
-      ),
+                      text: TextSpan(
+                        text: languageService.tr(
+                          "forgot_password_remember_password",
+                        ),
+                        style: TextStyle(
+                          color: AppColors.textGrey,
+                          fontSize: 14.sp,
+                        ),
+                        children: [
+                          TextSpan(
+                            text: languageService.tr("forgot_password_login"),
+                            style: TextStyle(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = () {
+                                Navigator.pushAndRemoveUntil(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => LoginScreen(),
+                                  ),
+                                  (route) => false,
+                                );
+                              },
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ],
             ),
             Obx(
               () => authController.isLoading
-                  ? Center(
-                      child: CommonLoadingWidget(isFullScreen: true),
-                    )
+                  ? Center(child: CommonLoadingWidget(isFullScreen: true))
                   : const SizedBox.shrink(),
             ),
           ],
@@ -266,18 +290,17 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       width: double.infinity,
       child: Obx(
         () => ElevatedButton(
-          onPressed:
-              authController.isLoading
-                  ? null
-                  : _isFormValid
-                  ? () {
-                    if (_formKey.currentState!.validate()) {
-                      authController.requestPasswordResetOTP(
-                        email: _emailController.text.trim(),
-                      );
-                    }
+          onPressed: authController.isLoading
+              ? null
+              : _isFormValid
+              ? () {
+                  if (_formKey.currentState!.validate()) {
+                    authController.requestPasswordResetOTP(
+                      email: _emailController.text.trim(),
+                    );
                   }
-                  : null,
+                }
+              : null,
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,
             disabledBackgroundColor: AppColors.border,
@@ -311,15 +334,14 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 color: AppColors.primary,
                 fontWeight: FontWeight.w600,
               ),
-              recognizer:
-                  TapGestureRecognizer()
-                    ..onTap = () {
-                      Navigator.pushAndRemoveUntil(
-                        context,
-                        MaterialPageRoute(builder: (context) => LoginScreen()),
-                        (route) => false,
-                      );
-                    },
+              recognizer: TapGestureRecognizer()
+                ..onTap = () {
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => LoginScreen()),
+                    (route) => false,
+                  );
+                },
             ),
           ],
         ),

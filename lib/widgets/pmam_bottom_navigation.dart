@@ -34,11 +34,12 @@ class PmamBottomNavigation extends StatelessWidget {
         _PmamTab('Invest', Icons.account_balance_wallet_rounded),
       ];
     }
-    
+
     final isGtxPrime = FlavorConfig.instance.appName == 'GTX Prime';
-    
+
     return [
-      if (!isGtxPrime) const _PmamTab('Become Mgr', Icons.workspace_premium_rounded),
+      if (!isGtxPrime)
+        const _PmamTab('Become Mgr', Icons.workspace_premium_rounded),
       const _PmamTab('Explore', Icons.travel_explore_rounded),
       const _PmamTab('Invest', Icons.account_balance_wallet_rounded),
     ];
@@ -110,7 +111,9 @@ class _NavItem extends StatelessWidget {
         curve: Curves.easeOut,
         padding: EdgeInsets.symmetric(vertical: 6.h, horizontal: 4.w),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary.withOpacity(0.08) : Colors.transparent,
+          color: selected
+              ? AppColors.primary.withOpacity(0.08)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
@@ -134,5 +137,3 @@ class _NavItem extends StatelessWidget {
     );
   }
 }
-
-

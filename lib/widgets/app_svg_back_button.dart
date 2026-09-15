@@ -6,12 +6,7 @@ import 'package:get/get.dart';
 /// Theme-aware back arrow using [assets/svg/trade/arro_back.svg].
 /// Color follows [AppColors.textPrimary] (black in light, white in dark).
 class AppSvgBackIcon extends StatelessWidget {
-  const AppSvgBackIcon({
-    super.key,
-    this.width,
-    this.height,
-    this.color,
-  });
+  const AppSvgBackIcon({super.key, this.width, this.height, this.color});
 
   final double? width;
   final double? height;
@@ -26,6 +21,7 @@ class AppSvgBackIcon extends StatelessWidget {
       assetPath,
       width: width,
       height: height,
+      matchTextDirection: true,
       colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
     );
   }
@@ -48,17 +44,9 @@ class AppMaterialBackIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     final iconColor = color ?? AppColors.textPrimary;
     if (ios) {
-      return Icon(
-        Icons.arrow_back_ios,
-        size: size,
-        color: iconColor,
-      );
+      return Icon(Icons.arrow_back_ios, size: size, color: iconColor);
     }
-    return Icon(
-      Icons.arrow_back,
-      size: size,
-      color: iconColor,
-    );
+    return Icon(Icons.arrow_back, size: size, color: iconColor);
   }
 }
 
@@ -88,10 +76,7 @@ class AppSvgBackButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return IconButton(
       onPressed: onPressed,
-      icon: AppSvgBackIcon(
-        width: iconWidth,
-        height: iconHeight,
-      ),
+      icon: AppSvgBackIcon(width: iconWidth, height: iconHeight),
     );
   }
 }

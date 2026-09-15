@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/copy_trading/copy_trading_masters_controller.dart';
+import 'package:crm_app/services/language_service.dart' show TranslationUtils;
 import 'package:crm_app/screens/home/more/copytrading/master_details_screen.dart';
 
 /// Explore Masters — public list of available master traders.
@@ -220,7 +221,7 @@ class _SummaryCards extends StatelessWidget {
                 value: '${_formatPct(avgGain)}%',
                 valueColor: avgGain >= 0 ? AppColors.success : AppColors.error,
                 icon: Icons.trending_up,
-                tag: 'Performance',
+                tag: TranslationUtils.tr('copy_performance'),
                 color: AppColors.primary,
               ),
             ),
@@ -287,7 +288,11 @@ class _SummaryCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(6.r),
                 ),
                 alignment: Alignment.center,
-                child: Icon(icon, size: 13.sp, color: AppColors.onColoredBackground),
+                child: Icon(
+                  icon,
+                  size: 13.sp,
+                  color: AppColors.onColoredBackground,
+                ),
               ),
               SizedBox(width: 6.w),
               Expanded(
@@ -356,11 +361,26 @@ class _FilterTabs extends StatelessWidget {
           scrollDirection: Axis.horizontal,
           physics: const BouncingScrollPhysics(),
           children: [
-            _tab(active, MasterFilterTab.all, 'All', allCount),
+            _tab(
+              active,
+              MasterFilterTab.all,
+              TranslationUtils.tr('common_all'),
+              allCount,
+            ),
             SizedBox(width: 8.w),
-            _tab(active, MasterFilterTab.enrolled, 'Enrolled', enrolledCount),
+            _tab(
+              active,
+              MasterFilterTab.enrolled,
+              TranslationUtils.tr('copy_enrolled'),
+              enrolledCount,
+            ),
             SizedBox(width: 8.w),
-            _tab(active, MasterFilterTab.discover, 'Discover', discoverCount),
+            _tab(
+              active,
+              MasterFilterTab.discover,
+              TranslationUtils.tr('copy_discover'),
+              discoverCount,
+            ),
           ],
         ),
       );
@@ -397,7 +417,9 @@ class _FilterTabs extends StatelessWidget {
               style: TextStyle(
                 fontSize: 12.sp,
                 fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                color: selected ? AppColors.onColoredBackground : AppColors.textPrimary,
+                color: selected
+                    ? AppColors.onColoredBackground
+                    : AppColors.textPrimary,
               ),
             ),
             SizedBox(width: 6.w),
@@ -414,7 +436,9 @@ class _FilterTabs extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 10.sp,
                   fontWeight: FontWeight.w700,
-                  color: selected ? AppColors.onColoredBackground : AppColors.textGrey,
+                  color: selected
+                      ? AppColors.onColoredBackground
+                      : AppColors.textGrey,
                 ),
               ),
             ),
@@ -1060,7 +1084,7 @@ class _ErrorState extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
               ),
-              child: const Text('Retry'),
+              child: Text(TranslationUtils.tr('common_retry')),
             ),
           ],
         ),

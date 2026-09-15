@@ -51,7 +51,9 @@ class _TicketListScreenState extends State<TicketListScreen> {
         backgroundColor: AppColors.background,
         elevation: 0,
         centerTitle: true,
-        leading: AppSvgBackButton(onPressed: () => AppSvgBackButton.popRoute(context)),
+        leading: AppSvgBackButton(
+          onPressed: () => AppSvgBackButton.popRoute(context),
+        ),
         title: Text(lang.tr('ticket_title'), style: AppTextStyles.screenTitle),
       ),
       floatingActionButton: Padding(
@@ -101,8 +103,9 @@ class _TicketListScreenState extends State<TicketListScreen> {
                     builder: (context, constraints) => SingleChildScrollView(
                       physics: const AlwaysScrollableScrollPhysics(),
                       child: ConstrainedBox(
-                        constraints:
-                            BoxConstraints(minHeight: constraints.maxHeight),
+                        constraints: BoxConstraints(
+                          minHeight: constraints.maxHeight,
+                        ),
                         child: _buildEmptyState(),
                       ),
                     ),
@@ -114,7 +117,8 @@ class _TicketListScreenState extends State<TicketListScreen> {
                 child: ListView.builder(
                   controller: _scrollController,
                   padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 90.h),
-                  itemCount: controller.tickets.length +
+                  itemCount:
+                      controller.tickets.length +
                       (controller.hasMorePages.value ? 1 : 0),
                   itemBuilder: (context, index) {
                     if (index >= controller.tickets.length) {
@@ -183,8 +187,7 @@ class _TicketListScreenState extends State<TicketListScreen> {
                         ? AppColors.whiteColor
                         : AppColors.textPrimary,
                     fontSize: 13.sp,
-                    fontWeight:
-                        selected ? FontWeight.w600 : FontWeight.w400,
+                    fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
                   ),
                 ),
               ),
@@ -277,8 +280,9 @@ class _TicketListScreenState extends State<TicketListScreen> {
             style: TextStyle(color: AppColors.textPrimary, fontSize: 13.sp),
             dropdownColor: AppColors.card,
             items: items.entries
-                .map((e) =>
-                    DropdownMenuItem(value: e.key, child: Text(e.value)))
+                .map(
+                  (e) => DropdownMenuItem(value: e.key, child: Text(e.value)),
+                )
                 .toList(),
             onChanged: (v) {
               if (v != null) onChanged(v);
@@ -296,11 +300,16 @@ class _TicketListScreenState extends State<TicketListScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.confirmation_number_outlined,
-                size: 64.sp, color: AppColors.icongrey),
+            Icon(
+              Icons.confirmation_number_outlined,
+              size: 64.sp,
+              color: AppColors.icongrey,
+            ),
             SizedBox(height: 16.h),
-            Text(lang.tr('ticket_no_tickets'),
-                style: AppTextStyles.headingblack),
+            Text(
+              lang.tr('ticket_no_tickets'),
+              style: AppTextStyles.headingblack,
+            ),
             SizedBox(height: 8.h),
             Text(
               lang.tr('ticket_no_tickets_subtitle'),
@@ -366,9 +375,13 @@ class _TicketCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Text('#${ticket.id}',
-                    style: TextStyle(
-                        color: AppColors.textSecondary, fontSize: 12.sp)),
+                Text(
+                  '#${ticket.id}',
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 12.sp,
+                  ),
+                ),
                 const Spacer(),
                 _badge(
                   ticket.isOpen
@@ -391,8 +404,10 @@ class _TicketCard extends StatelessWidget {
                 ticket.description,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style:
-                    TextStyle(color: AppColors.textSecondary, fontSize: 12.sp),
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 12.sp,
+                ),
               ),
             ],
             SizedBox(height: 10.h),
@@ -420,13 +435,19 @@ class _TicketCard extends StatelessWidget {
                     child: Text(
                       ticket.assignee!.name.characters.first.toUpperCase(),
                       style: TextStyle(
-                          fontSize: 11.sp, color: AppColors.primary),
+                        fontSize: 11.sp,
+                        color: AppColors.primary,
+                      ),
                     ),
                   ),
                   SizedBox(width: 6.w),
-                  Text(ticket.assignee!.name,
-                      style: TextStyle(
-                          fontSize: 12.sp, color: AppColors.textSecondary)),
+                  Text(
+                    ticket.assignee!.name,
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
                 ],
               ),
             ],
@@ -446,7 +467,10 @@ class _TicketCard extends StatelessWidget {
       child: Text(
         text,
         style: TextStyle(
-            color: color, fontSize: 10.sp, fontWeight: FontWeight.w600),
+          color: color,
+          fontSize: 10.sp,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -457,8 +481,10 @@ class _TicketCard extends StatelessWidget {
       children: [
         Icon(icon, size: 13.sp, color: AppColors.icongrey),
         SizedBox(width: 3.w),
-        Text(text,
-            style: TextStyle(fontSize: 11.sp, color: AppColors.textSecondary)),
+        Text(
+          text,
+          style: TextStyle(fontSize: 11.sp, color: AppColors.textSecondary),
+        ),
       ],
     );
   }

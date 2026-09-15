@@ -6,6 +6,7 @@ import 'package:crm_app/constants/text_styles.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import '../investment_detail_screen.dart';
+import 'package:crm_app/services/language_service.dart';
 
 // ─── Mock data model ───────────────────────────────────────────────
 class _MasterInvestment {
@@ -81,7 +82,10 @@ class _InvestmentTabState extends State<InvestmentTab> {
                   },
                   icon: SvgPicture.asset('assets/svg/ib_dashboard/home.svg'),
                 ),
-                Text('Your Investment', style: AppTextStyles.screenTitle),
+                Text(
+                  TranslationUtils.tr('your_investment'),
+                  style: AppTextStyles.screenTitle,
+                ),
                 SizedBox(width: 13.w), // balance spacer
               ],
             ),
@@ -102,7 +106,9 @@ class _InvestmentTabState extends State<InvestmentTab> {
 
                   // ── Masters you copy ──
                   Text(
-                    'Masters you copy (${_mockMasters.length})',
+                    TranslationUtils.tr(
+                      'masters_you_copy',
+                    ).replaceFirst('{count}', _mockMasters.length.toString()),
                     style: TextStyle(
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w600,
@@ -118,7 +124,9 @@ class _InvestmentTabState extends State<InvestmentTab> {
 
                   // ── History ──
                   Text(
-                    'History (0)',
+                    TranslationUtils.tr(
+                      'history_count',
+                    ).replaceFirst('{count}', '0'),
                     style: TextStyle(
                       fontSize: 15.sp,
                       fontWeight: FontWeight.w600,
@@ -169,7 +177,7 @@ class _InvestmentTabState extends State<InvestmentTab> {
             tilePadding: EdgeInsets.symmetric(horizontal: 10),
             childrenPadding: EdgeInsets.only(left: 10, right: 16, bottom: 12),
             title: Text(
-              'Your Stats',
+              TranslationUtils.tr('copy_your_stats'),
               style: TextStyle(
                 fontSize: 14.sp,
                 fontWeight: FontWeight.w600,
@@ -177,10 +185,10 @@ class _InvestmentTabState extends State<InvestmentTab> {
               ),
             ),
             children: [
-              _buildStatRow('Profit', r'$0.00'),
-              _buildStatRow('Float profit', r'$0.00'),
-              _buildStatRow('Equity', r'$70.50'),
-              _buildStatRow('Gain', r'$0.00'),
+              _buildStatRow(TranslationUtils.tr('copy_profit'), r'$0.00'),
+              _buildStatRow(TranslationUtils.tr('copy_float_profit'), r'$0.00'),
+              _buildStatRow(TranslationUtils.tr('copy_equity'), r'$70.50'),
+              _buildStatRow(TranslationUtils.tr('copy_gain'), r'$0.00'),
             ],
           ),
         ),
@@ -305,14 +313,14 @@ class _MasterCardState extends State<_MasterCard> {
                     children: [
                       Expanded(
                         child: _StatCell(
-                          label: 'Profit',
+                          label: TranslationUtils.tr('copy_profit'),
                           value: widget.master.profit,
                           valueColor: AppColors.green,
                         ),
                       ),
                       Expanded(
                         child: _StatCell(
-                          label: 'Float profit',
+                          label: TranslationUtils.tr('copy_float_profit'),
                           value: widget.master.floatProfit,
                           valueColor: AppColors.primary,
                         ),

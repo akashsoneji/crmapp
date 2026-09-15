@@ -163,10 +163,9 @@ class PriceAlertMonitorService extends GetxController {
       );
 
       // Calculate difference for better debugging
-      final difference =
-          condition == 'above'
-              ? currentPrice - targetPrice
-              : targetPrice - currentPrice;
+      final difference = condition == 'above'
+          ? currentPrice - targetPrice
+          : targetPrice - currentPrice;
       final isClose = difference.abs() < 0.0001; // Within 0.0001
 
       debugPrint(
@@ -266,7 +265,7 @@ class PriceAlertMonitorService extends GetxController {
           Get.find<AppNotificationController>().showSuccess(
             message:
                 '$symbol price is ${condition == 'above' ? 'above' : 'below'} \$${targetPrice.toString()}',
-            title: 'Price Alert Triggered!',
+            title: TranslationUtils.tr('price_alert_triggered_title'),
           );
         }
         */
@@ -372,14 +371,12 @@ class PriceAlertMonitorService extends GetxController {
       debugPrint('   - Message: ${message ?? 'No message'}');
 
       // Calculate difference and show status
-      final difference =
-          condition == 'above'
-              ? targetPrice - finalMarketPrice
-              : finalMarketPrice - targetPrice;
-      final isAlreadyTriggered =
-          condition == 'above'
-              ? finalMarketPrice >= targetPrice
-              : finalMarketPrice <= targetPrice;
+      final difference = condition == 'above'
+          ? targetPrice - finalMarketPrice
+          : finalMarketPrice - targetPrice;
+      final isAlreadyTriggered = condition == 'above'
+          ? finalMarketPrice >= targetPrice
+          : finalMarketPrice <= targetPrice;
 
       debugPrint('📈 Price Analysis:');
       debugPrint('   - Difference: ${difference.toString()}');
@@ -504,8 +501,9 @@ class PriceAlertMonitorService extends GetxController {
   // Cancel all alerts for a symbol
   Future<void> cancelAllAlertsForSymbol(String symbol) async {
     try {
-      final alertsToRemove =
-          _activeAlerts.where((alert) => alert['symbol'] == symbol).toList();
+      final alertsToRemove = _activeAlerts
+          .where((alert) => alert['symbol'] == symbol)
+          .toList();
 
       for (final alert in alertsToRemove) {
         await cancelAlert(alert['id'] as int);
@@ -653,16 +651,15 @@ class PriceAlertMonitorService extends GetxController {
       'activeAlertsCount': _activeAlerts.length,
       'currentSymbol': _chartSocketController?.currentSymbol.value ?? 'Unknown',
       'currentPrice': _chartSocketController?.getMarketPrice() ?? 0.0,
-      'alerts':
-          _activeAlerts
-              .map(
-                (alert) => {
-                  'symbol': alert['symbol'],
-                  'targetPrice': alert['targetPrice'],
-                  'condition': alert['condition'],
-                },
-              )
-              .toList(),
+      'alerts': _activeAlerts
+          .map(
+            (alert) => {
+              'symbol': alert['symbol'],
+              'targetPrice': alert['targetPrice'],
+              'condition': alert['condition'],
+            },
+          )
+          .toList(),
     };
   }
 

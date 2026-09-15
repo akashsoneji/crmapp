@@ -25,22 +25,23 @@ class IbmMoreScreen extends StatelessWidget {
       child: Scaffold(
         backgroundColor: AppColors.tradeBackgroundCenterColor,
         appBar: AppBar(
-          backgroundColor:
-              AppColors.isDarkMode ? AppColors.pureBlack : AppColors.whiteColor,
+          backgroundColor: AppColors.isDarkMode
+              ? AppColors.pureBlack
+              : AppColors.whiteColor,
           elevation: 0,
           surfaceTintColor: Colors.transparent,
           automaticallyImplyLeading: false,
           leading: Builder(
             builder: (ctx) => IconButton(
-          icon: SvgPicture.asset(
-            'assets/svg/ib_dashboard/home.svg',
-            colorFilter: ColorFilter.mode(
-              AppColors.textPrimary,
-              BlendMode.srcIn,
+              icon: SvgPicture.asset(
+                'assets/svg/ib_dashboard/home.svg',
+                colorFilter: ColorFilter.mode(
+                  AppColors.textPrimary,
+                  BlendMode.srcIn,
+                ),
+              ),
+              onPressed: () => Get.offAllNamed(AppPages.TRADING),
             ),
-          ),
-          onPressed: () => Get.offAllNamed(AppPages.TRADING),
-        ),
           ),
           title: Text(
             'More',

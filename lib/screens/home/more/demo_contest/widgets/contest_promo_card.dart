@@ -25,13 +25,13 @@ class ContestPromoCard extends StatelessWidget {
     final tagColor = live
         ? AppColors.success
         : upcoming
-            ? AppColors.warning
-            : AppColors.textGrey;
+        ? AppColors.warning
+        : AppColors.textGrey;
     final tagLabel = live
         ? '● LIVE'
         : upcoming
-            ? 'UPCOMING'
-            : 'ENDED';
+        ? 'UPCOMING'
+        : 'ENDED';
 
     return Material(
       color: Colors.transparent,
@@ -149,12 +149,14 @@ class ContestPromoCard extends StatelessWidget {
                 children: [
                   _StatPill(
                     emoji: '👥',
-                    label: '${contest.joinedParticipants}/${contest.maxParticipants}',
+                    label:
+                        '${contest.joinedParticipants}/${contest.maxParticipants}',
                   ),
                   SizedBox(width: 8.w),
                   _StatPill(
                     emoji: '💰',
-                    label: '\$${(contest.prizes.isNotEmpty ? contest.prizes.first.amount : 0).toStringAsFixed(0)} prize',
+                    label:
+                        '\$${(contest.prizes.isNotEmpty ? contest.prizes.first.amount : 0).toStringAsFixed(0)} prize',
                   ),
                   SizedBox(width: 8.w),
                   _StatPill(

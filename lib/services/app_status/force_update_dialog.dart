@@ -8,14 +8,9 @@ import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/services/app_status/app_status_controller.dart';
 import 'package:crm_app/services/app_status/in_app_update_service.dart';
+import 'package:crm_app/services/language_service.dart';
 
-enum UpdateDialogState {
-  idle,
-  downloading,
-  installing,
-  openingStore,
-  error,
-}
+enum UpdateDialogState { idle, downloading, installing, openingStore, error }
 
 class ForceUpdateDialog extends StatefulWidget {
   final bool isForceUpdate;
@@ -34,17 +29,19 @@ class _ForceUpdateDialogState extends State<ForceUpdateDialog> {
 
   Future<void> _handleUpdateTap() async {
     final controller = Get.find<AppStatusController>();
+    final languageService = Get.find<LanguageService>();
     final updateUrl = controller.statusData.value?.updateUrlAndroid;
 
     if (updateUrl == null || updateUrl.isEmpty) {
       setState(() {
         _state = UpdateDialogState.error;
-        _downloadError = 'No update URL found.';
+        _downloadError = languageService.tr('app_status_update_no_url');
       });
       return;
     }
 
-    final isPlayStoreUrl = updateUrl.contains('play.google.com') ||
+    final isPlayStoreUrl =
+        updateUrl.contains('play.google.com') ||
         updateUrl.contains('market.android.com') ||
         updateUrl.toLowerCase().endsWith('.aab');
 
@@ -61,7 +58,9 @@ class _ForceUpdateDialogState extends State<ForceUpdateDialog> {
       _state = UpdateDialogState.downloading;
       _downloadProgress = 0.0;
       _downloadError = null;
-      _downloadedSizeLabel = 'Starting download...';
+      _downloadedSizeLabel = languageService.tr(
+        'app_status_update_starting_download',
+      );
     });
 
     final result = await InAppUpdateService.instance.downloadAndInstall(
@@ -71,7 +70,10 @@ class _ForceUpdateDialogState extends State<ForceUpdateDialog> {
           setState(() {
             _downloadProgress = progress;
             final percent = (progress * 100).toStringAsFixed(0);
-            _downloadedSizeLabel = '$percent% complete';
+            _downloadedSizeLabel = languageService.tr(
+              'app_status_update_percent_complete',
+              {'percent': percent},
+            );
           });
         }
       },
@@ -84,7 +86,9 @@ class _ForceUpdateDialogState extends State<ForceUpdateDialog> {
         setState(() {
           _state = UpdateDialogState.installing;
           _downloadProgress = 1.0;
-          _downloadedSizeLabel = 'Ready to install';
+          _downloadedSizeLabel = languageService.tr(
+            'app_status_update_ready_to_install',
+          );
         });
         await Future.delayed(const Duration(seconds: 2));
         if (mounted) setState(() => _state = UpdateDialogState.idle);
@@ -106,7 +110,9 @@ class _ForceUpdateDialogState extends State<ForceUpdateDialog> {
       case DownloadResult.error:
         setState(() {
           _state = UpdateDialogState.error;
-          _downloadError = 'Download failed. Please check your connection and try again.';
+          _downloadError = languageService.tr(
+            'app_status_update_download_failed',
+          );
         });
         break;
     }
@@ -138,11 +144,10 @@ class _ForceUpdateDialogState extends State<ForceUpdateDialog> {
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<AppStatusController>();
+    final languageService = Get.find<LanguageService>();
     final releaseNotes = controller.statusData.value?.releaseNotes;
-    final latestVersion =
-        controller.statusData.value?.appVersion ??
-        controller.latestVersion.value;
-    final hasApkUrl = Platform.isAndroid &&
+    final hasApkUrl =
+        Platform.isAndroid &&
         controller.statusData.value?.updateUrlAndroid?.isNotEmpty == true;
 
     final bool isDark = AppColors.isDarkMode;
@@ -171,10 +176,7 @@ class _ForceUpdateDialogState extends State<ForceUpdateDialog> {
                     decoration: BoxDecoration(
                       color: cardColor,
                       borderRadius: BorderRadius.circular(28.r),
-                      border: Border.all(
-                        color: cardBorder,
-                        width: 1,
-                      ),
+                      border: Border.all(color: cardBorder, width: 1),
                       boxShadow: [
                         BoxShadow(
                           color: shadowColor.withValues(alpha: 0.1),
@@ -187,7 +189,9 @@ class _ForceUpdateDialogState extends State<ForceUpdateDialog> {
                           offset: const Offset(0, 12),
                         ),
                         BoxShadow(
-                          color: _accentColor.withValues(alpha: isDark ? 0.1 : 0.15),
+                          color: _accentColor.withValues(
+                            alpha: isDark ? 0.1 : 0.15,
+                          ),
                           blurRadius: 40,
                           offset: const Offset(0, 20),
                           spreadRadius: -4,
@@ -197,8 +201,6 @@ class _ForceUpdateDialogState extends State<ForceUpdateDialog> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                       
-        
                         Padding(
                           padding: EdgeInsets.fromLTRB(28.w, 32.w, 28.w, 28.w),
                           child: Column(
@@ -206,7 +208,7 @@ class _ForceUpdateDialogState extends State<ForceUpdateDialog> {
                               // Icon
                               _buildIcon(isDark),
                               SizedBox(height: 20.h),
-        
+
                               // Title
                               Text(
                                 _getTitle(),
@@ -218,29 +220,44 @@ class _ForceUpdateDialogState extends State<ForceUpdateDialog> {
                                 ),
                                 textAlign: TextAlign.center,
                               ),
-                              
+
                               SizedBox(height: 8.h),
-                               Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                 children: [
-                                  Icon(Icons.lock_outline_rounded, size: 12.w, color: AppColors.textGrey),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.lock_outline_rounded,
+                                    size: 12.w,
+                                    color: AppColors.textGrey,
+                                  ),
                                   SizedBox(width: 4.w),
-                                  Text('Do not close the app', style: AppTextStyles.bodyText.copyWith(fontSize: 14.sp, fontWeight: FontWeight.w400, color: subtitleColor), textAlign: TextAlign.center),
-                                 ],
-                               ),
-                                SizedBox(height: 8.h),
-                                // Text(
-                                //   'New version $latestVersion available',
-                                //   style: AppTextStyles.bodyText.copyWith(
-                                //     fontSize: 14.sp,
-                                //     fontWeight: FontWeight.w400,
-                                //     color: subtitleColor,
-                                //   ),
-                                //   textAlign: TextAlign.center,
-                                // ),
-        
+                                  Text(
+                                    languageService.tr(
+                                      'app_status_update_do_not_close',
+                                    ),
+                                    style: AppTextStyles.bodyText.copyWith(
+                                      fontSize: 14.sp,
+                                      fontWeight: FontWeight.w400,
+                                      color: subtitleColor,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 8.h),
+                              // Text(
+                              //   'New version $latestVersion available',
+                              //   style: AppTextStyles.bodyText.copyWith(
+                              //     fontSize: 14.sp,
+                              //     fontWeight: FontWeight.w400,
+                              //     color: subtitleColor,
+                              //   ),
+                              //   textAlign: TextAlign.center,
+                              // ),
+
                               // Release notes
-                              if (releaseNotes != null && releaseNotes.isNotEmpty) ...[
+                              if (releaseNotes != null &&
+                                  releaseNotes.isNotEmpty) ...[
                                 SizedBox(height: 20.h),
                                 Container(
                                   width: double.infinity,
@@ -254,7 +271,8 @@ class _ForceUpdateDialogState extends State<ForceUpdateDialog> {
                                     ),
                                   ),
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Row(
                                         children: [
@@ -265,7 +283,9 @@ class _ForceUpdateDialogState extends State<ForceUpdateDialog> {
                                           ),
                                           SizedBox(width: 6.w),
                                           Text(
-                                            "What's new",
+                                            languageService.tr(
+                                              'app_status_update_whats_new',
+                                            ),
                                             style: TextStyle(
                                               fontSize: 11.sp,
                                               fontWeight: FontWeight.w600,
@@ -279,7 +299,9 @@ class _ForceUpdateDialogState extends State<ForceUpdateDialog> {
                                         releaseNotes,
                                         style: TextStyle(
                                           fontSize: 13.sp,
-                                          color: titleColor.withValues(alpha: 0.8),
+                                          color: titleColor.withValues(
+                                            alpha: 0.8,
+                                          ),
                                           height: 1.5,
                                         ),
                                       ),
@@ -287,12 +309,13 @@ class _ForceUpdateDialogState extends State<ForceUpdateDialog> {
                                   ),
                                 ),
                               ],
-        
+
                               SizedBox(height: 28.h),
-        
+
                               // Buttons
                               _buildActions(hasApkUrl, isDark),
-                              if (!widget.isForceUpdate && _state == UpdateDialogState.idle) ...[
+                              if (!widget.isForceUpdate &&
+                                  _state == UpdateDialogState.idle) ...[
                                 SizedBox(height: 16.h),
                                 GestureDetector(
                                   onTap: () {
@@ -301,10 +324,14 @@ class _ForceUpdateDialogState extends State<ForceUpdateDialog> {
                                     controller.resetForceUpdateDialogFlag();
                                   },
                                   child: Text(
-                                    'Remind me later',
+                                    languageService.tr(
+                                      'app_status_update_remind_later',
+                                    ),
                                     style: TextStyle(
                                       fontSize: 14.sp,
-                                      color: subtitleColor.withValues(alpha: 0.8),
+                                      color: subtitleColor.withValues(
+                                        alpha: 0.8,
+                                      ),
                                       fontWeight: FontWeight.w500,
                                     ),
                                   ),
@@ -327,7 +354,9 @@ class _ForceUpdateDialogState extends State<ForceUpdateDialog> {
 
   String _getTitle() {
     final controller = Get.find<AppStatusController>();
-    final latestVersion = controller.statusData.value?.appVersion ?? controller.latestVersion.value;
+    final latestVersion =
+        controller.statusData.value?.appVersion ??
+        controller.latestVersion.value;
     switch (_state) {
       case UpdateDialogState.downloading:
         return 'Downloading Update';
@@ -471,10 +500,7 @@ class _ForceUpdateDialogState extends State<ForceUpdateDialog> {
             SizedBox(width: 4.w),
             Text(
               'Do not close the app',
-              style: TextStyle(
-                fontSize: 12.sp,
-                color: AppColors.textGrey,
-              ),
+              style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey),
             ),
           ],
         ),
@@ -507,11 +533,7 @@ class _ForceUpdateDialogState extends State<ForceUpdateDialog> {
               color: _accentColor.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(8.r),
             ),
-            child: Icon(
-              Icons.android_rounded,
-              size: 20.w,
-              color: _accentColor,
-            ),
+            child: Icon(Icons.android_rounded, size: 20.w, color: _accentColor),
           ),
           SizedBox(width: 12.w),
           Expanded(
@@ -558,10 +580,7 @@ class _ForceUpdateDialogState extends State<ForceUpdateDialog> {
         SizedBox(width: 10.w),
         Text(
           'Redirecting to app store...',
-          style: TextStyle(
-            fontSize: 13.sp,
-            color: AppColors.textSecondary,
-          ),
+          style: TextStyle(fontSize: 13.sp, color: AppColors.textSecondary),
         ),
       ],
     );
@@ -707,11 +726,7 @@ class _ForceUpdateDialogState extends State<ForceUpdateDialog> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.check_circle_rounded,
-                size: 20.w,
-                color: _accentColor,
-              ),
+              Icon(Icons.check_circle_rounded, size: 20.w, color: _accentColor),
               SizedBox(width: 10.w),
               Text(
                 'Download complete!',
@@ -727,10 +742,7 @@ class _ForceUpdateDialogState extends State<ForceUpdateDialog> {
         SizedBox(height: 8.h),
         Text(
           'System installer should have opened automatically',
-          style: TextStyle(
-            fontSize: 12.sp,
-            color: AppColors.textGrey,
-          ),
+          style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey),
           textAlign: TextAlign.center,
         ),
       ],

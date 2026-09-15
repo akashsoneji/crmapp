@@ -121,12 +121,15 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
                     controller.isHydratingInstrumentCatalog.value ||
                     (!controller.hasAttemptedInitialLoad.value &&
                         controller.allInstruments.isEmpty);
-      // On lifecycle resume/reconnect, keep the existing list visible. Only
-      // show the full loader for first load / genuinely empty state.
-      if (showInitialLoader) {
+                // On lifecycle resume/reconnect, keep the existing list visible. Only
+                // show the full loader for first load / genuinely empty state.
+                if (showInitialLoader) {
                   return Center(
                     child: CommonLoadingWidget(
-                      message: 'Loading instruments...',
+                      message: languageService.trf(
+                        'instruments_loading',
+                        'Loading instruments...',
+                      ),
                       size: 50.0,
                       color: AppColors.primary,
                     ),
@@ -211,24 +214,19 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
             context: context,
             isScrollControlled: true,
             backgroundColor: Colors.transparent,
-            builder:
-                (context) => Container(
-                  height: MediaQuery.of(context).size.height * 0.9,
-                  decoration: BoxDecoration(
-                    color: AppColors.tradeBackgroundCenterColor,
-                    borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(20.r),
-                    ),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(20.r),
-                    ),
-                    child: SearchInstrumentsScreen(
-                      onNavigateToChart: widget.onNavigateToChart,
-                    ),
-                  ),
+            builder: (context) => Container(
+              height: MediaQuery.of(context).size.height * 0.9,
+              decoration: BoxDecoration(
+                color: AppColors.tradeBackgroundCenterColor,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+                child: SearchInstrumentsScreen(
+                  onNavigateToChart: widget.onNavigateToChart,
                 ),
+              ),
+            ),
           );
         },
         floatingProfit: floatingProfit, // ✅ ADD: Show floating P&L
@@ -278,55 +276,49 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
         ];
 
         return Row(
-          children:
-              filters.map((filter) {
-                final isSelected = filter == _controller.currentFilter.value;
-                // Show favorites count for Favorites filter
-                final displayText =
-                    filter == 'Favorites'
-                        ? 'Favorites (${_controller.favoritesCount})'
-                        : filter;
-                return Padding(
-                  padding: EdgeInsets.only(right: 8.w),
-                  child: GestureDetector(
-                    onTap: () {
-                      _controller.filterInstruments(filter);
-                    },
-                    child: Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 16.w,
-                        vertical: 8.h,
-                      ),
-                      decoration: BoxDecoration(
-                        color:
-                            isSelected
-                                ? AppColors.selectedChipBackground
-                                : AppColors.tradeBackgroundCenterColor,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color:
-                              isSelected
-                                  ? AppColors.primary
-                                  : AppColors.primary,
-                        ),
-                      ),
-                      child: Text(
-                        displayText,
-                        style: AppTextStyles.input.copyWith(
-                          fontSize: 13.sp,
-                          height: 22 / 15,
-                          color:
-                              isSelected
-                                  ? AppColors.selectedChipForeground
-                                  : AppColors.primary,
-                          fontWeight:
-                              isSelected ? FontWeight.w600 : FontWeight.w400,
-                        ),
-                      ),
+          children: filters.map((filter) {
+            final isSelected = filter == _controller.currentFilter.value;
+            // Show favorites count for Favorites filter
+            final displayText = filter == 'Favorites'
+                ? 'Favorites (${_controller.favoritesCount})'
+                : filter;
+            return Padding(
+              padding: EdgeInsets.only(right: 8.w),
+              child: GestureDetector(
+                onTap: () {
+                  _controller.filterInstruments(filter);
+                },
+                child: Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 8.h,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? AppColors.selectedChipBackground
+                        : AppColors.tradeBackgroundCenterColor,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: isSelected ? AppColors.primary : AppColors.primary,
                     ),
                   ),
-                );
-              }).toList(),
+                  child: Text(
+                    displayText,
+                    style: AppTextStyles.input.copyWith(
+                      fontSize: 13.sp,
+                      height: 22 / 15,
+                      color: isSelected
+                          ? AppColors.selectedChipForeground
+                          : AppColors.primary,
+                      fontWeight: isSelected
+                          ? FontWeight.w600
+                          : FontWeight.w400,
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
         );
       }),
     );
@@ -508,11 +500,10 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
                               SizedBox(width: 2.w),
                               Flexible(
                                 child: Obx(() {
-                                  final spreadDiff =
-                                      _controller
-                                          .priceRx(instrument.symbol)
-                                          .value
-                                          .spreadDiff;
+                                  final spreadDiff = _controller
+                                      .priceRx(instrument.symbol)
+                                      .value
+                                      .spreadDiff;
                                   return Text(
                                     _formatSpreadDiff(spreadDiff),
                                     style: AppTextStyles.subheading.copyWith(
@@ -725,13 +716,9 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
                                 Text(option, style: AppTextStyles.input),
                               ],
                             ),
-                            trailing:
-                                option == _controller.currentSort.value
-                                    ? Icon(
-                                      Icons.check,
-                                      color: AppColors.primary,
-                                    )
-                                    : null,
+                            trailing: option == _controller.currentSort.value
+                                ? Icon(Icons.check, color: AppColors.primary)
+                                : null,
                             onTap: () {
                               _controller.sortInstruments(option);
                               Navigator.pop(context);
@@ -808,10 +795,9 @@ class _InstrumentsScreenState extends State<InstrumentsScreen>
   /// Returns path like 'assets/svg/flags/eur.svg'
   String _getFlagPath(String symbol) {
     // Remove suffix if present (e.g., EURUSD.c -> EURUSD)
-    String cleanSymbol =
-        symbol.contains('.')
-            ? symbol.substring(0, symbol.lastIndexOf('.'))
-            : symbol;
+    String cleanSymbol = symbol.contains('.')
+        ? symbol.substring(0, symbol.lastIndexOf('.'))
+        : symbol;
 
     // Extract first currency code (typically first 3 characters)
     // For pairs like EURUSD, GBPUSD, etc.
@@ -902,34 +888,34 @@ class _BidPriceColumn extends StatelessWidget {
           final dayLow = controller.priceRx(symbol).value.dayLow;
           return dayLow > 0
               ? Padding(
-                padding: EdgeInsets.only(top: 1.h),
-                child: RichText(
-                  textAlign: TextAlign.right,
-                  text: TextSpan(
-                    children: [
-                      TextSpan(
-                        text: 'L: ',
-                        style: AppTextStyles.subheading.copyWith(
-                          fontSize: 9.sp,
-                          color: AppColors.textGrey,
-                          height: 1.0,
+                  padding: EdgeInsets.only(top: 1.h),
+                  child: RichText(
+                    textAlign: TextAlign.right,
+                    text: TextSpan(
+                      children: [
+                        TextSpan(
+                          text: 'L: ',
+                          style: AppTextStyles.subheading.copyWith(
+                            fontSize: 9.sp,
+                            color: AppColors.textGrey,
+                            height: 1.0,
+                          ),
                         ),
-                      ),
-                      TextSpan(
-                        text: PrecisionHelper.formatPrice(
-                          dayLow,
-                          decimals: digits,
+                        TextSpan(
+                          text: PrecisionHelper.formatPrice(
+                            dayLow,
+                            decimals: digits,
+                          ),
+                          style: AppTextStyles.subheading.copyWith(
+                            fontSize: 9.sp,
+                            color: AppColors.textGrey,
+                            height: 1.0,
+                          ),
                         ),
-                        style: AppTextStyles.subheading.copyWith(
-                          fontSize: 9.sp,
-                          color: AppColors.textGrey,
-                          height: 1.0,
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              )
+                )
               : const SizedBox.shrink();
         }),
       ],
@@ -1039,34 +1025,34 @@ class _AskPriceColumn extends StatelessWidget {
             final dayHigh = controller.priceRx(symbol).value.dayHigh;
             return dayHigh > 0
                 ? Padding(
-                  padding: EdgeInsets.only(top: 1.h),
-                  child: RichText(
-                    textAlign: TextAlign.left,
-                    text: TextSpan(
-                      children: [
-                        TextSpan(
-                          text: 'H: ',
-                          style: AppTextStyles.subheading.copyWith(
-                            fontSize: 9.sp,
-                            color: AppColors.textGrey,
-                            height: 1.0,
+                    padding: EdgeInsets.only(top: 1.h),
+                    child: RichText(
+                      textAlign: TextAlign.left,
+                      text: TextSpan(
+                        children: [
+                          TextSpan(
+                            text: 'H: ',
+                            style: AppTextStyles.subheading.copyWith(
+                              fontSize: 9.sp,
+                              color: AppColors.textGrey,
+                              height: 1.0,
+                            ),
                           ),
-                        ),
-                        TextSpan(
-                          text: PrecisionHelper.formatPrice(
-                            dayHigh,
-                            decimals: digits,
+                          TextSpan(
+                            text: PrecisionHelper.formatPrice(
+                              dayHigh,
+                              decimals: digits,
+                            ),
+                            style: AppTextStyles.subheading.copyWith(
+                              fontSize: 9.sp,
+                              color: AppColors.textGrey,
+                              height: 1.0,
+                            ),
                           ),
-                          style: AppTextStyles.subheading.copyWith(
-                            fontSize: 9.sp,
-                            color: AppColors.textGrey,
-                            height: 1.0,
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                )
+                  )
                 : const SizedBox.shrink();
           }),
         ],

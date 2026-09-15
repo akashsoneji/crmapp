@@ -189,8 +189,10 @@ class _EditProfileState extends State<EditProfile> {
     final digits = _phoneDigits;
     if (iso == null || digits.isEmpty) return;
     try {
-      final formatted =
-          PhoneNumber.parse(digits, destinationCountry: iso).formatNsn();
+      final formatted = PhoneNumber.parse(
+        digits,
+        destinationCountry: iso,
+      ).formatNsn();
       if (formatted.isNotEmpty && formatted != _phoneController.text) {
         _phoneController.value = TextEditingValue(
           text: formatted,
@@ -374,97 +376,94 @@ class _EditProfileState extends State<EditProfile> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       isScrollControlled: true,
-      builder:
-          (context) => Container(
-            height: MediaQuery.of(context).size.height * 0.9,
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom,
-            ),
-            child: Padding(
-              padding: EdgeInsets.all(24.w),
-              child: Column(
-                children: [
-                  Container(
-                    width: 40.w,
-                    height: 4.h,
-                    decoration: BoxDecoration(
-                      color: AppColors.border,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.9,
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: Padding(
+          padding: EdgeInsets.all(24.w),
+          child: Column(
+            children: [
+              Container(
+                width: 40.w,
+                height: 4.h,
+                decoration: BoxDecoration(
+                  color: AppColors.border,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              SizedBox(height: 20.h),
+              Text(
+                'Select Country / Region',
+                style: TextStyle(
+                  fontSize: 18.sp,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              SizedBox(height: 20.h),
+              TextField(
+                controller: searchController,
+                textCapitalization: TextCapitalization.none,
+                autocorrect: false,
+                style: TextStyle(color: AppColors.textPrimary),
+                decoration: InputDecoration(
+                  prefixIcon: Icon(Icons.search, color: AppColors.textGrey),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: AppColors.border),
                   ),
-                  SizedBox(height: 20.h),
-                  Text(
-                    'Select Country / Region',
-                    style: TextStyle(
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
-                    ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: AppColors.border),
                   ),
-                  SizedBox(height: 20.h),
-                  TextField(
-                    controller: searchController,
-                    textCapitalization: TextCapitalization.none,
-                    autocorrect: false,
-                    style: TextStyle(color: AppColors.textPrimary),
-                    decoration: InputDecoration(
-
-                      prefixIcon: Icon(Icons.search, color: AppColors.textGrey),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: AppColors.border),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: AppColors.border),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: AppColors.primary, width: 2),
-                      ),
-                      fillColor: AppColors.surface,
-                      filled: true,
-                    ),
-                    onChanged: (value) {
-                      filteredCountries.value =
-                          dropdownService.countries
-                              .where(
-                                (country) => country.name!
-                                    .toLowerCase()
-                                    .contains(value.toLowerCase()),
-                              )
-                              .toList();
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: AppColors.primary, width: 2),
+                  ),
+                  fillColor: AppColors.surface,
+                  filled: true,
+                ),
+                onChanged: (value) {
+                  filteredCountries.value = dropdownService.countries
+                      .where(
+                        (country) => country.name!.toLowerCase().contains(
+                          value.toLowerCase(),
+                        ),
+                      )
+                      .toList();
+                },
+              ),
+              SizedBox(height: 20.h),
+              Expanded(
+                child: Obx(
+                  () => ListView.builder(
+                    itemCount: filteredCountries.length,
+                    itemBuilder: (context, index) {
+                      final country = filteredCountries[index];
+                      return ListTile(
+                        leading: Text(
+                          country.emoji ?? '',
+                          style: const TextStyle(fontSize: 24),
+                        ),
+                        title: Text(
+                          country.name ?? '',
+                          style: TextStyle(color: AppColors.textPrimary),
+                        ),
+                        onTap: () {
+                          dropdownService.selectCountry(country);
+                          Navigator.pop(context);
+                        },
+                      );
                     },
                   ),
-                  SizedBox(height: 20.h),
-                  Expanded(
-                    child: Obx(
-                      () => ListView.builder(
-                        itemCount: filteredCountries.length,
-                        itemBuilder: (context, index) {
-                          final country = filteredCountries[index];
-                          return ListTile(
-                            leading: Text(
-                              country.emoji ?? '',
-                              style: const TextStyle(fontSize: 24),
-                            ),
-                            title: Text(
-                              country.name ?? '',
-                              style: TextStyle(color: AppColors.textPrimary),
-                            ),
-                            onTap: () {
-                              dropdownService.selectCountry(country);
-                              Navigator.pop(context);
-                            },
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
+        ),
+      ),
     );
   }
 
@@ -482,94 +481,92 @@ class _EditProfileState extends State<EditProfile> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       isScrollControlled: true,
-      builder:
-          (context) => Container(
-            height: MediaQuery.of(context).size.height * 0.9,
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom,
-            ),
-            child: Padding(
-              padding: EdgeInsets.all(24.w),
-              child: Column(
-                children: [
-                  Container(
-                    width: 40.w,
-                    height: 4.h,
-                    decoration: BoxDecoration(
-                      color: AppColors.border,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.9,
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: Padding(
+          padding: EdgeInsets.all(24.w),
+          child: Column(
+            children: [
+              Container(
+                width: 40.w,
+                height: 4.h,
+                decoration: BoxDecoration(
+                  color: AppColors.border,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              SizedBox(height: 20.h),
+              Text(
+                'Select State',
+                style: TextStyle(
+                  fontSize: 18.sp,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              SizedBox(height: 20.h),
+              TextField(
+                controller: searchController,
+                textCapitalization: TextCapitalization.none,
+                autocorrect: false,
+                style: TextStyle(color: AppColors.textPrimary),
+                decoration: InputDecoration(
+                  hintText: 'Search states...',
+                  hintStyle: TextStyle(color: AppColors.textGrey),
+                  prefixIcon: Icon(Icons.search, color: AppColors.textGrey),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: AppColors.border),
                   ),
-                  SizedBox(height: 20.h),
-                  Text(
-                    'Select State',
-                    style: TextStyle(
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
-                    ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: AppColors.border),
                   ),
-                  SizedBox(height: 20.h),
-                  TextField(
-                    controller: searchController,
-                    textCapitalization: TextCapitalization.none,
-                    autocorrect: false,
-                    style: TextStyle(color: AppColors.textPrimary),
-                    decoration: InputDecoration(
-                      hintText: 'Search states...',
-                      hintStyle: TextStyle(color: AppColors.textGrey),
-                      prefixIcon: Icon(Icons.search, color: AppColors.textGrey),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: AppColors.border),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: AppColors.border),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: AppColors.primary, width: 2),
-                      ),
-                      fillColor: AppColors.surface,
-                      filled: true,
-                    ),
-                    onChanged: (value) {
-                      filteredStates.value =
-                          dropdownService.states
-                              .where(
-                                (state) => state.name.toLowerCase().contains(
-                                  value.toLowerCase(),
-                                ),
-                              )
-                              .toList();
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: AppColors.primary, width: 2),
+                  ),
+                  fillColor: AppColors.surface,
+                  filled: true,
+                ),
+                onChanged: (value) {
+                  filteredStates.value = dropdownService.states
+                      .where(
+                        (state) => state.name.toLowerCase().contains(
+                          value.toLowerCase(),
+                        ),
+                      )
+                      .toList();
+                },
+              ),
+              SizedBox(height: 20.h),
+              Expanded(
+                child: Obx(
+                  () => ListView.builder(
+                    itemCount: filteredStates.length,
+                    itemBuilder: (context, index) {
+                      final state = filteredStates[index];
+                      return ListTile(
+                        title: Text(
+                          state.name,
+                          style: TextStyle(color: AppColors.textPrimary),
+                        ),
+                        onTap: () {
+                          dropdownService.selectState(state);
+                          Navigator.pop(context);
+                        },
+                      );
                     },
                   ),
-                  SizedBox(height: 20.h),
-                  Expanded(
-                    child: Obx(
-                      () => ListView.builder(
-                        itemCount: filteredStates.length,
-                        itemBuilder: (context, index) {
-                          final state = filteredStates[index];
-                          return ListTile(
-                            title: Text(
-                              state.name,
-                              style: TextStyle(color: AppColors.textPrimary),
-                            ),
-                            onTap: () {
-                              dropdownService.selectState(state);
-                              Navigator.pop(context);
-                            },
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
+        ),
+      ),
     );
   }
 
@@ -587,94 +584,92 @@ class _EditProfileState extends State<EditProfile> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       isScrollControlled: true,
-      builder:
-          (context) => Container(
-            height: MediaQuery.of(context).size.height * 0.9,
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom,
-            ),
-            child: Padding(
-              padding: EdgeInsets.all(24.w),
-              child: Column(
-                children: [
-                  Container(
-                    width: 40.w,
-                    height: 4.h,
-                    decoration: BoxDecoration(
-                      color: AppColors.border,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.9,
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: Padding(
+          padding: EdgeInsets.all(24.w),
+          child: Column(
+            children: [
+              Container(
+                width: 40.w,
+                height: 4.h,
+                decoration: BoxDecoration(
+                  color: AppColors.border,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              SizedBox(height: 20.h),
+              Text(
+                'Select City',
+                style: TextStyle(
+                  fontSize: 18.sp,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              SizedBox(height: 20.h),
+              TextField(
+                controller: searchController,
+                textCapitalization: TextCapitalization.none,
+                autocorrect: false,
+                style: TextStyle(color: AppColors.textPrimary),
+                decoration: InputDecoration(
+                  hintText: 'Search cities...',
+                  hintStyle: TextStyle(color: AppColors.textGrey),
+                  prefixIcon: Icon(Icons.search, color: AppColors.textGrey),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: AppColors.border),
                   ),
-                  SizedBox(height: 20.h),
-                  Text(
-                    'Select City',
-                    style: TextStyle(
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
-                    ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: AppColors.border),
                   ),
-                  SizedBox(height: 20.h),
-                  TextField(
-                    controller: searchController,
-                    textCapitalization: TextCapitalization.none,
-                    autocorrect: false,
-                    style: TextStyle(color: AppColors.textPrimary),
-                    decoration: InputDecoration(
-                      hintText: 'Search cities...',
-                      hintStyle: TextStyle(color: AppColors.textGrey),
-                      prefixIcon: Icon(Icons.search, color: AppColors.textGrey),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: AppColors.border),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: AppColors.border),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: AppColors.primary, width: 2),
-                      ),
-                      fillColor: AppColors.surface,
-                      filled: true,
-                    ),
-                    onChanged: (value) {
-                      filteredCities.value =
-                          dropdownService.cities
-                              .where(
-                                (city) => city.name.toLowerCase().contains(
-                                  value.toLowerCase(),
-                                ),
-                              )
-                              .toList();
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: AppColors.primary, width: 2),
+                  ),
+                  fillColor: AppColors.surface,
+                  filled: true,
+                ),
+                onChanged: (value) {
+                  filteredCities.value = dropdownService.cities
+                      .where(
+                        (city) => city.name.toLowerCase().contains(
+                          value.toLowerCase(),
+                        ),
+                      )
+                      .toList();
+                },
+              ),
+              SizedBox(height: 20.h),
+              Expanded(
+                child: Obx(
+                  () => ListView.builder(
+                    itemCount: filteredCities.length,
+                    itemBuilder: (context, index) {
+                      final city = filteredCities[index];
+                      return ListTile(
+                        title: Text(
+                          city.name,
+                          style: TextStyle(color: AppColors.textPrimary),
+                        ),
+                        onTap: () {
+                          dropdownService.selectCity(city);
+                          Navigator.pop(context);
+                        },
+                      );
                     },
                   ),
-                  SizedBox(height: 20.h),
-                  Expanded(
-                    child: Obx(
-                      () => ListView.builder(
-                        itemCount: filteredCities.length,
-                        itemBuilder: (context, index) {
-                          final city = filteredCities[index];
-                          return ListTile(
-                            title: Text(
-                              city.name,
-                              style: TextStyle(color: AppColors.textPrimary),
-                            ),
-                            onTap: () {
-                              dropdownService.selectCity(city);
-                              Navigator.pop(context);
-                            },
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
+        ),
+      ),
     );
   }
 
@@ -685,10 +680,8 @@ class _EditProfileState extends State<EditProfile> {
     required ValueChanged<String> onItemSelected,
   }) {
     final itemHeight = 56.0;
-    final maxHeight =
-        MediaQuery.of(context).size.height * 0.85;
-    final totalHeight =
-        (items.length * itemHeight) + 80;
+    final maxHeight = MediaQuery.of(context).size.height * 0.85;
+    final totalHeight = (items.length * itemHeight) + 80;
 
     showModalBottomSheet(
       context: context,
@@ -764,11 +757,11 @@ class _EditProfileState extends State<EditProfile> {
               languageService.tr('edit_profile'),
               style: AppTextStyles.screenTitle,
             ),
-          leading: AppSvgBackButton(
-          onPressed: () => Get.back(closeOverlays: true),
-          iconWidth: 30.w,
-          iconHeight: 30.h,
-        ),
+            leading: AppSvgBackButton(
+              onPressed: () => Get.back(closeOverlays: true),
+              iconWidth: 30.w,
+              iconHeight: 30.h,
+            ),
           ),
 
           SliverToBoxAdapter(
@@ -859,19 +852,18 @@ class _EditProfileState extends State<EditProfile> {
                           ),
                           labelText: languageService.tr('kyc_details_title'),
                           readOnly: true,
-                          onTap:
-                              isProfileVerified
-                                  ? null
-                                  : () => _showBottomSheetList(
-                                    context: context,
-                                    items: controller.titleList,
-                                    title: languageService.tr(
-                                      'edit_profile_select_title',
-                                    ),
-                                    onItemSelected: (value) {
-                                      controller.updateTitle(value);
-                                    },
+                          onTap: isProfileVerified
+                              ? null
+                              : () => _showBottomSheetList(
+                                  context: context,
+                                  items: controller.titleList,
+                                  title: languageService.tr(
+                                    'edit_profile_select_title',
                                   ),
+                                  onItemSelected: (value) {
+                                    controller.updateTitle(value);
+                                  },
+                                ),
                           suffixIcon: Icon(
                             Icons.arrow_drop_down,
                             color: AppColors.textGrey,
@@ -966,7 +958,9 @@ class _EditProfileState extends State<EditProfile> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             InkWell(
-                              onTap: isProfileVerified ? null : _showCountryPicker,
+                              onTap: isProfileVerified
+                                  ? null
+                                  : _showCountryPicker,
                               child: Container(
                                 padding: EdgeInsets.symmetric(
                                   horizontal: 12.w,
@@ -1065,10 +1059,9 @@ class _EditProfileState extends State<EditProfile> {
                       Obx(
                         () => RTLHelper.rtlTextField(
                           controller: TextEditingController(
-                            text:
-                                controller.dateOfBirth.value.isEmpty
-                                    ? ''
-                                    : controller.dateOfBirth.value,
+                            text: controller.dateOfBirth.value.isEmpty
+                                ? ''
+                                : controller.dateOfBirth.value,
                           ),
                           labelText: languageService.tr(
                             'edit_profile_date_of_birth',
@@ -1122,19 +1115,18 @@ class _EditProfileState extends State<EditProfile> {
                           ),
                           labelText: languageService.tr('edit_profile_gender'),
                           readOnly: true,
-                          onTap:
-                              isProfileVerified
-                                  ? null
-                                  : () => _showBottomSheetList(
-                                    context: context,
-                                    items: controller.genderList,
-                                    title: languageService.tr(
-                                      'edit_profile_select_gender',
-                                    ),
-                                    onItemSelected: (value) {
-                                      controller.updateGender(value);
-                                    },
+                          onTap: isProfileVerified
+                              ? null
+                              : () => _showBottomSheetList(
+                                  context: context,
+                                  items: controller.genderList,
+                                  title: languageService.tr(
+                                    'edit_profile_select_gender',
                                   ),
+                                  onItemSelected: (value) {
+                                    controller.updateGender(value);
+                                  },
+                                ),
                           suffixIcon: Icon(
                             Icons.arrow_drop_down,
                             color: AppColors.textGrey,
@@ -1248,49 +1240,46 @@ class _EditProfileState extends State<EditProfile> {
         ],
       ),
       backgroundColor: AppColors.background,
-      bottomNavigationBar:
-          isProfileVerified
-              ? SizedBox.shrink()
-              : Padding(
-                padding: EdgeInsets.only(
-                  bottom: MediaQuery.of(context).padding.bottom + 10,
-                  left: 16.w,
-                  right: 16.w,
-                ),
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 46.h,
-                  child: Obx(
-                    () => RTLHelper.rtlButton(
-                      text:
-                          controller.isSaving.value
-                              ? 'Saving...'
-                              : languageService.tr('navigation_save'),
-                      onPressed:
-                          controller.isFormValid.value &&
-                                  !controller.isSaving.value
-                              ? () async {
-                                // Dismiss keyboard when save button is tapped
-                                FocusScope.of(context).unfocus();
-                                if (_formKey.currentState!.validate()) {
-                                  final success =
-                                      await controller.updateProfile();
-                                  if (success) {
-                                    Navigator.of(context).pop();
-                                  }
-                                }
+      bottomNavigationBar: isProfileVerified
+          ? SizedBox.shrink()
+          : Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).padding.bottom + 10,
+                left: 16.w,
+                right: 16.w,
+              ),
+              child: SizedBox(
+                width: double.infinity,
+                height: 46.h,
+                child: Obx(
+                  () => RTLHelper.rtlButton(
+                    text: controller.isSaving.value
+                        ? 'Saving...'
+                        : languageService.tr('navigation_save'),
+                    onPressed:
+                        controller.isFormValid.value &&
+                            !controller.isSaving.value
+                        ? () async {
+                            // Dismiss keyboard when save button is tapped
+                            FocusScope.of(context).unfocus();
+                            if (_formKey.currentState!.validate()) {
+                              final success = await controller.updateProfile();
+                              if (success) {
+                                Navigator.of(context).pop();
                               }
-                              : null,
-                      backgroundColor: AppColors.primary,
-                      foregroundColor:
-                          controller.isFormValid.value &&
-                                  !controller.isSaving.value
-                              ? AppColors.whiteColor
-                              : AppColors.textGrey,
-                    ),
+                            }
+                          }
+                        : null,
+                    backgroundColor: AppColors.primary,
+                    foregroundColor:
+                        controller.isFormValid.value &&
+                            !controller.isSaving.value
+                        ? AppColors.whiteColor
+                        : AppColors.textGrey,
                   ),
                 ),
               ),
+            ),
     );
   }
 
@@ -1350,12 +1339,11 @@ class _EditProfileState extends State<EditProfile> {
           controller: TextEditingController(
             text: dropdownService.selectedStateText,
           ),
-          onTap:
-              isProfileVerified
-                  ? null
-                  : (dropdownService.selectedCountry.value != null
-                      ? () => _showStateOptions()
-                      : null),
+          onTap: isProfileVerified
+              ? null
+              : (dropdownService.selectedCountry.value != null
+                    ? () => _showStateOptions()
+                    : null),
           decoration: InputDecoration(
             labelText: languageService.tr('edit_profile_state'),
             labelStyle: TextStyle(color: AppColors.textGrey),
@@ -1396,12 +1384,11 @@ class _EditProfileState extends State<EditProfile> {
           controller: TextEditingController(
             text: dropdownService.selectedCityText,
           ),
-          onTap:
-              isProfileVerified
-                  ? null
-                  : (dropdownService.selectedState.value != null
-                      ? () => _showCityOptions()
-                      : null),
+          onTap: isProfileVerified
+              ? null
+              : (dropdownService.selectedState.value != null
+                    ? () => _showCityOptions()
+                    : null),
           decoration: InputDecoration(
             labelText: languageService.tr('edit_profile_city'),
             labelStyle: TextStyle(color: AppColors.textGrey),

@@ -11,12 +11,14 @@ import 'package:crm_app/constants/api_const.dart';
 import 'package:crm_app/routes/app_pages.dart';
 import 'package:crm_app/services/secure_storage_service.dart';
 import 'package:crm_app/services/http_client_service.dart';
+import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
 import 'package:crm_app/controllers/auth_controller.dart';
 import 'package:get/get.dart' as g;
 
 class ApiService {
   static const Duration _timeout = Duration(seconds: 30);
+
   /// Debug-only: enable scratch + leaderboard mock responses.
   /// Turn this off to hit real APIs.
   static const bool _useScratchMocks = kDebugMode && false;
@@ -53,7 +55,6 @@ class ApiService {
   static void endStartupPhase() {
     _isAppStartupPhase = false;
   }
-
 
   // ✅ FIX: Retry mechanism to prevent logout on app restart
   // Track retry attempts to prevent infinite loops
@@ -100,7 +101,9 @@ class ApiService {
                 "status": "active",
                 "refresh_window":
                     "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}-08",
-                "expires_at": now.add(const Duration(hours: 12)).toIso8601String(),
+                "expires_at": now
+                    .add(const Duration(hours: 12))
+                    .toIso8601String(),
                 "created_at": now.toUtc().toIso8601String(),
                 "reward_amount": 0,
                 "scratched_at": null,
@@ -114,7 +117,9 @@ class ApiService {
                 "status": "scratched",
                 "refresh_window":
                     "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}-08",
-                "expires_at": now.add(const Duration(hours: 12)).toIso8601String(),
+                "expires_at": now
+                    .add(const Duration(hours: 12))
+                    .toIso8601String(),
                 "created_at": now.toUtc().toIso8601String(),
                 "reward_amount": 0.25,
                 "scratched_at": now
@@ -131,7 +136,9 @@ class ApiService {
                 "status": "active",
                 "refresh_window":
                     "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}-08",
-                "expires_at": now.add(const Duration(hours: 12)).toIso8601String(),
+                "expires_at": now
+                    .add(const Duration(hours: 12))
+                    .toIso8601String(),
                 "created_at": now.toUtc().toIso8601String(),
                 "reward_amount": 0,
                 "scratched_at": null,
@@ -157,11 +164,36 @@ class ApiService {
               "batch_index": 12,
             },
             "leaderboard": [
-              {"position": 1, "display_name": "Y***a", "avatar_letter": "Y", "amount": 16.45},
-              {"position": 2, "display_name": "R***l", "avatar_letter": "R", "amount": 15.04},
-              {"position": 3, "display_name": "A***d", "avatar_letter": "A", "amount": 12.22},
-              {"position": 4, "display_name": "S***h", "avatar_letter": "S", "amount": 10.10},
-              {"position": 5, "display_name": "M***a", "avatar_letter": "M", "amount": 9.50},
+              {
+                "position": 1,
+                "display_name": "Y***a",
+                "avatar_letter": "Y",
+                "amount": 16.45,
+              },
+              {
+                "position": 2,
+                "display_name": "R***l",
+                "avatar_letter": "R",
+                "amount": 15.04,
+              },
+              {
+                "position": 3,
+                "display_name": "A***d",
+                "avatar_letter": "A",
+                "amount": 12.22,
+              },
+              {
+                "position": 4,
+                "display_name": "S***h",
+                "avatar_letter": "S",
+                "amount": 10.10,
+              },
+              {
+                "position": 5,
+                "display_name": "M***a",
+                "avatar_letter": "M",
+                "amount": 9.50,
+              },
             ],
           },
         };
@@ -220,8 +252,9 @@ class ApiService {
           endpoint.contains('wallet');
 
       // Use fresh client for critical endpoints to avoid keep-alive issues
-      final clientToUse =
-          isCriticalEndpoint ? httpClient.getFreshClient() : httpClient.client;
+      final clientToUse = isCriticalEndpoint
+          ? httpClient.getFreshClient()
+          : httpClient.client;
 
       final response = await clientToUse
           .get(uri, headers: headers)
@@ -349,10 +382,9 @@ class ApiService {
       final timeout = isAuthEndpoint ? const Duration(seconds: 15) : _timeout;
 
       // Use fresh client for login/register AND critical endpoints to avoid keep-alive issues
-      final clientToUse =
-          (isAuthEndpoint || isCriticalEndpoint)
-              ? httpClient.getFreshClient()
-              : httpClient.client;
+      final clientToUse = (isAuthEndpoint || isCriticalEndpoint)
+          ? httpClient.getFreshClient()
+          : httpClient.client;
 
       final response = await clientToUse
           .post(
@@ -575,12 +607,11 @@ class ApiService {
       _logRequest('POST_FORM', endpoint, data: formData, extraHeaders: headers);
 
       final uri = Uri.parse('${ApiConstants.baseUrl}$endpoint');
-      final request =
-          http.MultipartRequest('POST', uri)
-            ..headers.addAll(headers)
-            ..fields.addAll(
-              formData.map((key, value) => MapEntry(key, value.toString())),
-            );
+      final request = http.MultipartRequest('POST', uri)
+        ..headers.addAll(headers)
+        ..fields.addAll(
+          formData.map((key, value) => MapEntry(key, value.toString())),
+        );
 
       final streamedResponse = await request.send().timeout(_timeout);
       final response = await http.Response.fromStream(streamedResponse);
@@ -650,8 +681,9 @@ class ApiService {
           // API returned status: false or success: false, treat as error
           // Only use data if it's actually a map (not an empty array)
           final errorData = responseData['data'];
-          final validErrorData =
-              errorData is Map<String, dynamic> ? errorData : null;
+          final validErrorData = errorData is Map<String, dynamic>
+              ? errorData
+              : null;
 
           // Log the error message being returned
           print('⚠️ API Error Response Detected:');
@@ -737,12 +769,11 @@ class ApiService {
 
   static void _logResponse(http.Response response) {
     final timestamp = DateTime.now().toIso8601String();
-    final statusEmoji =
-        response.statusCode >= 200 && response.statusCode < 300
-            ? '✅'
-            : response.statusCode >= 400
-            ? '❌'
-            : '⚠️';
+    final statusEmoji = response.statusCode >= 200 && response.statusCode < 300
+        ? '✅'
+        : response.statusCode >= 400
+        ? '❌'
+        : '⚠️';
 
     print('═══════════════════════════════════════════════════════════');
     print('$statusEmoji API RESPONSE [$timestamp]');
@@ -977,7 +1008,10 @@ class ApiService {
       }
 
       // Show custom toast message
-      CustomToastService.showInfo(message: message, title: 'Session Expired');
+      CustomToastService.showInfo(
+        message: message,
+        title: TranslationUtils.tr('session_expired'),
+      );
 
       // Wait a moment for the user to see the message
       await Future.delayed(Duration(seconds: 2));
@@ -997,8 +1031,8 @@ class ApiService {
       // Fallback: just show error message and navigate
       try {
         CustomToastService.showError(
-          message: 'Authentication failed. Please login again.',
-          title: 'Error',
+          message: TranslationUtils.tr('auth_authentication_failed'),
+          title: TranslationUtils.tr('common_error'),
         );
         await Future.delayed(Duration(seconds: 1));
         await SecureStorageService.clearAuthData();

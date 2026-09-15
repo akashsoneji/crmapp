@@ -6,15 +6,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:crm_app/services/language_service.dart';
 
 class IbTransferCommissionScreen extends StatefulWidget {
   const IbTransferCommissionScreen({super.key});
 
   @override
-  State<IbTransferCommissionScreen> createState() => _IbTransferCommissionScreenState();
+  State<IbTransferCommissionScreen> createState() =>
+      _IbTransferCommissionScreenState();
 }
 
-class _IbTransferCommissionScreenState extends State<IbTransferCommissionScreen> {
+class _IbTransferCommissionScreenState
+    extends State<IbTransferCommissionScreen> {
   late IbTransferController _controller;
   final ScrollController _scrollController = ScrollController();
 
@@ -27,13 +30,14 @@ class _IbTransferCommissionScreenState extends State<IbTransferCommissionScreen>
     } else {
       _controller = Get.put(IbTransferController());
     }
-    
+
     // Explicitly fetch data when screen is opened
     _controller.fetchInitData();
     _controller.fetchHistory(refresh: true);
-    
+
     _scrollController.addListener(() {
-      if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200.h) {
+      if (_scrollController.position.pixels >=
+          _scrollController.position.maxScrollExtent - 200.h) {
         _controller.fetchHistory();
       }
     });
@@ -55,7 +59,7 @@ class _IbTransferCommissionScreenState extends State<IbTransferCommissionScreen>
         elevation: 0,
         leading: const SizedBox.shrink(),
         title: Text(
-          'Transfer Commission',
+          TranslationUtils.tr('ib_transfer_commission'),
           style: AppTextStyles.screenTitle,
         ),
         centerTitle: true,
@@ -64,7 +68,9 @@ class _IbTransferCommissionScreenState extends State<IbTransferCommissionScreen>
         children: [
           SafeArea(
             child: Obx(() {
-              final isInitialLoading = _controller.isLoadingHistory.value && _controller.historyData.isEmpty;
+              final isInitialLoading =
+                  _controller.isLoadingHistory.value &&
+                  _controller.historyData.isEmpty;
 
               return CustomScrollView(
                 controller: _scrollController,
@@ -89,7 +95,10 @@ class _IbTransferCommissionScreenState extends State<IbTransferCommissionScreen>
                       hasScrollBody: false,
                       child: Center(
                         child: Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 40.w, vertical: 40.h),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 40.w,
+                            vertical: 40.h,
+                          ),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
@@ -100,7 +109,7 @@ class _IbTransferCommissionScreenState extends State<IbTransferCommissionScreen>
                               ),
                               SizedBox(height: 16.h),
                               Text(
-                                'No transfer history found',
+                                TranslationUtils.tr('ib_no_transfer_history'),
                                 style: TextStyle(
                                   color: AppColors.textSecondary,
                                   fontSize: 16.sp,
@@ -115,18 +124,18 @@ class _IbTransferCommissionScreenState extends State<IbTransferCommissionScreen>
                   // 4. Transactions List
                   else ...[
                     SliverPadding(
-                      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 20.w,
+                        vertical: 8.h,
+                      ),
                       sliver: SliverList(
-                        delegate: SliverChildBuilderDelegate(
-                          (context, index) {
-                            final item = _controller.historyData[index];
-                            return Padding(
-                              padding: EdgeInsets.only(bottom: 12.h),
-                              child: _buildHistoryCard(item),
-                            );
-                          },
-                          childCount: _controller.historyData.length,
-                        ),
+                        delegate: SliverChildBuilderDelegate((context, index) {
+                          final item = _controller.historyData[index];
+                          return Padding(
+                            padding: EdgeInsets.only(bottom: 12.h),
+                            child: _buildHistoryCard(item),
+                          );
+                        }, childCount: _controller.historyData.length),
                       ),
                     ),
 
@@ -136,16 +145,19 @@ class _IbTransferCommissionScreenState extends State<IbTransferCommissionScreen>
                         padding: EdgeInsets.symmetric(vertical: 24.h),
                         child: Center(
                           child: _controller.isLoadingHistory.value
-                              ? CircularProgressIndicator(color: AppColors.primary)
-                              : !_controller.hasMoreHistory.value && _controller.historyData.isNotEmpty
-                                  ? Text(
-                                      'No more history to show',
-                                      style: TextStyle(
-                                        color: AppColors.textSecondary,
-                                        fontSize: 11.sp,
-                                      ),
-                                    )
-                                  : const SizedBox.shrink(),
+                              ? CircularProgressIndicator(
+                                  color: AppColors.primary,
+                                )
+                              : !_controller.hasMoreHistory.value &&
+                                    _controller.historyData.isNotEmpty
+                              ? Text(
+                                  'No more history to show',
+                                  style: TextStyle(
+                                    color: AppColors.textSecondary,
+                                    fontSize: 11.sp,
+                                  ),
+                                )
+                              : const SizedBox.shrink(),
                         ),
                       ),
                     ),
@@ -167,16 +179,24 @@ class _IbTransferCommissionScreenState extends State<IbTransferCommissionScreen>
         borderRadius: BorderRadius.circular(20.r),
         gradient: LinearGradient(
           colors: [
-            AppColors.isDarkMode ? AppColors.secondary.withOpacity(0.15) : AppColors.primary,
-            AppColors.isDarkMode ? AppColors.secondary.withOpacity(0.15) : AppColors.primary.withOpacity(0.85),
-            AppColors.isDarkMode ? AppColors.secondary.withOpacity(0.15) : AppColors.secondary.withOpacity(0.9),
+            AppColors.isDarkMode
+                ? AppColors.secondary.withOpacity(0.15)
+                : AppColors.primary,
+            AppColors.isDarkMode
+                ? AppColors.secondary.withOpacity(0.15)
+                : AppColors.primary.withOpacity(0.85),
+            AppColors.isDarkMode
+                ? AppColors.secondary.withOpacity(0.15)
+                : AppColors.secondary.withOpacity(0.9),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.isDarkMode ? Colors.black.withOpacity(0.4) : AppColors.primary.withOpacity(0.3),
+            color: AppColors.isDarkMode
+                ? Colors.black.withOpacity(0.4)
+                : AppColors.primary.withOpacity(0.3),
             blurRadius: 15,
             offset: const Offset(0, 10),
           ),
@@ -192,7 +212,9 @@ class _IbTransferCommissionScreenState extends State<IbTransferCommissionScreen>
               top: -20.h,
               child: CircleAvatar(
                 radius: 60.r,
-                backgroundColor: AppColors.isDarkMode ? AppColors.secondary.withOpacity(0.15) : Colors.white.withOpacity(0.08),
+                backgroundColor: AppColors.isDarkMode
+                    ? AppColors.secondary.withOpacity(0.15)
+                    : Colors.white.withOpacity(0.08),
               ),
             ),
             Positioned(
@@ -200,7 +222,9 @@ class _IbTransferCommissionScreenState extends State<IbTransferCommissionScreen>
               bottom: -40.h,
               child: CircleAvatar(
                 radius: 80.r,
-                backgroundColor: AppColors.isDarkMode ? AppColors.secondary.withOpacity(0.15) : Colors.white.withOpacity(0.05),
+                backgroundColor: AppColors.isDarkMode
+                    ? AppColors.secondary.withOpacity(0.15)
+                    : Colors.white.withOpacity(0.05),
               ),
             ),
             Padding(
@@ -280,7 +304,9 @@ class _IbTransferCommissionScreenState extends State<IbTransferCommissionScreen>
     String date = '';
     if (item.requestedAt != null) {
       try {
-        date = DateFormat('dd MMM yyyy, HH:mm').format(DateTime.parse(item.requestedAt!));
+        date = DateFormat(
+          'dd MMM yyyy, HH:mm',
+        ).format(DateTime.parse(item.requestedAt!));
       } catch (_) {}
     }
 
@@ -315,8 +341,8 @@ class _IbTransferCommissionScreenState extends State<IbTransferCommissionScreen>
                   status == 'completed' || status == 'approved'
                       ? Icons.check_circle_outline
                       : status == 'pending'
-                          ? Icons.access_time
-                          : Icons.cancel_outlined,
+                      ? Icons.access_time
+                      : Icons.cancel_outlined,
                   color: statusColor,
                   size: 20.sp,
                 ),
@@ -328,19 +354,47 @@ class _IbTransferCommissionScreenState extends State<IbTransferCommissionScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      item.toClient != null ? '${item.toClient?.firstName ?? ''} ${item.toClient?.lastName ?? ''}'.trim() : (item.toClientUserId != null ? 'Client #${item.toClientUserId}' : 'Unknown Client'),
-                      style: TextStyle(color: AppColors.textPrimary, fontSize: 14.sp, fontWeight: FontWeight.w600),
+                      item.toClient != null
+                          ? '${item.toClient?.firstName ?? ''} ${item.toClient?.lastName ?? ''}'
+                                .trim()
+                          : (item.toClientUserId != null
+                                ? 'Client #${item.toClientUserId}'
+                                : 'Unknown Client'),
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     SizedBox(height: 4.h),
                     Row(
                       children: [
-                        Text('#${item.id}', style: TextStyle(color: AppColors.textGrey, fontSize: 11.sp)),
+                        Text(
+                          '#${item.id}',
+                          style: TextStyle(
+                            color: AppColors.textGrey,
+                            fontSize: 11.sp,
+                          ),
+                        ),
                         SizedBox(width: 6.w),
-                        Container(width: 3.w, height: 3.w, decoration: BoxDecoration(color: AppColors.textGrey, shape: BoxShape.circle)),
+                        Container(
+                          width: 3.w,
+                          height: 3.w,
+                          decoration: BoxDecoration(
+                            color: AppColors.textGrey,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
                         SizedBox(width: 6.w),
-                        Text(date, style: TextStyle(color: AppColors.textGrey, fontSize: 11.sp)),
+                        Text(
+                          date,
+                          style: TextStyle(
+                            color: AppColors.textGrey,
+                            fontSize: 11.sp,
+                          ),
+                        ),
                       ],
                     ),
                   ],
@@ -352,7 +406,11 @@ class _IbTransferCommissionScreenState extends State<IbTransferCommissionScreen>
                 children: [
                   Text(
                     '\$${item.amount != null ? (double.tryParse(item.amount!)?.toStringAsFixed(2) ?? item.amount!) : "0.00"}',
-                    style: TextStyle(color: AppColors.textPrimary, fontSize: 15.sp, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 15.sp,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   SizedBox(height: 4.h),
                   Row(
@@ -360,7 +418,11 @@ class _IbTransferCommissionScreenState extends State<IbTransferCommissionScreen>
                     children: [
                       Text(
                         status.toUpperCase(),
-                        style: TextStyle(color: statusColor, fontSize: 10.sp, fontWeight: FontWeight.w500),
+                        style: TextStyle(
+                          color: statusColor,
+                          fontSize: 10.sp,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                       if (status == 'pending') ...[
                         SizedBox(width: 6.w),
@@ -384,7 +446,11 @@ class _IbTransferCommissionScreenState extends State<IbTransferCommissionScreen>
                                           color: Colors.red.withOpacity(0.1),
                                           shape: BoxShape.circle,
                                         ),
-                                        child: Icon(Icons.cancel_outlined, color: Colors.red, size: 36.sp),
+                                        child: Icon(
+                                          Icons.cancel_outlined,
+                                          color: Colors.red,
+                                          size: 36.sp,
+                                        ),
                                       ),
                                       SizedBox(height: 16.h),
                                       Text(
@@ -411,9 +477,14 @@ class _IbTransferCommissionScreenState extends State<IbTransferCommissionScreen>
                                             child: TextButton(
                                               onPressed: () => Get.back(),
                                               style: TextButton.styleFrom(
-                                                padding: EdgeInsets.symmetric(vertical: 12.h),
+                                                padding: EdgeInsets.symmetric(
+                                                  vertical: 12.h,
+                                                ),
                                                 shape: RoundedRectangleBorder(
-                                                  borderRadius: BorderRadius.circular(10.r),
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                        10.r,
+                                                      ),
                                                 ),
                                               ),
                                               child: Text(
@@ -431,14 +502,21 @@ class _IbTransferCommissionScreenState extends State<IbTransferCommissionScreen>
                                             child: ElevatedButton(
                                               onPressed: () {
                                                 Get.back();
-                                                _controller.cancelTransfer(item.id!);
+                                                _controller.cancelTransfer(
+                                                  item.id!,
+                                                );
                                               },
                                               style: ElevatedButton.styleFrom(
                                                 backgroundColor: Colors.red,
                                                 elevation: 0,
-                                                padding: EdgeInsets.symmetric(vertical: 12.h),
+                                                padding: EdgeInsets.symmetric(
+                                                  vertical: 12.h,
+                                                ),
                                                 shape: RoundedRectangleBorder(
-                                                  borderRadius: BorderRadius.circular(10.r),
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                        10.r,
+                                                      ),
                                                 ),
                                               ),
                                               child: Text(
@@ -460,12 +538,22 @@ class _IbTransferCommissionScreenState extends State<IbTransferCommissionScreen>
                             );
                           },
                           child: Container(
-                            padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 6.w,
+                              vertical: 2.h,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.red.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(4.r),
                             ),
-                            child: Text('Cancel', style: TextStyle(color: Colors.red, fontSize: 10.sp, fontWeight: FontWeight.bold)),
+                            child: Text(
+                              'Cancel',
+                              style: TextStyle(
+                                color: Colors.red,
+                                fontSize: 10.sp,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
                         ),
                       ],
@@ -486,12 +574,20 @@ class _IbTransferCommissionScreenState extends State<IbTransferCommissionScreen>
               ),
               child: Row(
                 children: [
-                  Icon(Icons.format_quote, color: AppColors.textGrey, size: 12.sp),
+                  Icon(
+                    Icons.format_quote,
+                    color: AppColors.textGrey,
+                    size: 12.sp,
+                  ),
                   SizedBox(width: 4.w),
                   Expanded(
                     child: Text(
                       item.ibComment!,
-                      style: TextStyle(color: AppColors.textSecondary, fontSize: 11.sp, fontStyle: FontStyle.italic),
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 11.sp,
+                        fontStyle: FontStyle.italic,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),

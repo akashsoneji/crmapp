@@ -282,9 +282,9 @@ ThemeData _buildLightTheme() {
       backgroundColor: AppColors.whiteColor,
       elevation: 16,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.only(
-          topRight: Radius.circular(20.r),
-          bottomRight: Radius.circular(20.r),
+        borderRadius: BorderRadiusDirectional.only(
+          topStart: Radius.circular(20.r),
+          bottomStart: Radius.circular(20.r),
         ),
       ),
     ),
@@ -371,9 +371,9 @@ ThemeData _buildDarkTheme() {
       backgroundColor: AppColors.surfaceDarkTheme,
       elevation: 16,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.only(
-          topRight: Radius.circular(20.r),
-          bottomRight: Radius.circular(20.r),
+        borderRadius: BorderRadiusDirectional.only(
+          topStart: Radius.circular(20.r),
+          bottomStart: Radius.circular(20.r),
         ),
       ),
     ),
@@ -574,9 +574,13 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
             Future.microtask(() async {
               try {
                 await ChartSocketController.preloadForDefaultSymbol();
-                print('AuthCheckScreen: Chart WebSocket preload initiated in background');
+                print(
+                  'AuthCheckScreen: Chart WebSocket preload initiated in background',
+                );
               } catch (e) {
-                print('AuthCheckScreen: Chart preload error (non-critical): $e');
+                print(
+                  'AuthCheckScreen: Chart preload error (non-critical): $e',
+                );
               }
             }),
           );
@@ -658,8 +662,8 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
             .toString();
     final runtimeConfig =
         selectedBroker['broker_runtime_config'] is Map<String, dynamic>
-            ? selectedBroker['broker_runtime_config'] as Map<String, dynamic>
-            : selectedBroker;
+        ? selectedBroker['broker_runtime_config'] as Map<String, dynamic>
+        : selectedBroker;
 
     FlavorConfig.applyTenaxBrokerRuntimeConfig(
       config: runtimeConfig,

@@ -15,6 +15,7 @@ import 'package:crm_app/controllers/copy_trading/copy_trading_copier_subscriptio
         CopyTradingCopierSubscriptionsController;
 import 'package:crm_app/widgets/custom_toast.dart';
 import 'package:crm_app/screens/copy_trading/components/edit_subscription_sheet.dart';
+import 'package:crm_app/services/language_service.dart';
 
 // ─── Screen ───────────────────────────────────────────────────────
 class InvestmentDetailScreen extends StatefulWidget {
@@ -90,7 +91,9 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
         });
       } else {
         setState(() {
-          _detailError = response.message ?? 'Failed to load details';
+          _detailError =
+              response.message ??
+              TranslationUtils.tr('copy_failed_to_load_details');
         });
       }
     } catch (e) {
@@ -127,16 +130,17 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
         final data = nestedData is Map ? nestedData['data'] : null;
         if (data is List) {
           setState(() {
-            _trades =
-                data
-                    .whereType<Map>()
-                    .map((e) => TradeItem.fromJson(e.cast<String, dynamic>()))
-                    .toList();
+            _trades = data
+                .whereType<Map>()
+                .map((e) => TradeItem.fromJson(e.cast<String, dynamic>()))
+                .toList();
           });
         }
       } else {
         setState(() {
-          _tradesError = response.message ?? 'Failed to load trades';
+          _tradesError =
+              response.message ??
+              TranslationUtils.tr('copy_failed_to_load_trades');
         });
       }
     } catch (e) {
@@ -157,14 +161,14 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
     final res = await _subscriptionsCtrl.pause(widget.subscriptionId ?? 0);
     if (res.success) {
       CustomToastService.showSuccess(
-        title: 'Success',
-        message: 'Subscription paused',
+        title: TranslationUtils.tr('success_title'),
+        message: TranslationUtils.tr('copy_subscription_paused'),
       );
       _fetchDetail();
     } else {
       CustomToastService.showError(
-        title: 'Error',
-        message: res.message ?? 'Failed to pause',
+        title: TranslationUtils.tr('error_title'),
+        message: res.message ?? TranslationUtils.tr('copy_failed_to_pause'),
       );
     }
   }
@@ -173,14 +177,14 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
     final res = await _subscriptionsCtrl.resume(widget.subscriptionId ?? 0);
     if (res.success) {
       CustomToastService.showSuccess(
-        title: 'Success',
-        message: 'Subscription resumed',
+        title: TranslationUtils.tr('success_title'),
+        message: TranslationUtils.tr('copy_subscription_resumed'),
       );
       _fetchDetail();
     } else {
       CustomToastService.showError(
-        title: 'Error',
-        message: res.message ?? 'Failed to resume',
+        title: TranslationUtils.tr('error_title'),
+        message: res.message ?? TranslationUtils.tr('copy_failed_to_resume'),
       );
     }
   }
@@ -188,37 +192,34 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
   void _onStopTap() async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder:
-          (ctx) => AlertDialog(
-            title: const Text('Stop investment?'),
-            content: const Text(
-              'This is permanent. You\'ll need to re-subscribe.',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(false),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(true),
-                style: TextButton.styleFrom(foregroundColor: AppColors.error),
-                child: const Text('Stop'),
-              ),
-            ],
+      builder: (ctx) => AlertDialog(
+        title: Text(TranslationUtils.tr('copy_stop_investment')),
+        content: Text(TranslationUtils.tr('copy_stop_investment_message')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(TranslationUtils.tr('common_cancel')),
           ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            child: Text(TranslationUtils.tr('common_stop')),
+          ),
+        ],
+      ),
     );
     if (confirmed != true) return;
     final res = await _subscriptionsCtrl.stop(widget.subscriptionId ?? 0);
     if (res.success) {
       CustomToastService.showSuccess(
-        title: 'Success',
-        message: 'Subscription stopped',
+        title: TranslationUtils.tr('copy_success'),
+        message: TranslationUtils.tr('copy_subscription_stopped'),
       );
       _fetchDetail();
     } else {
       CustomToastService.showError(
-        title: 'Error',
-        message: res.message ?? 'Failed to stop',
+        title: TranslationUtils.tr('error_title'),
+        message: res.message ?? TranslationUtils.tr('copy_failed_to_stop'),
       );
     }
   }
@@ -227,31 +228,28 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
     final amountCtrl = TextEditingController();
     final amount = await showDialog<num?>(
       context: context,
-      builder:
-          (ctx) => AlertDialog(
-            title: const Text('Add capital'),
-            content: TextField(
-              controller: amountCtrl,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              decoration: const InputDecoration(hintText: 'Amount (USD)'),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(null),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () {
-                  final v = num.tryParse(amountCtrl.text.trim());
-                  if (v == null || v <= 0) return;
-                  Navigator.of(ctx).pop(v);
-                },
-                child: const Text('Add'),
-              ),
-            ],
+      builder: (ctx) => AlertDialog(
+        title: Text(TranslationUtils.tr('copy_add_capital')),
+        content: TextField(
+          controller: amountCtrl,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          decoration: const InputDecoration(hintText: 'Amount (USD)'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(null),
+            child: Text(TranslationUtils.tr('common_cancel')),
           ),
+          TextButton(
+            onPressed: () {
+              final v = num.tryParse(amountCtrl.text.trim());
+              if (v == null || v <= 0) return;
+              Navigator.of(ctx).pop(v);
+            },
+            child: Text(TranslationUtils.tr('common_add')),
+          ),
+        ],
+      ),
     );
     if (amount == null) return;
     final res = await _subscriptionsCtrl.addCapital(
@@ -260,19 +258,18 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
     );
     if (res.success) {
       CustomToastService.showSuccess(
-        title: 'Success',
-        message: 'Capital added successfully',
+        title: TranslationUtils.tr('success_title'),
+        message: TranslationUtils.tr('copy_capital_added_successfully'),
       );
       _fetchDetail();
     } else {
       CustomToastService.showError(
-        title: 'Error',
-        message: res.message ?? 'Failed to add capital',
+        title: TranslationUtils.tr('error_title'),
+        message:
+            res.message ?? TranslationUtils.tr('copy_failed_to_add_capital'),
       );
     }
   }
-
-
 
   String getCopyMethodDisplay(CopierSubscriptionItem? item) {
     if (item == null) return 'Equal x1';
@@ -329,8 +326,8 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
   Widget _buildTraderHeader() {
     final displayEquity =
         _detailData != null && _detailData!['current_equity'] != null
-            ? '\$${double.tryParse(_detailData!['current_equity'].toString())?.toStringAsFixed(2) ?? _detailData!['current_equity']}'
-            : widget.equity;
+        ? '\$${double.tryParse(_detailData!['current_equity'].toString())?.toStringAsFixed(2) ?? _detailData!['current_equity']}'
+        : widget.equity;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -443,9 +440,8 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
     // Profit
     final profitVal =
         _detailData != null && _detailData!['total_profit_loss'] != null
-            ? double.tryParse(_detailData!['total_profit_loss'].toString()) ??
-                0.0
-            : (item != null ? item.totalPnl.toDouble() : 0.0);
+        ? double.tryParse(_detailData!['total_profit_loss'].toString()) ?? 0.0
+        : (item != null ? item.totalPnl.toDouble() : 0.0);
     final profitDisplay = '\$${profitVal.toStringAsFixed(2)}';
 
     // Capital
@@ -454,12 +450,11 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
     // Float profit
     final floatProfitVal =
         _detailData != null &&
-                _detailData!['current_equity'] != null &&
-                item != null
-            ? (double.tryParse(_detailData!['current_equity'].toString()) ??
-                    0.0) -
-                item.accountBalance.toDouble()
-            : 0.0;
+            _detailData!['current_equity'] != null &&
+            item != null
+        ? (double.tryParse(_detailData!['current_equity'].toString()) ?? 0.0) -
+              item.accountBalance.toDouble()
+        : 0.0;
     final floatProfitDisplay = '\$${floatProfitVal.toStringAsFixed(2)}';
 
     // Gain
@@ -470,28 +465,25 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
     final gainDisplay = '${gainVal.toStringAsFixed(2)}%';
 
     // Commission display
-    final commissionDisplay =
-        item != null
-            ? '\$${item.totalCommissionPaid.toStringAsFixed(2)}'
-            : '\$0.00';
+    final commissionDisplay = item != null
+        ? '\$${item.totalCommissionPaid.toStringAsFixed(2)}'
+        : '\$0.00';
 
     // Risk score or risk percent
-    final riskDisplay =
-        item != null && item.riskPercent.isNotEmpty
-            ? '${item.riskPercent}%'
-            : '1';
+    final riskDisplay = item != null && item.riskPercent.isNotEmpty
+        ? '${item.riskPercent}%'
+        : '1';
 
     // Equity and balance
     final equityVal =
         _detailData != null && _detailData!['current_equity'] != null
-            ? double.tryParse(_detailData!['current_equity'].toString()) ?? 0.0
-            : (item != null ? item.capitalAmount.toDouble() : 0.0);
+        ? double.tryParse(_detailData!['current_equity'].toString()) ?? 0.0
+        : (item != null ? item.capitalAmount.toDouble() : 0.0);
     final balanceVal = item != null ? item.accountBalance.toDouble() : 0.0;
 
-    final leverageDisplay =
-        item != null && item.serverType.isNotEmpty
-            ? item.serverType.toUpperCase()
-            : '1:500';
+    final leverageDisplay = item != null && item.serverType.isNotEmpty
+        ? item.serverType.toUpperCase()
+        : '1:500';
 
     final copyingMethodDisplay = getCopyMethodDisplay(item);
 
@@ -539,14 +531,16 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
                 _SummaryRow(
                   'Profit',
                   profitDisplay,
-                  valueColor:
-                      profitVal >= 0 ? AppColors.green : AppColors.error,
+                  valueColor: profitVal >= 0
+                      ? AppColors.green
+                      : AppColors.error,
                 ),
                 _SummaryRow(
                   'Float profit',
                   floatProfitDisplay,
-                  valueColor:
-                      floatProfitVal >= 0 ? AppColors.green : AppColors.error,
+                  valueColor: floatProfitVal >= 0
+                      ? AppColors.green
+                      : AppColors.error,
                 ),
                 _SummaryRow(
                   'Gain',
@@ -606,16 +600,17 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
                   item != null
                       ? '\$${(item.totalPnl / 30.0).toStringAsFixed(2)}'
                       : '\$0.00',
-                  valueColor:
-                      profitVal >= 0 ? AppColors.green : AppColors.error,
+                  valueColor: profitVal >= 0
+                      ? AppColors.green
+                      : AppColors.error,
                 ),
                 _SummaryRow(
-                  'Status',
+                  TranslationUtils.tr('common_status'),
                   item != null ? item.status.toUpperCase() : 'UNKNOWN',
                   valueColor:
                       item != null && item.status.toLowerCase() == 'active'
-                          ? AppColors.green
-                          : AppColors.warning,
+                      ? AppColors.green
+                      : AppColors.warning,
                 ),
               ],
             ),
@@ -640,9 +635,7 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
     final canStop = status == 'active' || status == 'paused';
 
     return Card(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12.r),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
       color: AppColors.whiteColor,
       elevation: 0.8,
       child: Padding(
@@ -699,7 +692,7 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
                     child: ElevatedButton.icon(
                       onPressed: _onStopTap,
                       icon: const Icon(Icons.stop, color: Colors.white),
-                      label: const Text('Stop'),
+                      label: Text(TranslationUtils.tr('common_stop')),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.error,
                         foregroundColor: Colors.white,
@@ -807,8 +800,6 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
     );
   }
 
-
-
   // ─────────────────────────────────────────────────────────────────
   // TRADES TAB
   // ─────────────────────────────────────────────────────────────────
@@ -882,16 +873,14 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
                   context: context,
                   isScrollControlled: true,
                   backgroundColor: Colors.transparent,
-                  builder:
-                      (ctx) => EditSubscriptionSheet(
-                        subscriptionId: widget.subscriptionId ?? 0,
-                        masterCode: sub.masterCode,
-                        planId: sub.planId,
-                        masterName:
-                            sub.masterName.isNotEmpty
-                                ? sub.masterName
-                                : sub.masterCode,
-                      ),
+                  builder: (ctx) => EditSubscriptionSheet(
+                    subscriptionId: widget.subscriptionId ?? 0,
+                    masterCode: sub.masterCode,
+                    planId: sub.planId,
+                    masterName: sub.masterName.isNotEmpty
+                        ? sub.masterName
+                        : sub.masterCode,
+                  ),
                 );
                 if (updated == true) {
                   _fetchDetail();
@@ -908,10 +897,9 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
             _OptionItem(
               icon: Icons.grid_view_outlined,
               label: "View Master's Performance",
-              onTap:
-                  () => Get.offAll(
-                    () => const CopyTradingMainScreen(initialIndex: 1),
-                  ),
+              onTap: () => Get.offAll(
+                () => const CopyTradingMainScreen(initialIndex: 1),
+              ),
             ),
             _divider(),
             _OptionItem(
@@ -926,17 +914,17 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
                   scale: 0.6,
                   child: Switch(
                     value: _notificationsEnabled,
-                    onChanged:
-                        (val) => setState(() => _notificationsEnabled = val),
+                    onChanged: (val) =>
+                        setState(() => _notificationsEnabled = val),
                     activeThumbColor: AppColors.primary,
                     inactiveThumbColor: AppColors.whiteColor,
                     inactiveTrackColor: AppColors.switchTrackOff,
                     overlayColor: MaterialStateProperty.all(Colors.transparent),
 
                     // Border removal when inactive (from previous fix)
-                    trackOutlineColor: MaterialStateProperty.resolveWith<
-                      Color?
-                    >((states) {
+                    trackOutlineColor: MaterialStateProperty.resolveWith<Color?>((
+                      states,
+                    ) {
                       if (states.contains(MaterialState.selected)) return null;
                       return Colors
                           .transparent; // or AppColors.whiteColor if background is white
@@ -966,118 +954,112 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
   void _showStopCopyingDialog() {
     showDialog(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            insetPadding: const EdgeInsets.symmetric(
-              horizontal: 16.0,
-            ), // ← main change for width
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20.r),
+      builder: (context) => AlertDialog(
+        insetPadding: const EdgeInsets.symmetric(
+          horizontal: 16.0,
+        ), // ← main change for width
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20.r),
+        ),
+        contentPadding: EdgeInsets.symmetric(
+          horizontal: 20.w, // increased from 8 → looks better
+          vertical: 24.h,
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.info_outline, size: 40.sp, color: AppColors.textPrimary),
+            SizedBox(height: 20.h), // slightly more breathing room
+            Text(
+              'Are you Sure?',
+              style: TextStyle(
+                fontSize: 18.sp, // optional: little bigger title
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
             ),
-            contentPadding: EdgeInsets.symmetric(
-              horizontal: 20.w, // increased from 8 → looks better
-              vertical: 24.h,
+            SizedBox(height: 16.h),
+            Text(
+              'This investment has a bonus applied. It amounts \$23.50. If you stop copying, the bonus will be cancelled and you will not be able to reapply it.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14.sp,
+                color: AppColors.textGrey,
+                fontWeight: FontWeight.w400,
+                height: 1.4, // ← helps long text feel less cramped
+              ),
             ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
+            SizedBox(height: 28.h),
+            Row(
               children: [
-                Icon(
-                  Icons.info_outline,
-                  size: 40.sp,
-                  color: AppColors.textPrimary,
-                ),
-                SizedBox(height: 20.h), // slightly more breathing room
-                Text(
-                  'Are you Sure?',
-                  style: TextStyle(
-                    fontSize: 18.sp, // optional: little bigger title
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                SizedBox(height: 16.h),
-                Text(
-                  'This investment has a bonus applied. It amounts \$23.50. If you stop copying, the bonus will be cancelled and you will not be able to reapply it.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    color: AppColors.textGrey,
-                    fontWeight: FontWeight.w400,
-                    height: 1.4, // ← helps long text feel less cramped
-                  ),
-                ),
-                SizedBox(height: 28.h),
-                Row(
-                  children: [
-                    Expanded(
-                      child: SizedBox(
-                        height: 48.h, // slightly taller buttons feel premium
-                        child: TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          style: TextButton.styleFrom(
-                            backgroundColor: AppColors.cardBackGround,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12.r),
-                            ),
-                          ),
-                          child: Text(
-                            'Back',
-                            style: TextStyle(
-                              color: AppColors.primary,
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
+                Expanded(
+                  child: SizedBox(
+                    height: 48.h, // slightly taller buttons feel premium
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: TextButton.styleFrom(
+                        backgroundColor: AppColors.cardBackGround,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
+                      ),
+                      child: Text(
+                        'Back',
+                        style: TextStyle(
+                          color: AppColors.primary,
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
-                    SizedBox(width: 12.w),
-                    Expanded(
-                      child: SizedBox(
-                        height: 48.h,
-                        child: ElevatedButton(
-                          onPressed: () async {
-                            Navigator.pop(context); // Close the dialog
-                            final res = await _subscriptionsCtrl.stop(
-                              widget.subscriptionId ?? 0,
-                            );
-                            if (res.success) {
-                              CustomToastService.showSuccess(
-                                title: 'Success',
-                                message: 'Subscription stopped successfully',
-                              );
-                              _fetchDetail();
-                            } else {
-                              CustomToastService.showError(
-                                title: 'Error',
-                                message:
-                                    res.message ?? 'Failed to stop copying',
-                              );
-                            }
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12.r),
-                            ),
-                          ),
-                          child: Text(
-                            'Close and Stop',
-                            style: TextStyle(
-                              color: AppColors.whiteColor,
-                              fontSize: 13.5.sp, // was 12.8 – little small
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
+                  ),
+                ),
+                SizedBox(width: 12.w),
+                Expanded(
+                  child: SizedBox(
+                    height: 48.h,
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        Navigator.pop(context); // Close the dialog
+                        final res = await _subscriptionsCtrl.stop(
+                          widget.subscriptionId ?? 0,
+                        );
+                        if (res.success) {
+                          CustomToastService.showSuccess(
+                            title: TranslationUtils.tr('copy_success'),
+                            message: 'Subscription stopped successfully',
+                          );
+                          _fetchDetail();
+                        } else {
+                          CustomToastService.showError(
+                            title: 'Error',
+                            message: res.message ?? 'Failed to stop copying',
+                          );
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
+                      ),
+                      child: Text(
+                        'Close and Stop',
+                        style: TextStyle(
+                          color: AppColors.whiteColor,
+                          fontSize: 13.5.sp, // was 12.8 – little small
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
-                  ],
+                  ),
                 ),
               ],
             ),
-          ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -1176,8 +1158,9 @@ class _TradeExpandableCardState extends State<_TradeExpandableCard> {
                                   vertical: 2,
                                 ),
                                 decoration: BoxDecoration(
-                                  color:
-                                      isBuy ? AppColors.green : AppColors.error,
+                                  color: isBuy
+                                      ? AppColors.green
+                                      : AppColors.error,
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
@@ -1233,10 +1216,9 @@ class _TradeExpandableCardState extends State<_TradeExpandableCard> {
                           Text(
                             '\$${t.copierProfit.toStringAsFixed(2)}',
                             style: TextStyle(
-                              color:
-                                  t.copierProfit >= 0
-                                      ? AppColors.green
-                                      : AppColors.error,
+                              color: t.copierProfit >= 0
+                                  ? AppColors.green
+                                  : AppColors.error,
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
                             ),
@@ -1264,10 +1246,9 @@ class _TradeExpandableCardState extends State<_TradeExpandableCard> {
           AnimatedCrossFade(
             firstChild: const SizedBox(width: double.infinity),
             secondChild: _buildDetails(t),
-            crossFadeState:
-                _expanded
-                    ? CrossFadeState.showSecond
-                    : CrossFadeState.showFirst,
+            crossFadeState: _expanded
+                ? CrossFadeState.showSecond
+                : CrossFadeState.showFirst,
             duration: const Duration(milliseconds: 220),
           ),
         ],

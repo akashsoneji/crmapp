@@ -44,118 +44,124 @@ class _LanguageSelectorScreenState extends State<LanguageSelectorScreen> {
         ),
         centerTitle: true,
       ),
-      body: Directionality(
-        textDirection: _languageService.getTextDirection(),
-        child: Column(
-          children: [
-            // Language list
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                children: [
-                  // System default option
-                  _buildLanguageOption(
-                    languageCode: 'system',
-                    languageName: _languageService.tr(
-                      'settings_language_system',
-                    ),
-                    isSelected: _selectedLanguage == 'system',
-                    onTap: () => _selectLanguage('system'),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Divider
-                  Container(height: 1, color: AppColors.border),
-
-                  const SizedBox(height: 16),
-
-                  // Supported languages
-                  ..._languageService.getSupportedLanguages().entries.map(
-                    (entry) => _buildLanguageOption(
-                      languageCode: entry.key,
-                      languageName: entry.value,
-                      isSelected: _selectedLanguage == entry.key,
-                      onTap: () => _selectLanguage(entry.key),
-                      isRTL:
-                          _languageService.getLanguageInfo(entry.key)['isRTL'],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // Bottom section with info
-            Container(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                children: [
-                  // RTL info if current language is RTL
-                  if (_languageService.isRTL())
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: AppColors.primary.withOpacity(0.3),
-                        ),
+      body: Obx(
+        () => Directionality(
+          textDirection: _languageService.getTextDirection(),
+          child: Column(
+            children: [
+              // Language list
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  children: [
+                    // System default option
+                    _buildLanguageOption(
+                      languageCode: 'system',
+                      languageName: _languageService.tr(
+                        'settings_language_system',
                       ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.info_outline,
-                            color: AppColors.primary,
-                            size: 20,
+                      isSelected: _selectedLanguage == 'system',
+                      onTap: () => _selectLanguage('system'),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // Divider
+                    Container(height: 1, color: AppColors.border),
+
+                    const SizedBox(height: 16),
+
+                    // Supported languages
+                    ..._languageService.getSupportedLanguages().entries.map(
+                      (entry) => _buildLanguageOption(
+                        languageCode: entry.key,
+                        languageName: entry.value,
+                        isSelected: _selectedLanguage == entry.key,
+                        onTap: () => _selectLanguage(entry.key),
+                        isRTL: _languageService.getLanguageInfo(
+                          entry.key,
+                        )['isRTL'],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Bottom section with info
+              Container(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    // RTL info if current language is RTL
+                    if (_languageService.isRTL())
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: AppColors.primary.withOpacity(0.3),
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              'RTL (Right-to-Left) layout is enabled for this language. The interface will automatically adjust for better readability.',
-                              style: AppTextStyles.subheading.copyWith(
-                                color: AppColors.primary,
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.info_outline,
+                              color: AppColors.primary,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                _languageService.tr(
+                                  'settings_language_rtl_info',
+                                ),
+                                style: AppTextStyles.subheading.copyWith(
+                                  color: AppColors.primary,
+                                ),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                  const SizedBox(height: 16),
-
-                  // Apply button
-                  Padding(
-                    padding: EdgeInsets.only(bottom: Get.height * 0.05),
-                    child: SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton(
-                        onPressed:
-                            _selectedLanguage != null ? _applyLanguage : null,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: AppColors.whiteColor,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          elevation: 0,
-                          padding: EdgeInsets.symmetric(vertical: 10.h),
-                        ),
-                        child: Text(
-                          _languageService.tr('common_apply'),
-                          style: AppTextStyles.button.copyWith(
-                            color: AppColors.whiteColor,
-                            fontWeight: FontWeight.w600,
-                          ),
+                          ],
                         ),
                       ),
+
+                    const SizedBox(height: 16),
+
+                    // Apply button
+                    Padding(
+                      padding: EdgeInsets.only(bottom: Get.height * 0.05),
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: ElevatedButton(
+                          onPressed: _selectedLanguage != null
+                              ? _applyLanguage
+                              : null,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: AppColors.whiteColor,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            elevation: 0,
+                            padding: EdgeInsets.symmetric(vertical: 10.h),
+                          ),
+                          child: Text(
+                            _languageService.tr('common_apply'),
+                            style: AppTextStyles.button.copyWith(
+                              color: AppColors.whiteColor,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -171,10 +177,9 @@ class _LanguageSelectorScreenState extends State<LanguageSelectorScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color:
-            isSelected
-                ? AppColors.primary.withOpacity(0.1)
-                : AppColors.backgroundLight,
+        color: isSelected
+            ? AppColors.primary.withOpacity(0.1)
+            : AppColors.backgroundLight,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isSelected ? AppColors.primary : AppColors.border,
@@ -222,7 +227,7 @@ class _LanguageSelectorScreenState extends State<LanguageSelectorScreen> {
                       ),
                       if (isRTL)
                         Text(
-                          'RTL Layout',
+                          _languageService.tr('settings_language_rtl'),
                           style: AppTextStyles.subheading.copyWith(
                             color: AppColors.textSecondary,
                           ),
@@ -240,7 +245,7 @@ class _LanguageSelectorScreenState extends State<LanguageSelectorScreen> {
                       color: AppColors.primary,
                       shape: BoxShape.circle,
                     ),
-                    child:   Icon(
+                    child: Icon(
                       Icons.check,
                       color: AppColors.whiteColor,
                       size: 16,
@@ -260,10 +265,12 @@ class _LanguageSelectorScreenState extends State<LanguageSelectorScreen> {
         return '🇺🇸';
       case 'ar':
         return '🇸🇦';
-      case 'tr':
-        return '🇹🇷';
-      case 'hi':
-        return '🇮🇳';
+      case 'es_MX':
+        return '🇲🇽';
+      case 'zh_CN':
+        return '🇨🇳';
+      case 'id':
+        return '🇮🇩';
       case 'es':
         return '🇪🇸';
       case 'system':
@@ -303,8 +310,8 @@ class _LanguageSelectorScreenState extends State<LanguageSelectorScreen> {
       // Show success message
       if (Get.isRegistered<AppNotificationController>()) {
         Get.find<AppNotificationController>().showSuccess(
-          message: 'Language changed successfully',
-          title: 'Success',
+          message: _languageService.tr('settings_language_change_success'),
+          title: _languageService.tr('common_success'),
         );
       }
 
@@ -317,8 +324,10 @@ class _LanguageSelectorScreenState extends State<LanguageSelectorScreen> {
       // Show error message
       if (Get.isRegistered<AppNotificationController>()) {
         Get.find<AppNotificationController>().showError(
-          message: 'Failed to change language: $e',
-          title: 'Error',
+          message: _languageService.tr('settings_language_change_error', {
+            'error': e.toString(),
+          }),
+          title: _languageService.tr('common_error'),
         );
       }
     }
@@ -378,7 +387,9 @@ class LanguageInfoWidget extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           Text(
-            languageInfo['isRTL'] ? 'RTL Layout' : 'LTR Layout',
+            languageInfo['isRTL']
+                ? languageService.tr('settings_language_rtl')
+                : languageService.tr('settings_language_ltr'),
             style: AppTextStyles.input.copyWith(color: AppColors.textSecondary),
           ),
         ],

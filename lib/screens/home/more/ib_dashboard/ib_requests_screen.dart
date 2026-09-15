@@ -1,6 +1,7 @@
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/screens/home/trading_main_screen.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
+import 'package:crm_app/services/language_service.dart' show TranslationUtils;
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
@@ -106,10 +107,17 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
             fontSize: 20.sp,
             fontWeight: FontWeight.w400,
             color: AppColors.textPrimary,
-          fontFamily: 'SF UI'),
+            fontFamily: 'SF UI',
+          ),
         ),
         leading: IconButton(
-          icon: SvgPicture.asset("assets/svg/ib_dashboard/home.svg", colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn)),
+          icon: SvgPicture.asset(
+            "assets/svg/ib_dashboard/home.svg",
+            colorFilter: ColorFilter.mode(
+              AppColors.textPrimary,
+              BlendMode.srcIn,
+            ),
+          ),
           onPressed: () => Get.offAll(() => const TradingMainScreen()),
         ),
         centerTitle: true,
@@ -125,7 +133,7 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
                 controller.ibApprovalRequests.isEmpty) {
               return Center(
                 child: CommonLoadingWidget(
-                  message: 'Loading requests...',
+                  message: TranslationUtils.tr('ib_loading_requests'),
                   size: 50.0,
                   color: AppColors.primary,
                 ),
@@ -154,57 +162,57 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
-          children:
-              statuses.map((status) {
-                final isSelected = _selectedStatus == status;
-                return Padding(
-                  padding: EdgeInsets.only(right: 10.w),
-                  child: GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _selectedStatus = status;
-                      });
-                    },
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 16.w,
-                        vertical: 8.h,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isSelected ? AppColors.primary : AppColors.whiteColor,
-                        borderRadius: BorderRadius.circular(20.r),
-                        border: Border.all(
-                          color:
-                              isSelected
-                                  ? AppColors.primary
-                                  : AppColors.border,
-                          width: 1,
-                        ),
-                        boxShadow:
-                            isSelected
-                                ? [
-                                  BoxShadow(
-                                    color: AppColors.primary.withOpacity(0.3),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ]
-                                : null,
-                      ),
-                      child: Text(
-                        status,
-                        style: TextStyle(
-                          color: isSelected ? AppColors.whiteColor : AppColors.textGrey,
-                          fontWeight:
-                              isSelected ? FontWeight.w600 : FontWeight.w500,
-                          fontSize: 13.sp,
-                        ),
-                      ),
+          children: statuses.map((status) {
+            final isSelected = _selectedStatus == status;
+            return Padding(
+              padding: EdgeInsets.only(right: 10.w),
+              child: GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _selectedStatus = status;
+                  });
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 8.h,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? AppColors.primary
+                        : AppColors.whiteColor,
+                    borderRadius: BorderRadius.circular(20.r),
+                    border: Border.all(
+                      color: isSelected ? AppColors.primary : AppColors.border,
+                      width: 1,
+                    ),
+                    boxShadow: isSelected
+                        ? [
+                            BoxShadow(
+                              color: AppColors.primary.withOpacity(0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ]
+                        : null,
+                  ),
+                  child: Text(
+                    status,
+                    style: TextStyle(
+                      color: isSelected
+                          ? AppColors.whiteColor
+                          : AppColors.textGrey,
+                      fontWeight: isSelected
+                          ? FontWeight.w600
+                          : FontWeight.w500,
+                      fontSize: 13.sp,
                     ),
                   ),
-                );
-              }).toList(),
+                ),
+              ),
+            );
+          }).toList(),
         ),
       ),
     );
@@ -239,7 +247,8 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
                   fontSize: 20.sp,
                   fontWeight: FontWeight.w400,
                   color: AppColors.textPrimary,
-                fontFamily: 'SF UI'),
+                  fontFamily: 'SF UI',
+                ),
               ),
               SizedBox(height: 8.h),
               Text(
@@ -270,10 +279,9 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
     final statusColor = _getApprovalStatusColor(request.status);
     final name = _getRequestName(request);
     final email = _getRequestEmail(request);
-    final assignedPlan =
-        (request.assignedPlan ?? '').isNotEmpty
-            ? request.assignedPlan!
-            : 'Not Assigned';
+    final assignedPlan = (request.assignedPlan ?? '').isNotEmpty
+        ? request.assignedPlan!
+        : 'Not Assigned';
 
     return Container(
       margin: EdgeInsets.only(bottom: 16.h),
@@ -332,7 +340,8 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
                         fontSize: 20.sp,
                         fontWeight: FontWeight.w400,
                         color: AppColors.whiteColor,
-                      fontFamily: 'SF UI'),
+                        fontFamily: 'SF UI',
+                      ),
                     ),
                   ),
                 ),
@@ -347,7 +356,8 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
                           fontSize: 18.sp,
                           fontWeight: FontWeight.w400,
                           color: AppColors.textPrimary,
-                        fontFamily: 'SF UI'),
+                          fontFamily: 'SF UI',
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -385,7 +395,8 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
                       fontSize: 13.sp,
                       fontWeight: FontWeight.w400,
                       color: statusColor,
-                    fontFamily: 'SF UI'),
+                      fontFamily: 'SF UI',
+                    ),
                   ),
                 ),
               ],
@@ -435,7 +446,8 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
                     fontSize: 15.sp,
                     fontWeight: FontWeight.w400,
                     color: AppColors.whiteColor,
-                  fontFamily: 'SF UI'),
+                    fontFamily: 'SF UI',
+                  ),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
@@ -499,7 +511,8 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
                   fontSize: 15.sp,
                   fontWeight: FontWeight.w400,
                   color: valueColor ?? AppColors.textPrimary,
-                fontFamily: 'SF UI'),
+                  fontFamily: 'SF UI',
+                ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -543,7 +556,8 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
                             fontSize: 20.sp,
                             fontWeight: FontWeight.w400,
                             color: AppColors.textPrimary,
-                          fontFamily: 'SF UI'),
+                            fontFamily: 'SF UI',
+                          ),
                         ),
                         IconButton(
                           onPressed: Get.back,
@@ -573,7 +587,8 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
                           color: AppColors.whiteColor,
                           fontWeight: FontWeight.w400,
                           fontSize: 16.sp,
-                        fontFamily: 'SF UI'),
+                          fontFamily: 'SF UI',
+                        ),
                       ),
                     ),
 
@@ -614,14 +629,13 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
                           child: DropdownButton<CommissionGroup>(
                             isExpanded: true,
                             value: selectedGroup,
-                            hint: const Text('Select Group'),
-                            items:
-                                ibController.commissionGroups.map((group) {
-                                  return DropdownMenuItem(
-                                    value: group,
-                                    child: Text(group.groupName ?? 'N/A'),
-                                  );
-                                }).toList(),
+                            hint: Text(TranslationUtils.tr('ib_select_group')),
+                            items: ibController.commissionGroups.map((group) {
+                              return DropdownMenuItem(
+                                value: group,
+                                child: Text(group.groupName ?? 'N/A'),
+                              );
+                            }).toList(),
                             onChanged: (value) {
                               setState(() => selectedGroup = value);
                             },
@@ -685,7 +699,12 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
                               _loadApprovalRequests();
                             }
                           },
-                          child: Text('Submit', style: AppTextStyles.textButton.copyWith(color: AppColors.whiteColor)),
+                          child: Text(
+                            'Submit',
+                            style: AppTextStyles.textButton.copyWith(
+                              color: AppColors.whiteColor,
+                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -707,9 +726,13 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
           fontSize: 15.sp,
           fontWeight: FontWeight.w400,
           color: AppColors.textPrimary,
-        fontFamily: 'SF UI'),
+          fontFamily: 'SF UI',
+        ),
         children: const [
-          TextSpan(text: '*', style: TextStyle(color: AppColors.error)),
+          TextSpan(
+            text: '*',
+            style: TextStyle(color: AppColors.error),
+          ),
         ],
       ),
     );

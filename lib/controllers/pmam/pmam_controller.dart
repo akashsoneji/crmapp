@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import 'package:flutter/foundation.dart';
 import 'package:crm_app/services/pmam_service.dart';
+import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
 import 'package:crm_app/models/pmam_model.dart';
 
@@ -48,15 +49,15 @@ class PmamController extends GetxController {
       <Map<String, dynamic>>[].obs;
 
   // ── Investor state ──
-  final RxList<PmamManager> managersList = <PmamManager>[].obs; // from datatable API
+  final RxList<PmamManager> managersList =
+      <PmamManager>[].obs; // from datatable API
   final RxBool isManagersLoading = false.obs;
   final RxInt managersTotal = 0.obs;
   final RxList<Map<String, dynamic>> availablePlans =
       <Map<String, dynamic>>[].obs;
   final RxList<Map<String, dynamic>> myInvestments =
       <Map<String, dynamic>>[].obs; // legacy: currently mirrors fundEntries
-  final RxList<Map<String, dynamic>> enrollments =
-      <Map<String, dynamic>>[].obs;
+  final RxList<Map<String, dynamic>> enrollments = <Map<String, dynamic>>[].obs;
   final RxList<Map<String, dynamic>> openAllocations =
       <Map<String, dynamic>>[].obs;
   final RxList<Map<String, dynamic>> eligibleAccounts =
@@ -115,7 +116,7 @@ class PmamController extends GetxController {
       if (response.success) {
         managerStatus.value = 'pending';
         CustomToastService.showSuccess(
-          message: 'Manager application submitted successfully!',
+          message: TranslationUtils.tr('pmam_application_submitted'),
         );
         return true;
       } else {
@@ -157,7 +158,8 @@ class PmamController extends GetxController {
         dashboardStats.value = data;
         _hydrateFromOverview(data);
       } else {
-        errorMessage.value = overviewResp.message ?? 'Failed to load dashboard';
+        errorMessage.value =
+            overviewResp.message ?? 'pmam_dashboard_load_failed'.tr;
         _hydrateFromOverview(const {});
       }
     } catch (e) {
@@ -201,9 +203,12 @@ class PmamController extends GetxController {
       final block = (hero[key] is Map) ? hero[key] as Map : const {};
       final isRoi = key == 'roi';
       return {
-        'current': isRoi ? toNum(block['current_pct']) : toNum(block['current']),
-        'previous':
-            isRoi ? toNum(block['previous_pct']) : toNum(block['previous']),
+        'current': isRoi
+            ? toNum(block['current_pct'])
+            : toNum(block['current']),
+        'previous': isRoi
+            ? toNum(block['previous_pct'])
+            : toNum(block['previous']),
         if (isRoi) 'current_pct': toNum(block['current_pct']),
         if (absoluteDelta) 'delta': toNum(block['delta']),
         'delta_pct': toNum(block['delta_pct']),
@@ -237,12 +242,12 @@ class PmamController extends GetxController {
     }
 
     Map<String, dynamic> chartBlock(List<num> values) => {
-          'series': {
-            'labels': mainLabels,
-            'values': values,
-            'data': values, // legacy alias
-          },
-        };
+      'series': {
+        'labels': mainLabels,
+        'values': values,
+        'data': values, // legacy alias
+      },
+    };
 
     final equityVals = mainSeries('equity');
     final aumVals = mainSeries('aum');
@@ -310,7 +315,10 @@ class PmamController extends GetxController {
     final trades = data['recent_trades'];
     recentDashboardTrades.assignAll(
       trades is List
-          ? trades.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList()
+          ? trades
+                .whereType<Map>()
+                .map((e) => Map<String, dynamic>.from(e))
+                .toList()
           : const <Map<String, dynamic>>[],
     );
   }
@@ -337,8 +345,8 @@ class PmamController extends GetxController {
       if (resp.success) {
         final newStatus =
             (resp.data is Map && (resp.data as Map)['data'] is Map)
-                ? ((resp.data as Map)['data'] as Map)['status']?.toString()
-                : null;
+            ? ((resp.data as Map)['data'] as Map)['status']?.toString()
+            : null;
         _patchPlanStatus(
           planId,
           status: newStatus ?? 'approved',
@@ -366,7 +374,10 @@ class PmamController extends GetxController {
       final resp = await PmamService.updatePlan(planId, body);
       if (resp.success) {
         _patchPlanFields(planId, body);
-        return (ok: true, message: resp.message ?? 'Plan updated successfully.');
+        return (
+          ok: true,
+          message: resp.message ?? 'Plan updated successfully.',
+        );
       }
       return (ok: false, message: resp.message ?? 'Failed to update plan.');
     } catch (e) {
@@ -548,7 +559,9 @@ class PmamController extends GetxController {
         managersTotal.value = (d['recordsTotal'] ?? 0) as int;
         if (list is List) {
           managersList.assignAll(
-            list.map((i) => PmamManager.fromJson(i as Map<String, dynamic>)).toList(),
+            list
+                .map((i) => PmamManager.fromJson(i as Map<String, dynamic>))
+                .toList(),
           );
         }
       }
@@ -613,8 +626,7 @@ class PmamController extends GetxController {
           );
         }
       } else if (!enrollResp.success) {
-        errorMessage.value =
-            enrollResp.message ?? 'Failed to load enrollments';
+        errorMessage.value = enrollResp.message ?? 'Failed to load enrollments';
       }
 
       final allocResp = results[2];
@@ -699,7 +711,9 @@ class PmamController extends GetxController {
         'amount': amount,
       });
       if (resp.success) {
-        CustomToastService.showSuccess(message: resp.message ?? 'Deposit added');
+        CustomToastService.showSuccess(
+          message: resp.message ?? 'Deposit added',
+        );
         await loadInvestorPortal();
         return true;
       }
@@ -755,10 +769,13 @@ class PmamController extends GetxController {
             } else {
               trades.assignAll(parsed);
             }
-            tradesTotal.value = int.tryParse((data['total'] ?? 0).toString()) ?? 0;
-            tradesPage.value = int.tryParse((data['page'] ?? page).toString()) ?? page;
+            tradesTotal.value =
+                int.tryParse((data['total'] ?? 0).toString()) ?? 0;
+            tradesPage.value =
+                int.tryParse((data['page'] ?? page).toString()) ?? page;
             tradesPerPage.value =
-                int.tryParse((data['per_page'] ?? perPage).toString()) ?? perPage;
+                int.tryParse((data['per_page'] ?? perPage).toString()) ??
+                perPage;
             tradesTotalPages.value =
                 int.tryParse((data['total_pages'] ?? 1).toString()) ?? 1;
             if (kDebugMode) {
@@ -771,7 +788,8 @@ class PmamController extends GetxController {
             for (final t in trades) {
               net += double.tryParse((t['profit'] ?? 0).toString()) ?? 0;
               comm +=
-                  double.tryParse((t['commission_charged'] ?? 0).toString()) ?? 0;
+                  double.tryParse((t['commission_charged'] ?? 0).toString()) ??
+                  0;
             }
             tradesNetPnl.value = net;
             tradesCommission.value = comm;
@@ -798,7 +816,9 @@ class PmamController extends GetxController {
           tradesTotal.value = parsed.length;
           tradesTotalPages.value = 1;
           if (kDebugMode) {
-            debugPrint('[PMAM] trades response is List rows=${parsed.length} (no pagination fields)');
+            debugPrint(
+              '[PMAM] trades response is List rows=${parsed.length} (no pagination fields)',
+            );
           }
           double net = 0, comm = 0;
           for (final t in trades) {
@@ -817,7 +837,9 @@ class PmamController extends GetxController {
           tradesCommission.value = 0;
           tradesSettledPnl.value = 0;
           if (kDebugMode) {
-            debugPrint('[PMAM] trades response unexpected data type: ${data.runtimeType}');
+            debugPrint(
+              '[PMAM] trades response unexpected data type: ${data.runtimeType}',
+            );
           }
         }
       } else {
@@ -828,7 +850,9 @@ class PmamController extends GetxController {
         tradesCommission.value = 0;
         tradesSettledPnl.value = 0;
         if (kDebugMode) {
-          debugPrint('[PMAM] getManagerTrades failed success=${resp.success} message=${resp.message}');
+          debugPrint(
+            '[PMAM] getManagerTrades failed success=${resp.success} message=${resp.message}',
+          );
         }
       }
     } catch (e) {

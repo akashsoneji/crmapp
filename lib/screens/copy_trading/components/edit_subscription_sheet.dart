@@ -9,6 +9,7 @@ import 'package:crm_app/services/api_service.dart';
 import 'package:crm_app/controllers/copy_trading/copy_trading_subscribe_controller.dart';
 import 'package:crm_app/widgets/labeled_app_text_field.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
+import 'package:crm_app/services/language_service.dart' show TranslationUtils;
 
 class EditSubscriptionSheet extends StatefulWidget {
   final int subscriptionId;
@@ -86,7 +87,9 @@ class _EditSubscriptionSheetState extends State<EditSubscriptionSheet> {
 
     try {
       final res = await ApiService.get(
-        endpoint: ApiConstants.copyTradingCopierSubscriptionDetail(widget.subscriptionId),
+        endpoint: ApiConstants.copyTradingCopierSubscriptionDetail(
+          widget.subscriptionId,
+        ),
       );
 
       if (!res.success || res.data == null) {
@@ -106,10 +109,16 @@ class _EditSubscriptionSheetState extends State<EditSubscriptionSheet> {
         _multiplierCtrl.text = _subController.lotMultiplier.value.toString();
         _mirrorRatioCtrl.text = _subController.mirrorRatio.value.toString();
         _riskPercentCtrl.text = _subController.percentageRisk.value.toString();
-        _dynamicDdCtrl.text = _subController.dynamicDrawdownThreshold.value.toString();
-        _dynamicReduceCtrl.text = _subController.dynamicReductionRatio.value.toString();
-        _fixedRatioProfitStepCtrl.text = _subController.fixedRatioProfitStep.value.toString();
-        _fixedRatioLotStepCtrl.text = _subController.fixedRatioLotStep.value.toString();
+        _dynamicDdCtrl.text = _subController.dynamicDrawdownThreshold.value
+            .toString();
+        _dynamicReduceCtrl.text = _subController.dynamicReductionRatio.value
+            .toString();
+        _fixedRatioProfitStepCtrl.text = _subController
+            .fixedRatioProfitStep
+            .value
+            .toString();
+        _fixedRatioLotStepCtrl.text = _subController.fixedRatioLotStep.value
+            .toString();
 
         if (_subController.slTpMode.value == 'pip') {
           _tpCtrl.text = _subController.takeProfitPips.value.toString();
@@ -137,7 +146,10 @@ class _EditSubscriptionSheetState extends State<EditSubscriptionSheet> {
       case 'fixed':
         final fixed = double.tryParse(_fixedLotCtrl.text) ?? 0;
         if (fixed <= 0) {
-          CustomToastService.showError(title: 'Validation', message: 'Enter a valid fixed lot size');
+          CustomToastService.showError(
+            title: TranslationUtils.tr('validation_title'),
+            message: TranslationUtils.tr('copy_valid_fixed_lot_size'),
+          );
           return;
         }
         _subController.fixedLotSize.value = fixed;
@@ -145,7 +157,10 @@ class _EditSubscriptionSheetState extends State<EditSubscriptionSheet> {
       case 'mirror_ratio':
         final r = double.tryParse(_mirrorRatioCtrl.text) ?? 0;
         if (r <= 0) {
-          CustomToastService.showError(title: 'Validation', message: 'Enter a valid ratio');
+          CustomToastService.showError(
+            title: TranslationUtils.tr('validation_title'),
+            message: TranslationUtils.tr('copy_valid_ratio'),
+          );
           return;
         }
         _subController.mirrorRatio.value = r;
@@ -153,7 +168,10 @@ class _EditSubscriptionSheetState extends State<EditSubscriptionSheet> {
       case 'percentage_risk':
         final risk = double.tryParse(_riskPercentCtrl.text) ?? 0;
         if (risk <= 0) {
-          CustomToastService.showError(title: 'Validation', message: 'Enter a valid risk percentage');
+          CustomToastService.showError(
+            title: TranslationUtils.tr('validation_title'),
+            message: TranslationUtils.tr('copy_valid_risk_percentage'),
+          );
           return;
         }
         _subController.percentageRisk.value = risk;
@@ -162,7 +180,10 @@ class _EditSubscriptionSheetState extends State<EditSubscriptionSheet> {
         final dd = double.tryParse(_dynamicDdCtrl.text) ?? 0;
         final red = double.tryParse(_dynamicReduceCtrl.text) ?? 0;
         if (dd <= 0 || red <= 0) {
-          CustomToastService.showError(title: 'Validation', message: 'Enter valid dynamic rules');
+          CustomToastService.showError(
+            title: TranslationUtils.tr('validation_title'),
+            message: TranslationUtils.tr('copy_valid_dynamic_rules'),
+          );
           return;
         }
         _subController.dynamicDrawdownThreshold.value = dd;
@@ -172,7 +193,10 @@ class _EditSubscriptionSheetState extends State<EditSubscriptionSheet> {
         final step = double.tryParse(_fixedRatioProfitStepCtrl.text) ?? 0;
         final lot = double.tryParse(_fixedRatioLotStepCtrl.text) ?? 0;
         if (step <= 0 || lot <= 0) {
-          CustomToastService.showError(title: 'Validation', message: 'Enter valid fixed ratio parameters');
+          CustomToastService.showError(
+            title: TranslationUtils.tr('validation_title'),
+            message: TranslationUtils.tr('copy_valid_fixed_ratio_parameters'),
+          );
           return;
         }
         _subController.fixedRatioProfitStep.value = step;
@@ -185,7 +209,10 @@ class _EditSubscriptionSheetState extends State<EditSubscriptionSheet> {
     if (_subController.copyingMethod.value == 'proportional') {
       final mult = double.tryParse(_multiplierCtrl.text) ?? 0;
       if (mult <= 0) {
-        CustomToastService.showError(title: 'Validation', message: 'Enter a valid multiplier');
+        CustomToastService.showError(
+          title: TranslationUtils.tr('validation_title'),
+          message: TranslationUtils.tr('copy_valid_multiplier'),
+        );
         return;
       }
       _subController.lotMultiplier.value = mult;
@@ -195,7 +222,10 @@ class _EditSubscriptionSheetState extends State<EditSubscriptionSheet> {
       final tp = double.tryParse(_tpCtrl.text) ?? 0;
       final sl = double.tryParse(_slCtrl.text) ?? 0;
       if (tp <= 0 || sl <= 0) {
-        CustomToastService.showError(title: 'Validation', message: 'Enter valid TP and SL values');
+        CustomToastService.showError(
+          title: TranslationUtils.tr('validation_title'),
+          message: TranslationUtils.tr('copy_valid_tp_sl_values'),
+        );
         return;
       }
       if (_subController.slTpMode.value == 'pip') {
@@ -207,12 +237,20 @@ class _EditSubscriptionSheetState extends State<EditSubscriptionSheet> {
       }
     }
 
-    final res = await _subController.updateSubscription(subscriptionId: widget.subscriptionId);
+    final res = await _subController.updateSubscription(
+      subscriptionId: widget.subscriptionId,
+    );
     if (res.success) {
-      CustomToastService.showSuccess(title: 'Success', message: res.message ?? 'Copy settings updated');
+      CustomToastService.showSuccess(
+        title: TranslationUtils.tr('success_title'),
+        message: res.message ?? TranslationUtils.tr('copy_settings_updated'),
+      );
       Get.back(result: true);
     } else {
-      CustomToastService.showError(title: 'Failed', message: res.message ?? 'Update failed');
+      CustomToastService.showError(
+        title: TranslationUtils.tr('copy_failed'),
+        message: res.message ?? 'Update failed',
+      );
     }
   }
 
@@ -282,7 +320,7 @@ class _EditSubscriptionSheetState extends State<EditSubscriptionSheet> {
                   SizedBox(height: 12.h),
                   ElevatedButton(
                     onPressed: _loadSubscriptionDetail,
-                    child: const Text('Retry'),
+                    child: Text(TranslationUtils.tr('common_retry')),
                   ),
                 ],
               ),
@@ -310,32 +348,72 @@ class _EditSubscriptionSheetState extends State<EditSubscriptionSheet> {
                       // Sizing Method Dropdown
                       Text(
                         'Sizing Method',
-                        style: AppTextStyles.label.copyWith(fontWeight: FontWeight.w600),
+                        style: AppTextStyles.label.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                       SizedBox(height: 6.h),
                       DropdownButtonFormField<String>(
                         value: method,
                         decoration: InputDecoration(
-                          contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 12.w,
+                            vertical: 12.h,
+                          ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10.r),
                           ),
                         ),
-                        items: const [
-                          DropdownMenuItem(value: 'fixed', child: Text('Fixed Lot Size')),
-                          DropdownMenuItem(value: 'proportional_equity', child: Text('Equity Proportional')),
-                          DropdownMenuItem(value: 'proportional_balance', child: Text('Balance Proportional')),
-                          DropdownMenuItem(value: 'multiplier_only', child: Text('Lot Multiplier')),
-                          DropdownMenuItem(value: 'mirror_ratio', child: Text('Mirror Ratio')),
-                          DropdownMenuItem(value: 'percentage_risk', child: Text('Percentage Risk')),
-                          DropdownMenuItem(value: 'reverse', child: Text('Reverse Copying')),
-                          DropdownMenuItem(value: 'dynamic_lot', child: Text('Dynamic Drawdown Lot')),
-                          DropdownMenuItem(value: 'fixed_ratio', child: Text('Fixed Profit Ratio')),
+                        items: [
+                          DropdownMenuItem(
+                            value: 'fixed',
+                            child: Text(
+                              TranslationUtils.tr('copy_fixed_lot_size'),
+                            ),
+                          ),
+                          DropdownMenuItem(
+                            value: 'proportional_equity',
+                            child: Text(
+                              TranslationUtils.tr('copy_equity_proportional'),
+                            ),
+                          ),
+                          DropdownMenuItem(
+                            value: 'proportional_balance',
+                            child: Text(
+                              TranslationUtils.tr('copy_balance_proportional'),
+                            ),
+                          ),
+                          DropdownMenuItem(
+                            value: 'multiplier_only',
+                            child: Text('Lot Multiplier'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'mirror_ratio',
+                            child: Text('Mirror Ratio'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'percentage_risk',
+                            child: Text('Percentage Risk'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'reverse',
+                            child: Text('Reverse Copying'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'dynamic_lot',
+                            child: Text('Dynamic Drawdown Lot'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'fixed_ratio',
+                            child: Text('Fixed Profit Ratio'),
+                          ),
                         ],
                         onChanged: (v) {
                           if (v != null) {
                             _subController.sizingMethod.value = v;
-                            _subController.copyingMethod.value = v == 'fixed' ? 'fixed' : 'proportional';
+                            _subController.copyingMethod.value = v == 'fixed'
+                                ? 'fixed'
+                                : 'proportional';
                           }
                         },
                       ),
@@ -344,62 +422,80 @@ class _EditSubscriptionSheetState extends State<EditSubscriptionSheet> {
                       // Method-specific input fields
                       if (method == 'fixed')
                         LabeledAppTextField(
-                          label: 'Fixed Lot Size *',
+                          label:
+                              '${TranslationUtils.tr('copy_fixed_lot_size')} *',
                           controller: _fixedLotCtrl,
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
                           hintText: 'e.g. 0.01',
                         )
                       else if (method == 'mirror_ratio')
                         LabeledAppTextField(
                           label: 'Mirror Ratio *',
                           controller: _mirrorRatioCtrl,
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
                           hintText: 'e.g. 0.5',
                         )
                       else if (method == 'percentage_risk')
                         LabeledAppTextField(
                           label: 'Risk % per trade *',
                           controller: _riskPercentCtrl,
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
                           hintText: 'e.g. 2.0',
                         )
                       else if (method == 'dynamic_lot') ...[
                         LabeledAppTextField(
                           label: 'Drawdown threshold (%) *',
                           controller: _dynamicDdCtrl,
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
                           hintText: 'e.g. 20',
                         ),
                         SizedBox(height: 12.h),
                         LabeledAppTextField(
                           label: 'Reduction ratio (0–1) *',
                           controller: _dynamicReduceCtrl,
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
                           hintText: 'e.g. 0.5',
                         ),
                       ] else if (method == 'fixed_ratio') ...[
                         LabeledAppTextField(
                           label: 'Profit milestone (USD) *',
                           controller: _fixedRatioProfitStepCtrl,
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
                           hintText: 'e.g. 1000.00',
                         ),
                         SizedBox(height: 12.h),
                         LabeledAppTextField(
                           label: 'Lot increase per milestone *',
                           controller: _fixedRatioLotStepCtrl,
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
                           hintText: 'e.g. 0.01',
                         ),
                       ],
 
                       // Proportional lot multiplier
-                      if (_subController.copyingMethod.value == 'proportional') ...[
+                      if (_subController.copyingMethod.value ==
+                          'proportional') ...[
                         SizedBox(height: 12.h),
                         LabeledAppTextField(
                           label: 'Lot Multiplier *',
                           controller: _multiplierCtrl,
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
                           hintText: 'e.g. 1.0',
                         ),
                       ],
@@ -409,9 +505,12 @@ class _EditSubscriptionSheetState extends State<EditSubscriptionSheet> {
                       Container(
                         padding: EdgeInsets.all(12.r),
                         decoration: BoxDecoration(
-                          color: AppColors.tradeBackgroundCenterColor.withOpacity(0.4),
+                          color: AppColors.tradeBackgroundCenterColor
+                              .withOpacity(0.4),
                           borderRadius: BorderRadius.circular(12.r),
-                          border: Border.all(color: AppColors.textGrey.withOpacity(0.1)),
+                          border: Border.all(
+                            color: AppColors.textGrey.withOpacity(0.1),
+                          ),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -443,7 +542,9 @@ class _EditSubscriptionSheetState extends State<EditSubscriptionSheet> {
                                   Expanded(
                                     child: _buildModeButton(
                                       label: 'Pip Mode',
-                                      selected: _subController.slTpMode.value == 'pip',
+                                      selected:
+                                          _subController.slTpMode.value ==
+                                          'pip',
                                       onTap: () {
                                         _subController.slTpMode.value = 'pip';
                                       },
@@ -453,9 +554,12 @@ class _EditSubscriptionSheetState extends State<EditSubscriptionSheet> {
                                   Expanded(
                                     child: _buildModeButton(
                                       label: 'Dollar Mode',
-                                      selected: _subController.slTpMode.value == 'dollar',
+                                      selected:
+                                          _subController.slTpMode.value ==
+                                          'dollar',
                                       onTap: () {
-                                        _subController.slTpMode.value = 'dollar';
+                                        _subController.slTpMode.value =
+                                            'dollar';
                                       },
                                     ),
                                   ),
@@ -468,7 +572,10 @@ class _EditSubscriptionSheetState extends State<EditSubscriptionSheet> {
                                     child: LabeledAppTextField(
                                       label: 'Take Profit',
                                       controller: _tpCtrl,
-                                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                      keyboardType:
+                                          const TextInputType.numberWithOptions(
+                                            decimal: true,
+                                          ),
                                       hintText: '0.0',
                                     ),
                                   ),
@@ -477,7 +584,10 @@ class _EditSubscriptionSheetState extends State<EditSubscriptionSheet> {
                                     child: LabeledAppTextField(
                                       label: 'Stop Loss',
                                       controller: _slCtrl,
-                                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                      keyboardType:
+                                          const TextInputType.numberWithOptions(
+                                            decimal: true,
+                                          ),
                                       hintText: '0.0',
                                     ),
                                   ),
@@ -501,7 +611,7 @@ class _EditSubscriptionSheetState extends State<EditSubscriptionSheet> {
                                   borderRadius: BorderRadius.circular(10.r),
                                 ),
                               ),
-                              child: const Text('Cancel'),
+                              child: Text(TranslationUtils.tr('common_cancel')),
                             ),
                           ),
                           SizedBox(width: 12.w),
@@ -541,10 +651,14 @@ class _EditSubscriptionSheetState extends State<EditSubscriptionSheet> {
       child: Container(
         padding: EdgeInsets.symmetric(vertical: 8.h),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary.withOpacity(0.12) : Colors.transparent,
+          color: selected
+              ? AppColors.primary.withOpacity(0.12)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(8.r),
           border: Border.all(
-            color: selected ? AppColors.primary : AppColors.textGrey.withOpacity(0.2),
+            color: selected
+                ? AppColors.primary
+                : AppColors.textGrey.withOpacity(0.2),
           ),
         ),
         alignment: Alignment.center,

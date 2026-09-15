@@ -3,6 +3,7 @@ import 'package:crm_app/constants/text_styles.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:crm_app/services/language_service.dart';
 import '../controllers/notification_controller.dart';
 
 class NotificationsScreen extends GetView<NotificationController> {
@@ -13,7 +14,10 @@ class NotificationsScreen extends GetView<NotificationController> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text('Notifications', style: AppTextStyles.screenTitle),
+        title: Text(
+          Get.find<LanguageService>().tr('more_notifications'),
+          style: AppTextStyles.screenTitle,
+        ),
         centerTitle: true,
         backgroundColor: AppColors.background,
         elevation: 0,
@@ -37,7 +41,7 @@ class NotificationsScreen extends GetView<NotificationController> {
         if (controller.notifications.isEmpty) {
           return Center(
             child: Text(
-              'No notifications found',
+              Get.find<LanguageService>().tr('notifications_empty'),
               style: AppTextStyles.bodyText.copyWith(
                 color: AppColors.textSecondary,
                 fontSize: 16.sp,
@@ -64,7 +68,10 @@ class NotificationsScreen extends GetView<NotificationController> {
                         child: SizedBox(
                           height: 24.w,
                           width: 24.w,
-                          child: CircularProgressIndicator(color: AppColors.primary, strokeWidth: 2),
+                          child: CircularProgressIndicator(
+                            color: AppColors.primary,
+                            strokeWidth: 2,
+                          ),
                         ),
                       ),
                     );
@@ -76,25 +83,37 @@ class NotificationsScreen extends GetView<NotificationController> {
               final isUnread = item.readAt == null;
               return Container(
                 decoration: BoxDecoration(
-                  color: isUnread ? AppColors.primary.withValues(alpha: 0.05) : AppColors.cardBackground,
+                  color: isUnread
+                      ? AppColors.primary.withValues(alpha: 0.05)
+                      : AppColors.cardBackground,
                   borderRadius: BorderRadius.circular(16.r),
                   border: Border.all(
-                    color: isUnread ? AppColors.primary.withValues(alpha: 0.3) : AppColors.border, 
-                    width: 1
+                    color: isUnread
+                        ? AppColors.primary.withValues(alpha: 0.3)
+                        : AppColors.border,
+                    width: 1,
                   ),
                 ),
                 padding: EdgeInsets.all(16.w),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _getNotificationIcon(item.module, item.type ?? item.title, item.avatar),
+                    _getNotificationIcon(
+                      item.module,
+                      item.type ?? item.title,
+                      item.avatar,
+                    ),
                     SizedBox(width: 12.w),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            item.title ?? item.type ?? 'Notification',
+                            item.title ??
+                                item.type ??
+                                Get.find<LanguageService>().tr(
+                                  'notification_fallback_title',
+                                ),
                             style: AppTextStyles.cardSubtitle.copyWith(
                               fontSize: 14.sp,
                               fontWeight: FontWeight.w600,
@@ -136,10 +155,10 @@ class NotificationsScreen extends GetView<NotificationController> {
     if ((module == null || module.isEmpty) && (type == null || type.isEmpty)) {
       return _buildDefaultAvatar(avatar);
     }
-    
+
     final lowerModule = module?.toLowerCase() ?? '';
     final lowerType = type?.toLowerCase() ?? '';
-    
+
     IconData iconData = Icons.notifications_outlined;
     Color iconColor = AppColors.primary;
     Color bgColor = AppColors.primary.withValues(alpha: 0.1);
@@ -148,34 +167,38 @@ class NotificationsScreen extends GetView<NotificationController> {
       iconData = Icons.account_balance_wallet_outlined;
       iconColor = Colors.blue;
       bgColor = Colors.blue.withValues(alpha: 0.1);
-    } else if (lowerModule.contains('deposit') || lowerType.contains('deposit')) {
+    } else if (lowerModule.contains('deposit') ||
+        lowerType.contains('deposit')) {
       iconData = Icons.add_circle_outline;
       iconColor = Colors.green;
       bgColor = Colors.green.withValues(alpha: 0.1);
-    } else if (lowerModule.contains('withdraw') || lowerType.contains('withdraw')) {
+    } else if (lowerModule.contains('withdraw') ||
+        lowerType.contains('withdraw')) {
       iconData = Icons.remove_circle_outline;
       iconColor = Colors.orange;
       bgColor = Colors.orange.withValues(alpha: 0.1);
-    } else if (lowerModule.contains('transfer') || lowerType.contains('transfer')) {
+    } else if (lowerModule.contains('transfer') ||
+        lowerType.contains('transfer')) {
       iconData = Icons.swap_horiz;
       iconColor = Colors.purple;
       bgColor = Colors.purple.withValues(alpha: 0.1);
-    } else if (lowerModule.contains('kyc') || lowerModule.contains('verify') || lowerModule.contains('document') ||
-               lowerType.contains('kyc') || lowerType.contains('verify') || lowerType.contains('document')) {
+    } else if (lowerModule.contains('kyc') ||
+        lowerModule.contains('verify') ||
+        lowerModule.contains('document') ||
+        lowerType.contains('kyc') ||
+        lowerType.contains('verify') ||
+        lowerType.contains('document')) {
       iconData = Icons.verified_user_outlined;
       iconColor = Colors.teal;
       bgColor = Colors.teal.withValues(alpha: 0.1);
     } else if (avatar != null && avatar.isNotEmpty) {
-       return _buildDefaultAvatar(avatar);
+      return _buildDefaultAvatar(avatar);
     }
 
     return Container(
       height: 40.w,
       width: 40.w,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: bgColor,
-      ),
+      decoration: BoxDecoration(shape: BoxShape.circle, color: bgColor),
       child: Center(
         child: Icon(iconData, color: iconColor, size: 20.r),
       ),
@@ -204,7 +227,11 @@ class NotificationsScreen extends GetView<NotificationController> {
         color: AppColors.primary.withValues(alpha: 0.1),
       ),
       child: Center(
-        child: Icon(Icons.notifications_outlined, color: AppColors.primary, size: 20.r),
+        child: Icon(
+          Icons.notifications_outlined,
+          color: AppColors.primary,
+          size: 20.r,
+        ),
       ),
     );
   }

@@ -30,8 +30,11 @@ class _DepositCameraScreenState extends State<DepositCameraScreen> {
     } catch (e) {
       print('Error building camera preview: $e');
     }
-    return   Center(
-      child: CommonLoadingWidget(size: 40.0, color: AppColors.onColoredBackground),
+    return Center(
+      child: CommonLoadingWidget(
+        size: 40.0,
+        color: AppColors.onColoredBackground,
+      ),
     );
   }
 
@@ -69,10 +72,10 @@ class _DepositCameraScreenState extends State<DepositCameraScreen> {
         appBar: AppBar(
           backgroundColor: AppColors.cameraBackground,
           leading: IconButton(
-            icon:   Icon(Icons.close, color: AppColors.onColoredBackground),
+            icon: Icon(Icons.close, color: AppColors.onColoredBackground),
             onPressed: _closeCamera,
           ),
-          title:   Text(
+          title: Text(
             'Take Payment Proof Photo',
             style: TextStyle(color: AppColors.onColoredBackground),
           ),
@@ -88,15 +91,14 @@ class _DepositCameraScreenState extends State<DepositCameraScreen> {
               children: [
                 // Camera Preview
                 Positioned.fill(
-                  child:
-                      isValid
-                          ? _buildCameraPreview(camController)
-                          :   Center(
-                            child: CommonLoadingWidget(
-                              size: 40.0,
-                              color: AppColors.onColoredBackground,
-                            ),
+                  child: isValid
+                      ? _buildCameraPreview(camController)
+                      : Center(
+                          child: CommonLoadingWidget(
+                            size: 40.0,
+                            color: AppColors.onColoredBackground,
                           ),
+                        ),
                 ),
 
                 // Bottom controls
@@ -114,10 +116,12 @@ class _DepositCameraScreenState extends State<DepositCameraScreen> {
                           width: 60,
                           height: 60,
                           decoration: BoxDecoration(
-                            color: AppColors.onColoredBackground.withOpacity(0.24),
+                            color: AppColors.onColoredBackground.withOpacity(
+                              0.24,
+                            ),
                             shape: BoxShape.circle,
                           ),
-                          child:   Icon(
+                          child: Icon(
                             Icons.close,
                             color: AppColors.onColoredBackground,
                             size: 28,
@@ -128,33 +132,34 @@ class _DepositCameraScreenState extends State<DepositCameraScreen> {
                       // Capture button
                       Obx(
                         () => GestureDetector(
-                          onTap:
-                              controller.isLoading.value
-                                  ? null
-                                  : controller.captureImage,
+                          onTap: controller.isLoading.value
+                              ? null
+                              : controller.captureImage,
                           child: Container(
                             width: 80,
                             height: 80,
                             decoration: BoxDecoration(
                               color: AppColors.onColoredBackground,
                               shape: BoxShape.circle,
-                              border: Border.all(color: AppColors.onColoredBackground, width: 4),
+                              border: Border.all(
+                                color: AppColors.onColoredBackground,
+                                width: 4,
+                              ),
                             ),
-                            child:
-                                controller.isLoading.value
-                                    ? Center(
-                                      child: CommonLoadingWidget(
-                                        size: 30.0,
-                                        color: AppColors.onColoredBackground,
-                                      ),
-                                    )
-                                    : Container(
-                                      margin: const EdgeInsets.all(6),
-                                      decoration:   BoxDecoration(
-                                        color: AppColors.onColoredBackground,
-                                        shape: BoxShape.circle,
-                                      ),
+                            child: controller.isLoading.value
+                                ? Center(
+                                    child: CommonLoadingWidget(
+                                      size: 30.0,
+                                      color: AppColors.onColoredBackground,
                                     ),
+                                  )
+                                : Container(
+                                    margin: const EdgeInsets.all(6),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.onColoredBackground,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
                           ),
                         ),
                       ),

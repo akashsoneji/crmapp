@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
+import 'package:crm_app/services/language_service.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/models/chart_notification.dart';
@@ -13,7 +15,9 @@ class ChartTradingNotification extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final typeText = notification.type.toLowerCase() == 'buy' ? 'Buy' : 'Sell';
+    final typeText = notification.type.toLowerCase() == 'buy'
+        ? Get.find<LanguageService>().tr('notification_buy')
+        : Get.find<LanguageService>().tr('notification_sell');
 
     // Determine background color based on status
     Color backgroundColor;
@@ -29,12 +33,12 @@ class ChartTradingNotification extends StatelessWidget {
       case NotificationStatus.success:
         backgroundColor = AppColors.primary;
         leftBorderColor = AppColors.success;
-        statusText = 'Done';
+        statusText = Get.find<LanguageService>().tr('notification_done');
         break;
       case NotificationStatus.error:
         backgroundColor = AppColors.primary;
         leftBorderColor = AppColors.error;
-        statusText = 'Error';
+        statusText = Get.find<LanguageService>().tr('notification_error');
         break;
     }
 
@@ -43,7 +47,9 @@ class ChartTradingNotification extends StatelessWidget {
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(4.r),
-        border: Border(left: BorderSide(color: leftBorderColor, width: 3.w)),
+        border: BorderDirectional(
+          start: BorderSide(color: leftBorderColor, width: 3.w),
+        ),
       ),
       padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 6.h),
       child: Row(
@@ -103,10 +109,9 @@ class ChartNotificationStack extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
-        children:
-            notifications.map((notification) {
-              return ChartTradingNotification(notification: notification);
-            }).toList(),
+        children: notifications.map((notification) {
+          return ChartTradingNotification(notification: notification);
+        }).toList(),
       ),
     );
   }

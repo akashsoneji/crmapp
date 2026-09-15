@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:get/get.dart';
+import 'package:crm_app/services/language_service.dart';
 
 class CopyTradingDepositScreen extends StatelessWidget {
   const CopyTradingDepositScreen({super.key});
@@ -17,7 +18,7 @@ class CopyTradingDepositScreen extends StatelessWidget {
         elevation: 0,
         centerTitle: true,
         title: Text(
-          'Deposit',
+          TranslationUtils.tr('common_deposit'),
           style: AppTextStyles.heading.copyWith(fontWeight: FontWeight.w600),
         ),
         leading: IconButton(

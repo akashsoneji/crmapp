@@ -105,161 +105,164 @@ class DashboardScreen extends StatelessWidget {
                 // Main Content
                 (controller.mt5Accounts.isEmpty)
                     ? LayoutBuilder(
-                      builder: (context, constraints) {
-                        return SingleChildScrollView(
-                          physics: AlwaysScrollableScrollPhysics(),
-                          child: ConstrainedBox(
-                            constraints: BoxConstraints(
-                              minHeight: constraints.maxHeight,
-                            ),
-                            child: IntrinsicHeight(
-                              child: Container(
-                                alignment: Alignment.center,
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 22.w,
-                                  vertical: 16.h,
-                                ),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Flexible(
-                                      child: FutureBuilder<Widget>(
-                                        future: SvgColorHelper.loadSvgWithColor(
-                                          assetPath:
-                                              'assets/svg/deshboard/no_account.svg',
-                                          targetColor: AppColors.primary,
-                                          colorToReplace:
-                                              '#5F259E', // Replace this color in the SVG
-                                          height: 100.h,
-                                          width: 100.w,
-                                        ),
-                                        builder: (context, snapshot) {
-                                          if (snapshot.hasData)
-                                            return snapshot.data!;
-                                          return SizedBox(
+                        builder: (context, constraints) {
+                          return SingleChildScrollView(
+                            physics: AlwaysScrollableScrollPhysics(),
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                minHeight: constraints.maxHeight,
+                              ),
+                              child: IntrinsicHeight(
+                                child: Container(
+                                  alignment: Alignment.center,
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 22.w,
+                                    vertical: 16.h,
+                                  ),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Flexible(
+                                        child: FutureBuilder<Widget>(
+                                          future: SvgColorHelper.loadSvgWithColor(
+                                            assetPath:
+                                                'assets/svg/deshboard/no_account.svg',
+                                            targetColor: AppColors.primary,
+                                            colorToReplace:
+                                                '#5F259E', // Replace this color in the SVG
                                             height: 100.h,
                                             width: 100.w,
-                                          );
-                                        },
-                                      ),
-                                    ),
-                                    SizedBox(height: 14.h),
-                                    Flexible(
-                                      child: Text(
-                                        languageService.tr(
-                                          'dashboard_new_account_title',
-                                        ),
-                                        style: AppTextStyles.heading,
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ),
-                                    SizedBox(height: 14.h),
-                                    Flexible(
-                                      child: Text(
-                                        languageService.tr(
-                                          'dashboard_new_account_description',
-                                        ),
-                                        style: AppTextStyles.grey14400h57,
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ),
-                                    SizedBox(height: 14.h),
-                                    SizedBox(
-                                      height: 44.h,
-                                      width: 333.w,
-                                      child: OutlinedButton(
-                                        style: OutlinedButton.styleFrom(
-                                          minimumSize: Size(0, 44.h),
-                                          side: BorderSide(
-                                            color: AppColors.primary,
                                           ),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(12.r),
-                                          ),
+                                          builder: (context, snapshot) {
+                                            if (snapshot.hasData)
+                                              return snapshot.data!;
+                                            return SizedBox(
+                                              height: 100.h,
+                                              width: 100.w,
+                                            );
+                                          },
                                         ),
-                                        onPressed: () {
-                                          controller.openRealAccount();
-                                        },
+                                      ),
+                                      SizedBox(height: 14.h),
+                                      Flexible(
                                         child: Text(
                                           languageService.tr(
-                                            'dashboard_open_real_account',
+                                            'dashboard_new_account_title',
                                           ),
-                                          style: AppTextStyles.black14600h1_71
-                                              .copyWith(
-                                                color: AppColors.primary,
-                                              ),
+                                          style: AppTextStyles.heading,
+                                          textAlign: TextAlign.center,
                                         ),
                                       ),
-                                    ),
-                                    SizedBox(height: 14.h),
-                                    SizedBox(
-                                      height: 44.h,
-                                      width: 333.w,
-                                      child: OutlinedButton(
-                                        style: OutlinedButton.styleFrom(
-                                          minimumSize: Size(0, 44.h),
-                                          backgroundColor: AppColors.primary,
-                                          side: BorderSide(
-                                            color: AppColors.backgroundLight,
-                                          ),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(12.r),
-                                          ),
-                                        ),
-                                        onPressed: () {
-                                          controller.openDemoAccount();
-                                        },
+                                      SizedBox(height: 14.h),
+                                      Flexible(
                                         child: Text(
                                           languageService.tr(
-                                            'dashboard_open_demo_account',
+                                            'dashboard_new_account_description',
                                           ),
-                                          style: AppTextStyles.black14600h1_71
-                                              .copyWith(
-                                                color: AppColors.whiteColor,
-                                              ),
+                                          style: AppTextStyles.grey14400h57,
+                                          textAlign: TextAlign.center,
                                         ),
                                       ),
-                                    ),
-                                  ],
+                                      SizedBox(height: 14.h),
+                                      SizedBox(
+                                        height: 44.h,
+                                        width: 333.w,
+                                        child: OutlinedButton(
+                                          style: OutlinedButton.styleFrom(
+                                            minimumSize: Size(0, 44.h),
+                                            side: BorderSide(
+                                              color: AppColors.primary,
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(12.r),
+                                            ),
+                                          ),
+                                          onPressed: () {
+                                            controller.openRealAccount();
+                                          },
+                                          child: Text(
+                                            languageService.tr(
+                                              'dashboard_open_real_account',
+                                            ),
+                                            style: AppTextStyles.black14600h1_71
+                                                .copyWith(
+                                                  color: AppColors.primary,
+                                                ),
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(height: 14.h),
+                                      SizedBox(
+                                        height: 44.h,
+                                        width: 333.w,
+                                        child: OutlinedButton(
+                                          style: OutlinedButton.styleFrom(
+                                            minimumSize: Size(0, 44.h),
+                                            backgroundColor: AppColors.primary,
+                                            side: BorderSide(
+                                              color: AppColors.backgroundLight,
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(12.r),
+                                            ),
+                                          ),
+                                          onPressed: () {
+                                            controller.openDemoAccount();
+                                          },
+                                          child: Text(
+                                            languageService.tr(
+                                              'dashboard_open_demo_account',
+                                            ),
+                                            style: AppTextStyles.black14600h1_71
+                                                .copyWith(
+                                                  color: AppColors.whiteColor,
+                                                ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                        );
-                      },
-                    )
-                    : AnimatedOpacity(
-                      opacity: controller.isBottomSheetOpen.value ? 0.3 : 1.0,
-                      duration: Duration(milliseconds: 300),
-                      child: ListView.builder(
-                        // Performance optimizations
-                        cacheExtent: 500, // Cache 500 pixels worth of items
-                        addAutomaticKeepAlives:
-                            false, // Don't keep off-screen items alive
-                        addRepaintBoundaries:
-                            true, // Add repaint boundaries for better performance
-                        physics: AlwaysScrollableScrollPhysics(),
-                        padding: EdgeInsets.only(
-                          left: 16,
-                          right: 16,
-                          top: 16,
-                          bottom:
-                              16 + 77.h + MediaQuery.of(context).padding.bottom,
-                        ),
-                        itemCount: controller.mt5Accounts.length,
-                        itemBuilder: (context, index) {
-                          final account = controller.mt5Accounts[index];
-                          return Container(
-                            margin: EdgeInsets.only(bottom: 16),
-                            child: _buildAccountCard(account),
                           );
                         },
+                      )
+                    : AnimatedOpacity(
+                        opacity: controller.isBottomSheetOpen.value ? 0.3 : 1.0,
+                        duration: Duration(milliseconds: 300),
+                        child: ListView.builder(
+                          // Performance optimizations
+                          cacheExtent: 500, // Cache 500 pixels worth of items
+                          addAutomaticKeepAlives:
+                              false, // Don't keep off-screen items alive
+                          addRepaintBoundaries:
+                              true, // Add repaint boundaries for better performance
+                          physics: AlwaysScrollableScrollPhysics(),
+                          padding: EdgeInsets.only(
+                            left: 16,
+                            right: 16,
+                            top: 16,
+                            bottom:
+                                16 +
+                                77.h +
+                                MediaQuery.of(context).padding.bottom,
+                          ),
+                          itemCount: controller.mt5Accounts.length,
+                          itemBuilder: (context, index) {
+                            final account = controller.mt5Accounts[index];
+                            return Container(
+                              margin: EdgeInsets.only(bottom: 16),
+                              child: _buildAccountCard(account),
+                            );
+                          },
+                        ),
                       ),
-                    ),
                 // Overlay loading indicator
                 controller.isLoadingMT5Accounts.value
                     ? Center(child: CommonLoadingWidget(isFullScreen: true))
@@ -345,12 +348,11 @@ class DashboardScreen extends StatelessWidget {
                     alignment: Alignment.center,
                     // padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color:
-                          account.accountType == 'live'
-                              ? AppColors.isDarkMode
-                                  ? AppColors.primary.withOpacity(0.1)
-                                  : AppColors.primary
-                              : AppColors.primary.withValues(alpha: 0.1),
+                      color: account.accountType == 'live'
+                          ? AppColors.isDarkMode
+                                ? AppColors.primary.withOpacity(0.1)
+                                : AppColors.primary
+                          : AppColors.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -533,23 +535,19 @@ class DashboardScreen extends StatelessWidget {
               Expanded(
                 flex: 1,
                 child: _buildActionButton(
-                  color:
-                      account.accountType.toLowerCase() == 'live'
-                          ? AppColors.error
-                          : AppColors.primary,
+                  color: account.accountType.toLowerCase() == 'live'
+                      ? AppColors.error
+                      : AppColors.primary,
                   isSvg: true,
-                  svg:
-                      account.accountType.toLowerCase() == 'live'
-                          ? "assets/svg/deshboard/money-send.svg"
-                          : "assets/svg/bottom_navigation/setting.svg",
-                  icon:
-                      account.accountType.toLowerCase() == 'live'
-                          ? Icons.trending_down
-                          : Icons.settings,
-                  label:
-                      account.accountType.toLowerCase() == 'live'
-                          ? languageService.tr('dashboard_withdraw')
-                          : languageService.tr('more_settings'),
+                  svg: account.accountType.toLowerCase() == 'live'
+                      ? "assets/svg/deshboard/money-send.svg"
+                      : "assets/svg/bottom_navigation/setting.svg",
+                  icon: account.accountType.toLowerCase() == 'live'
+                      ? Icons.trending_down
+                      : Icons.settings,
+                  label: account.accountType.toLowerCase() == 'live'
+                      ? languageService.tr('dashboard_withdraw')
+                      : languageService.tr('more_settings'),
                   onTap: () {
                     if (account.accountType.toLowerCase() == 'live') {
                       controller.onWithdraw(account.metaAccountNumber);
@@ -649,12 +647,11 @@ class DashboardScreen extends StatelessWidget {
         final screenWidth = MediaQuery.of(context).size.width;
         // Calculate responsive font size based on screen width
         // Small devices (< 400px): 11sp, Medium (400-600px): 12sp, Large (> 600px): 13sp
-        final double fontSize =
-            screenWidth < 400
-                ? 11.sp
-                : screenWidth < 600
-                ? 12.sp
-                : 13.sp;
+        final double fontSize = screenWidth < 400
+            ? 11.sp
+            : screenWidth < 600
+            ? 12.sp
+            : 13.sp;
 
         return GestureDetector(
           onTap: onTap,
@@ -671,11 +668,11 @@ class DashboardScreen extends StatelessWidget {
               children: [
                 (isSvg == true)
                     ? SvgPicture.asset(
-                      svg!,
-                      height: 16.h,
-                      width: 16.w,
-                      color: color,
-                    )
+                        svg!,
+                        height: 16.h,
+                        width: 16.w,
+                        color: color,
+                      )
                     : Icon(icon, color: AppColors.primary, size: 16.sp),
                 SizedBox(width: 4.w),
                 Flexible(
@@ -779,10 +776,9 @@ class AccountInfoBottomSheet extends StatelessWidget {
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color:
-                                account.accountType == 'live'
-                                    ? AppColors.primary.withValues(alpha: 0.1)
-                                    : AppColors.primary.withAlpha(51),
+                            color: account.accountType == 'live'
+                                ? AppColors.primary.withValues(alpha: 0.1)
+                                : AppColors.primary.withAlpha(51),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
@@ -910,7 +906,7 @@ class AccountInfoBottomSheet extends StatelessWidget {
                   accountInfo != null && accountInfo.marginLevel > 0
                       ? '${accountInfo.marginLevel.toStringAsFixed(2)}%'
                       : account.marginLevel.isNotEmpty &&
-                          account.marginLevel != '0'
+                            account.marginLevel != '0'
                       ? '${account.marginLevel}%'
                       : '-',
                 ),
@@ -956,20 +952,20 @@ class AccountInfoBottomSheet extends StatelessWidget {
                 SizedBox(width: 12),
                 account.accountType.toLowerCase() == 'live'
                     ? Expanded(
-                      child: _buildActionButton(
-                        isSvg: true,
-                        color: AppColors.error,
-                        svg: 'assets/svg/deshboard/money-send.svg',
-                        icon: Icons.arrow_downward,
-                        label: languageService.tr('dashboard_withdraw'),
-                        onTap: () {
-                          Get.back(closeOverlays: true);
-                          Get.find<DashboardController>().onWithdraw(
-                            account.metaAccountNumber,
-                          );
-                        },
-                      ),
-                    )
+                        child: _buildActionButton(
+                          isSvg: true,
+                          color: AppColors.error,
+                          svg: 'assets/svg/deshboard/money-send.svg',
+                          icon: Icons.arrow_downward,
+                          label: languageService.tr('dashboard_withdraw'),
+                          onTap: () {
+                            Get.back(closeOverlays: true);
+                            Get.find<DashboardController>().onWithdraw(
+                              account.metaAccountNumber,
+                            );
+                          },
+                        ),
+                      )
                     : SizedBox.shrink(),
                 SizedBox(width: 12),
                 Expanded(
@@ -1148,8 +1144,14 @@ class AccountMenuBottomSheet extends StatelessWidget {
                           floatingLabelStyle: TextStyle(
                             color: AppColors.textGrey,
                           ),
-                          labelText: 'New Password',
-                          hintText: 'Enter new password',
+                          labelText: languageService.trf(
+                            'home_new_password',
+                            'New Password',
+                          ),
+                          hintText: languageService.trf(
+                            'home_enter_new_password',
+                            'Enter new password',
+                          ),
                           suffixIcon: IconButton(
                             icon: Icon(
                               obscurePassword.value
@@ -1193,7 +1195,10 @@ class AccountMenuBottomSheet extends StatelessWidget {
                           return null;
                         },
                         decoration: InputDecoration(
-                          labelText: 'Confirm Password',
+                          labelText: TranslationUtils.trf(
+                            'home_confirm_password',
+                            'Confirm Password',
+                          ),
                           hintText: 'Confirm new password',
                           floatingLabelStyle: TextStyle(
                             color: AppColors.textGrey,
@@ -1233,45 +1238,43 @@ class AccountMenuBottomSheet extends StatelessWidget {
                         width: double.infinity,
                         height: 46.h,
                         child: ElevatedButton(
-                          onPressed:
-                              isLoading.value
-                                  ? null
-                                  : () async {
-                                    if (formKey.currentState!.validate()) {
-                                      isLoading.value = true;
-                                      try {
-                                        final response = await authService
-                                            .changePassword(
-                                              mt5Account:
-                                                  account.metaAccountNumber,
-                                              newPassword:
-                                                  passwordController.text
-                                                      .trim(),
-                                            );
+                          onPressed: isLoading.value
+                              ? null
+                              : () async {
+                                  if (formKey.currentState!.validate()) {
+                                    isLoading.value = true;
+                                    try {
+                                      final response = await authService
+                                          .changePassword(
+                                            mt5Account:
+                                                account.metaAccountNumber,
+                                            newPassword: passwordController.text
+                                                .trim(),
+                                          );
 
-                                        if (response.success) {
-                                          CustomToastService.showSuccess(
-                                            message:
-                                                response.data?['message'] ??
-                                                'Password changed successfully',
-                                          );
-                                          Get.back(closeOverlays: true);
-                                        } else {
-                                          CustomToastService.showError(
-                                            message:
-                                                response.message ??
-                                                'Failed to change password',
-                                          );
-                                        }
-                                      } catch (e) {
-                                        CustomToastService.showError(
-                                          message: 'Error: $e',
+                                      if (response.success) {
+                                        CustomToastService.showSuccess(
+                                          message:
+                                              response.data?['message'] ??
+                                              'Password changed successfully',
                                         );
-                                      } finally {
-                                        isLoading.value = false;
+                                        Get.back(closeOverlays: true);
+                                      } else {
+                                        CustomToastService.showError(
+                                          message:
+                                              response.message ??
+                                              'Failed to change password',
+                                        );
                                       }
+                                    } catch (e) {
+                                      CustomToastService.showError(
+                                        message: 'Error: $e',
+                                      );
+                                    } finally {
+                                      isLoading.value = false;
                                     }
-                                  },
+                                  }
+                                },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primary,
                             disabledBackgroundColor: AppColors.border,
@@ -1279,26 +1282,25 @@ class AccountMenuBottomSheet extends StatelessWidget {
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
-                          child:
-                              isLoading.value
-                                  ? SizedBox(
-                                    width: 20.w,
-                                    height: 20.h,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        AppColors.whiteColor,
-                                      ),
-                                    ),
-                                  )
-                                  : Text(
-                                    'Change Password',
-                                    style: TextStyle(
-                                      fontSize: 14.sp,
-                                      fontWeight: FontWeight.w600,
-                                      color: AppColors.whiteColor,
+                          child: isLoading.value
+                              ? SizedBox(
+                                  width: 20.w,
+                                  height: 20.h,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      AppColors.whiteColor,
                                     ),
                                   ),
+                                )
+                              : Text(
+                                  'Change Password',
+                                  style: TextStyle(
+                                    fontSize: 14.sp,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.whiteColor,
+                                  ),
+                                ),
                         ),
                       ),
                     ),
@@ -1395,15 +1397,15 @@ class AccountMenuBottomSheet extends StatelessWidget {
                 ),
                 // if (account.tradingServer.toLowerCase() == 'mt5' &&
                 //     account.masterGroupId.toLowerCase() != 'scratchcard') ...[
-                  SizedBox(height: 8),
-                  _buildMenuItem(
-                    icon: Icons.lock,
-                    label: languageService.tr('change_password'),
-                    onTap: () {
-                      Get.back(closeOverlays: true);
-                      _showMT5ChangePasswordDialog();
-                    },
-                  ),
+                SizedBox(height: 8),
+                _buildMenuItem(
+                  icon: Icons.lock,
+                  label: languageService.tr('change_password'),
+                  onTap: () {
+                    Get.back(closeOverlays: true);
+                    _showMT5ChangePasswordDialog();
+                  },
+                ),
                 // ],
                 if (account.leverageChangeAllowed) ...[
                   SizedBox(height: 8),
@@ -1477,7 +1479,10 @@ class AccountMenuBottomSheet extends StatelessWidget {
                 svgPath,
                 width: 22.w,
                 height: 22.h,
-                colorFilter: ColorFilter.mode(AppColors.primary, BlendMode.srcIn),
+                colorFilter: ColorFilter.mode(
+                  AppColors.primary,
+                  BlendMode.srcIn,
+                ),
               )
             else if (icon != null)
               Icon(icon, size: 22, color: AppColors.primary),

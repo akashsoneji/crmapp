@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-
 class ReferralLinksScreen extends StatelessWidget {
   const ReferralLinksScreen({super.key});
 

@@ -1,5 +1,6 @@
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:crm_app/services/language_service.dart';
 import '../widgets/rtl_components.dart';
 import '../constants/color.dart';
 import '../constants/text_styles.dart';
@@ -12,13 +13,14 @@ class ExampleRTLComponentsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final languageService = Get.find<LanguageService>();
     final TextEditingController _emailController = TextEditingController();
     final TextEditingController _passwordController = TextEditingController();
 
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
-        title: Text('RTL Components Demo'),
+        title: Text(languageService.tr('rtl_demo_title')),
         backgroundColor: AppColors.primary,
         foregroundColor: AppColors.whiteColor,
       ),

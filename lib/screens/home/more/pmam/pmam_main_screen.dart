@@ -12,6 +12,7 @@ import 'pmam_investor_portal_screen.dart';
 import 'pmam_manager_dashboard_screen.dart';
 import 'pmam_manager_portal_screen.dart';
 import '../../../../flavor_config.dart';
+import '../../../../services/language_service.dart';
 
 /// Single entry-point for the PAMM module.
 ///
@@ -48,10 +49,9 @@ class _PmamMainScreenState extends State<PmamMainScreen> {
     });
   }
 
-  PmamNavMode _modeFor(String? status) =>
-      (status?.toLowerCase() == 'approved')
-          ? PmamNavMode.manager
-          : PmamNavMode.investor;
+  PmamNavMode _modeFor(String? status) => (status?.toLowerCase() == 'approved')
+      ? PmamNavMode.manager
+      : PmamNavMode.investor;
 
   List<Widget> _pagesFor(PmamNavMode mode) {
     if (mode == PmamNavMode.manager) {
@@ -75,20 +75,21 @@ class _PmamMainScreenState extends State<PmamMainScreen> {
   }
 
   String _titleFor(PmamNavMode mode, int i) {
+    final languageService = Get.find<LanguageService>();
     if (mode == PmamNavMode.manager) {
-      return const [
-        'Manager Dashboard',
-        'My Plans',
-        'My Investors',
-        'Explore Fund Managers',
-        'My Investments',
+      return [
+        languageService.tr('pmam_manager_dashboard'),
+        languageService.tr('pmam_my_plans'),
+        languageService.tr('pmam_my_investors'),
+        languageService.tr('pmam_explore_fund_managers'),
+        languageService.tr('pmam_my_investments'),
       ][i];
     }
     final isGtxPrime = FlavorConfig.instance.appName == 'GTX Prime';
     final titles = [
-      if (!isGtxPrime) 'Become a Manager',
-      'Explore Fund Managers',
-      'My Investments',
+      if (!isGtxPrime) languageService.tr('pmam_become_manager'),
+      languageService.tr('pmam_explore_fund_managers'),
+      languageService.tr('pmam_my_investments'),
     ];
     return titles[i];
   }
@@ -117,10 +118,10 @@ class _PmamMainScreenState extends State<PmamMainScreen> {
           elevation: 0,
           centerTitle: false,
           leading: AppSvgBackButton(
-          onPressed: () => Get.back(closeOverlays: true),
-          iconWidth: 30.w,
-          iconHeight: 30.h,
-        ),
+            onPressed: () => Get.back(closeOverlays: true),
+            iconWidth: 30.w,
+            iconHeight: 30.h,
+          ),
           iconTheme: IconThemeData(color: AppColors.textPrimary),
           title: Text(
             _titleFor(mode, safeIdx),
@@ -139,10 +140,7 @@ class _PmamMainScreenState extends State<PmamMainScreen> {
               ),
           ],
         ),
-        body: IndexedStack(
-          index: safeIdx,
-          children: pages,
-        ),
+        body: IndexedStack(index: safeIdx, children: pages),
         bottomNavigationBar: PmamBottomNavigation(
           currentIndex: safeIdx,
           mode: mode,

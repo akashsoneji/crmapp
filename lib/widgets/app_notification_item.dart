@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/models/app_notification.dart';
 import 'package:crm_app/utils/precision_helper.dart';
+import 'package:crm_app/services/language_service.dart';
 
 /// Individual notification widget for app-wide notifications
 /// Supports both generic messages and trading notifications
@@ -25,7 +27,9 @@ class AppNotificationItem extends StatelessWidget {
 
   /// Build trading notification (for chart screen compatibility)
   Widget _buildTradingNotification() {
-    final typeText = notification.tradeType?.toLowerCase() == 'buy' ? 'Buy' : 'Sell';
+    final typeText = notification.tradeType?.toLowerCase() == 'buy'
+        ? Get.find<LanguageService>().tr('notification_buy')
+        : Get.find<LanguageService>().tr('notification_sell');
 
     // Determine background color based on status
     Color backgroundColor;
@@ -41,12 +45,12 @@ class AppNotificationItem extends StatelessWidget {
       case NotificationStatus.success:
         backgroundColor = AppColors.primary;
         leftBorderColor = AppColors.success;
-        statusText = 'Done';
+        statusText = Get.find<LanguageService>().tr('notification_done');
         break;
       case NotificationStatus.error:
         backgroundColor = AppColors.primary;
         leftBorderColor = AppColors.error;
-        statusText = 'Error';
+        statusText = Get.find<LanguageService>().tr('notification_error');
         break;
     }
 
@@ -55,7 +59,9 @@ class AppNotificationItem extends StatelessWidget {
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(4.r),
-        border: Border(left: BorderSide(color: leftBorderColor, width: 3.w)),
+        border: BorderDirectional(
+          start: BorderSide(color: leftBorderColor, width: 3.w),
+        ),
       ),
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
       child: Row(
@@ -127,14 +133,17 @@ class AppNotificationItem extends StatelessWidget {
     }
 
     // Use error message if available, otherwise use message
-    final displayMessage = notification.errorMessage ?? notification.message ?? '';
+    final displayMessage =
+        notification.errorMessage ?? notification.message ?? '';
 
     return Container(
       margin: EdgeInsets.only(bottom: 4.h),
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(4.r),
-        border: Border(left: BorderSide(color: leftBorderColor, width: 3.w)),
+        border: BorderDirectional(
+          start: BorderSide(color: leftBorderColor, width: 3.w),
+        ),
       ),
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
       child: Row(
@@ -147,17 +156,20 @@ class AppNotificationItem extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (notification.title != null && notification.title!.isNotEmpty)
+                if (notification.title != null &&
+                    notification.title!.isNotEmpty)
                   Text(
                     notification.title!,
                     style: TextStyle(
                       fontSize: 14.sp, // Increased by 2 pixels (from 12.sp)
-                      fontWeight: FontWeight.w500, // Default font weight for titles
+                      fontWeight:
+                          FontWeight.w500, // Default font weight for titles
                       color: AppColors.whiteColor,
                       decoration: TextDecoration.none,
                     ),
                   ),
-                if (notification.title != null && notification.title!.isNotEmpty)
+                if (notification.title != null &&
+                    notification.title!.isNotEmpty)
                   SizedBox(height: 2.h),
                 Text(
                   displayMessage,
@@ -177,7 +189,7 @@ class AppNotificationItem extends StatelessWidget {
           // Only show loading spinner, no status text
           if (notification.status == NotificationStatus.loading)
             Padding(
-              padding: EdgeInsets.only(left: 8.w),
+              padding: EdgeInsetsDirectional.only(start: 8.w),
               child: SizedBox(
                 width: 16.w,
                 height: 16.h,
@@ -192,4 +204,3 @@ class AppNotificationItem extends StatelessWidget {
     );
   }
 }
-

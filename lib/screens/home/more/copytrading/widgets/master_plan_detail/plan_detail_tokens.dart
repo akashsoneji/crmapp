@@ -65,23 +65,19 @@ class PlanTokens {
   // Accent — mirrors AppColors.primary so the active broker's brand
   // colour flows through every chip, badge and tab indicator.
   Color get brand => AppColors.primary;
-  Color get brandSoft => isDark
-      ? AppColors.primary.withValues(alpha: 0.18)
-      : _brandSoft;
+  Color get brandSoft =>
+      isDark ? AppColors.primary.withValues(alpha: 0.18) : _brandSoft;
   Color get success => _success;
-  Color get successSoft => isDark
-      ? _success.withValues(alpha: 0.18)
-      : _successSoft;
+  Color get successSoft =>
+      isDark ? _success.withValues(alpha: 0.18) : _successSoft;
   Color get successText => _successText;
   Color get danger => _danger;
-  Color get dangerSoft => isDark
-      ? _danger.withValues(alpha: 0.18)
-      : _dangerSoft;
+  Color get dangerSoft =>
+      isDark ? _danger.withValues(alpha: 0.18) : _dangerSoft;
   Color get dangerText => _dangerText;
   Color get warning => _warning;
-  Color get warningSoft => isDark
-      ? _warning.withValues(alpha: 0.18)
-      : _warningSoft;
+  Color get warningSoft =>
+      isDark ? _warning.withValues(alpha: 0.18) : _warningSoft;
   Color get warningText => _warningText;
 
   // Subtle elevation for cards
@@ -96,14 +92,14 @@ class PlanTokens {
         ];
 
   BoxDecoration cardDecoration({double radius = 16}) => BoxDecoration(
-        color: surface,
-        borderRadius: BorderRadius.circular(radius),
-        border: Border.all(color: border),
-        boxShadow: cardShadow,
-      );
+    color: surface,
+    borderRadius: BorderRadius.circular(radius),
+    border: Border.all(color: border),
+    boxShadow: cardShadow,
+  );
 
   BoxDecoration chipDecoration({Color? color}) => BoxDecoration(
-        color: color ?? chipBg,
-        borderRadius: BorderRadius.circular(999),
-      );
+    color: color ?? chipBg,
+    borderRadius: BorderRadius.circular(999),
+  );
 }

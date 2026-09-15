@@ -1,4 +1,5 @@
 import 'package:crm_app/widgets/app_svg_back_button.dart';
+import 'package:crm_app/services/language_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -58,7 +59,12 @@ class _PmamManagerPlanDetailScreenState
         title: Obx(() {
           final planName =
               _ctrl.planDetails['plan']?['plan_name'] ?? 'Plan Details';
-          return Text('Plan: $planName', style: AppTextStyles.heading);
+          return Text(
+            Get.find<LanguageService>().tr('pmam_plan_prefix', {
+              'planName': planName,
+            }),
+            style: AppTextStyles.heading,
+          );
         }),
         centerTitle: true,
       ),
@@ -237,7 +243,7 @@ class _PmamManagerPlanDetailScreenState
               SizedBox(height: 120.h),
               Center(
                 child: Text(
-                  'No pending investor requests.',
+                  Get.find<LanguageService>().tr('common_no_data'),
                   style: TextStyle(color: AppColors.textGrey),
                 ),
               ),
@@ -258,13 +264,13 @@ class _PmamManagerPlanDetailScreenState
               onApprove: (id) async {
                 final ok = await _ctrl.approveInvestorRequest(id);
                 Get.snackbar(
-                  ok ? 'Approved' : 'Error',
                   ok
-                      ? 'Investor request approved'
-                      : 'Failed to approve request',
-                  backgroundColor: (ok
-                          ? AppColors.green
-                          : AppColors.error)
+                      ? TranslationUtils.tr('common_approved')
+                      : TranslationUtils.tr('common_error'),
+                  ok
+                      ? TranslationUtils.tr('pmam_investor_request_approved')
+                      : TranslationUtils.tr('pmam_failed_to_approve_request'),
+                  backgroundColor: (ok ? AppColors.green : AppColors.error)
                       .withValues(alpha: 0.95),
                   colorText: AppColors.onColoredBackground,
                   snackPosition: SnackPosition.BOTTOM,
@@ -277,12 +283,8 @@ class _PmamManagerPlanDetailScreenState
                 final ok = await _ctrl.rejectInvestorRequest(id);
                 Get.snackbar(
                   ok ? 'Rejected' : 'Error',
-                  ok
-                      ? 'Investor request rejected'
-                      : 'Failed to reject request',
-                  backgroundColor: (ok
-                          ? AppColors.green
-                          : AppColors.error)
+                  ok ? 'Investor request rejected' : 'Failed to reject request',
+                  backgroundColor: (ok ? AppColors.green : AppColors.error)
                       .withValues(alpha: 0.95),
                   colorText: AppColors.onColoredBackground,
                   snackPosition: SnackPosition.BOTTOM,
@@ -433,9 +435,7 @@ class _RequestCard extends StatelessWidget {
                   shape: BoxShape.circle,
                 ),
                 child: Text(
-                  displayName.isNotEmpty
-                      ? displayName[0].toUpperCase()
-                      : '?',
+                  displayName.isNotEmpty ? displayName[0].toUpperCase() : '?',
                   style: TextStyle(
                     color: AppColors.primary,
                     fontWeight: FontWeight.w800,
@@ -474,8 +474,7 @@ class _RequestCard extends StatelessWidget {
                 ),
               ),
               Container(
-                padding:
-                    EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
                 decoration: BoxDecoration(
                   color: _statusBg(status),
                   borderRadius: BorderRadius.circular(20.r),
@@ -498,9 +497,7 @@ class _RequestCard extends StatelessWidget {
           // Account / Amount row
           Row(
             children: [
-              Expanded(
-                child: _kv('Account', accNumber),
-              ),
+              Expanded(child: _kv('Account', accNumber)),
               Expanded(
                 child: _kv(
                   'Amount',

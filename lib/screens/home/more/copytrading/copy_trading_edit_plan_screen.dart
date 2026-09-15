@@ -2,6 +2,7 @@ import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/copy_trading/copy_trading_master_dashboard_controller.dart';
 import 'package:crm_app/utils/app_logger.dart';
+import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/widgets/app_select_field.dart';
 import 'package:crm_app/widgets/app_svg_back_button.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
@@ -27,7 +28,7 @@ class CopyTradingEditPlanScreen extends StatefulWidget {
 
 class _CopyTradingEditPlanScreenState extends State<CopyTradingEditPlanScreen> {
   final _formKey = GlobalKey<FormState>();
-  
+
   late final TextEditingController _nameCtrl;
   late String _commissionType;
   late final TextEditingController _commissionCtrl;
@@ -48,28 +49,36 @@ class _CopyTradingEditPlanScreenState extends State<CopyTradingEditPlanScreen> {
     final p = widget.plan;
     _nameCtrl = TextEditingController(text: p.planName);
     _commissionType = p.commissionType;
-    
-    final commissionVal = p.commissionType == 'subscription' ? p.subscriptionFee : p.commissionPercentage;
+
+    final commissionVal = p.commissionType == 'subscription'
+        ? p.subscriptionFee
+        : p.commissionPercentage;
     _commissionCtrl = TextEditingController(
-      text: commissionVal == commissionVal.toInt() ? commissionVal.toInt().toString() : commissionVal.toString(),
+      text: commissionVal == commissionVal.toInt()
+          ? commissionVal.toInt().toString()
+          : commissionVal.toString(),
     );
-    
+
     _noFeeDaysCtrl = TextEditingController(text: p.noFeeDays.toString());
-    
+
     _minCapitalCtrl = TextEditingController(
       text: p.minimumCapital == p.minimumCapital.toInt()
           ? p.minimumCapital.toInt().toString()
           : p.minimumCapital.toString(),
     );
-    
+
     _copyRatioCtrl = TextEditingController(
-      text: p.copyRatio == p.copyRatio.toInt() ? p.copyRatio.toInt().toString() : p.copyRatio.toString(),
+      text: p.copyRatio == p.copyRatio.toInt()
+          ? p.copyRatio.toInt().toString()
+          : p.copyRatio.toString(),
     );
-    
-    _maxCopiersCtrl = TextEditingController(text: p.maxCopiers?.toString() ?? '');
+
+    _maxCopiersCtrl = TextEditingController(
+      text: p.maxCopiers?.toString() ?? '',
+    );
     _strategyCtrl = TextEditingController(text: p.strategyDescription);
     _riskCtrl = TextEditingController(text: p.riskInformation);
-    
+
     _subscriptionPeriod = 'monthly';
   }
 
@@ -95,7 +104,10 @@ class _CopyTradingEditPlanScreenState extends State<CopyTradingEditPlanScreen> {
         backgroundColor: AppColors.tradeBackgroundCenterColor,
         elevation: 0,
         centerTitle: true,
-        title: Text('Edit Plan', style: AppTextStyles.heading),
+        title: Text(
+          Get.find<LanguageService>().tr('copy_trading_edit_plan'),
+          style: AppTextStyles.heading,
+        ),
         leading: AppSvgBackButton(
           onPressed: () => Get.back(closeOverlays: true),
           iconWidth: 30.w,
@@ -132,15 +144,26 @@ class _CopyTradingEditPlanScreenState extends State<CopyTradingEditPlanScreen> {
                     ),
                     SizedBox(height: 6.h),
                     Container(
-                      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 12.w,
+                        vertical: 12.h,
+                      ),
                       decoration: BoxDecoration(
-                        color: AppColors.tradeBackgroundCenterColor.withValues(alpha: 0.3),
+                        color: AppColors.tradeBackgroundCenterColor.withValues(
+                          alpha: 0.3,
+                        ),
                         borderRadius: BorderRadius.circular(8.r),
-                        border: Border.all(color: AppColors.border.withValues(alpha: 0.1)),
+                        border: Border.all(
+                          color: AppColors.border.withValues(alpha: 0.1),
+                        ),
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.account_balance_wallet_outlined, size: 16.r, color: _mutedText),
+                          Icon(
+                            Icons.account_balance_wallet_outlined,
+                            size: 16.r,
+                            color: _mutedText,
+                          ),
                           SizedBox(width: 8.w),
                           Expanded(
                             child: Text(
@@ -178,7 +201,9 @@ class _CopyTradingEditPlanScreenState extends State<CopyTradingEditPlanScreen> {
                     SizedBox(height: 6.h),
                     TextFormField(
                       controller: _nameCtrl,
-                      validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter plan name' : null,
+                      validator: (v) => (v == null || v.trim().isEmpty)
+                          ? 'Enter plan name'
+                          : null,
                       decoration: InputDecoration(
                         hintText: 'e.g. Conservative Growth Plan',
                         hintStyle: TextStyle(
@@ -210,9 +235,14 @@ class _CopyTradingEditPlanScreenState extends State<CopyTradingEditPlanScreen> {
                         options: const [
                           AppSelectOption(value: 'weekly', title: 'Weekly'),
                           AppSelectOption(value: 'monthly', title: 'Monthly'),
-                          AppSelectOption(value: 'quarterly', title: 'Quarterly'),
+                          AppSelectOption(
+                            value: 'quarterly',
+                            title: 'Quarterly',
+                          ),
                         ],
-                        onChanged: (v) => setState(() => _subscriptionPeriod = v ?? 'monthly'),
+                        onChanged: (v) => setState(
+                          () => _subscriptionPeriod = v ?? 'monthly',
+                        ),
                       ),
                     ],
                     SizedBox(height: 14.h),
@@ -235,7 +265,8 @@ class _CopyTradingEditPlanScreenState extends State<CopyTradingEditPlanScreen> {
                       controller: _strategyCtrl,
                       maxLines: 3,
                       decoration: InputDecoration(
-                        hintText: 'Describe your trading strategy and risk approach.',
+                        hintText:
+                            'Describe your trading strategy and risk approach.',
                         hintStyle: TextStyle(
                           fontSize: 12.sp,
                           color: _mutedText,
@@ -258,7 +289,8 @@ class _CopyTradingEditPlanScreenState extends State<CopyTradingEditPlanScreen> {
                       controller: _riskCtrl,
                       maxLines: 3,
                       decoration: InputDecoration(
-                        hintText: 'Describe potential drawdowns and risk level.',
+                        hintText:
+                            'Describe potential drawdowns and risk level.',
                         hintStyle: TextStyle(
                           fontSize: 12.sp,
                           color: _mutedText,
@@ -341,10 +373,15 @@ class _CopyTradingEditPlanScreenState extends State<CopyTradingEditPlanScreen> {
             SizedBox(height: 6.h),
             TextFormField(
               controller: _commissionCtrl,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              validator: (v) =>
+                  (v == null || v.trim().isEmpty) ? 'Required' : null,
               decoration: InputDecoration(
-                hintText: _commissionType == 'per_trade' ? 'e.g. 30' : 'e.g. 50',
+                hintText: _commissionType == 'per_trade'
+                    ? 'e.g. 30'
+                    : 'e.g. 50',
                 hintStyle: TextStyle(fontSize: 12.sp, color: _mutedText),
               ),
             ),
@@ -352,7 +389,13 @@ class _CopyTradingEditPlanScreenState extends State<CopyTradingEditPlanScreen> {
         );
 
         if (stack) {
-          return Column(children: [left, SizedBox(height: 12.h), right]);
+          return Column(
+            children: [
+              left,
+              SizedBox(height: 12.h),
+              right,
+            ],
+          );
         }
         return Row(
           children: [
@@ -390,11 +433,7 @@ class _CopyTradingEditPlanScreenState extends State<CopyTradingEditPlanScreen> {
             SizedBox(height: 4.h),
             Text(
               'Copiers won\'t pay commission on trades within this grace period.',
-              style: TextStyle(
-                fontSize: 10.sp,
-                color: _mutedText,
-                height: 1.3,
-              ),
+              style: TextStyle(fontSize: 10.sp, color: _mutedText, height: 1.3),
             ),
           ],
         );
@@ -413,8 +452,11 @@ class _CopyTradingEditPlanScreenState extends State<CopyTradingEditPlanScreen> {
             SizedBox(height: 6.h),
             TextFormField(
               controller: _minCapitalCtrl,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              validator: (v) =>
+                  (v == null || v.trim().isEmpty) ? 'Required' : null,
               decoration: InputDecoration(
                 hintText: 'e.g. 100',
                 hintStyle: TextStyle(fontSize: 12.sp, color: _mutedText),
@@ -424,7 +466,13 @@ class _CopyTradingEditPlanScreenState extends State<CopyTradingEditPlanScreen> {
         );
 
         if (stack) {
-          return Column(children: [left, SizedBox(height: 12.h), right]);
+          return Column(
+            children: [
+              left,
+              SizedBox(height: 12.h),
+              right,
+            ],
+          );
         }
         return Row(
           children: [
@@ -456,18 +504,15 @@ class _CopyTradingEditPlanScreenState extends State<CopyTradingEditPlanScreen> {
             SizedBox(height: 6.h),
             TextFormField(
               controller: _copyRatioCtrl,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(
-                hintText: '1',
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
               ),
+              decoration: const InputDecoration(hintText: '1'),
             ),
             SizedBox(height: 4.h),
             Text(
               'Default 1 — copier volume scales from this ratio.',
-              style: TextStyle(
-                fontSize: 10.sp,
-                color: _mutedText,
-              ),
+              style: TextStyle(fontSize: 10.sp, color: _mutedText),
             ),
           ],
         );
@@ -496,7 +541,13 @@ class _CopyTradingEditPlanScreenState extends State<CopyTradingEditPlanScreen> {
         );
 
         if (stack) {
-          return Column(children: [left, SizedBox(height: 12.h), right]);
+          return Column(
+            children: [
+              left,
+              SizedBox(height: 12.h),
+              right,
+            ],
+          );
         }
         return Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -562,7 +613,10 @@ class _CopyTradingEditPlanScreenState extends State<CopyTradingEditPlanScreen> {
           ),
         ),
         child: loading
-            ? CommonLoadingWidget(size: 22, color: AppColors.onColoredBackground)
+            ? CommonLoadingWidget(
+                size: 22,
+                color: AppColors.onColoredBackground,
+              )
             : Text(
                 'Save Changes',
                 style: TextStyle(

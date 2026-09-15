@@ -64,7 +64,8 @@ class _ContestCountdownTimerState extends State<ContestCountdownTimer> {
     final positive = _remaining.inSeconds > 0;
     final parts = _formatDuration(_remaining);
 
-    final textStyle = widget.textStyle ??
+    final textStyle =
+        widget.textStyle ??
         AppTextStyles.bodyText.copyWith(
           fontSize: 14.sp,
           fontWeight: FontWeight.w600,
@@ -151,10 +152,7 @@ class _CountdownCell extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            value,
-            style: textStyle.copyWith(fontWeight: FontWeight.w700),
-          ),
+          Text(value, style: textStyle.copyWith(fontWeight: FontWeight.w700)),
           if (!compact && label.isNotEmpty)
             Text(
               label,

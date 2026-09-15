@@ -4,6 +4,7 @@ import 'dart:ui';
 
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/controllers/app_notification_controller.dart';
+import 'package:crm_app/services/language_service.dart';
 
 // Document Type Model
 class DocumentType {
@@ -28,13 +29,13 @@ class KYCController extends GetxController {
 
   final List<DocumentType> documentTypes = [
     DocumentType(
-      title: 'Passport',
-      subtitle: 'International',
+      title: TranslationUtils.tr('kyc_passport'),
+      subtitle: TranslationUtils.tr('kyc_international'),
       icon: Icons.book,
       iconColor: AppColors.primary,
     ),
     DocumentType(
-      title: 'ID/Aadhar card',
+      title: TranslationUtils.tr('kyc_id_aadhar_card'),
       subtitle: 'EU/GB Issued',
       icon: Icons.credit_card,
       iconColor: AppColors.primary,

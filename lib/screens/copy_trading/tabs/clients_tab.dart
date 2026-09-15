@@ -72,16 +72,15 @@ class _ClientsTabState extends State<ClientsTab> {
           ),
         ),
       ),
-      body:
-          _tradeHistory.isEmpty
-              ? _buildEmptyState()
-              : ListView.builder(
-                padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 80.h),
-                itemCount: _tradeHistory.length,
-                itemBuilder: (context, index) {
-                  return _TradeHistoryCard(data: _tradeHistory[index]);
-                },
-              ),
+      body: _tradeHistory.isEmpty
+          ? _buildEmptyState()
+          : ListView.builder(
+              padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 80.h),
+              itemCount: _tradeHistory.length,
+              itemBuilder: (context, index) {
+                return _TradeHistoryCard(data: _tradeHistory[index]);
+              },
+            ),
     );
   }
 
@@ -167,15 +166,14 @@ class _TradeHistoryCardState extends State<_TradeHistoryCard> {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color:
-                                  data.type == 'BUY'
-                                      ? AppColors.green
-                                      : AppColors.error,
+                              color: data.type == 'BUY'
+                                  ? AppColors.green
+                                  : AppColors.error,
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
                               data.type,
-                              style:   TextStyle(
+                              style: TextStyle(
                                 color: AppColors.whiteColor,
                                 fontSize: 10,
                                 fontWeight: FontWeight.w600,
@@ -309,11 +307,10 @@ class _TradeHistoryCardState extends State<_TradeHistoryCard> {
 class DottedLinePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final paint =
-        Paint()
-          ..color = AppColors.dashLineColor
-          ..strokeWidth = 1
-          ..style = PaintingStyle.stroke;
+    final paint = Paint()
+      ..color = AppColors.dashLineColor
+      ..strokeWidth = 1
+      ..style = PaintingStyle.stroke;
 
     const dashWidth = 1.0;
     const dashSpace = 2.0;

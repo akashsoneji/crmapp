@@ -25,6 +25,7 @@ class _CommissionGroupFormScreenState extends State<CommissionGroupFormScreen> {
   final Map<int, bool> _expandedGroups =
       {}; // Track expanded state for each group
   bool _isLoading = false;
+
   /// True while this screen is waiting for its first structure fetch (avoids error flash).
   bool _isPageLoading = true;
 
@@ -170,8 +171,8 @@ class _CommissionGroupFormScreenState extends State<CommissionGroupFormScreen> {
           if (controller != null) {
             final value = controller.text.trim();
             final numValue = double.tryParse(value) ?? 0;
-            commissionRates['${masterGroup.id}_${category.id}'] =
-                numValue.toInt();
+            commissionRates['${masterGroup.id}_${category.id}'] = numValue
+                .toInt();
           } else {
             commissionRates['${masterGroup.id}_${category.id}'] = 0;
           }
@@ -227,12 +228,15 @@ class _CommissionGroupFormScreenState extends State<CommissionGroupFormScreen> {
           iconHeight: 30.h,
         ),
         title: Text(
-          widget.group != null ? 'Edit Commission Group' : 'Add Commission Group',
+          widget.group != null
+              ? 'Edit Commission Group'
+              : 'Add Commission Group',
           style: TextStyle(
             fontSize: 20.sp,
             fontWeight: FontWeight.w400,
             color: AppColors.textPrimary,
-          fontFamily: 'SF UI'),
+            fontFamily: 'SF UI',
+          ),
         ),
         centerTitle: true,
       ),
@@ -265,120 +269,123 @@ class _CommissionGroupFormScreenState extends State<CommissionGroupFormScreen> {
           }
 
           return SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Header Section
-                  Container(
-                    width: double.infinity,
-                    color: AppColors.whiteColor,
-                    padding: EdgeInsets.all(16.w),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Standard Group Structure',
-                          style: TextStyle(
-                            fontSize: 20.sp,
-                            fontWeight: FontWeight.w400,
-                            color: AppColors.textPrimary,
-                           fontFamily: 'SF UI'),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header Section
+                Container(
+                  width: double.infinity,
+                  color: AppColors.whiteColor,
+                  padding: EdgeInsets.all(16.w),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Standard Group Structure',
+                        style: TextStyle(
+                          fontSize: 20.sp,
+                          fontWeight: FontWeight.w400,
+                          color: AppColors.textPrimary,
+                          fontFamily: 'SF UI',
                         ),
-                        SizedBox(height: 8.h),
-                        Text(
-                          'Standard Group Structure: Create commission groups for Sub-IBs. Commission rates cannot exceed your own rates.',
-                          style: TextStyle(
-                            fontSize: 13.sp,
+                      ),
+                      SizedBox(height: 8.h),
+                      Text(
+                        'Standard Group Structure: Create commission groups for Sub-IBs. Commission rates cannot exceed your own rates.',
+                        style: TextStyle(
+                          fontSize: 13.sp,
+                          color: AppColors.textGrey,
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(height: 12.h),
+
+                // Group Name Section
+                Container(
+                  width: double.infinity,
+                  color: AppColors.whiteColor,
+                  padding: EdgeInsets.all(16.w),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Group Name',
+                        style: TextStyle(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w400,
+                          color: AppColors.textPrimary,
+                          fontFamily: 'SF UI',
+                        ),
+                      ),
+                      SizedBox(height: 12.h),
+                      TextField(
+                        controller: _groupNameController,
+                        decoration: InputDecoration(
+                          hintText: 'Enter group name',
+                          hintStyle: TextStyle(
                             color: AppColors.textGrey,
-                            height: 1.4,
+                            fontSize: 14.sp,
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: 12.h),
-
-                  // Group Name Section
-                  Container(
-                    width: double.infinity,
-                    color: AppColors.whiteColor,
-                    padding: EdgeInsets.all(16.w),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Group Name',
-                          style: TextStyle(
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.w400,
-                            color: AppColors.textPrimary,
-                           fontFamily: 'SF UI'),
-                        ),
-                        SizedBox(height: 12.h),
-                        TextField(
-                          controller: _groupNameController,
-                          decoration: InputDecoration(
-                            hintText: 'Enter group name',
-                            hintStyle: TextStyle(
-                              color: AppColors.textGrey,
-                              fontSize: 14.sp,
-                            ),
-                            filled: true,
-                            fillColor: AppColors.whiteColor,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12.r),
-                              borderSide: BorderSide(color: AppColors.border),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12.r),
-                              borderSide: BorderSide(color: AppColors.border),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12.r),
-                              borderSide: BorderSide(
-                                color: AppColors.primary,
-                                width: 1.5,
-                              ),
-                            ),
-                            contentPadding: EdgeInsets.symmetric(
-                              horizontal: 14.w,
-                              vertical: 6.h,
+                          filled: true,
+                          fillColor: AppColors.whiteColor,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12.r),
+                            borderSide: BorderSide(color: AppColors.border),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12.r),
+                            borderSide: BorderSide(color: AppColors.border),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12.r),
+                            borderSide: BorderSide(
+                              color: AppColors.primary,
+                              width: 1.5,
                             ),
                           ),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 14.w,
+                            vertical: 6.h,
+                          ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                  // SizedBox(height: 12.h),
+                ),
+                // SizedBox(height: 12.h),
 
-                  // Commission Rates Section
-                  Container(
-                    width: double.infinity,
-                    color: AppColors.whiteColor,
-                    padding: EdgeInsets.all(16.w),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Set Commission Rates (Category-wise)',
-                          style: TextStyle(
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.w400,
-                            color: AppColors.textPrimary,
-                           fontFamily: 'SF UI'),
+                // Commission Rates Section
+                Container(
+                  width: double.infinity,
+                  color: AppColors.whiteColor,
+                  padding: EdgeInsets.all(16.w),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Set Commission Rates (Category-wise)',
+                        style: TextStyle(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w400,
+                          color: AppColors.textPrimary,
+                          fontFamily: 'SF UI',
                         ),
-                        SizedBox(height: 16.h),
-                        _buildCommissionList(
-                          structureData?.masterGroups ?? [],
-                          structureData?.symbolCategories ?? [],
-                        ),
-                      ],
-                    ),
+                      ),
+                      SizedBox(height: 16.h),
+                      _buildCommissionList(
+                        structureData?.masterGroups ?? [],
+                        structureData?.symbolCategories ?? [],
+                      ),
+                    ],
                   ),
-                  SizedBox(height: 80.h), // Space for bottom buttons
-                ],
-              ),
-            );
+                ),
+                SizedBox(height: 80.h), // Space for bottom buttons
+              ],
+            ),
+          );
         },
       ),
       bottomNavigationBar: Container(
@@ -398,9 +405,10 @@ class _CommissionGroupFormScreenState extends State<CommissionGroupFormScreen> {
             children: [
               Expanded(
                 child: OutlinedButton(
-                  onPressed:
-                      _isLoading ? null : () => Navigator.of(context).pop(),
-style: OutlinedButton.styleFrom(
+                  onPressed: _isLoading
+                      ? null
+                      : () => Navigator.of(context).pop(),
+                  style: OutlinedButton.styleFrom(
                     padding: EdgeInsets.symmetric(vertical: 14.h),
                     side: BorderSide(color: AppColors.border),
                     shape: RoundedRectangleBorder(
@@ -413,7 +421,8 @@ style: OutlinedButton.styleFrom(
                       fontSize: 16.sp,
                       fontWeight: FontWeight.w400,
                       color: AppColors.textPrimary,
-                     fontFamily: 'SF UI'),
+                      fontFamily: 'SF UI',
+                    ),
                   ),
                 ),
               ),
@@ -429,26 +438,26 @@ style: OutlinedButton.styleFrom(
                     ),
                     elevation: 0,
                   ),
-                  child:
-                      _isLoading
-                          ? SizedBox(
-                            height: 20.h,
-                            width: 20.w,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                AppColors.whiteColor,
-                              ),
+                  child: _isLoading
+                      ? SizedBox(
+                          height: 20.h,
+                          width: 20.w,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              AppColors.whiteColor,
                             ),
-                          )
-                          : Text(
-                            'Save Commission Group',
-                            style: TextStyle(
-                              fontSize: 16.sp,
-                              fontWeight: FontWeight.w400,
-                              color: AppColors.whiteColor,
-                             fontFamily: 'SF UI'),
                           ),
+                        )
+                      : Text(
+                          'Save Commission Group',
+                          style: TextStyle(
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w400,
+                            color: AppColors.whiteColor,
+                            fontFamily: 'SF UI',
+                          ),
+                        ),
                 ),
               ),
             ],
@@ -463,20 +472,13 @@ style: OutlinedButton.styleFrom(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.error_outline,
-            size: 48.sp,
-            color: AppColors.textGrey,
-          ),
+          Icon(Icons.error_outline, size: 48.sp, color: AppColors.textGrey),
           SizedBox(height: 16.h),
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 32.w),
             child: Text(
               message,
-              style: TextStyle(
-                fontSize: 14.sp,
-                color: AppColors.textGrey,
-              ),
+              style: TextStyle(fontSize: 14.sp, color: AppColors.textGrey),
               textAlign: TextAlign.center,
             ),
           ),
@@ -500,7 +502,8 @@ style: OutlinedButton.styleFrom(
                     fontSize: 16.sp,
                     fontWeight: FontWeight.w400,
                     color: AppColors.whiteColor,
-                   fontFamily: 'SF UI'),
+                    fontFamily: 'SF UI',
+                  ),
                 ),
               ),
             ),
@@ -578,10 +581,12 @@ style: OutlinedButton.styleFrom(
                     style: TextStyle(
                       fontSize: 18.sp,
                       fontWeight: FontWeight.w400,
-                      color:
-                          isExpanded ? AppColors.primary : AppColors.whiteColor,
+                      color: isExpanded
+                          ? AppColors.primary
+                          : AppColors.whiteColor,
                       letterSpacing: 0.5,
-                     fontFamily: 'SF UI'),
+                      fontFamily: 'SF UI',
+                    ),
                   ),
                   // Animated triangle icon (caret)
                   AnimatedRotation(
@@ -589,8 +594,9 @@ style: OutlinedButton.styleFrom(
                     duration: const Duration(milliseconds: 200),
                     child: Icon(
                       Icons.keyboard_arrow_down,
-                      color:
-                          isExpanded ? AppColors.primary : AppColors.whiteColor,
+                      color: isExpanded
+                          ? AppColors.primary
+                          : AppColors.whiteColor,
                       size: 24.sp,
                     ),
                   ),
@@ -612,38 +618,30 @@ style: OutlinedButton.styleFrom(
                   top: BorderSide(color: AppColors.border, width: 1),
                 ),
               ),
-              child:
-                  symbolCategories.isEmpty
-                      ? Padding(
-                        padding: EdgeInsets.symmetric(vertical: 16.h),
-                        child: Center(
-                          child: Text(
-                            'No categories available',
-                            style: TextStyle(
-                              fontSize: 14.sp,
-                              color: AppColors.textGrey,
-                            ),
+              child: symbolCategories.isEmpty
+                  ? Padding(
+                      padding: EdgeInsets.symmetric(vertical: 16.h),
+                      child: Center(
+                        child: Text(
+                          'No categories available',
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            color: AppColors.textGrey,
                           ),
                         ),
-                      )
-                      : Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children:
-                            symbolCategories.asMap().entries.map((entry) {
-                              final category = entry.value;
-                              final isLast =
-                                  entry.key == symbolCategories.length - 1;
-                              return Padding(
-                                padding: EdgeInsets.only(
-                                  bottom: isLast ? 0 : 16.h,
-                                ),
-                                child: _buildCategoryInput(
-                                  masterGroup,
-                                  category,
-                                ),
-                              );
-                            }).toList(),
                       ),
+                    )
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: symbolCategories.asMap().entries.map((entry) {
+                        final category = entry.value;
+                        final isLast = entry.key == symbolCategories.length - 1;
+                        return Padding(
+                          padding: EdgeInsets.only(bottom: isLast ? 0 : 16.h),
+                          child: _buildCategoryInput(masterGroup, category),
+                        );
+                      }).toList(),
+                    ),
             ),
         ],
       ),
@@ -652,8 +650,9 @@ style: OutlinedButton.styleFrom(
 
   Widget _buildCategoryInput(MasterGroup masterGroup, SymbolCategory category) {
     final key = '${masterGroup.id}_${category.id}';
-    final controller =
-        _commissionControllers[key] ??= TextEditingController(text: '0');
+    final controller = _commissionControllers[key] ??= TextEditingController(
+      text: '0',
+    );
     final maxValue = _getMaxValue(masterGroup.id!, category.id!);
 
     return Column(
@@ -670,7 +669,8 @@ style: OutlinedButton.styleFrom(
                   fontSize: 17.sp,
                   fontWeight: FontWeight.w400,
                   color: AppColors.textPrimary,
-                 fontFamily: 'SF UI'),
+                  fontFamily: 'SF UI',
+                ),
               ),
             ),
             SizedBox(width: 12.w),
@@ -689,34 +689,30 @@ style: OutlinedButton.styleFrom(
                 style: TextStyle(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.w400,
-                  color:
-                      (maxValue != null && maxValue == 0)
-                          ? AppColors.textGrey
-                          : AppColors.primary,
+                  color: (maxValue != null && maxValue == 0)
+                      ? AppColors.textGrey
+                      : AppColors.primary,
                 ),
                 textAlign: TextAlign.right,
                 decoration: InputDecoration(
                   prefixText: '\$ ',
                   prefixStyle: TextStyle(
-                    color:
-                        (maxValue != null && maxValue == 0)
-                            ? AppColors.textGrey
-                            : AppColors.primary,
+                    color: (maxValue != null && maxValue == 0)
+                        ? AppColors.textGrey
+                        : AppColors.primary,
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w600,
                   ),
                   filled: true,
-                  fillColor:
-                      (maxValue != null && maxValue == 0)
-                          ? AppColors.border.withValues(alpha: 0.1)
-                          : AppColors.primary.withValues(alpha: 0.05),
+                  fillColor: (maxValue != null && maxValue == 0)
+                      ? AppColors.border.withValues(alpha: 0.1)
+                      : AppColors.primary.withValues(alpha: 0.05),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8.r),
                     borderSide: BorderSide(
-                      color:
-                          (maxValue != null && maxValue == 0)
-                              ? AppColors.border.withValues(alpha: 0.3)
-                              : AppColors.primary.withValues(alpha: 0.2),
+                      color: (maxValue != null && maxValue == 0)
+                          ? AppColors.border.withValues(alpha: 0.3)
+                          : AppColors.primary.withValues(alpha: 0.2),
                     ),
                   ),
                   focusedBorder: OutlineInputBorder(

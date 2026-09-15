@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/widgets/labeled_app_text_field.dart';
+import 'package:crm_app/services/language_service.dart';
 
 class AddInvestmentScreen extends StatefulWidget {
   final String traderName;
@@ -31,11 +32,17 @@ class _AddInvestmentScreenState extends State<AddInvestmentScreen> {
         leading: IconButton(
           icon: SvgPicture.asset(
             'assets/svg/trade/arro_back.svg',
-            colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn),
+            colorFilter: ColorFilter.mode(
+              AppColors.textPrimary,
+              BlendMode.srcIn,
+            ),
           ),
           onPressed: () => Get.back(),
         ),
-        title: Text('Add Investment', style: AppTextStyles.heading),
+        title: Text(
+          TranslationUtils.tr('copy_add_investment'),
+          style: AppTextStyles.heading,
+        ),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -45,7 +52,7 @@ class _AddInvestmentScreenState extends State<AddInvestmentScreen> {
             _buildHeaderCard(),
             SizedBox(height: 16.h),
             LabeledAppTextField(
-              label: 'Investing Amount',
+              label: TranslationUtils.tr('copy_investing_amount'),
               controller: _amountController,
               keyboardType: const TextInputType.numberWithOptions(
                 signed: true,
@@ -86,7 +93,9 @@ class _AddInvestmentScreenState extends State<AddInvestmentScreen> {
                 ),
                 SizedBox(width: 6.w),
                 Text(
-                  'Your investment with this master trader will total \$50.01',
+                  TranslationUtils.tr(
+                    'copy_total_investment',
+                  ).replaceFirst('{amount}', r'\$50.01'),
                   style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey),
                 ),
               ],
@@ -113,7 +122,7 @@ class _AddInvestmentScreenState extends State<AddInvestmentScreen> {
               elevation: 0,
             ),
             child: Text(
-              'Confirm',
+              TranslationUtils.tr('confirm'),
               style: TextStyle(
                 fontSize: 14.sp,
                 fontWeight: FontWeight.w600,
@@ -140,7 +149,7 @@ class _AddInvestmentScreenState extends State<AddInvestmentScreen> {
             SvgPicture.asset('assets/svg/copy_trading/person_svg.svg'),
             SizedBox(width: 12),
             Text(
-              'Prime_traders',
+              TranslationUtils.tr('copy_prime_traders'),
               style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
             ),
           ],
@@ -167,7 +176,7 @@ class _AddInvestmentScreenState extends State<AddInvestmentScreen> {
               ),
               SizedBox(width: 10.w),
               Text(
-                'Important',
+                TranslationUtils.tr('important'),
                 style: TextStyle(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.w600,
@@ -181,7 +190,7 @@ class _AddInvestmentScreenState extends State<AddInvestmentScreen> {
           ),
           SizedBox(height: 12.h),
           Text(
-            'Enter the amount you want to add to your current investment with this master trader.',
+            TranslationUtils.tr('copy_add_investment_note'),
             style: TextStyle(
               fontFamily: 'Roboto',
               fontWeight: FontWeight.w400,

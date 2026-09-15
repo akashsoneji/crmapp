@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
+import 'package:crm_app/services/language_service.dart';
 
 class SubscriptionSetupScreen extends StatefulWidget {
   const SubscriptionSetupScreen({super.key});
@@ -83,12 +84,15 @@ class _SubscriptionSetupScreenState extends State<SubscriptionSetupScreen> {
         leading: IconButton(
           icon: SvgPicture.asset(
             'assets/svg/trade/arro_back.svg',
-            colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn),
+            colorFilter: ColorFilter.mode(
+              AppColors.textPrimary,
+              BlendMode.srcIn,
+            ),
           ),
           onPressed: () => Get.back(),
         ),
         title: Text(
-          'Subscription Setup',
+          TranslationUtils.tr('subscription_setup'),
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w600,
@@ -120,8 +124,8 @@ class _SubscriptionSetupScreenState extends State<SubscriptionSetupScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'Funds In Wallet',
+                  Text(
+                    TranslationUtils.tr('funds_in_wallet'),
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                   Row(
@@ -154,8 +158,8 @@ class _SubscriptionSetupScreenState extends State<SubscriptionSetupScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        'Copy Proportion',
+                      Text(
+                        TranslationUtils.tr('copy_proportion'),
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -169,7 +173,9 @@ class _SubscriptionSetupScreenState extends State<SubscriptionSetupScreen> {
                           });
                         },
                         child: Text(
-                          _isCustomMode ? '< Default' : 'Custom >',
+                          _isCustomMode
+                              ? '< ${TranslationUtils.tr('default_label')}'
+                              : '${TranslationUtils.tr('custom_label')} >',
                           style: TextStyle(
                             fontSize: 13,
                             color: AppColors.primary,
@@ -188,8 +194,8 @@ class _SubscriptionSetupScreenState extends State<SubscriptionSetupScreen> {
                         final selected = _selectedProportion == i;
                         return Expanded(
                           child: GestureDetector(
-                            onTap:
-                                () => setState(() => _selectedProportion = i),
+                            onTap: () =>
+                                setState(() => _selectedProportion = i),
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 200),
                               margin: EdgeInsets.only(right: i < 2 ? 8 : 0),
@@ -201,10 +207,9 @@ class _SubscriptionSetupScreenState extends State<SubscriptionSetupScreen> {
                                 color: AppColors.surface,
                                 borderRadius: BorderRadius.circular(4),
                                 border: Border.all(
-                                  color:
-                                      selected
-                                          ? AppColors.primary
-                                          : AppColors.border,
+                                  color: selected
+                                      ? AppColors.primary
+                                      : AppColors.border,
                                 ),
                               ),
                               child: Column(
@@ -215,10 +220,9 @@ class _SubscriptionSetupScreenState extends State<SubscriptionSetupScreen> {
                                     style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w700,
-                                      color:
-                                          selected
-                                              ? AppColors.whiteColor
-                                              : AppColors.textPrimary,
+                                      color: selected
+                                          ? AppColors.whiteColor
+                                          : AppColors.textPrimary,
                                     ),
                                   ),
                                   const SizedBox(height: 4),
@@ -227,10 +231,11 @@ class _SubscriptionSetupScreenState extends State<SubscriptionSetupScreen> {
                                     style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w400,
-                                      color:
-                                          selected
-                                              ? AppColors.whiteColor.withOpacity(0.70)
-                                              : AppColors.textPrimary,
+                                      color: selected
+                                          ? AppColors.whiteColor.withOpacity(
+                                              0.70,
+                                            )
+                                          : AppColors.textPrimary,
                                     ),
                                   ),
                                   const SizedBox(height: 8),
@@ -239,10 +244,11 @@ class _SubscriptionSetupScreenState extends State<SubscriptionSetupScreen> {
                                     style: TextStyle(
                                       fontSize: 10,
                                       fontWeight: FontWeight.w400,
-                                      color:
-                                          selected
-                                              ? AppColors.whiteColor.withOpacity(0.70)
-                                              : AppColors.textPrimary,
+                                      color: selected
+                                          ? AppColors.whiteColor.withOpacity(
+                                              0.70,
+                                            )
+                                          : AppColors.textPrimary,
                                     ),
                                   ),
                                 ],
@@ -258,7 +264,7 @@ class _SubscriptionSetupScreenState extends State<SubscriptionSetupScreen> {
                   // Custom mode: text field
                   if (_isCustomMode) ...[
                     _buildLabeledField(
-                      label: 'Enter Value',
+                      label: TranslationUtils.tr('copy_enter_value'),
                       controller: _customValueCtrl,
                       keyboardType: TextInputType.text,
                     ),
@@ -289,8 +295,8 @@ class _SubscriptionSetupScreenState extends State<SubscriptionSetupScreen> {
                               0.8, // ← Change this value: 0.7 = smaller, 0.9 = slightly smaller, 1.0 = normal
                           child: Switch(
                             value: _supportFundsEnabled,
-                            onChanged:
-                                (v) => setState(() => _supportFundsEnabled = v),
+                            onChanged: (v) =>
+                                setState(() => _supportFundsEnabled = v),
                             activeThumbColor: AppColors.primary,
                             inactiveThumbColor: AppColors.whiteColor,
                             inactiveTrackColor: AppColors.switchTrackOff,
@@ -299,14 +305,15 @@ class _SubscriptionSetupScreenState extends State<SubscriptionSetupScreen> {
                             ),
 
                             // Border removal when inactive (from previous fix)
-                            trackOutlineColor: MaterialStateProperty.resolveWith<
-                              Color?
-                            >((states) {
-                              if (states.contains(MaterialState.selected))
-                                return null;
-                              return Colors
-                                  .transparent; // or AppColors.whiteColor if background is white
-                            }),
+                            trackOutlineColor:
+                                MaterialStateProperty.resolveWith<Color?>((
+                                  states,
+                                ) {
+                                  if (states.contains(MaterialState.selected))
+                                    return null;
+                                  return Colors
+                                      .transparent; // or AppColors.whiteColor if background is white
+                                }),
                             trackOutlineWidth:
                                 MaterialStateProperty.resolveWith<double?>((
                                   states,
@@ -350,7 +357,7 @@ class _SubscriptionSetupScreenState extends State<SubscriptionSetupScreen> {
                   if (_isCustomMode && _supportFundsEnabled) ...[
                     const SizedBox(height: 12),
                     _buildLabeledField(
-                      label: 'Support Amount',
+                      label: TranslationUtils.tr('copy_support_amount'),
                       controller: _supportAmountCtrl,
                       keyboardType: const TextInputType.numberWithOptions(
                         decimal: true,
@@ -415,7 +422,7 @@ class _SubscriptionSetupScreenState extends State<SubscriptionSetupScreen> {
             ),
             elevation: 0,
           ),
-          child:   Text(
+          child: Text(
             'Start Copying',
             style: TextStyle(
               fontSize: 16,

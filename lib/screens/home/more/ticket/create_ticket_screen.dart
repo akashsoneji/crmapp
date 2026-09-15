@@ -78,9 +78,13 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
         backgroundColor: AppColors.background,
         elevation: 0,
         centerTitle: true,
-        leading: AppSvgBackButton(onPressed: () => AppSvgBackButton.popRoute(context)),
-        title:
-            Text(lang.tr('ticket_new_ticket'), style: AppTextStyles.screenTitle),
+        leading: AppSvgBackButton(
+          onPressed: () => AppSvgBackButton.popRoute(context),
+        ),
+        title: Text(
+          lang.tr('ticket_new_ticket'),
+          style: AppTextStyles.screenTitle,
+        ),
       ),
       body: Form(
         key: _formKey,
@@ -92,13 +96,17 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
               () => DropdownButtonFormField<String>(
                 value: _departmentId,
                 isExpanded: true,
-                decoration: _inputDecoration(lang.tr('ticket_select_department')),
+                decoration: _inputDecoration(
+                  lang.tr('ticket_select_department'),
+                ),
                 dropdownColor: AppColors.card,
                 items: controller.departments
-                    .map((d) => DropdownMenuItem(
-                          value: d.id.toString(),
-                          child: Text(d.name, style: AppTextStyles.black14600),
-                        ))
+                    .map(
+                      (d) => DropdownMenuItem(
+                        value: d.id.toString(),
+                        child: Text(d.name, style: AppTextStyles.black14600),
+                      ),
+                    )
                     .toList(),
                 validator: (v) =>
                     v == null ? lang.tr('ticket_select_department') : null,
@@ -112,15 +120,19 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
               isExpanded: true,
               decoration: _inputDecoration(lang.tr('ticket_select_priority')),
               dropdownColor: AppColors.card,
-              items: {
-                'low': lang.tr('ticket_priority_low'),
-                'medium': lang.tr('ticket_priority_medium'),
-                'high': lang.tr('ticket_priority_high'),
-              }
-                  .entries
-                  .map((e) =>
-                      DropdownMenuItem(value: e.key, child: Text(e.value,style: AppTextStyles.black14600,)))
-                  .toList(),
+              items:
+                  {
+                        'low': lang.tr('ticket_priority_low'),
+                        'medium': lang.tr('ticket_priority_medium'),
+                        'high': lang.tr('ticket_priority_high'),
+                      }.entries
+                      .map(
+                        (e) => DropdownMenuItem(
+                          value: e.key,
+                          child: Text(e.value, style: AppTextStyles.black14600),
+                        ),
+                      )
+                      .toList(),
               onChanged: (v) => setState(() => _priority = v ?? 'low'),
             ),
             SizedBox(height: 16.h),
@@ -155,16 +167,17 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
                       padding: EdgeInsets.symmetric(vertical: 14.h),
                       side: BorderSide(color: AppColors.border),
                     ),
-                    child: Text(lang.tr('ticket_cancel'),
-                        style: TextStyle(color: AppColors.textPrimary)),
+                    child: Text(
+                      lang.tr('ticket_cancel'),
+                      style: TextStyle(color: AppColors.textPrimary),
+                    ),
                   ),
                 ),
                 SizedBox(width: 12.w),
                 Expanded(
                   child: Obx(
                     () => ElevatedButton(
-                      onPressed:
-                          controller.isSubmitting.value ? null : _submit,
+                      onPressed: controller.isSubmitting.value ? null : _submit,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
                         padding: EdgeInsets.symmetric(vertical: 14.h),
@@ -181,8 +194,9 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
                           : Text(
                               lang.tr('ticket_create'),
                               style: TextStyle(
-                                  color: AppColors.whiteColor,
-                                  fontWeight: FontWeight.w600),
+                                color: AppColors.whiteColor,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                     ),
                   ),
@@ -207,8 +221,11 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
         ),
         child: Row(
           children: [
-            Icon(Icons.insert_drive_file_outlined,
-                color: AppColors.primary, size: 20.sp),
+            Icon(
+              Icons.insert_drive_file_outlined,
+              color: AppColors.primary,
+              size: 20.sp,
+            ),
             SizedBox(width: 8.w),
             Expanded(
               child: Text(
@@ -251,7 +268,9 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
                 lang.tr('ticket_attachment_formats'),
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                    fontSize: 11.sp, color: AppColors.textSecondary),
+                  fontSize: 11.sp,
+                  color: AppColors.textSecondary,
+                ),
               ),
             ],
           ),
@@ -261,28 +280,28 @@ class _CreateTicketScreenState extends State<CreateTicketScreen> {
   }
 
   Widget _label(String text) => Padding(
-        padding: EdgeInsets.only(bottom: 6.h),
-        child: Text(text, style: AppTextStyles.label),
-      );
+    padding: EdgeInsets.only(bottom: 6.h),
+    child: Text(text, style: AppTextStyles.label),
+  );
 
   InputDecoration _inputDecoration(String hint) => InputDecoration(
-        hintText: hint,
-        hintStyle: TextStyle(color: AppColors.hint, fontSize: 13.sp),
-        isDense: true,
-        filled: true,
-        fillColor: AppColors.surface,
-        contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10.r),
-          borderSide: BorderSide(color: AppColors.border),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10.r),
-          borderSide: BorderSide(color: AppColors.border),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10.r),
-          borderSide: BorderSide(color: AppColors.primary),
-        ),
-      );
+    hintText: hint,
+    hintStyle: TextStyle(color: AppColors.hint, fontSize: 13.sp),
+    isDense: true,
+    filled: true,
+    fillColor: AppColors.surface,
+    contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(10.r),
+      borderSide: BorderSide(color: AppColors.border),
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(10.r),
+      borderSide: BorderSide(color: AppColors.border),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(10.r),
+      borderSide: BorderSide(color: AppColors.primary),
+    ),
+  );
 }

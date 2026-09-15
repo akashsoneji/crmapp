@@ -51,10 +51,9 @@ class IbmMainShell extends StatelessWidget {
           ),
           child: Container(
             decoration: BoxDecoration(
-              color:
-                  AppColors.isDarkMode
-                      ? AppColors.pureBlack
-                      : AppColors.whiteColor,
+              color: AppColors.isDarkMode
+                  ? AppColors.pureBlack
+                  : AppColors.whiteColor,
               border: Border(
                 top: BorderSide(color: AppColors.divider, width: 0.8),
               ),
@@ -82,38 +81,37 @@ class IbmMainShell extends StatelessWidget {
                 BottomNavigationBarItem(
                   icon: const Icon(Icons.dashboard_outlined),
                   activeIcon: const Icon(Icons.dashboard),
-                  label: languageService.tr('Dashboard'),
+                  label: languageService.tr('more_dashboard'),
                 ),
                 BottomNavigationBarItem(
                   icon: const Icon(Icons.campaign_outlined),
                   activeIcon: const Icon(Icons.campaign),
-                  label: languageService.tr('Promotion'),
+                  label: languageService.tr('general_promotional'),
                 ),
                 BottomNavigationBarItem(
-                  icon:
-                      pendingRequests > 0
-                          ? Badge(
-                            label: Text('$pendingRequests'),
-                            child: const Icon(Icons.people_outline),
-                          )
-                          : const Icon(Icons.people_outline),
+                  icon: pendingRequests > 0
+                      ? Badge(
+                          label: Text('$pendingRequests'),
+                          child: const Icon(Icons.people_outline),
+                        )
+                      : const Icon(Icons.people_outline),
                   activeIcon: const Icon(Icons.people),
-                  label: languageService.tr('Network'),
+                  label: languageService.tr('my_clients'),
                 ),
                 BottomNavigationBarItem(
                   icon: const Icon(Icons.account_balance_wallet_outlined),
                   activeIcon: const Icon(Icons.account_balance_wallet),
-                  label: languageService.tr('Commission'),
+                  label: languageService.tr('commission'),
                 ),
                 BottomNavigationBarItem(
                   icon: const Icon(Icons.link_outlined),
                   activeIcon: const Icon(Icons.link),
-                  label: languageService.tr('Links'),
+                  label: languageService.tr('referral_link'),
                 ),
                 BottomNavigationBarItem(
                   icon: const Icon(Icons.more_horiz_outlined),
                   activeIcon: const Icon(Icons.more_horiz),
-                  label: languageService.tr('More'),
+                  label: languageService.tr('general_more'),
                 ),
               ],
             ),
@@ -129,8 +127,9 @@ class IbmMainShell extends StatelessWidget {
     LanguageService languageService,
   ) {
     return Drawer(
-      backgroundColor:
-          AppColors.isDarkMode ? AppColors.card : AppColors.whiteColor,
+      backgroundColor: AppColors.isDarkMode
+          ? AppColors.card
+          : AppColors.whiteColor,
       child: SafeArea(
         child: Column(
           children: [
@@ -156,7 +155,7 @@ class IbmMainShell extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'IB Manager Portal',
+                          languageService.tr('ibm_manager_portal'),
                           style: TextStyle(
                             fontSize: 15.sp,
                             fontWeight: FontWeight.w800,
@@ -164,7 +163,7 @@ class IbmMainShell extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          'Partner Workspace',
+                          languageService.tr('ibm_partner_workspace'),
                           style: TextStyle(
                             fontSize: 11.sp,
                             color: AppColors.textGrey,
@@ -189,7 +188,7 @@ class IbmMainShell extends StatelessWidget {
                   children: [
                     _buildDrawerItem(
                       icon: Icons.dashboard_outlined,
-                      title: 'Dashboard',
+                      title: languageService.tr('more_dashboard'),
                       isSelected: currentIdx == 0,
                       hasArrow: false,
                       onTap: () {
@@ -199,7 +198,7 @@ class IbmMainShell extends StatelessWidget {
                     ),
                     _buildDrawerItem(
                       icon: Icons.campaign_outlined,
-                      title: 'Promotion',
+                      title: languageService.tr('general_promotional'),
                       isSelected: currentIdx == 1,
                       hasArrow: true,
                       onTap: () {
@@ -209,7 +208,7 @@ class IbmMainShell extends StatelessWidget {
                     ),
                     _buildDrawerItem(
                       icon: Icons.person_outline,
-                      title: 'Clients & Network',
+                      title: languageService.tr('ibm_clients_network'),
                       isSelected: currentIdx == 2,
                       hasArrow: true,
                       onTap: () {
@@ -219,7 +218,7 @@ class IbmMainShell extends StatelessWidget {
                     ),
                     _buildDrawerItem(
                       icon: Icons.account_balance_wallet_outlined,
-                      title: 'Commission',
+                      title: languageService.tr('commission'),
                       isSelected: currentIdx == 3,
                       hasArrow: true,
                       onTap: () {
@@ -229,7 +228,7 @@ class IbmMainShell extends StatelessWidget {
                     ),
                     _buildDrawerItem(
                       icon: Icons.link_outlined,
-                      title: 'Referral Links',
+                      title: languageService.tr('referral_link'),
                       isSelected: currentIdx == 4,
                       hasArrow: false,
                       onTap: () {
@@ -239,7 +238,7 @@ class IbmMainShell extends StatelessWidget {
                     ),
                     _buildDrawerItem(
                       icon: Icons.more_horiz_outlined,
-                      title: 'More',
+                      title: languageService.tr('general_more'),
                       isSelected: currentIdx == 5,
                       hasArrow: true,
                       onTap: () {
@@ -259,10 +258,9 @@ class IbmMainShell extends StatelessWidget {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10.r),
                 ),
-                tileColor:
-                    AppColors.isDarkMode
-                        ? Colors.grey[900]
-                        : const Color(0xFFF7F8FA),
+                tileColor: AppColors.isDarkMode
+                    ? Colors.grey[900]
+                    : const Color(0xFFF7F8FA),
                 leading: const Icon(Icons.arrow_back, color: Color(0xFF5F259E)),
                 title: const Text(
                   'Back to Client Portal',
@@ -290,10 +288,9 @@ class IbmMainShell extends StatelessWidget {
     return Container(
       margin: EdgeInsets.only(bottom: 4.h),
       decoration: BoxDecoration(
-        color:
-            isSelected
-                ? const Color(0xFF5F259E).withOpacity(0.08)
-                : Colors.transparent,
+        color: isSelected
+            ? const Color(0xFF5F259E).withOpacity(0.08)
+            : Colors.transparent,
         borderRadius: BorderRadius.circular(10.r),
       ),
       child: ListTile(
@@ -310,14 +307,9 @@ class IbmMainShell extends StatelessWidget {
             color: isSelected ? const Color(0xFF5F259E) : AppColors.textPrimary,
           ),
         ),
-        trailing:
-            hasArrow
-                ? Icon(
-                  Icons.chevron_right,
-                  size: 16.w,
-                  color: AppColors.textGrey,
-                )
-                : null,
+        trailing: hasArrow
+            ? Icon(Icons.chevron_right, size: 16.w, color: AppColors.textGrey)
+            : null,
         onTap: onTap,
         dense: true,
         contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 2.h),

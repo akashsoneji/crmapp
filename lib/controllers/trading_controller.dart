@@ -5,6 +5,7 @@ import 'package:crm_app/models/websocket_trading_response.dart';
 import 'package:crm_app/models/trade_history_model.dart';
 import 'package:crm_app/models/order_types.dart';
 import 'package:crm_app/services/api_service.dart';
+import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/constants/api_const.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
 import 'package:crm_app/utils/precision_helper.dart';
@@ -631,20 +632,19 @@ class TradingController extends GetxController {
     // Map to trade positions - always update even if empty to clear screen
     // Similar to how market positions work - they always update, even if empty
     // ✅ FIX: Filter out orders that are being cancelled or deleted to prevent re-adding removed orders
-    final newPendingOrders =
-        orders
-            .where(
-              (order) =>
-                  !_cancellingOrderIds.contains(order.order) &&
-                  !isPendingOrderDeleted(order.order),
-            )
-            .map((order) => order.toTradePosition())
-            .toList();
+    final newPendingOrders = orders
+        .where(
+          (order) =>
+              !_cancellingOrderIds.contains(order.order) &&
+              !isPendingOrderDeleted(order.order),
+        )
+        .map((order) => order.toTradePosition())
+        .toList();
 
     // Always update value and refresh - this ensures UI clears when websocket sends empty array
     // Matching the behavior of _updateMarketPositions which always updates
     _pendingPositions.value = newPendingOrders;
-    
+
     // ✅ FIX: Populate _pendingPositionsById for efficient lookups
     _pendingPositionsById.clear();
     for (final order in newPendingOrders) {
@@ -933,7 +933,7 @@ class TradingController extends GetxController {
 
   void setClosedDirection(String direction) {
     _closedDirection.value = direction;
-    
+
     // ✅ FIX: Trigger trade history reload when direction filter changes on History tab
     // This ensures server-side filtering across all pages
     if (_selectedTab.value == 2) {
@@ -946,7 +946,7 @@ class TradingController extends GetxController {
       _currentFilterParams = params;
       loadTradeHistory(page: 1, refresh: true, additionalParams: params);
     }
-    
+
     update();
   }
 
@@ -1084,30 +1084,28 @@ class TradingController extends GetxController {
     if (_selectedTab.value == 2) {
       // Apply instrument filter (match base symbols too)
       if (_selectedInstruments.isNotEmpty) {
-        positions =
-            positions.where((p) {
-              // Check if exact symbol matches
-              if (_selectedInstruments.contains(p.symbol)) {
-                return true;
-              }
-              // Check if base symbol (without .c suffix) matches
-              final baseSymbol = p.symbol.replaceFirst('.c', '');
-              return _selectedInstruments.contains(baseSymbol) ||
-                  _selectedInstruments.any(
-                    (selected) => selected.replaceFirst('.c', '') == baseSymbol,
-                  );
-            }).toList();
+        positions = positions.where((p) {
+          // Check if exact symbol matches
+          if (_selectedInstruments.contains(p.symbol)) {
+            return true;
+          }
+          // Check if base symbol (without .c suffix) matches
+          final baseSymbol = p.symbol.replaceFirst('.c', '');
+          return _selectedInstruments.contains(baseSymbol) ||
+              _selectedInstruments.any(
+                (selected) => selected.replaceFirst('.c', '') == baseSymbol,
+              );
+        }).toList();
       }
 
       // Apply direction filter (case-insensitive comparison) - tab-specific (tab 2 only)
       final directionFilter = _closedDirection.value;
       if (directionFilter != 'All') {
-        positions =
-            positions.where((p) {
-              final positionAction = p.action.trim().toLowerCase();
-              final selectedDirection = directionFilter.trim().toLowerCase();
-              return positionAction == selectedDirection;
-            }).toList();
+        positions = positions.where((p) {
+          final positionAction = p.action.trim().toLowerCase();
+          final selectedDirection = directionFilter.trim().toLowerCase();
+          return positionAction == selectedDirection;
+        }).toList();
       }
     }
 
@@ -1216,8 +1214,9 @@ class TradingController extends GetxController {
       }
 
       // Get all positions for this account
-      final positionsToClose =
-          _marketPositions.where((p) => p.accountId == accountToUse).toList();
+      final positionsToClose = _marketPositions
+          .where((p) => p.accountId == accountToUse)
+          .toList();
 
       if (positionsToClose.isEmpty) {
         _setError('No positions found to close');
@@ -1225,11 +1224,10 @@ class TradingController extends GetxController {
       }
 
       // Extract position IDs
-      final positionIds =
-          positionsToClose
-              .map((p) => int.tryParse(p.orderId))
-              .where((id) => id != null)
-              .toList();
+      final positionIds = positionsToClose
+          .map((p) => int.tryParse(p.orderId))
+          .where((id) => id != null)
+          .toList();
 
       if (positionIds.isEmpty) {
         _setError('No valid position IDs found');
@@ -1376,16 +1374,14 @@ class TradingController extends GetxController {
 
       // Add optional TP/SL values
       if (stopLoss != null && stopLoss > 0) {
-        payload['stop_loss'] =
-            digits != null
-                ? PrecisionHelper.round(stopLoss, decimals: digits)
-                : stopLoss;
+        payload['stop_loss'] = digits != null
+            ? PrecisionHelper.round(stopLoss, decimals: digits)
+            : stopLoss;
       }
       if (takeProfit != null && takeProfit > 0) {
-        payload['take_profit'] =
-            digits != null
-                ? PrecisionHelper.round(takeProfit, decimals: digits)
-                : takeProfit;
+        payload['take_profit'] = digits != null
+            ? PrecisionHelper.round(takeProfit, decimals: digits)
+            : takeProfit;
       }
 
       // Call the API to update TP/SL
@@ -1429,8 +1425,9 @@ class TradingController extends GetxController {
       }
 
       // Get all profitable positions
-      final profitablePositions =
-          _marketPositions.where((p) => p.profitLoss > 0).toList();
+      final profitablePositions = _marketPositions
+          .where((p) => p.profitLoss > 0)
+          .toList();
 
       // Close each profitable position
       for (final position in profitablePositions) {
@@ -1455,8 +1452,9 @@ class TradingController extends GetxController {
         markPositionAsDeleted(position.orderId);
       }
 
-      _marketPositions.value =
-          _marketPositions.where((p) => p.profitLoss <= 0).toList();
+      _marketPositions.value = _marketPositions
+          .where((p) => p.profitLoss <= 0)
+          .toList();
       _marketPositions.refresh();
 
       // ✅ FIX: Call update() for GetBuilder compatibility
@@ -1497,8 +1495,9 @@ class TradingController extends GetxController {
       }
 
       // Get all losing positions
-      final losingPositions =
-          _marketPositions.where((p) => p.profitLoss < 0).toList();
+      final losingPositions = _marketPositions
+          .where((p) => p.profitLoss < 0)
+          .toList();
 
       // Close each losing position
       for (final position in losingPositions) {
@@ -1523,8 +1522,9 @@ class TradingController extends GetxController {
         markPositionAsDeleted(position.orderId);
       }
 
-      _marketPositions.value =
-          _marketPositions.where((p) => p.profitLoss >= 0).toList();
+      _marketPositions.value = _marketPositions
+          .where((p) => p.profitLoss >= 0)
+          .toList();
       _marketPositions.refresh();
 
       // ✅ FIX: Call update() for GetBuilder compatibility
@@ -1565,8 +1565,9 @@ class TradingController extends GetxController {
       }
 
       // Get all long positions
-      final longPositions =
-          _marketPositions.where((p) => p.action == 'Buy').toList();
+      final longPositions = _marketPositions
+          .where((p) => p.action == 'Buy')
+          .toList();
 
       // Close each long position
       for (final position in longPositions) {
@@ -1585,8 +1586,9 @@ class TradingController extends GetxController {
       }
 
       // Remove all long positions from local list
-      _marketPositions.value =
-          _marketPositions.where((p) => p.action != 'Buy').toList();
+      _marketPositions.value = _marketPositions
+          .where((p) => p.action != 'Buy')
+          .toList();
       _marketPositions.refresh();
 
       _setSuccess('All long positions closed successfully');
@@ -1624,8 +1626,9 @@ class TradingController extends GetxController {
       }
 
       // Get all short positions
-      final shortPositions =
-          _marketPositions.where((p) => p.action == 'Sell').toList();
+      final shortPositions = _marketPositions
+          .where((p) => p.action == 'Sell')
+          .toList();
 
       // Close each short position
       for (final position in shortPositions) {
@@ -1646,8 +1649,9 @@ class TradingController extends GetxController {
       }
 
       // Remove all short positions from local list
-      _marketPositions.value =
-          _marketPositions.where((p) => p.action != 'Sell').toList();
+      _marketPositions.value = _marketPositions
+          .where((p) => p.action != 'Sell')
+          .toList();
       _marketPositions.refresh();
 
       _setSuccess('All short positions closed successfully');
@@ -1741,14 +1745,20 @@ class TradingController extends GetxController {
     _errorMessage.value = error;
     if (error.isNotEmpty) {
       // Get.snackbar('Error', error, snackPosition: SnackPosition.TOP);
-      CustomToastService.showError(title: 'Error', message: error);
+      CustomToastService.showError(
+        title: TranslationUtils.tr('common_error'),
+        message: error,
+      );
     }
   }
 
   void _setSuccess(String message) {
     _successMessage.value = message;
     if (message.isNotEmpty) {
-      CustomToastService.showSuccess(title: 'Success', message: message);
+      CustomToastService.showSuccess(
+        title: TranslationUtils.tr('common_success'),
+        message: message,
+      );
       // Get.snackbar('Success', message, snackPosition: SnackPosition.TOP);
     }
   }
@@ -1953,18 +1963,18 @@ class TradingController extends GetxController {
       }
 
       // Filter out orders that are already being cancelled
-      final ordersToCancel =
-          orderIds.where((id) => !_cancellingOrderIds.contains(id)).toList();
+      final ordersToCancel = orderIds
+          .where((id) => !_cancellingOrderIds.contains(id))
+          .toList();
 
       if (ordersToCancel.isEmpty) {
         return;
       }
 
       // Filter out orders that don't exist in pending list (already closed)
-      existingOrders =
-          ordersToCancel.where((id) {
-            return _pendingPositions.any((p) => p.orderId == id.toString());
-          }).toList();
+      existingOrders = ordersToCancel.where((id) {
+        return _pendingPositions.any((p) => p.orderId == id.toString());
+      }).toList();
 
       if (existingOrders.isEmpty) {
         return;
@@ -2068,7 +2078,8 @@ class TradingController extends GetxController {
       // Build query parameters matching the API format:
       // ?page=1&per_page=10&mt5_account=2000000&from=YYYY-MM-DD&to=YYYY-MM-DD
       final now = DateTime.now().toUtc();
-      final defaultStartDate = now; // Default: today (matches web dashboard & UI default preset)
+      final defaultStartDate =
+          now; // Default: today (matches web dashboard & UI default preset)
       final defaultFromStr =
           '${defaultStartDate.year}-${defaultStartDate.month.toString().padLeft(2, '0')}-${defaultStartDate.day.toString().padLeft(2, '0')}';
       final defaultToStr =
@@ -2522,8 +2533,9 @@ class TradingController extends GetxController {
       return "Please enter a valid price";
     }
 
-    final currentPrice =
-        orderType.isBuyOrder ? currentAskPrice : currentBidPrice;
+    final currentPrice = orderType.isBuyOrder
+        ? currentAskPrice
+        : currentBidPrice;
     final pipGap = calculatePipGap(price);
 
     switch (orderType) {
@@ -2779,12 +2791,10 @@ API Response:
     required int decimals,
   }) {
     if (currentPrice.isEmpty) {
-      final defaultPrice =
-          orderType.isBuyOrder ? currentAskPrice : currentBidPrice;
-      return PrecisionHelper.formatPrice(
-        defaultPrice,
-        decimals: decimals,
-      );
+      final defaultPrice = orderType.isBuyOrder
+          ? currentAskPrice
+          : currentBidPrice;
+      return PrecisionHelper.formatPrice(defaultPrice, decimals: decimals);
     }
 
     final priceValue = double.tryParse(currentPrice) ?? 0.0;
@@ -2794,10 +2804,7 @@ API Response:
     // Apply order type specific logic
     double newValue = priceValue + adjustment;
 
-    return PrecisionHelper.formatPrice(
-      newValue,
-      decimals: decimals,
-    );
+    return PrecisionHelper.formatPrice(newValue, decimals: decimals);
   }
 
   /// Adjust SL/TP by pip value
@@ -2811,12 +2818,10 @@ API Response:
     if (currentValue.isEmpty) {
       final entryPriceValue = double.tryParse(entryPrice) ?? 0.0;
       final stepValue = _getPointValue(decimals);
-      final defaultValue =
-          isIncrease ? entryPriceValue + stepValue : entryPriceValue - stepValue;
-      return PrecisionHelper.formatPrice(
-        defaultValue,
-        decimals: decimals,
-      );
+      final defaultValue = isIncrease
+          ? entryPriceValue + stepValue
+          : entryPriceValue - stepValue;
+      return PrecisionHelper.formatPrice(defaultValue, decimals: decimals);
     }
 
     final currentValueNum = double.tryParse(currentValue) ?? 0.0;
@@ -2824,10 +2829,7 @@ API Response:
     final adjustment = isIncrease ? stepValue : -stepValue;
     final newValue = currentValueNum + adjustment;
 
-    return PrecisionHelper.formatPrice(
-      newValue,
-      decimals: decimals,
-    );
+    return PrecisionHelper.formatPrice(newValue, decimals: decimals);
   }
 
   /// Check if order type is enabled for current market conditions

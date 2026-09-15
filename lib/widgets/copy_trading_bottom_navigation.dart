@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
+import 'package:crm_app/services/language_service.dart';
 import 'package:flutter_svg/svg.dart';
 
 class CopyTradingBottomNavItem {
@@ -28,11 +29,12 @@ class CopyTradingBottomNavigation extends StatelessWidget {
     this.isMaster = false,
   });
 
-  static const List<CopyTradingBottomNavItem> _copierItems = [
+  static List<CopyTradingBottomNavItem> _copierItems = [
     CopyTradingBottomNavItem(
-      label: 'Become Master',
+      label: TranslationUtils.tr('copy_trading_become_master'),
       icon: "assets/svg/copy_trading/bottom_navigation/become_master.svg",
-      iconActive: "assets/svg/copy_trading/bottom_navigation/become_master_bold.svg",
+      iconActive:
+          "assets/svg/copy_trading/bottom_navigation/become_master_bold.svg",
     ),
     CopyTradingBottomNavItem(
       label: 'Explore',
@@ -47,7 +49,7 @@ class CopyTradingBottomNavigation extends StatelessWidget {
     ),
   ];
 
-  static const List<CopyTradingBottomNavItem> _masterItems = [
+  static List<CopyTradingBottomNavItem> _masterItems = [
     CopyTradingBottomNavItem(
       label: 'Dashboard',
       icon: 'assets/svg/copy_trading/bottom_navigation/dashboard.svg',
@@ -90,7 +92,9 @@ class CopyTradingBottomNavigation extends StatelessWidget {
             borderRadius: BorderRadius.circular(32.r),
             boxShadow: [
               BoxShadow(
-                color: AppColors.textPrimary.withValues(alpha: AppColors.isDarkMode ? 0.22 : 0.15),
+                color: AppColors.textPrimary.withValues(
+                  alpha: AppColors.isDarkMode ? 0.22 : 0.15,
+                ),
                 blurRadius: 22,
                 spreadRadius: 2,
                 offset: const Offset(0, 8),
@@ -102,7 +106,10 @@ class CopyTradingBottomNavigation extends StatelessWidget {
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
               child: Container(
-                padding: EdgeInsets.symmetric(horizontal: isMaster ? 4.w : 8.w, vertical: 8.h),
+                padding: EdgeInsets.symmetric(
+                  horizontal: isMaster ? 4.w : 8.w,
+                  vertical: 8.h,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.whiteColor,
                   borderRadius: BorderRadius.circular(32.r),
@@ -111,29 +118,28 @@ class CopyTradingBottomNavigation extends StatelessWidget {
                     width: 1,
                   ),
                 ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children:
-                    items.asMap().entries.map((entry) {
-                      final idx = entry.key;
-                      final item = entry.value;
-                      return _buildNavItem(
-                        context,
-                        idx,
-                        item.icon,
-                        item.iconActive,
-                        item.label,
-                      );
-                    }).toList(),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: items.asMap().entries.map((entry) {
+                    final idx = entry.key;
+                    final item = entry.value;
+                    return _buildNavItem(
+                      context,
+                      idx,
+                      item.icon,
+                      item.iconActive,
+                      item.label,
+                    );
+                  }).toList(),
+                ),
               ),
             ),
           ),
         ),
       ),
-    ),
-  );
-}
- 
+    );
+  }
+
   Widget _buildNavItem(
     BuildContext context,
     int index,
@@ -142,7 +148,7 @@ class CopyTradingBottomNavigation extends StatelessWidget {
     String label,
   ) {
     final bool isSelected = currentIndex == index;
- 
+
     return InkWell(
       borderRadius: BorderRadius.circular(50.r),
       onTap: () => onTap(index),
@@ -150,15 +156,15 @@ class CopyTradingBottomNavigation extends StatelessWidget {
         duration: const Duration(milliseconds: 220),
         curve: Curves.easeOut,
         padding: EdgeInsets.symmetric(
-          horizontal:
-              isSelected ? (isMaster ? 10.w : 26.w) : (isMaster ? 4.w : 10.w),
+          horizontal: isSelected
+              ? (isMaster ? 10.w : 26.w)
+              : (isMaster ? 4.w : 10.w),
           vertical: 6.h,
         ),
         decoration: BoxDecoration(
-          color:
-              isSelected
-                  ? AppColors.primary.withOpacity(0.1)
-                  : Colors.transparent,
+          color: isSelected
+              ? AppColors.primary.withOpacity(0.1)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(50.r),
         ),
         child: Column(

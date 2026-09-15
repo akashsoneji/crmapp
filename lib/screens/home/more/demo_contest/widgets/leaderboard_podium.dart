@@ -70,12 +70,15 @@ class _PodiumColumn extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasEntry = entry != null;
-    final name = entry?.displayName.replaceAll(
+    final name =
+        entry?.displayName.replaceAll(
           RegExp(r'^[\u{1F1E6}-\u{1F1FF}]{2}\s*', unicode: true),
           '',
         ) ??
         '—';
-    final pnlColor = (entry?.pnl ?? 0) >= 0 ? AppColors.success : AppColors.error;
+    final pnlColor = (entry?.pnl ?? 0) >= 0
+        ? AppColors.success
+        : AppColors.error;
     final pnlText = hasEntry
         ? '${entry!.pnlPercent >= 0 ? '+' : ''}${entry!.pnlPercent.toStringAsFixed(1)}%'
         : '—';
@@ -98,7 +101,9 @@ class _PodiumColumn extends StatelessWidget {
           ),
           alignment: Alignment.center,
           child: Text(
-            hasEntry ? name.substring(0, name.length.clamp(0, 1)).toUpperCase() : '·',
+            hasEntry
+                ? name.substring(0, name.length.clamp(0, 1)).toUpperCase()
+                : '·',
             style: TextStyle(
               fontSize: 18.sp,
               fontWeight: FontWeight.w700,

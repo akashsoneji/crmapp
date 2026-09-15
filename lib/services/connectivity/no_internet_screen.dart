@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/services/connectivity/connectivity_controller.dart';
+import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/utils/svg_color_helper.dart';
 
 /// Full-screen "No Internet" overlay shown when device loses connectivity.
@@ -14,6 +15,7 @@ class NoInternetScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<ConnectivityController>();
+    final languageService = Get.find<LanguageService>();
 
     return Container(
       color: AppColors.whiteColor,
@@ -51,7 +53,7 @@ class NoInternetScreen extends StatelessWidget {
 
               // Title
               Text(
-                'No Internet!',
+                languageService.tr('connectivity_no_internet_title'),
                 style: AppTextStyles.headingblack,
                 textAlign: TextAlign.center,
               ),
@@ -59,7 +61,7 @@ class NoInternetScreen extends StatelessWidget {
 
               // Message
               Text(
-                'Please check your connection and try again',
+                languageService.tr('connectivity_no_internet_message'),
                 style: TextStyle(
                   fontSize: 11.45.sp,
                   color: AppColors.textSecondary,
@@ -69,10 +71,9 @@ class NoInternetScreen extends StatelessWidget {
               ),
               SizedBox(height: 48.h),
 
-            
               const Spacer(flex: 3),
 
-               // Refresh / Retry Button
+              // Refresh / Retry Button
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -97,7 +98,7 @@ class NoInternetScreen extends StatelessWidget {
                       ),
                       SizedBox(width: 8.w),
                       Text(
-                        'Refresh',
+                        languageService.tr('connectivity_refresh'),
                         style: TextStyle(
                           fontSize: 16.sp,
                           fontWeight: FontWeight.w600,
@@ -108,7 +109,7 @@ class NoInternetScreen extends StatelessWidget {
                   ),
                 ),
               ),
-SizedBox(height: 24.h),
+              SizedBox(height: 24.h),
             ],
           ),
         ),

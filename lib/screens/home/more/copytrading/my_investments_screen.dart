@@ -1,4 +1,5 @@
 import 'package:crm_app/constants/color.dart';
+import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/copy_trading/copy_trading_copier_subscriptions_controller.dart'
     show
@@ -94,7 +95,10 @@ class _MyInvestmentsScreenState extends State<MyInvestmentsScreen>
           onPressed: () => Get.offAll(() => const TradingMainScreen()),
         ),
         centerTitle: true,
-        title: Text('My Investments', style: AppTextStyles.screenTitle),
+        title: Text(
+          Get.find<LanguageService>().tr('pmam_my_investments'),
+          style: AppTextStyles.screenTitle,
+        ),
         automaticallyImplyLeading: false,
         // actions: [
         //   Padding(
@@ -189,18 +193,16 @@ class _MyInvestmentsScreenState extends State<MyInvestmentsScreen>
                   child: TabBar(
                     controller: tabController,
                     indicator: BoxDecoration(
-                      color:
-                          AppColors.isDarkMode
-                              ? AppColors.textPrimaryDark.withValues(alpha: 0.1)
-                              : AppColors.primary,
+                      color: AppColors.isDarkMode
+                          ? AppColors.textPrimaryDark.withValues(alpha: 0.1)
+                          : AppColors.primary,
                       borderRadius: BorderRadius.circular(10.r),
                     ),
                     indicatorSize: TabBarIndicatorSize.tab,
                     dividerColor: Colors.transparent,
-                    labelColor:
-                        AppColors.isDarkMode
-                            ? AppColors.textPrimaryDark
-                            : AppColors.onColoredBackground,
+                    labelColor: AppColors.isDarkMode
+                        ? AppColors.textPrimaryDark
+                        : AppColors.onColoredBackground,
                     unselectedLabelColor: AppColors.textGrey,
                     labelStyle: TextStyle(
                       fontSize: 12.sp,
@@ -278,32 +280,29 @@ class _MyInvestmentsScreenState extends State<MyInvestmentsScreen>
     final amountCtrl = TextEditingController();
     final amount = await showDialog<num?>(
       context: context,
-      builder:
-          (ctx) => AlertDialog(
-            title: const Text('Add capital'),
-            content: TextField(
-              controller: amountCtrl,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              decoration: const InputDecoration(hintText: 'Amount (USD)'),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(null),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () {
-                  final v = num.tryParse(amountCtrl.text.trim());
-                  // Don't close dialog for invalid amount.
-                  if (v == null || v <= 0) return;
-                  Navigator.of(ctx).pop(v);
-                },
-                child: const Text('Add'),
-              ),
-            ],
+      builder: (ctx) => AlertDialog(
+        title: const Text('Add capital'),
+        content: TextField(
+          controller: amountCtrl,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          decoration: const InputDecoration(hintText: 'Amount (USD)'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(null),
+            child: Text(TranslationUtils.tr('common_cancel')),
           ),
+          TextButton(
+            onPressed: () {
+              final v = num.tryParse(amountCtrl.text.trim());
+              // Don't close dialog for invalid amount.
+              if (v == null || v <= 0) return;
+              Navigator.of(ctx).pop(v);
+            },
+            child: const Text('Add'),
+          ),
+        ],
+      ),
     );
     // Cancel pressed -> amount is null. Don't show any error.
     if (amount == null) return;
@@ -329,23 +328,20 @@ class _MyInvestmentsScreenState extends State<MyInvestmentsScreen>
   void _stop(int id) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder:
-          (ctx) => AlertDialog(
-            title: const Text('Stop investment?'),
-            content: const Text(
-              'This is permanent. You\'ll need to re-subscribe.',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(false),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(true),
-                child: const Text('Stop'),
-              ),
-            ],
+      builder: (ctx) => AlertDialog(
+        title: Text(TranslationUtils.tr('copy_stop_investment')),
+        content: Text(TranslationUtils.tr('copy_stop_investment_message')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(TranslationUtils.tr('common_cancel')),
           ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(TranslationUtils.tr('common_stop')),
+          ),
+        ],
+      ),
     );
     if (confirmed != true) return;
     final res = await controller.stop(id);
@@ -359,8 +355,9 @@ class _MyInvestmentsScreenState extends State<MyInvestmentsScreen>
     Get.to(
       () => MasterDetailsScreen(
         masterCode: sub.masterCode,
-        masterNickname:
-            sub.masterName.isNotEmpty ? sub.masterName : sub.masterCode,
+        masterNickname: sub.masterName.isNotEmpty
+            ? sub.masterName
+            : sub.masterCode,
       ),
       transition: Transition.rightToLeft,
       duration: const Duration(milliseconds: 250),
@@ -505,10 +502,12 @@ class _SummarySection extends StatelessWidget {
                           label: 'Total P&L',
                           value: '\$${totalPnl.toStringAsFixed(2)}',
                           icon: Icons.trending_up,
-                          iconColor:
-                              totalPnl >= 0 ? AppColors.green : AppColors.error,
-                          valueColor:
-                              totalPnl >= 0 ? AppColors.green : AppColors.error,
+                          iconColor: totalPnl >= 0
+                              ? AppColors.green
+                              : AppColors.error,
+                          valueColor: totalPnl >= 0
+                              ? AppColors.green
+                              : AppColors.error,
                         ),
                       ),
                     ],
@@ -746,7 +745,10 @@ class _InvestmentRow extends StatelessWidget {
                           gradient: LinearGradient(
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
-                            colors: [AppColors.brandPrimary, AppColors.brandPrimary.withOpacity(0.7)],
+                            colors: [
+                              AppColors.brandPrimary,
+                              AppColors.brandPrimary.withOpacity(0.7),
+                            ],
                           ),
                           borderRadius: BorderRadius.circular(10.r),
                         ),
@@ -806,10 +808,9 @@ class _InvestmentRow extends StatelessWidget {
                                   '\$${item.totalPnl.toStringAsFixed(2)}',
                                   style: AppTextStyles.black16600.copyWith(
                                     fontWeight: FontWeight.w600,
-                                    color:
-                                        item.totalPnl >= 0
-                                            ? AppColors.green
-                                            : AppColors.error,
+                                    color: item.totalPnl >= 0
+                                        ? AppColors.green
+                                        : AppColors.error,
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -1089,7 +1090,7 @@ class _TradeHistoryTab extends StatelessWidget {
                 TextButton.icon(
                   onPressed: controller.loadTrades,
                   icon: const Icon(Icons.refresh, size: 16),
-                  label: const Text('Retry'),
+                  label: Text(TranslationUtils.tr('common_retry')),
                   style: TextButton.styleFrom(
                     foregroundColor: AppColors.primary,
                   ),
@@ -1452,14 +1453,12 @@ class _EmptyInvestmentsState extends StatelessWidget {
               ),
               style: ElevatedButton.styleFrom(
                 elevation: 0,
-                backgroundColor:
-                    AppColors.isDarkMode
-                        ? AppColors.textPrimaryDark.withValues(alpha: 0.1)
-                        : AppColors.primary,
-                foregroundColor:
-                    AppColors.isDarkMode
-                        ? AppColors.textPrimaryDark
-                        : AppColors.onColoredBackground,
+                backgroundColor: AppColors.isDarkMode
+                    ? AppColors.textPrimaryDark.withValues(alpha: 0.1)
+                    : AppColors.primary,
+                foregroundColor: AppColors.isDarkMode
+                    ? AppColors.textPrimaryDark
+                    : AppColors.onColoredBackground,
                 padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10.r),
@@ -1503,7 +1502,10 @@ class _InlineError extends StatelessWidget {
           TextButton(
             onPressed: onRetry,
             style: TextButton.styleFrom(padding: EdgeInsets.zero),
-            child: Text('Retry', style: AppTextStyles.textButton),
+            child: Text(
+              TranslationUtils.tr('common_retry'),
+              style: AppTextStyles.textButton,
+            ),
           ),
         ],
       ),

@@ -5,6 +5,7 @@ import 'package:crm_app/models/trade_win/trade_win_past_win_model.dart';
 import 'package:crm_app/models/trade_win/trade_win_product_model.dart';
 import 'package:crm_app/models/trade_win/trade_win_stats_model.dart';
 import 'package:crm_app/services/api_service.dart';
+import 'package:crm_app/services/language_service.dart';
 
 class TradeWinController extends GetxController {
   final RxBool isLoading = false.obs;
@@ -107,13 +108,17 @@ class TradeWinController extends GetxController {
       );
 
       if (!response.success || response.data == null) {
-        errorMessage.value = response.message ?? 'Failed to load products';
+        errorMessage.value =
+            response.message ??
+            Get.find<LanguageService>().tr('tw_failed_to_load_products');
         return;
       }
 
       final root = _asMap(response.data);
       if (root == null) {
-        errorMessage.value = 'Invalid response';
+        errorMessage.value = Get.find<LanguageService>().tr(
+          'tw_invalid_response',
+        );
         return;
       }
 
@@ -168,7 +173,8 @@ class TradeWinController extends GetxController {
     }
   }
 
-  Future<void> loadMoreProducts() => fetchProducts(showLoader: false, loadMore: true);
+  Future<void> loadMoreProducts() =>
+      fetchProducts(showLoader: false, loadMore: true);
 
   Future<void> fetchPastWins({bool reset = true, bool loadMore = false}) async {
     if (loadMore) {
@@ -178,8 +184,9 @@ class TradeWinController extends GetxController {
       isLoadingPastWins.value = true;
     }
 
-    final page =
-        loadMore ? pastWinsCurrentPage + 1 : (reset ? 1 : pastWinsCurrentPage);
+    final page = loadMore
+        ? pastWinsCurrentPage + 1
+        : (reset ? 1 : pastWinsCurrentPage);
 
     try {
       final response = await ApiService.get(
@@ -204,17 +211,16 @@ class TradeWinController extends GetxController {
       pastWinsLastPage = _readInt(pageData['last_page'], fallback: 1);
 
       final listRaw = pageData['data'];
-      final items =
-          listRaw is List
-              ? listRaw
-                  .whereType<Map>()
-                  .map(
-                    (e) => TradeWinPastWinModel.fromJson(
-                      Map<String, dynamic>.from(e),
-                    ),
-                  )
-                  .toList()
-              : <TradeWinPastWinModel>[];
+      final items = listRaw is List
+          ? listRaw
+                .whereType<Map>()
+                .map(
+                  (e) => TradeWinPastWinModel.fromJson(
+                    Map<String, dynamic>.from(e),
+                  ),
+                )
+                .toList()
+          : <TradeWinPastWinModel>[];
 
       if (loadMore) {
         pastWins.addAll(items);
@@ -251,35 +257,28 @@ class TradeWinController extends GetxController {
 
   _ProductsPageParse _parseProductsPage(dynamic productsRaw) {
     if (productsRaw is List) {
-      final items =
-          productsRaw
-              .whereType<Map>()
-              .map(
-                (e) =>
-                    TradeWinProductModel.fromJson(Map<String, dynamic>.from(e)),
-              )
-              .toList();
-      return _ProductsPageParse(
-        items: items,
-        currentPage: 1,
-        lastPage: 1,
-      );
+      final items = productsRaw
+          .whereType<Map>()
+          .map(
+            (e) => TradeWinProductModel.fromJson(Map<String, dynamic>.from(e)),
+          )
+          .toList();
+      return _ProductsPageParse(items: items, currentPage: 1, lastPage: 1);
     }
 
     if (productsRaw is Map) {
       final m = Map<String, dynamic>.from(productsRaw);
       final listRaw = m['data'];
-      final items =
-          listRaw is List
-              ? listRaw
-                  .whereType<Map>()
-                  .map(
-                    (e) => TradeWinProductModel.fromJson(
-                      Map<String, dynamic>.from(e),
-                    ),
-                  )
-                  .toList()
-              : <TradeWinProductModel>[];
+      final items = listRaw is List
+          ? listRaw
+                .whereType<Map>()
+                .map(
+                  (e) => TradeWinProductModel.fromJson(
+                    Map<String, dynamic>.from(e),
+                  ),
+                )
+                .toList()
+          : <TradeWinProductModel>[];
 
       return _ProductsPageParse(
         items: items,

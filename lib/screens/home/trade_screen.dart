@@ -77,11 +77,7 @@ class TradeScreen extends StatefulWidget {
   final Function(String)? onNavigateToChart;
   final Function(int)? onNavigateToTab; // Bottom navigation index (0..4)
 
-  const TradeScreen({
-    super.key,
-    this.onNavigateToChart,
-    this.onNavigateToTab,
-  });
+  const TradeScreen({super.key, this.onNavigateToChart, this.onNavigateToTab});
 
   @override
   State<TradeScreen> createState() => _TradeScreenState();
@@ -430,8 +426,8 @@ class _TradeScreenState extends State<TradeScreen> {
                                           'You have no data',
                                           style: AppTextStyles.subheading
                                               .copyWith(
-                                            color: AppColors.textGrey,
-                                          ),
+                                                color: AppColors.textGrey,
+                                              ),
                                         ),
                                       ],
                                     ),
@@ -458,18 +454,18 @@ class _TradeScreenState extends State<TradeScreen> {
                                           builder: (innerController) {
                                             final TradePosition? fresh =
                                                 innerController.selectedTab == 0
-                                                    ? innerController
-                                                        .getMarketPositionById(
-                                                          position.orderId,
-                                                        )
-                                                    : (innerController
-                                                                .selectedTab ==
-                                                            1
-                                                        ? innerController
+                                                ? innerController
+                                                      .getMarketPositionById(
+                                                        position.orderId,
+                                                      )
+                                                : (innerController
+                                                              .selectedTab ==
+                                                          1
+                                                      ? innerController
                                                             .getPendingPositionById(
                                                               position.orderId,
                                                             )
-                                                        : innerController
+                                                      : innerController
                                                             .getClosedPositionById(
                                                               position.orderId,
                                                             ));
@@ -530,27 +526,27 @@ class _TradeScreenState extends State<TradeScreen> {
 
       return (positions.isNotEmpty)
           ? (tradingController.selectedTab == 0)
-              ? TextButton(
-                style: TextButton.styleFrom(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10.r),
-                  ),
-                  backgroundColor: AppColors.cardBackGround,
-                ),
-                onPressed: () {
-                  print('🔘 Close All button clicked!');
-                  _showClosePositionsBottomSheet(tradingController);
-                },
-                child: Text(
-                  languageService.tr('trade_close_all'),
-                  style: AppTextStyles.label.copyWith(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w400,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              )
-              : SizedBox.shrink()
+                ? TextButton(
+                    style: TextButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10.r),
+                      ),
+                      backgroundColor: AppColors.cardBackGround,
+                    ),
+                    onPressed: () {
+                      print('🔘 Close All button clicked!');
+                      _showClosePositionsBottomSheet(tradingController);
+                    },
+                    child: Text(
+                      languageService.tr('trade_close_all'),
+                      style: AppTextStyles.label.copyWith(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w400,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  )
+                : SizedBox.shrink()
           : const SizedBox.shrink();
     });
 
@@ -566,14 +562,12 @@ class _TradeScreenState extends State<TradeScreen> {
         final accountInfo = controller.accountInfo;
         final double? floatingProfit =
             (accountInfo != null && activeAccount != null)
-                ? accountInfo.profit
-                : null;
+            ? accountInfo.profit
+            : null;
 
         final navigateToTab = widget.onNavigateToTab;
         return AccountHeaderWidget(
-          onMenuTap: navigateToTab == null
-              ? null
-              : () => navigateToTab(4),
+          onMenuTap: navigateToTab == null ? null : () => navigateToTab(4),
           showSearchIcon: false,
           rightWidget: closeAllButton,
           floatingProfit: floatingProfit,
@@ -636,65 +630,67 @@ class _TradeScreenState extends State<TradeScreen> {
                     fontSize: 14.sp,
                     height: 1.57.h,
                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                    color:
-                        isSelected ? AppColors.textPrimary : AppColors.textGrey,
+                    color: isSelected
+                        ? AppColors.textPrimary
+                        : AppColors.textGrey,
                   ),
                 ),
                 SizedBox(width: 4.h),
                 (index == 0)
                     ? Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 8.w,
-                        vertical: 2.h,
-                      ),
-                      decoration: BoxDecoration(
-                        color:
-                            // isSelected
-                            // ?
-                            AppColors.cardBackGround,
-                        // : AppColors.backgroundLight,
-                        borderRadius: BorderRadius.circular(8.r),
-                      ),
-                      child: Text(
-                        _getPositionCount(tradingController, index).toString(),
-                        style: AppTextStyles.label.copyWith(
-                          fontSize: 10.sp,
-                          fontWeight: FontWeight.w600,
-                          color:
-                              isSelected
-                                  ? AppColors.primary
-                                  : AppColors.textGrey,
-                        ),
-                      ),
-                    )
-                    : const SizedBox.shrink(),
-                SizedBox(width: 4.h),
-                (index == 1)
-                    ? Obx(() {
-                      // Access pendingPositions directly to ensure reactivity
-                      final count = tradingController.pendingPositions.length;
-                      return Container(
                         padding: EdgeInsets.symmetric(
                           horizontal: 8.w,
                           vertical: 2.h,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.cardBackGround,
+                          color:
+                              // isSelected
+                              // ?
+                              AppColors.cardBackGround,
+                          // : AppColors.backgroundLight,
                           borderRadius: BorderRadius.circular(8.r),
                         ),
                         child: Text(
-                          count.toString(),
+                          _getPositionCount(
+                            tradingController,
+                            index,
+                          ).toString(),
                           style: AppTextStyles.label.copyWith(
                             fontSize: 10.sp,
                             fontWeight: FontWeight.w600,
-                            color:
-                                isSelected
-                                    ? AppColors.primary
-                                    : AppColors.textGrey,
+                            color: isSelected
+                                ? AppColors.primary
+                                : AppColors.textGrey,
                           ),
                         ),
-                      );
-                    })
+                      )
+                    : const SizedBox.shrink(),
+                SizedBox(width: 4.h),
+                (index == 1)
+                    ? Obx(() {
+                        // Access pendingPositions directly to ensure reactivity
+                        final count = tradingController.pendingPositions.length;
+                        return Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 8.w,
+                            vertical: 2.h,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.cardBackGround,
+                            borderRadius: BorderRadius.circular(8.r),
+                          ),
+                          child: Text(
+                            count.toString(),
+                            style: AppTextStyles.label.copyWith(
+                              fontSize: 10.sp,
+                              fontWeight: FontWeight.w600,
+                              color: isSelected
+                                  ? AppColors.primary
+                                  : AppColors.textGrey,
+                            ),
+                          ),
+                        );
+                      })
                     : const SizedBox.shrink(),
               ],
             ),
@@ -754,38 +750,35 @@ class _TradeScreenState extends State<TradeScreen> {
             tradingController.selectedTab == 2
                 ? SizedBox.shrink()
                 : RichText(
-                  text: TextSpan(
-                    style: AppTextStyles.label.copyWith(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w400,
-                      color: AppColors.icongrey, // base/default color
-                      height: 1.4,
-                    ),
-                    children: [
-                      TextSpan(
-                        text:
-                            tradingController.selectedTab == 1
-                                ? 'Pending orders:\n'
-                                : 'Floating profit:\n',
+                    text: TextSpan(
+                      style: AppTextStyles.label.copyWith(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w400,
+                        color: AppColors.icongrey, // base/default color
+                        height: 1.4,
                       ),
-                      TextSpan(
-                        text:
-                            tradingController.selectedTab == 1
-                                ? '${positions.length} orders'
-                                : '\$${PrecisionHelper.formatPnL(totalProfitLoss)}',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color:
-                              tradingController.selectedTab == 1
-                                  ? AppColors.textGrey
-                                  : (isPositive
+                      children: [
+                        TextSpan(
+                          text: tradingController.selectedTab == 1
+                              ? 'Pending orders:\n'
+                              : 'Floating profit:\n',
+                        ),
+                        TextSpan(
+                          text: tradingController.selectedTab == 1
+                              ? '${positions.length} orders'
+                              : '\$${PrecisionHelper.formatPnL(totalProfitLoss)}',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: tradingController.selectedTab == 1
+                                ? AppColors.textGrey
+                                : (isPositive
                                       ? AppColors.success
                                       : AppColors.error),
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
             Spacer(),
             Row(
               children: [
@@ -804,20 +797,18 @@ class _TradeScreenState extends State<TradeScreen> {
                             height: 35,
                             width: 40,
                             decoration: BoxDecoration(
-                              color:
-                                  hasDateFilter
-                                      ? AppColors.primary.withOpacity(0.1)
-                                      : AppColors.backgroundLight,
+                              color: hasDateFilter
+                                  ? AppColors.primary.withOpacity(0.1)
+                                  : AppColors.backgroundLight,
                               borderRadius: BorderRadius.circular(5),
                             ),
                             margin: EdgeInsets.all(5),
                             padding: EdgeInsets.symmetric(horizontal: 10),
                             child: Icon(
                               Icons.calendar_today,
-                              color:
-                                  hasDateFilter
-                                      ? AppColors.primary
-                                      : AppColors.textGreyLight,
+                              color: hasDateFilter
+                                  ? AppColors.primary
+                                  : AppColors.textGreyLight,
                               size: 20,
                             ),
                           ),
@@ -874,10 +865,9 @@ class _TradeScreenState extends State<TradeScreen> {
                           height: 35,
                           width: 40,
                           decoration: BoxDecoration(
-                            color:
-                                isInstrumentFilterActive
-                                    ? AppColors.primary.withOpacity(0.1)
-                                    : AppColors.backgroundLight,
+                            color: isInstrumentFilterActive
+                                ? AppColors.primary.withOpacity(0.1)
+                                : AppColors.backgroundLight,
                             borderRadius: BorderRadius.circular(5),
                           ),
                           margin: EdgeInsets.all(5),
@@ -886,10 +876,9 @@ class _TradeScreenState extends State<TradeScreen> {
                             angle: 1.55,
                             child: SvgPicture.asset(
                               "assets/svg/bottom_navigation/candle_bold.svg",
-                              color:
-                                  isInstrumentFilterActive
-                                      ? AppColors.primary
-                                      : AppColors.textGreyLight,
+                              color: isInstrumentFilterActive
+                                  ? AppColors.primary
+                                  : AppColors.textGreyLight,
                             ),
                           ),
                         ),
@@ -933,8 +922,8 @@ class _TradeScreenState extends State<TradeScreen> {
                   );
                 }),
                 Obx(() {
-                  final currentDirection =
-                      tradingController.getCurrentDirectionFilter();
+                  final currentDirection = tradingController
+                      .getCurrentDirectionFilter();
                   final isFilterActive = currentDirection != 'All';
                   final filteredCount = tradingController.getFilteredCount();
 
@@ -947,20 +936,18 @@ class _TradeScreenState extends State<TradeScreen> {
                           height: 35,
                           width: 40,
                           decoration: BoxDecoration(
-                            color:
-                                isFilterActive
-                                    ? AppColors.primary.withOpacity(0.1)
-                                    : AppColors.backgroundLight,
+                            color: isFilterActive
+                                ? AppColors.primary.withOpacity(0.1)
+                                : AppColors.backgroundLight,
                             borderRadius: BorderRadius.circular(5),
                           ),
                           margin: EdgeInsets.all(5),
                           padding: EdgeInsets.symmetric(horizontal: 10),
                           child: SvgPicture.asset(
                             "assets/svg/trade/trade_arrow_icon.svg",
-                            color:
-                                isFilterActive
-                                    ? AppColors.primary
-                                    : AppColors.textGreyLight,
+                            color: isFilterActive
+                                ? AppColors.primary
+                                : AppColors.textGreyLight,
                           ),
                         ),
                         // Badge showing count when filter is active
@@ -1008,45 +995,41 @@ class _TradeScreenState extends State<TradeScreen> {
                   final isAnyActive = tradingController.isAnyFilterActive;
                   return AnimatedSwitcher(
                     duration: const Duration(milliseconds: 200),
-                    transitionBuilder:
-                        (child, animation) => FadeTransition(
-                          opacity: animation,
-                          child: SizeTransition(
-                            sizeFactor: animation,
-                            axis: Axis.horizontal,
-                            child: child,
-                          ),
-                        ),
-                    child:
-                        isAnyActive
-                            ? Padding(
-                              key: const ValueKey('reset_btn'),
-                              padding: EdgeInsets.only(left: 4.w, right: 2.w),
-                              child: InkWell(
-                                onTap: () async {
-                                  await tradingController.resetAllFilters();
-                                },
-                                borderRadius: BorderRadius.circular(6.r),
-                                child: Container(
-                                  height: 35,
-                                  width: 40,
-                                  decoration: BoxDecoration(
-                                    color: AppColors.backgroundLight,
-                                    borderRadius: BorderRadius.circular(5),
-                                  ),
-                                  margin: EdgeInsets.all(5),
-                                  padding: EdgeInsets.symmetric(horizontal: 10),
-                                  child: Icon(
-                                    Icons.refresh_rounded,
-                                    size: 20.w,
-                                    color: AppColors.primary,
-                                  ),
+                    transitionBuilder: (child, animation) => FadeTransition(
+                      opacity: animation,
+                      child: SizeTransition(
+                        sizeFactor: animation,
+                        axis: Axis.horizontal,
+                        child: child,
+                      ),
+                    ),
+                    child: isAnyActive
+                        ? Padding(
+                            key: const ValueKey('reset_btn'),
+                            padding: EdgeInsets.only(left: 4.w, right: 2.w),
+                            child: InkWell(
+                              onTap: () async {
+                                await tradingController.resetAllFilters();
+                              },
+                              borderRadius: BorderRadius.circular(6.r),
+                              child: Container(
+                                height: 35,
+                                width: 40,
+                                decoration: BoxDecoration(
+                                  color: AppColors.backgroundLight,
+                                  borderRadius: BorderRadius.circular(5),
+                                ),
+                                margin: EdgeInsets.all(5),
+                                padding: EdgeInsets.symmetric(horizontal: 10),
+                                child: Icon(
+                                  Icons.refresh_rounded,
+                                  size: 20.w,
+                                  color: AppColors.primary,
                                 ),
                               ),
-                            )
-                            : const SizedBox.shrink(
-                              key: ValueKey('reset_hidden'),
                             ),
+                          )
+                        : const SizedBox.shrink(key: ValueKey('reset_hidden')),
                   );
                 }),
               ],
@@ -1178,12 +1161,11 @@ class _TradeScreenState extends State<TradeScreen> {
                 Container(
                   width: 4.w,
                   decoration: BoxDecoration(
-                    color:
-                        isPositive && isBuy
-                            ? AppColors.green
-                            : (!isPositive
-                                ? AppColors.warning
-                                : Colors.transparent),
+                    color: isPositive && isBuy
+                        ? AppColors.green
+                        : (!isPositive
+                              ? AppColors.warning
+                              : Colors.transparent),
                     borderRadius: BorderRadius.only(
                       topLeft: Radius.circular(12.r),
                       bottomLeft: Radius.circular(12.r),
@@ -1225,9 +1207,9 @@ class _TradeScreenState extends State<TradeScreen> {
                                           fontWeight: FontWeight.w500,
                                           color:
                                               (position.action.toLowerCase() ==
-                                                      'buy')
-                                                  ? AppColors.green
-                                                  : AppColors.error,
+                                                  'buy')
+                                              ? AppColors.green
+                                              : AppColors.error,
                                         ),
                                       ),
                                     ],
@@ -1267,10 +1249,9 @@ class _TradeScreenState extends State<TradeScreen> {
                                   style: AppTextStyles.heading.copyWith(
                                     fontSize: 14.sp,
                                     fontWeight: FontWeight.w500,
-                                    color:
-                                        isPositive
-                                            ? AppColors.green
-                                            : AppColors.error,
+                                    color: isPositive
+                                        ? AppColors.green
+                                        : AppColors.error,
                                   ),
                                 ),
                               ],
@@ -1281,10 +1262,9 @@ class _TradeScreenState extends State<TradeScreen> {
                         AnimatedSize(
                           duration: Duration(milliseconds: 200),
                           curve: Curves.easeInOut,
-                          child:
-                              isExpanded
-                                  ? _buildExpandedCardContent(position)
-                                  : SizedBox.shrink(),
+                          child: isExpanded
+                              ? _buildExpandedCardContent(position)
+                              : SizedBox.shrink(),
                         ),
                       ],
                     ),
@@ -1433,25 +1413,24 @@ class _TradeScreenState extends State<TradeScreen> {
 
     // For pending orders, show status instead of P/L
     // For market positions, show P/L
-    final rightSideContent =
-        isPendingTab
-            ? Text(
-              'placed',
-              style: AppTextStyles.heading.copyWith(
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w500,
-                color: AppColors.textGrey,
-              ),
-            )
-            : Text(
-              '${PrecisionHelper.formatPnL(position.profitLoss)}',
-              textAlign: TextAlign.center,
-              style: AppTextStyles.heading.copyWith(
-                fontSize: 16.sp,
-                fontWeight: FontWeight.w800,
-                color: isPositive ? AppColors.green : AppColors.error,
-              ),
-            );
+    final rightSideContent = isPendingTab
+        ? Text(
+            'placed',
+            style: AppTextStyles.heading.copyWith(
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w500,
+              color: AppColors.textGrey,
+            ),
+          )
+        : Text(
+            '${PrecisionHelper.formatPnL(position.profitLoss)}',
+            textAlign: TextAlign.center,
+            style: AppTextStyles.heading.copyWith(
+              fontSize: 16.sp,
+              fontWeight: FontWeight.w800,
+              color: isPositive ? AppColors.green : AppColors.error,
+            ),
+          );
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1478,10 +1457,9 @@ class _TradeScreenState extends State<TradeScreen> {
                     style: AppTextStyles.heading.copyWith(
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w500,
-                      color:
-                          (position.action.toLowerCase() == 'buy')
-                              ? AppColors.green
-                              : AppColors.error,
+                      color: (position.action.toLowerCase() == 'buy')
+                          ? AppColors.green
+                          : AppColors.error,
                     ),
                   ),
                 ],
@@ -1544,124 +1522,126 @@ class _TradeScreenState extends State<TradeScreen> {
                 //   ),
                 // ),
                 Expanded(
-                  child:
-                      tradingController.availableInstruments.isEmpty
-                          ? Center(
-                            child: Text(
+                  child: tradingController.availableInstruments.isEmpty
+                      ? Center(
+                          child: Text(
+                            TranslationUtils.trf(
+                              'trading_no_trade',
                               'No Trade',
-                              style: AppTextStyles.heading,
                             ),
-                          )
-                          : Obx(() {
-                            // Get unique base symbols (without .c suffix) for display
-                            final allInstruments =
-                                tradingController.availableInstruments;
-                            final baseSymbols = <String>{};
-                            final symbolMap =
-                                <String, Set<String>>{}; // base -> all variants
+                            style: AppTextStyles.heading,
+                          ),
+                        )
+                      : Obx(() {
+                          // Get unique base symbols (without .c suffix) for display
+                          final allInstruments =
+                              tradingController.availableInstruments;
+                          final baseSymbols = <String>{};
+                          final symbolMap =
+                              <String, Set<String>>{}; // base -> all variants
 
-                            for (final instrument in allInstruments) {
-                              final baseSymbol = _getDisplaySymbol(instrument);
-                              baseSymbols.add(baseSymbol);
-                              symbolMap
-                                  .putIfAbsent(baseSymbol, () => <String>{})
-                                  .add(instrument);
-                            }
+                          for (final instrument in allInstruments) {
+                            final baseSymbol = _getDisplaySymbol(instrument);
+                            baseSymbols.add(baseSymbol);
+                            symbolMap
+                                .putIfAbsent(baseSymbol, () => <String>{})
+                                .add(instrument);
+                          }
 
-                            final sortedSymbols = baseSymbols.toList()..sort();
+                          final sortedSymbols = baseSymbols.toList()..sort();
 
-                            return ListView.builder(
-                              padding: EdgeInsets.symmetric(horizontal: 0.w),
-                              itemCount: sortedSymbols.length,
-                              itemBuilder: (context, index) {
-                                final baseSymbol = sortedSymbols[index];
-                                final variants = symbolMap[baseSymbol] ?? {};
+                          return ListView.builder(
+                            padding: EdgeInsets.symmetric(horizontal: 0.w),
+                            itemCount: sortedSymbols.length,
+                            itemBuilder: (context, index) {
+                              final baseSymbol = sortedSymbols[index];
+                              final variants = symbolMap[baseSymbol] ?? {};
 
-                                return Obx(() {
-                                  // Check if any variant is selected - wrapped in Obx for reactivity
-                                  final isSelected = variants.any(
-                                    (variant) => tradingController
-                                        .selectedInstruments
-                                        .contains(variant),
-                                  );
+                              return Obx(() {
+                                // Check if any variant is selected - wrapped in Obx for reactivity
+                                final isSelected = variants.any(
+                                  (variant) => tradingController
+                                      .selectedInstruments
+                                      .contains(variant),
+                                );
 
-                                  return ListTile(
-                                    leading: _buildPositionFlag(
-                                      baseSymbol, // Use base symbol for flag
-                                      size: 24.h,
+                                return ListTile(
+                                  leading: _buildPositionFlag(
+                                    baseSymbol, // Use base symbol for flag
+                                    size: 24.h,
+                                  ),
+                                  title: Text(
+                                    baseSymbol,
+                                    style: AppTextStyles.label.copyWith(
+                                      fontSize: 12.sp,
+                                      fontWeight: FontWeight.w500,
+                                      color: AppColors.textPrimary,
                                     ),
-                                    title: Text(
-                                      baseSymbol,
-                                      style: AppTextStyles.label.copyWith(
-                                        fontSize: 12.sp,
-                                        fontWeight: FontWeight.w500,
-                                        color: AppColors.textPrimary,
-                                      ),
+                                  ),
+                                  trailing: Checkbox(
+                                    value: isSelected,
+                                    checkColor: AppColors.whiteColor,
+                                    side: BorderSide(
+                                      color: AppColors.textGrey,
+                                      width: 1.5,
                                     ),
-                                    trailing: Checkbox(
-                                      value: isSelected,
-                                      checkColor: AppColors.whiteColor,
-                        side: BorderSide(color: AppColors.textGrey, width: 1.5),
-                                      onChanged: (value) {
-                                        if (value == true) {
-                                          // Add all variants when selecting base symbol
-                                          for (final variant in variants) {
-                                            tradingController.addInstrument(
-                                              variant,
-                                            );
-                                          }
-                                        } else {
-                                          // Remove all variants when deselecting base symbol
-                                          for (final variant in variants) {
-                                            tradingController.removeInstrument(
-                                              variant,
-                                            );
-                                          }
-                                        }
-                                      },
-                                      activeColor: AppColors.primary,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(
-                                          4.r,
-                                        ),
-                                      ),
-                                    ),
-                                    onTap: () {
-                                      final currentSelected = variants.any(
-                                        (variant) => tradingController
-                                            .selectedInstruments
-                                            .contains(variant),
-                                      );
-                                      if (currentSelected) {
-                                        // Remove all variants
-                                        for (final variant in variants) {
-                                          tradingController.removeInstrument(
-                                            variant,
-                                          );
-                                        }
-                                      } else {
-                                        // Add all variants
+                                    onChanged: (value) {
+                                      if (value == true) {
+                                        // Add all variants when selecting base symbol
                                         for (final variant in variants) {
                                           tradingController.addInstrument(
                                             variant,
                                           );
                                         }
+                                      } else {
+                                        // Remove all variants when deselecting base symbol
+                                        for (final variant in variants) {
+                                          tradingController.removeInstrument(
+                                            variant,
+                                          );
+                                        }
                                       }
                                     },
-                                    tileColor:
-                                        isSelected
-                                            ? AppColors.primary.withValues(
-                                              alpha: 0.05,
-                                            )
-                                            : null,
+                                    activeColor: AppColors.primary,
                                     shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8.r),
+                                      borderRadius: BorderRadius.circular(4.r),
                                     ),
-                                  );
-                                });
-                              },
-                            );
-                          }),
+                                  ),
+                                  onTap: () {
+                                    final currentSelected = variants.any(
+                                      (variant) => tradingController
+                                          .selectedInstruments
+                                          .contains(variant),
+                                    );
+                                    if (currentSelected) {
+                                      // Remove all variants
+                                      for (final variant in variants) {
+                                        tradingController.removeInstrument(
+                                          variant,
+                                        );
+                                      }
+                                    } else {
+                                      // Add all variants
+                                      for (final variant in variants) {
+                                        tradingController.addInstrument(
+                                          variant,
+                                        );
+                                      }
+                                    }
+                                  },
+                                  tileColor: isSelected
+                                      ? AppColors.primary.withValues(
+                                          alpha: 0.05,
+                                        )
+                                      : null,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8.r),
+                                  ),
+                                );
+                              });
+                            },
+                          );
+                        }),
                 ),
                 Padding(
                   padding: EdgeInsets.all(16.w),
@@ -1670,28 +1650,28 @@ class _TradeScreenState extends State<TradeScreen> {
                       tradingController.availableInstruments.isEmpty
                           ? SizedBox.shrink()
                           : Expanded(
-                            child: ElevatedButton(
-                              onPressed: () {
-                                Get.back(closeOverlays: true);
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primary,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8.r),
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  Get.back(closeOverlays: true);
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primary,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8.r),
+                                  ),
+                                  minimumSize: Size(double.infinity, 40.h),
+                                  // Removed maximumSize to avoid constraint conflicts
                                 ),
-                                minimumSize: Size(double.infinity, 40.h),
-                                // Removed maximumSize to avoid constraint conflicts
-                              ),
-                              child: Text(
-                                'Confirm',
-                                style: AppTextStyles.label.copyWith(
-                                  fontSize: 14.sp,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.whiteColor,
+                                child: Text(
+                                  'Confirm',
+                                  style: AppTextStyles.label.copyWith(
+                                    fontSize: 14.sp,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.whiteColor,
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
                     ],
                   ),
                 ),
@@ -1758,8 +1738,8 @@ class _TradeScreenState extends State<TradeScreen> {
                     itemBuilder: (context, index) {
                       final direction = ['All', 'Buy', 'Sell'][index];
                       return Obx(() {
-                        final currentDirection =
-                            tradingController.getCurrentDirectionFilter();
+                        final currentDirection = tradingController
+                            .getCurrentDirectionFilter();
                         final isSelected = currentDirection == direction;
                         return ListTile(
                           title: Text(
@@ -1795,9 +1775,7 @@ class _TradeScreenState extends State<TradeScreen> {
                                   WidgetStateProperty.resolveWith<Color?>((
                                     states,
                                   ) {
-                                    if (states.contains(
-                                      WidgetState.selected,
-                                    )) {
+                                    if (states.contains(WidgetState.selected)) {
                                       return AppColors.controlActive;
                                     }
                                     return AppColors.textGreyLight;
@@ -1818,10 +1796,9 @@ class _TradeScreenState extends State<TradeScreen> {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8.r),
                           ),
-                          tileColor:
-                              isSelected
-                                  ? AppColors.primary.withValues(alpha: 0.08)
-                                  : null,
+                          tileColor: isSelected
+                              ? AppColors.primary.withValues(alpha: 0.08)
+                              : null,
                         );
                       });
                     },
@@ -2064,17 +2041,13 @@ class _TradeScreenState extends State<TradeScreen> {
                                   vertical: 14.h,
                                 ),
                                 decoration: BoxDecoration(
-                                  color:
-                                      startDate != null
-                                          ? AppColors.primary.withValues(
-                                            alpha: 0.1,
-                                          )
-                                          : AppColors.backgroundLight,
+                                  color: startDate != null
+                                      ? AppColors.primary.withValues(alpha: 0.1)
+                                      : AppColors.backgroundLight,
                                   border: Border.all(
-                                    color:
-                                        startDate != null
-                                            ? AppColors.primary
-                                            : AppColors.border,
+                                    color: startDate != null
+                                        ? AppColors.primary
+                                        : AppColors.border,
                                     width: startDate != null ? 1.5 : 1,
                                   ),
                                   borderRadius: BorderRadius.circular(12.r),
@@ -2098,10 +2071,9 @@ class _TradeScreenState extends State<TradeScreen> {
                                       style: AppTextStyles.label.copyWith(
                                         fontSize: 13.sp,
                                         fontWeight: FontWeight.w600,
-                                        color:
-                                            startDate != null
-                                                ? AppColors.primary
-                                                : AppColors.textGrey,
+                                        color: startDate != null
+                                            ? AppColors.primary
+                                            : AppColors.textGrey,
                                       ),
                                     ),
                                   ],
@@ -2145,17 +2117,13 @@ class _TradeScreenState extends State<TradeScreen> {
                                   vertical: 14.h,
                                 ),
                                 decoration: BoxDecoration(
-                                  color:
-                                      endDate != null
-                                          ? AppColors.primary.withValues(
-                                            alpha: 0.1,
-                                          )
-                                          : AppColors.backgroundLight,
+                                  color: endDate != null
+                                      ? AppColors.primary.withValues(alpha: 0.1)
+                                      : AppColors.backgroundLight,
                                   border: Border.all(
-                                    color:
-                                        endDate != null
-                                            ? AppColors.primary
-                                            : AppColors.border,
+                                    color: endDate != null
+                                        ? AppColors.primary
+                                        : AppColors.border,
                                     width: endDate != null ? 1.5 : 1,
                                   ),
                                   borderRadius: BorderRadius.circular(12.r),
@@ -2179,10 +2147,9 @@ class _TradeScreenState extends State<TradeScreen> {
                                       style: AppTextStyles.label.copyWith(
                                         fontSize: 13.sp,
                                         fontWeight: FontWeight.w600,
-                                        color:
-                                            endDate != null
-                                                ? AppColors.primary
-                                                : AppColors.textGrey,
+                                        color: endDate != null
+                                            ? AppColors.primary
+                                            : AppColors.textGrey,
                                       ),
                                     ),
                                   ],
@@ -2262,22 +2229,20 @@ class _TradeScreenState extends State<TradeScreen> {
 
                                 if (selectedFilter == 'custom') {
                                   // Date picker returns local dates, convert to UTC
-                                  finalStartDate =
-                                      startDate!.isUtc
-                                          ? startDate!
-                                          : DateTime.utc(
-                                            startDate!.year,
-                                            startDate!.month,
-                                            startDate!.day,
-                                          );
-                                  finalEndDate =
-                                      endDate!.isUtc
-                                          ? endDate!
-                                          : DateTime.utc(
-                                            endDate!.year,
-                                            endDate!.month,
-                                            endDate!.day,
-                                          );
+                                  finalStartDate = startDate!.isUtc
+                                      ? startDate!
+                                      : DateTime.utc(
+                                          startDate!.year,
+                                          startDate!.month,
+                                          startDate!.day,
+                                        );
+                                  finalEndDate = endDate!.isUtc
+                                      ? endDate!
+                                      : DateTime.utc(
+                                          endDate!.year,
+                                          endDate!.month,
+                                          endDate!.day,
+                                        );
                                 } else {
                                   // Quick filters already use UTC
                                   finalStartDate = startDate!;
@@ -2446,16 +2411,13 @@ class _TradeScreenState extends State<TradeScreen> {
                   child: Obx(() {
                     // Get real-time position data filtered by orderId
                     // Check the appropriate list based on tab (Market or Pending)
-                    final realTimePosition =
-                        tradingController.selectedTab == 1
-                            ? tradingController.pendingPositions
-                                .firstWhereOrNull(
-                                  (p) => p.orderId == position.orderId,
-                                )
-                            : tradingController.marketPositions
-                                .firstWhereOrNull(
-                                  (p) => p.orderId == position.orderId,
-                                );
+                    final realTimePosition = tradingController.selectedTab == 1
+                        ? tradingController.pendingPositions.firstWhereOrNull(
+                            (p) => p.orderId == position.orderId,
+                          )
+                        : tradingController.marketPositions.firstWhereOrNull(
+                            (p) => p.orderId == position.orderId,
+                          );
 
                     // Use real-time data if available, otherwise fallback to static position
                     final currentPosition = realTimePosition ?? position;
@@ -2464,10 +2426,9 @@ class _TradeScreenState extends State<TradeScreen> {
 
                     // Use openTime from current position (real-time if available, otherwise static)
                     // For pending orders, we want to show the actual time from WebSocket
-                    final displayOpenTime =
-                        currentPosition.openTime.isNotEmpty
-                            ? currentPosition.openTime
-                            : position.openTime;
+                    final displayOpenTime = currentPosition.openTime.isNotEmpty
+                        ? currentPosition.openTime
+                        : position.openTime;
                     final displaySwap = currentPosition.swap;
 
                     return Column(
@@ -2490,12 +2451,11 @@ class _TradeScreenState extends State<TradeScreen> {
                               style: AppTextStyles.heading.copyWith(
                                 fontSize: 14.sp,
                                 fontWeight: FontWeight.w500,
-                                color:
-                                    tradingController.selectedTab == 1
-                                        ? AppColors.textGrey
-                                        : (currentIsPositive
-                                            ? AppColors.success
-                                            : AppColors.error),
+                                color: tradingController.selectedTab == 1
+                                    ? AppColors.textGrey
+                                    : (currentIsPositive
+                                          ? AppColors.success
+                                          : AppColors.error),
                               ),
                             ),
                           ],
@@ -2650,110 +2610,126 @@ class _TradeScreenState extends State<TradeScreen> {
           ListView(
             shrinkWrap: true,
             padding: EdgeInsets.symmetric(horizontal: 16.w),
-            children:
-                tradingController.selectedTab == 1
-                    ? [
-                      // Pending order actions
-                      _buildActionOption(
-                        icon: Icons.cancel,
-                        title: 'Cancel Order',
-                        subtitle: 'Cancel this pending order',
-                        onTap: () async {
-                          Get.back(closeOverlays: true);
-                          await _showCancelOrderConfirmation(
-                            tradingController,
-                            position,
-                          );
-                        },
-                        color: AppColors.error,
+            children: tradingController.selectedTab == 1
+                ? [
+                    // Pending order actions
+                    _buildActionOption(
+                      icon: Icons.cancel,
+                      title: TranslationUtils.trf(
+                        'trade_cancel_order',
+                        'Cancel Order',
                       ),
-                      _buildActionOption(
-                        icon: Icons.edit,
-                        title: 'Modify Order',
-                        subtitle:
-                            'Change order price, stop loss or take profit',
-                        onTap: () {
-                          Get.back(closeOverlays: true);
-                          Get.to(() => EditOrderScreen(position: position));
-                        },
-                        color: AppColors.primary,
+                      subtitle: TranslationUtils.trf(
+                        'trade_cancel_order_subtitle',
+                        'Cancel this pending order',
                       ),
-                      _buildActionOption(
-                        icon: Icons.add,
-                        title: 'New Order',
-                        subtitle: 'Place a new order for this instrument',
-                        onTap: () {
-                          Get.back(closeOverlays: true);
-                          // Use callback to navigate to chart tab in TradingMainScreen
-                          if (widget.onNavigateToChart != null) {
-                            widget.onNavigateToChart!(position.symbol);
-                          }
-                        },
-                        color: AppColors.success,
+                      onTap: () async {
+                        Get.back(closeOverlays: true);
+                        await _showCancelOrderConfirmation(
+                          tradingController,
+                          position,
+                        );
+                      },
+                      color: AppColors.error,
+                    ),
+                    _buildActionOption(
+                      icon: Icons.edit,
+                      title: TranslationUtils.trf(
+                        'trading_modify_order',
+                        'Modify Order',
                       ),
-                      _buildActionOption(
-                        icon: Icons.show_chart,
-                        title: 'Chart',
-                        subtitle: 'View detailed chart for this instrument',
-                        onTap: () {
-                          Get.back(closeOverlays: true);
-                          // Use callback to navigate to chart tab in TradingMainScreen
-                          if (widget.onNavigateToChart != null) {
-                            widget.onNavigateToChart!(position.symbol);
-                          }
-                        },
-                        color: AppColors.primary,
+                      subtitle: TranslationUtils.trf(
+                        'trading_change_order_parameters',
+                        'Change order price, stop loss or take profit',
                       ),
-                    ]
-                    : [
-                      // Market position actions
-                      _buildActionOption(
-                        icon: Icons.close,
-                        title: 'Close / Modify Position',
-                        subtitle: 'Close / Modify this position immediately',
-                        onTap: () {
-                          Get.back(closeOverlays: true);
-                          Get.to(() => ClosePositionScreen(position: position));
-                        },
-                        color: AppColors.error,
+                      onTap: () {
+                        Get.back(closeOverlays: true);
+                        Get.to(() => EditOrderScreen(position: position));
+                      },
+                      color: AppColors.primary,
+                    ),
+                    _buildActionOption(
+                      icon: Icons.add,
+                      title: TranslationUtils.trf(
+                        'trading_new_order',
+                        'New Order',
                       ),
-                      // _buildActionOption(
-                      //   icon: Icons.edit,
-                      //   title: 'Modify Position',
-                      //   subtitle: 'Change stop loss or take profit',
-                      //   onTap: () {
-                      //     Get.back(closeOverlays: true);
-                      //     Get.to(() => EditOrderScreen(position: position));
-                      //   },
-                      //   color: AppColors.primary,
-                      // ),
-                      _buildActionOption(
-                        icon: Icons.add,
-                        title: 'New Order',
-                        subtitle: 'Place a new order for this instrument',
-                        onTap: () {
-                          Get.back(closeOverlays: true);
-                          // Use callback to navigate to chart tab in TradingMainScreen
-                          if (widget.onNavigateToChart != null) {
-                            widget.onNavigateToChart!(position.symbol);
-                          }
-                        },
-                        color: AppColors.success,
+                      subtitle: TranslationUtils.trf(
+                        'trading_new_order_subtitle',
+                        'Place a new order for this instrument',
                       ),
-                      _buildActionOption(
-                        icon: Icons.show_chart,
-                        title: 'Chart',
-                        subtitle: 'View detailed chart for this instrument',
-                        onTap: () {
-                          Get.back(closeOverlays: true);
-                          // Use callback to navigate to chart tab in TradingMainScreen
-                          if (widget.onNavigateToChart != null) {
-                            widget.onNavigateToChart!(position.symbol);
-                          }
-                        },
-                        color: AppColors.primary,
-                      ),
-                    ],
+                      onTap: () {
+                        Get.back(closeOverlays: true);
+                        // Use callback to navigate to chart tab in TradingMainScreen
+                        if (widget.onNavigateToChart != null) {
+                          widget.onNavigateToChart!(position.symbol);
+                        }
+                      },
+                      color: AppColors.success,
+                    ),
+                    _buildActionOption(
+                      icon: Icons.show_chart,
+                      title: 'Chart',
+                      subtitle: 'View detailed chart for this instrument',
+                      onTap: () {
+                        Get.back(closeOverlays: true);
+                        // Use callback to navigate to chart tab in TradingMainScreen
+                        if (widget.onNavigateToChart != null) {
+                          widget.onNavigateToChart!(position.symbol);
+                        }
+                      },
+                      color: AppColors.primary,
+                    ),
+                  ]
+                : [
+                    // Market position actions
+                    _buildActionOption(
+                      icon: Icons.close,
+                      title: 'Close / Modify Position',
+                      subtitle: 'Close / Modify this position immediately',
+                      onTap: () {
+                        Get.back(closeOverlays: true);
+                        Get.to(() => ClosePositionScreen(position: position));
+                      },
+                      color: AppColors.error,
+                    ),
+                    // _buildActionOption(
+                    //   icon: Icons.edit,
+                    //   title: 'Modify Position',
+                    //   subtitle: 'Change stop loss or take profit',
+                    //   onTap: () {
+                    //     Get.back(closeOverlays: true);
+                    //     Get.to(() => EditOrderScreen(position: position));
+                    //   },
+                    //   color: AppColors.primary,
+                    // ),
+                    _buildActionOption(
+                      icon: Icons.add,
+                      title: 'New Order',
+                      subtitle: 'Place a new order for this instrument',
+                      onTap: () {
+                        Get.back(closeOverlays: true);
+                        // Use callback to navigate to chart tab in TradingMainScreen
+                        if (widget.onNavigateToChart != null) {
+                          widget.onNavigateToChart!(position.symbol);
+                        }
+                      },
+                      color: AppColors.success,
+                    ),
+                    _buildActionOption(
+                      icon: Icons.show_chart,
+                      title: 'Chart',
+                      subtitle: 'View detailed chart for this instrument',
+                      onTap: () {
+                        Get.back(closeOverlays: true);
+                        // Use callback to navigate to chart tab in TradingMainScreen
+                        if (widget.onNavigateToChart != null) {
+                          widget.onNavigateToChart!(position.symbol);
+                        }
+                      },
+                      color: AppColors.primary,
+                    ),
+                  ],
           ),
           SizedBox(height: MediaQuery.of(Get.context!).padding.bottom),
         ],
@@ -2836,203 +2812,190 @@ class _TradeScreenState extends State<TradeScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                    Padding(
-                      padding: EdgeInsets.all(16.w),
-                      child: Text(
-                        'Which positions would you like to close at market prices?',
-                        style: AppTextStyles.heading.copyWith(
-                          fontSize: 18.sp,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
-                        ),
-                        textAlign: TextAlign.center,
+                  Padding(
+                    padding: EdgeInsets.all(16.w),
+                    child: Text(
+                      'Which positions would you like to close at market prices?',
+                      style: AppTextStyles.heading.copyWith(
+                        fontSize: 18.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
                       ),
+                      textAlign: TextAlign.center,
                     ),
-                    SizedBox(height: 8.h),
-                    Flexible(
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 16.w),
-                        child: SingleChildScrollView(
-                          child: Column(
-                            children: [
-                              _buildCloseOption(
-                                tradingController,
-                                'all_currently_open',
-                                'All currently open',
-                                () => tradingController.getTotalProfitLoss(),
-                                selectedOption == 'all_currently_open',
-                                (value) =>
-                                    setState(() => selectedOption = value),
-                              ),
-                              _buildCloseOption(
-                                tradingController,
-                                'all_profitable',
-                                'All profitable',
-                                () =>
-                                    tradingController
-                                        .getTotalProfitableProfitLoss(),
-                                selectedOption == 'all_profitable',
-                                (value) =>
-                                    setState(() => selectedOption = value),
-                              ),
-                              _buildCloseOption(
-                                tradingController,
-                                'all_losing',
-                                'All losing',
-                                () =>
-                                    tradingController
-                                        .getTotalLosingProfitLoss(),
-                                selectedOption == 'all_losing',
-                                (value) =>
-                                    setState(() => selectedOption = value),
-                              ),
-                              _buildCloseOption(
-                                tradingController,
-                                'all_long',
-                                'All Long',
-                                () =>
-                                    tradingController.getTotalLongProfitLoss(),
-                                selectedOption == 'all_long',
-                                (value) =>
-                                    setState(() => selectedOption = value),
-                              ),
-                              _buildCloseOption(
-                                tradingController,
-                                'all_short',
-                                'All Short',
-                                () =>
-                                    tradingController.getTotalShortProfitLoss(),
-                                selectedOption == 'all_short',
-                                (value) =>
-                                    setState(() => selectedOption = value),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    // SizedBox(height: 16.h),
-                    SafeArea(
-                      child: Padding(
-                        padding: EdgeInsets.only(
-                          left: 16.w,
-                          right: 16.w,
-                          // bottom: 16.h,
-                        ),
-                        child: Row(
+                  ),
+                  SizedBox(height: 8.h),
+                  Flexible(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16.w),
+                      child: SingleChildScrollView(
+                        child: Column(
                           children: [
-                            Expanded(
-                              child: OutlinedButton(
-                                onPressed: () {
-                                  Navigator.of(context).pop();
-                                },
-                                style: OutlinedButton.styleFrom(
-                                  side: BorderSide(color: AppColors.primary),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8.r),
-                                  ),
-                                  minimumSize: Size(double.infinity, 40.h),
-                                  // Removed maximumSize to avoid constraint conflicts
-                                ),
-                                child: Text(
-                                  'Cancel',
-                                  style: AppTextStyles.label.copyWith(
-                                    fontSize: 16.sp,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.primary,
-                                  ),
-                                ),
-                              ),
+                            _buildCloseOption(
+                              tradingController,
+                              'all_currently_open',
+                              'All currently open',
+                              () => tradingController.getTotalProfitLoss(),
+                              selectedOption == 'all_currently_open',
+                              (value) => setState(() => selectedOption = value),
                             ),
-                            SizedBox(width: 16.w),
-                            // ✅ ENHANCED: Show P&L in button text, keep original style
-                            Expanded(
-                              child: Obx(() {
-                                // Calculate P&L based on selected option
-                                final pnl = _getPnLForOption(
-                                  selectedOption,
-                                  tradingController,
-                                );
-                                final isPositive = pnl >= 0;
-                                final isPendingTab =
-                                    tradingController.selectedTab == 1;
-
-                                // Button text with P&L
-                                String buttonText;
-                                if (isPendingTab) {
-                                  final count =
-                                      tradingController.pendingPositions.length;
-                                  buttonText =
-                                      'Confirm ($count order${count != 1 ? 's' : ''})';
-                                } else {
-                                  buttonText =
-                                      isPositive
-                                          ? 'Confirm (+\$${PrecisionHelper.formatPnL(pnl)})'
-                                          : 'Confirm (\$${PrecisionHelper.formatPnL(pnl)})';
-                                }
-
-                                return ElevatedButton(
-                                  onPressed:
-                                      tradingController.isLoading
-                                          ? null
-                                          : () async {
-                                            print(
-                                              '🔘 Bottom sheet confirm button clicked!',
-                                            );
-                                            print(
-                                              '📊 Selected option: $selectedOption',
-                                            );
-
-                                            // Close bottom sheet immediately using Navigator
-
-                                            // ✅ Execute directly without second confirmation
-                                            await _executeClosePositionsDirectly(
-                                              tradingController,
-                                              selectedOption,
-                                            );
-                                            Navigator.of(context).pop();
-                                          },
-                                  style: ElevatedButton.styleFrom(
-                                    padding: EdgeInsets.zero,
-                                    backgroundColor:
-                                        isPendingTab
-                                            ? AppColors.primary
-                                            : (isPositive
-                                                ? AppColors.success
-                                                : AppColors.error),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8.r),
-                                    ),
-                                    minimumSize: Size(double.infinity, 40.h),
-                                  ),
-                                  child:
-                                      tradingController.isLoading
-                                          ? ButtonLoadingWidget(
-                                            size: 16.0,
-                                            color: AppColors.whiteColor,
-                                          )
-                                          : Text(
-                                            buttonText,
-                                            textAlign: TextAlign.center,
-                                            style: AppTextStyles.label.copyWith(
-                                              fontSize: 16.sp,
-                                              fontWeight: FontWeight.w600,
-                                              color: AppColors.whiteColor,
-                                            ),
-                                          ),
-                                );
-                              }),
+                            _buildCloseOption(
+                              tradingController,
+                              'all_profitable',
+                              'All profitable',
+                              () => tradingController
+                                  .getTotalProfitableProfitLoss(),
+                              selectedOption == 'all_profitable',
+                              (value) => setState(() => selectedOption = value),
+                            ),
+                            _buildCloseOption(
+                              tradingController,
+                              'all_losing',
+                              'All losing',
+                              () =>
+                                  tradingController.getTotalLosingProfitLoss(),
+                              selectedOption == 'all_losing',
+                              (value) => setState(() => selectedOption = value),
+                            ),
+                            _buildCloseOption(
+                              tradingController,
+                              'all_long',
+                              'All Long',
+                              () => tradingController.getTotalLongProfitLoss(),
+                              selectedOption == 'all_long',
+                              (value) => setState(() => selectedOption = value),
+                            ),
+                            _buildCloseOption(
+                              tradingController,
+                              'all_short',
+                              'All Short',
+                              () => tradingController.getTotalShortProfitLoss(),
+                              selectedOption == 'all_short',
+                              (value) => setState(() => selectedOption = value),
                             ),
                           ],
                         ),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                  // SizedBox(height: 16.h),
+                  SafeArea(
+                    child: Padding(
+                      padding: EdgeInsets.only(
+                        left: 16.w,
+                        right: 16.w,
+                        // bottom: 16.h,
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                              },
+                              style: OutlinedButton.styleFrom(
+                                side: BorderSide(color: AppColors.primary),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8.r),
+                                ),
+                                minimumSize: Size(double.infinity, 40.h),
+                                // Removed maximumSize to avoid constraint conflicts
+                              ),
+                              child: Text(
+                                'Cancel',
+                                style: AppTextStyles.label.copyWith(
+                                  fontSize: 16.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(width: 16.w),
+                          // ✅ ENHANCED: Show P&L in button text, keep original style
+                          Expanded(
+                            child: Obx(() {
+                              // Calculate P&L based on selected option
+                              final pnl = _getPnLForOption(
+                                selectedOption,
+                                tradingController,
+                              );
+                              final isPositive = pnl >= 0;
+                              final isPendingTab =
+                                  tradingController.selectedTab == 1;
+
+                              // Button text with P&L
+                              String buttonText;
+                              if (isPendingTab) {
+                                final count =
+                                    tradingController.pendingPositions.length;
+                                buttonText =
+                                    'Confirm ($count order${count != 1 ? 's' : ''})';
+                              } else {
+                                buttonText = isPositive
+                                    ? 'Confirm (+\$${PrecisionHelper.formatPnL(pnl)})'
+                                    : 'Confirm (\$${PrecisionHelper.formatPnL(pnl)})';
+                              }
+
+                              return ElevatedButton(
+                                onPressed: tradingController.isLoading
+                                    ? null
+                                    : () async {
+                                        print(
+                                          '🔘 Bottom sheet confirm button clicked!',
+                                        );
+                                        print(
+                                          '📊 Selected option: $selectedOption',
+                                        );
+
+                                        // Close bottom sheet immediately using Navigator
+
+                                        // ✅ Execute directly without second confirmation
+                                        await _executeClosePositionsDirectly(
+                                          tradingController,
+                                          selectedOption,
+                                        );
+                                        Navigator.of(context).pop();
+                                      },
+                                style: ElevatedButton.styleFrom(
+                                  padding: EdgeInsets.zero,
+                                  backgroundColor: isPendingTab
+                                      ? AppColors.primary
+                                      : (isPositive
+                                            ? AppColors.success
+                                            : AppColors.error),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8.r),
+                                  ),
+                                  minimumSize: Size(double.infinity, 40.h),
+                                ),
+                                child: tradingController.isLoading
+                                    ? ButtonLoadingWidget(
+                                        size: 16.0,
+                                        color: AppColors.whiteColor,
+                                      )
+                                    : Text(
+                                        buttonText,
+                                        textAlign: TextAlign.center,
+                                        style: AppTextStyles.label.copyWith(
+                                          fontSize: 16.sp,
+                                          fontWeight: FontWeight.w600,
+                                          color: AppColors.whiteColor,
+                                        ),
+                                      ),
+                              );
+                            }),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            );
-          },
-        ),
+            ),
+          );
+        },
+      ),
       isScrollControlled: true,
       isDismissible: true,
       enableDrag: true,
@@ -3084,10 +3047,9 @@ class _TradeScreenState extends State<TradeScreen> {
                   style: AppTextStyles.label.copyWith(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w600,
-                    color:
-                        hasPositions
-                            ? (isPositive ? AppColors.success : AppColors.error)
-                            : AppColors.textGrey,
+                    color: hasPositions
+                        ? (isPositive ? AppColors.success : AppColors.error)
+                        : AppColors.textGrey,
                   ),
                 );
               }),
@@ -3098,11 +3060,10 @@ class _TradeScreenState extends State<TradeScreen> {
                 return Radio<String>(
                   value: value,
                   groupValue: isSelected ? value : null,
-                  onChanged:
-                      hasPositions ? (newValue) => onChanged(newValue!) : null,
-                  fillColor: WidgetStateProperty.resolveWith<Color?>((
-                    states,
-                  ) {
+                  onChanged: hasPositions
+                      ? (newValue) => onChanged(newValue!)
+                      : null,
+                  fillColor: WidgetStateProperty.resolveWith<Color?>((states) {
                     if (states.contains(WidgetState.selected)) {
                       return AppColors.primary;
                     }
@@ -3160,8 +3121,9 @@ class _TradeScreenState extends State<TradeScreen> {
       if (tradingController.selectedTab == 1) {
         // Handle pending orders
         final pendingOrders = tradingController.pendingPositions;
-        final orderIds =
-            pendingOrders.map((p) => int.parse(p.orderId)).toList();
+        final orderIds = pendingOrders
+            .map((p) => int.parse(p.orderId))
+            .toList();
 
         if (orderIds.isNotEmpty) {
           await tradingController.closeMultiplePendingOrders(
@@ -3237,166 +3199,160 @@ class _TradeScreenState extends State<TradeScreen> {
           borderRadius: BorderRadius.circular(16.r),
         ),
         child: Builder(
-          builder:
-              (dialogContext) => Container(
-                constraints: BoxConstraints(
-                  maxWidth: 400.w,
-                  maxHeight: MediaQuery.of(dialogContext).size.height * 0.6,
+          builder: (dialogContext) => Container(
+            constraints: BoxConstraints(
+              maxWidth: 400.w,
+              maxHeight: MediaQuery.of(dialogContext).size.height * 0.6,
+            ),
+            padding: EdgeInsets.fromLTRB(24.w, 24.h, 24.w, 24.h),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Title
+                Text(
+                  isPendingOrder ? 'Cancel Order' : 'Close Position',
+                  style: AppTextStyles.heading.copyWith(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
-                padding: EdgeInsets.fromLTRB(24.w, 24.h, 24.w, 24.h),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                SizedBox(height: 16.h),
+                // Content - Scrollable to handle long text on small devices
+                Flexible(
+                  child: SingleChildScrollView(
+                    child: Text(
+                      isPendingOrder
+                          ? 'Are you sure you want to cancel ${_getDisplaySymbol(position.symbol)} ${position.action} ${position.volume} order?'
+                          : 'Are you sure you want to close ${_getDisplaySymbol(position.symbol)} ${position.action} ${position.volume}?',
+                      style: AppTextStyles.label.copyWith(
+                        fontSize: 14.sp,
+                        color: AppColors.textGrey,
+                        height: 1.5,
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 24.h),
+                // Buttons - Bottom center, same size
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Title
-                    Text(
-                      isPendingOrder ? 'Cancel Order' : 'Close Position',
-                      style: AppTextStyles.heading.copyWith(
-                        fontSize: 18.sp,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    SizedBox(height: 16.h),
-                    // Content - Scrollable to handle long text on small devices
-                    Flexible(
-                      child: SingleChildScrollView(
-                        child: Text(
-                          isPendingOrder
-                              ? 'Are you sure you want to cancel ${_getDisplaySymbol(position.symbol)} ${position.action} ${position.volume} order?'
-                              : 'Are you sure you want to close ${_getDisplaySymbol(position.symbol)} ${position.action} ${position.volume}?',
-                          style: AppTextStyles.label.copyWith(
-                            fontSize: 14.sp,
-                            color: AppColors.textGrey,
-                            height: 1.5,
+                    // Cancel Button - Equal width with confirm button
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () {
+                          print('🔘 CANCEL BUTTON CLICKED IN DIALOG!');
+                          Navigator.of(Get.context!).pop(false);
+                        },
+                        style: OutlinedButton.styleFrom(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 8.w,
+                            vertical: 12.h,
+                          ),
+                          minimumSize: Size(0, 44.h),
+                          side: BorderSide(color: AppColors.border, width: 1),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12.r),
+                          ),
+                          backgroundColor: Colors.transparent,
+                        ),
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            'Cancel',
+                            style: AppTextStyles.label.copyWith(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textGrey,
+                            ),
+                            textAlign: TextAlign.center,
                           ),
                         ),
                       ),
                     ),
-                    SizedBox(height: 24.h),
-                    // Buttons - Bottom center, same size
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        // Cancel Button - Equal width with confirm button
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () {
-                              print('🔘 CANCEL BUTTON CLICKED IN DIALOG!');
-                              Navigator.of(Get.context!).pop(false);
-                            },
-                            style: OutlinedButton.styleFrom(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 8.w,
-                                vertical: 12.h,
-                              ),
-                              minimumSize: Size(0, 44.h),
-                              side: BorderSide(
-                                color: AppColors.border,
-                                width: 1,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12.r),
-                              ),
-                              backgroundColor: Colors.transparent,
+                    SizedBox(width: 12.w),
+                    // Confirm Button - Equal width with cancel button
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          print('🔘 CONFIRM BUTTON CLICKED IN DIALOG!');
+                          print('📊 Is Pending Order: $isPendingOrder');
+
+                          // Close the dialog first
+                          // Close the dialog but return false to Dismissible
+                          // This ensures the item stays in the list until success message
+                          Navigator.of(Get.context!).pop(false);
+
+                          // Add a small delay to ensure dialog is closed
+                          await Future.delayed(Duration(milliseconds: 100));
+
+                          // Call the appropriate API based on order type
+                          final accountController =
+                              Get.find<AccountController>();
+                          final activeAccount =
+                              accountController.activeMT5Account;
+
+                          if (activeAccount != null) {
+                            if (isPendingOrder) {
+                              // This is a pending order - cancel it
+                              print('📞 Calling cancel order API...');
+                              await tradingController
+                                  .cancelOrderWithImmediateUpdate(
+                                    mt5Account: activeAccount.metaAccountNumber,
+                                    orderId: int.parse(position.orderId),
+                                  );
+                              print('✅ Cancel order API completed');
+                            } else {
+                              // This is a market position - close it
+                              print('📞 Calling close position API...');
+                              await tradingController
+                                  .closePositionWithImmediateUpdate(
+                                    mt5Account: activeAccount.metaAccountNumber,
+                                    positionId: int.parse(position.orderId),
+                                  );
+                              print('✅ Close position API completed');
+                            }
+                          } else {
+                            print('❌ No active account found');
+                            CustomToastService.showError(
+                              title: 'Error',
+                              message: 'No active account found',
+                            );
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 8.w,
+                            vertical: 12.h,
+                          ),
+                          minimumSize: Size(0, 44.h),
+                          backgroundColor: AppColors.primary,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12.r),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            isPendingOrder ? 'Cancel Order' : 'Close',
+                            style: AppTextStyles.label.copyWith(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.whiteColor,
                             ),
-                            child: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: Text(
-                                'Cancel',
-                                style: AppTextStyles.label.copyWith(
-                                  fontSize: 14.sp,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.textGrey,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
+                            textAlign: TextAlign.center,
                           ),
                         ),
-                        SizedBox(width: 12.w),
-                        // Confirm Button - Equal width with cancel button
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: () async {
-                              print('🔘 CONFIRM BUTTON CLICKED IN DIALOG!');
-                              print('📊 Is Pending Order: $isPendingOrder');
-
-                              // Close the dialog first
-                              // Close the dialog but return false to Dismissible
-                              // This ensures the item stays in the list until success message
-                              Navigator.of(Get.context!).pop(false);
-
-                              // Add a small delay to ensure dialog is closed
-                              await Future.delayed(Duration(milliseconds: 100));
-
-                              // Call the appropriate API based on order type
-                              final accountController =
-                                  Get.find<AccountController>();
-                              final activeAccount =
-                                  accountController.activeMT5Account;
-
-                              if (activeAccount != null) {
-                                if (isPendingOrder) {
-                                  // This is a pending order - cancel it
-                                  print('📞 Calling cancel order API...');
-                                  await tradingController
-                                      .cancelOrderWithImmediateUpdate(
-                                        mt5Account:
-                                            activeAccount.metaAccountNumber,
-                                        orderId: int.parse(position.orderId),
-                                      );
-                                  print('✅ Cancel order API completed');
-                                } else {
-                                  // This is a market position - close it
-                                  print('📞 Calling close position API...');
-                                  await tradingController
-                                      .closePositionWithImmediateUpdate(
-                                        mt5Account:
-                                            activeAccount.metaAccountNumber,
-                                        positionId: int.parse(position.orderId),
-                                      );
-                                  print('✅ Close position API completed');
-                                }
-                              } else {
-                                print('❌ No active account found');
-                                CustomToastService.showError(
-                                  title: 'Error',
-                                  message: 'No active account found',
-                                );
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 8.w,
-                                vertical: 12.h,
-                              ),
-                              minimumSize: Size(0, 44.h),
-                              backgroundColor: AppColors.primary,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12.r),
-                              ),
-                              elevation: 0,
-                            ),
-                            child: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: Text(
-                                isPendingOrder ? 'Cancel Order' : 'Close',
-                                style: AppTextStyles.label.copyWith(
-                                  fontSize: 14.sp,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.whiteColor,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ],
                 ),
-              ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -3418,148 +3374,141 @@ class _TradeScreenState extends State<TradeScreen> {
           borderRadius: BorderRadius.circular(16.r),
         ),
         child: Builder(
-          builder:
-              (dialogContext) => Container(
-                constraints: BoxConstraints(
-                  maxWidth: 400.w,
-                  maxHeight: MediaQuery.of(dialogContext).size.height * 0.6,
+          builder: (dialogContext) => Container(
+            constraints: BoxConstraints(
+              maxWidth: 400.w,
+              maxHeight: MediaQuery.of(dialogContext).size.height * 0.6,
+            ),
+            padding: EdgeInsets.fromLTRB(24.w, 24.h, 24.w, 24.h),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Title
+                Text(
+                  'Cancel Order',
+                  style: AppTextStyles.heading.copyWith(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
-                padding: EdgeInsets.fromLTRB(24.w, 24.h, 24.w, 24.h),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                SizedBox(height: 16.h),
+                // Content - Scrollable to handle long text on small devices
+                Flexible(
+                  child: SingleChildScrollView(
+                    child: Text(
+                      'Are you sure you want to cancel ${_getDisplaySymbol(position.symbol)} ${position.action} ${position.volume} order?',
+                      style: AppTextStyles.label.copyWith(
+                        fontSize: 14.sp,
+                        color: AppColors.textGrey,
+                        height: 1.5,
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 24.h),
+                // Buttons - Bottom center, same size
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Title
-                    Text(
-                      'Cancel Order',
-                      style: AppTextStyles.heading.copyWith(
-                        fontSize: 18.sp,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    SizedBox(height: 16.h),
-                    // Content - Scrollable to handle long text on small devices
-                    Flexible(
-                      child: SingleChildScrollView(
-                        child: Text(
-                          'Are you sure you want to cancel ${_getDisplaySymbol(position.symbol)} ${position.action} ${position.volume} order?',
-                          style: AppTextStyles.label.copyWith(
-                            fontSize: 14.sp,
-                            color: AppColors.textGrey,
-                            height: 1.5,
+                    // Cancel Button - Equal width with confirm button
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () {
+                          print('🔘 CANCEL BUTTON CLICKED IN DIALOG!');
+                          Navigator.of(Get.context!).pop(false);
+                        },
+                        style: OutlinedButton.styleFrom(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 8.w,
+                            vertical: 12.h,
+                          ),
+                          minimumSize: Size(0, 44.h),
+                          side: BorderSide(color: AppColors.border, width: 1),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12.r),
+                          ),
+                          backgroundColor: Colors.transparent,
+                        ),
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            'Cancel',
+                            style: AppTextStyles.label.copyWith(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textGrey,
+                            ),
+                            textAlign: TextAlign.center,
                           ),
                         ),
                       ),
                     ),
-                    SizedBox(height: 24.h),
-                    // Buttons - Bottom center, same size
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        // Cancel Button - Equal width with confirm button
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () {
-                              print('🔘 CANCEL BUTTON CLICKED IN DIALOG!');
-                              Navigator.of(Get.context!).pop(false);
-                            },
-                            style: OutlinedButton.styleFrom(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 8.w,
-                                vertical: 12.h,
-                              ),
-                              minimumSize: Size(0, 44.h),
-                              side: BorderSide(
-                                color: AppColors.border,
-                                width: 1,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12.r),
-                              ),
-                              backgroundColor: Colors.transparent,
-                            ),
-                            child: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: Text(
-                                'Cancel',
-                                style: AppTextStyles.label.copyWith(
-                                  fontSize: 14.sp,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.textGrey,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: 12.w),
-                        // Cancel Order Button - Equal width with cancel button
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: () async {
-                              print(
-                                '🔘 CANCEL ORDER BUTTON CLICKED IN DIALOG!',
-                              );
-                              // Close the dialog but return false to Dismissible
-                              // This ensures the item stays in the list until success message
-                              Navigator.of(Get.context!).pop(false);
+                    SizedBox(width: 12.w),
+                    // Cancel Order Button - Equal width with cancel button
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          print('🔘 CANCEL ORDER BUTTON CLICKED IN DIALOG!');
+                          // Close the dialog but return false to Dismissible
+                          // This ensures the item stays in the list until success message
+                          Navigator.of(Get.context!).pop(false);
 
-                              await Future.delayed(Duration(milliseconds: 100));
+                          await Future.delayed(Duration(milliseconds: 100));
 
-                              final accountController =
-                                  Get.find<AccountController>();
-                              final activeAccount =
-                                  accountController.activeMT5Account;
+                          final accountController =
+                              Get.find<AccountController>();
+                          final activeAccount =
+                              accountController.activeMT5Account;
 
-                              if (activeAccount != null) {
-                                print('📞 Calling cancel order API...');
-                                await tradingController
-                                    .cancelOrderWithImmediateUpdate(
-                                      mt5Account:
-                                          activeAccount.metaAccountNumber,
-                                      orderId: int.parse(position.orderId),
-                                    );
-                                print('✅ Cancel order API completed');
-                              } else {
-                                print('❌ No active account found');
-                                CustomToastService.showError(
-                                  title: 'Error',
-                                  message: 'No active account found',
+                          if (activeAccount != null) {
+                            print('📞 Calling cancel order API...');
+                            await tradingController
+                                .cancelOrderWithImmediateUpdate(
+                                  mt5Account: activeAccount.metaAccountNumber,
+                                  orderId: int.parse(position.orderId),
                                 );
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 8.w,
-                                vertical: 12.h,
-                              ),
-                              minimumSize: Size(0, 44.h),
-                              backgroundColor: AppColors.primary,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12.r),
-                              ),
-                              elevation: 0,
+                            print('✅ Cancel order API completed');
+                          } else {
+                            print('❌ No active account found');
+                            CustomToastService.showError(
+                              title: 'Error',
+                              message: 'No active account found',
+                            );
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 8.w,
+                            vertical: 12.h,
+                          ),
+                          minimumSize: Size(0, 44.h),
+                          backgroundColor: AppColors.primary,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12.r),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            'Cancel Order',
+                            style: AppTextStyles.label.copyWith(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.whiteColor,
                             ),
-                            child: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: Text(
-                                'Cancel Order',
-                                style: AppTextStyles.label.copyWith(
-                                  fontSize: 14.sp,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.whiteColor,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
+                            textAlign: TextAlign.center,
                           ),
                         ),
-                      ],
+                      ),
                     ),
                   ],
                 ),
-              ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -3583,40 +3532,38 @@ class _TradeScreenState extends State<TradeScreen> {
     }
 
     // Filter out credit for History tab
-    final metricKeys =
-        config.metricKeys.where((key) {
-          if (key == 'trade_metric_credit' && currentTab == 2) {
-            return false;
-          }
-          return true;
-        }).toList();
+    final metricKeys = config.metricKeys.where((key) {
+      if (key == 'trade_metric_credit' && currentTab == 2) {
+        return false;
+      }
+      return true;
+    }).toList();
 
     // Build metric rows - show "0" if data not available
     return Column(
-      children:
-          metricKeys.map((key) {
-            String value;
-            Color? valueColor;
+      children: metricKeys.map((key) {
+        String value;
+        Color? valueColor;
 
-            // Get value - defaults to "0" if data not available
-            if (currentTab == 2 && totals != null) {
-              value = _getMetricValue(key, null, totals);
-              valueColor = _getMetricColor(key, null, totals);
-            } else if (currentTab != 2 && accountInfo != null) {
-              value = _getMetricValue(key, accountInfo, null);
-              valueColor = _getMetricColor(key, accountInfo, null);
-            } else {
-              // No data available - show "0" instead of "--"
-              value = '0.00';
-              valueColor = AppColors.textGrey;
-            }
+        // Get value - defaults to "0" if data not available
+        if (currentTab == 2 && totals != null) {
+          value = _getMetricValue(key, null, totals);
+          valueColor = _getMetricColor(key, null, totals);
+        } else if (currentTab != 2 && accountInfo != null) {
+          value = _getMetricValue(key, accountInfo, null);
+          valueColor = _getMetricColor(key, accountInfo, null);
+        } else {
+          // No data available - show "0" instead of "--"
+          value = '0.00';
+          valueColor = AppColors.textGrey;
+        }
 
-            return _buildMetricRow(
-              languageService.tr(key),
-              value,
-              valueColor: valueColor,
-            );
-          }).toList(),
+        return _buildMetricRow(
+          languageService.tr(key),
+          value,
+          valueColor: valueColor,
+        );
+      }).toList(),
     );
   }
 
@@ -3697,10 +3644,9 @@ class _TradeScreenState extends State<TradeScreen> {
   /// Returns path like 'assets/svg/flags/eurusd.svg'
   String _getFlagPath(String symbol) {
     // Remove suffix if present (e.g., EURUSD.c -> EURUSD)
-    String cleanSymbol =
-        symbol.contains('.')
-            ? symbol.substring(0, symbol.lastIndexOf('.'))
-            : symbol;
+    String cleanSymbol = symbol.contains('.')
+        ? symbol.substring(0, symbol.lastIndexOf('.'))
+        : symbol;
 
     // Return path with full symbol lowercase
     return 'assets/svg/flags/${cleanSymbol.toLowerCase()}.svg';
@@ -3847,8 +3793,9 @@ class _TradeScreenState extends State<TradeScreen> {
     final formattedOpenTime = _formatIsoDateTimeString(position.openTime);
     final formattedCloseTime = _formatIsoDateTimeString(position.closeTime);
 
-    final durationValue =
-        position.duration.isNotEmpty ? position.duration : '-';
+    final durationValue = position.duration.isNotEmpty
+        ? position.duration
+        : '-';
 
     // Format values for S/L and T/P
     String formatValue(String value) {

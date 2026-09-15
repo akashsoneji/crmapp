@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/app_notification_controller.dart';
+import '../services/language_service.dart';
 
 // Message Model
 class ChatMessage {
@@ -23,11 +24,7 @@ class Language {
   final String code;
   final int number;
 
-  Language({
-    required this.name,
-    required this.code,
-    required this.number,
-  });
+  Language({required this.name, required this.code, required this.number});
 }
 
 // Chat Controller
@@ -70,28 +67,35 @@ class ChatController extends GetxController {
 
     // User's response
     Future.delayed(const Duration(milliseconds: 500), () {
-      messages.add(ChatMessage(
-        text: "Hi there!",
-        isUser: true,
-        timestamp: DateTime.now().subtract(const Duration(minutes: 1)),
-      ));
+      messages.add(
+        ChatMessage(
+          text: "Hi there!",
+          isUser: true,
+          timestamp: DateTime.now().subtract(const Duration(minutes: 1)),
+        ),
+      );
 
       // Bot's follow-up
       Future.delayed(const Duration(milliseconds: 1000), () {
-        messages.add(ChatMessage(
-          text: "Hello, Brooklyn! Thank you for contacting App.",
-          isUser: false,
-          timestamp: DateTime.now().subtract(const Duration(seconds: 30)),
-          sender: "App Assistant",
-        ));
+        messages.add(
+          ChatMessage(
+            text: "Hello, Brooklyn! Thank you for contacting App.",
+            isUser: false,
+            timestamp: DateTime.now().subtract(const Duration(seconds: 30)),
+            sender: "App Assistant",
+          ),
+        );
 
         Future.delayed(const Duration(milliseconds: 1500), () {
-          messages.add(ChatMessage(
-            text: "Please select the department where you want to get assistance.",
-            isUser: false,
-            timestamp: DateTime.now(),
-            sender: "App Assistant",
-          ));
+          messages.add(
+            ChatMessage(
+              text:
+                  "Please select the department where you want to get assistance.",
+              isUser: false,
+              timestamp: DateTime.now(),
+              sender: "App Assistant",
+            ),
+          );
           _scrollToBottom();
         });
       });
@@ -104,18 +108,18 @@ class ChatController extends GetxController {
 
     // Bot response
     Future.delayed(const Duration(milliseconds: 800), () {
-      _addBotMessage("Great! I'll assist you in ${language.name}. How can I help you today?");
+      _addBotMessage(
+        "Great! I'll assist you in ${language.name}. How can I help you today?",
+      );
     });
   }
 
   void sendMessage(String text) {
     if (text.trim().isEmpty) return;
 
-    messages.add(ChatMessage(
-      text: text.trim(),
-      isUser: true,
-      timestamp: DateTime.now(),
-    ));
+    messages.add(
+      ChatMessage(text: text.trim(), isUser: true, timestamp: DateTime.now()),
+    );
 
     messageController.clear();
     _scrollToBottom();
@@ -131,12 +135,14 @@ class ChatController extends GetxController {
   }
 
   void _addBotMessage(String text) {
-    messages.add(ChatMessage(
-      text: text,
-      isUser: false,
-      timestamp: DateTime.now(),
-      sender: "App Assistant",
-    ));
+    messages.add(
+      ChatMessage(
+        text: text,
+        isUser: false,
+        timestamp: DateTime.now(),
+        sender: "App Assistant",
+      ),
+    );
     _scrollToBottom();
   }
 
@@ -172,8 +178,8 @@ class ChatController extends GetxController {
   void openVoiceInput() {
     if (Get.isRegistered<AppNotificationController>()) {
       Get.find<AppNotificationController>().showInfo(
-        message: 'Voice input feature would be implemented here',
-        title: 'Voice Input',
+        message: Get.find<LanguageService>().tr('chat_voice_input_unavailable'),
+        title: Get.find<LanguageService>().tr('chat_voice_input_title'),
       );
     }
   }
@@ -181,8 +187,8 @@ class ChatController extends GetxController {
   void openAttachment() {
     if (Get.isRegistered<AppNotificationController>()) {
       Get.find<AppNotificationController>().showInfo(
-        message: 'File attachment feature would be implemented here',
-        title: 'Attachment',
+        message: Get.find<LanguageService>().tr('chat_attachment_unavailable'),
+        title: Get.find<LanguageService>().tr('chat_attachment_title'),
       );
     }
   }

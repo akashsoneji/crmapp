@@ -31,7 +31,8 @@ class _WalletScreenState extends State<WalletScreen> {
     super.initState();
     _scrollController = ScrollController();
     _scrollController.addListener(() {
-      if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200.h) {
+      if (_scrollController.position.pixels >=
+          _scrollController.position.maxScrollExtent - 200.h) {
         controller.loadMoreTransactions();
       }
     });
@@ -65,8 +66,9 @@ class _WalletScreenState extends State<WalletScreen> {
     return '$prefix\$$amountStr';
   }
 
-  Color get _onPrimary =>
-      AppColors.primary.computeLuminance() > 0.5 ? const Color(0xFF000000) : const Color(0xFFFFFFFF);
+  Color get _onPrimary => AppColors.primary.computeLuminance() > 0.5
+      ? const Color(0xFF000000)
+      : const Color(0xFFFFFFFF);
 
   Color get _textFieldBg =>
       AppColors.isDarkMode ? const Color(0xFF333333) : const Color(0xFFFFFFFF);
@@ -89,7 +91,10 @@ class _WalletScreenState extends State<WalletScreen> {
               "assets/svg/trade/arro_back.svg",
               height: 24.h,
               width: 24.w,
-              colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn),
+              colorFilter: ColorFilter.mode(
+                AppColors.textPrimary,
+                BlendMode.srcIn,
+              ),
             ),
             onPressed: () => NavigationHelper.safeBack(context: context),
           ),
@@ -104,8 +109,10 @@ class _WalletScreenState extends State<WalletScreen> {
         children: [
           SafeArea(
             child: Obx(() {
-              final isInitialLoading = controller.isHistoryLoading.value && controller.historyTransactions.isEmpty;
-              
+              final isInitialLoading =
+                  controller.isHistoryLoading.value &&
+                  controller.historyTransactions.isEmpty;
+
               return CustomScrollView(
                 controller: _scrollController,
                 physics: const AlwaysScrollableScrollPhysics(),
@@ -149,7 +156,7 @@ class _WalletScreenState extends State<WalletScreen> {
                               ),
                               SizedBox(height: 16.h),
                               Text(
-                                'No transactions found',
+                                languageService.tr('wallet_no_transactions'),
                                 style: TextStyle(
                                   color: AppColors.textSecondary,
                                   fontSize: 14.sp,
@@ -184,21 +191,22 @@ class _WalletScreenState extends State<WalletScreen> {
                       child: Padding(
                         padding: EdgeInsets.symmetric(vertical: 24.h),
                         child: Center(
-                          child:
-                              controller.isLoadingMore.value
-                                  ? CircularProgressIndicator(
-                                    color: AppColors.primary,
-                                  )
-                                  : !controller.hasMore.value &&
-                                      controller.historyTransactions.isNotEmpty
-                                  ? Text(
-                                    'No more transactions to show',
-                                    style: TextStyle(
-                                      color: AppColors.textSecondary,
-                                      fontSize: 11.sp,
-                                    ),
-                                  )
-                                  : const SizedBox.shrink(),
+                          child: controller.isLoadingMore.value
+                              ? CircularProgressIndicator(
+                                  color: AppColors.primary,
+                                )
+                              : !controller.hasMore.value &&
+                                    controller.historyTransactions.isNotEmpty
+                              ? Text(
+                                  languageService.tr(
+                                    'wallet_no_more_transactions',
+                                  ),
+                                  style: TextStyle(
+                                    color: AppColors.textSecondary,
+                                    fontSize: 11.sp,
+                                  ),
+                                )
+                              : const SizedBox.shrink(),
                         ),
                       ),
                     ),
@@ -210,15 +218,14 @@ class _WalletScreenState extends State<WalletScreen> {
 
           // Processing overlay (used for deposit, transfers)
           Obx(
-            () =>
-                controller.isLoading.value
-                    ? CommonLoadingWidget(
-                      message: languageService.tr('wallet_processing'),
-                      size: 60.0,
-                      color: AppColors.primary,
-                      isFullScreen: true,
-                    )
-                    : const SizedBox.shrink(),
+            () => controller.isLoading.value
+                ? CommonLoadingWidget(
+                    message: languageService.tr('wallet_processing'),
+                    size: 60.0,
+                    color: AppColors.primary,
+                    isFullScreen: true,
+                  )
+                : const SizedBox.shrink(),
           ),
         ],
       ),
@@ -266,10 +273,9 @@ class _WalletScreenState extends State<WalletScreen> {
               top: -20.h,
               child: CircleAvatar(
                 radius: 60.r,
-                backgroundColor:
-                    AppColors.isDarkMode
-                        ? AppColors.secondary.withOpacity(0.15)
-                        : Colors.white.withOpacity(0.08),
+                backgroundColor: AppColors.isDarkMode
+                    ? AppColors.secondary.withOpacity(0.15)
+                    : Colors.white.withOpacity(0.08),
               ),
             ),
             Positioned(
@@ -277,10 +283,9 @@ class _WalletScreenState extends State<WalletScreen> {
               bottom: -40.h,
               child: CircleAvatar(
                 radius: 80.r,
-                backgroundColor:
-                    AppColors.isDarkMode
-                        ? AppColors.secondary.withOpacity(0.15)
-                        : Colors.white.withOpacity(0.05),
+                backgroundColor: AppColors.isDarkMode
+                    ? AppColors.secondary.withOpacity(0.15)
+                    : Colors.white.withOpacity(0.05),
               ),
             ),
             Padding(
@@ -355,7 +360,9 @@ class _WalletScreenState extends State<WalletScreen> {
                                         ClipboardData(text: walletId),
                                       );
                                       CustomToastService.showSuccess(
-                                        message: 'Wallet ID copied',
+                                        message: languageService.tr(
+                                          'wallet_id_copied',
+                                        ),
                                       );
                                     }
                                   },
@@ -438,23 +445,21 @@ class _WalletScreenState extends State<WalletScreen> {
           ),
         ),
         style: ElevatedButton.styleFrom(
-          backgroundColor:
-              isPrimary
-                  ? AppColors.primary
-                  : isDark
-                  ? _textFieldBg
-                  : AppColors.primary.withOpacity(0.08),
+          backgroundColor: isPrimary
+              ? AppColors.primary
+              : isDark
+              ? _textFieldBg
+              : AppColors.primary.withOpacity(0.08),
           elevation: 0,
           shadowColor: Colors.transparent,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12.r),
-            side:
-                isPrimary
-                    ? BorderSide.none
-                    : BorderSide(
-                      color: AppColors.primary.withOpacity(0.2),
-                      width: 1,
-                    ),
+            side: isPrimary
+                ? BorderSide.none
+                : BorderSide(
+                    color: AppColors.primary.withOpacity(0.2),
+                    width: 1,
+                  ),
           ),
         ),
       ),
@@ -468,7 +473,8 @@ class _WalletScreenState extends State<WalletScreen> {
       if (controller.filterType.value != 'All Types') {
         chips.add(
           _buildFilterChip(
-            label: 'Type: ${controller.filterType.value}',
+            label:
+                '${languageService.tr('wallet_filter_type')}: ${controller.filterType.value}',
             onDeleted: () {
               controller.filterType.value = 'All Types';
               controller.applyFilters();
@@ -480,7 +486,8 @@ class _WalletScreenState extends State<WalletScreen> {
       if (controller.filterStatus.value != 'All Status') {
         chips.add(
           _buildFilterChip(
-            label: 'Status: ${controller.filterStatus.value}',
+            label:
+                '${languageService.tr('wallet_filter_status')}: ${controller.filterStatus.value}',
             onDeleted: () {
               controller.filterStatus.value = 'All Status';
               controller.applyFilters();
@@ -491,14 +498,12 @@ class _WalletScreenState extends State<WalletScreen> {
 
       if (controller.filterDateFrom.value.isNotEmpty ||
           controller.filterDateTo.value.isNotEmpty) {
-        final from =
-            controller.filterDateFrom.value.isNotEmpty
-                ? controller.filterDateFrom.value
-                : 'Any';
-        final to =
-            controller.filterDateTo.value.isNotEmpty
-                ? controller.filterDateTo.value
-                : 'Any';
+        final from = controller.filterDateFrom.value.isNotEmpty
+            ? controller.filterDateFrom.value
+            : 'Any';
+        final to = controller.filterDateTo.value.isNotEmpty
+            ? controller.filterDateTo.value
+            : 'Any';
         chips.add(
           _buildFilterChip(
             label: '$from to $to',
@@ -535,7 +540,7 @@ class _WalletScreenState extends State<WalletScreen> {
                     ),
                     SizedBox(width: 4.w),
                     Text(
-                      'Filters',
+                      languageService.tr('wallet_filters'),
                       style: TextStyle(
                         fontSize: 12.sp,
                         fontWeight: FontWeight.bold,
@@ -548,37 +553,35 @@ class _WalletScreenState extends State<WalletScreen> {
             ),
             SizedBox(width: 8.w),
             Expanded(
-              child:
-                  chips.isEmpty
-                      ? Text(
-                        'All Transactions',
-                        style: TextStyle(
-                          fontSize: 13.sp,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textSecondary,
-                        ),
-                      )
-                      : SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children:
-                              chips
-                                  .map(
-                                    (c) => Padding(
-                                      padding: EdgeInsets.only(right: 6.w),
-                                      child: c,
-                                    ),
-                                  )
-                                  .toList(),
-                        ),
+              child: chips.isEmpty
+                  ? Text(
+                      languageService.tr('wallet_all_transactions'),
+                      style: TextStyle(
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textSecondary,
                       ),
+                    )
+                  : SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: chips
+                            .map(
+                              (c) => Padding(
+                                padding: EdgeInsets.only(right: 6.w),
+                                child: c,
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    ),
             ),
             if (chips.isNotEmpty) ...[
               SizedBox(width: 6.w),
               GestureDetector(
                 onTap: controller.clearFilters,
                 child: Text(
-                  'Clear All',
+                  languageService.tr('wallet_clear_all'),
                   style: TextStyle(
                     fontSize: 12.sp,
                     color: AppColors.textSecondary,
@@ -844,20 +847,19 @@ class _WalletScreenState extends State<WalletScreen> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme:
-                isDark
-                    ? ColorScheme.dark(
-                      primary: AppColors.primary,
-                      onPrimary: Colors.black,
-                      surface: AppColors.cardBackground,
-                      onSurface: AppColors.textPrimary,
-                    )
-                    : ColorScheme.light(
-                      primary: AppColors.primary,
-                      onPrimary: Colors.white,
-                      surface: AppColors.cardBackground,
-                      onSurface: AppColors.textPrimary,
-                    ),
+            colorScheme: isDark
+                ? ColorScheme.dark(
+                    primary: AppColors.primary,
+                    onPrimary: Colors.black,
+                    surface: AppColors.cardBackground,
+                    onSurface: AppColors.textPrimary,
+                  )
+                : ColorScheme.light(
+                    primary: AppColors.primary,
+                    onPrimary: Colors.white,
+                    surface: AppColors.cardBackground,
+                    onSurface: AppColors.textPrimary,
+                  ),
           ),
           child: child!,
         );
@@ -892,10 +894,7 @@ class _WalletScreenState extends State<WalletScreen> {
                 value.isEmpty ? label : value,
                 style: TextStyle(
                   fontSize: 12.sp,
-                  color:
-                      value.isEmpty
-                          ? AppColors.hint
-                          : AppColors.textPrimary,
+                  color: value.isEmpty ? AppColors.hint : AppColors.textPrimary,
                 ),
               ),
             ),
@@ -924,19 +923,15 @@ class _WalletScreenState extends State<WalletScreen> {
           isExpanded: true,
           dropdownColor: AppColors.cardBackground,
           value: options.contains(value) ? value : options.first,
-          items:
-              options.map((opt) {
-                return DropdownMenuItem(
-                  value: opt,
-                  child: Text(
-                    opt,
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                );
-              }).toList(),
+          items: options.map((opt) {
+            return DropdownMenuItem(
+              value: opt,
+              child: Text(
+                opt,
+                style: TextStyle(fontSize: 12.sp, color: AppColors.textPrimary),
+              ),
+            );
+          }).toList(),
           onChanged: onChanged,
         ),
       ),
@@ -1047,14 +1042,14 @@ class _WalletScreenState extends State<WalletScreen> {
                   Text(
                     tx.createdAt != null
                         ? (() {
-                          final parsedDate = DateTime.tryParse(tx.createdAt!);
-                          if (parsedDate != null) {
-                            return DateFormat(
-                              'MMM dd, yyyy hh:mm a',
-                            ).format(parsedDate.toLocal());
-                          }
-                          return tx.createdAt!;
-                        })()
+                            final parsedDate = DateTime.tryParse(tx.createdAt!);
+                            if (parsedDate != null) {
+                              return DateFormat(
+                                'MMM dd, yyyy hh:mm a',
+                              ).format(parsedDate.toLocal());
+                            }
+                            return tx.createdAt!;
+                          })()
                         : '',
                     style: TextStyle(
                       fontSize: 10.sp,
@@ -1072,10 +1067,9 @@ class _WalletScreenState extends State<WalletScreen> {
                   style: TextStyle(
                     fontSize: 15.sp,
                     fontWeight: FontWeight.w800,
-                    color:
-                        isDeposit
-                            ? const Color(0xFF22C55E)
-                            : const Color(0xFFEF4444),
+                    color: isDeposit
+                        ? const Color(0xFF22C55E)
+                        : const Color(0xFFEF4444),
                   ),
                 ),
                 SizedBox(height: 6.h),
@@ -1154,10 +1148,9 @@ class _WalletScreenState extends State<WalletScreen> {
                       style: TextStyle(
                         fontSize: 28.sp,
                         fontWeight: FontWeight.w800,
-                        color:
-                            isDeposit
-                                ? const Color(0xFF22C55E)
-                                : const Color(0xFFEF4444),
+                        color: isDeposit
+                            ? const Color(0xFF22C55E)
+                            : const Color(0xFFEF4444),
                       ),
                     ),
                     SizedBox(height: 8.h),
@@ -1167,20 +1160,18 @@ class _WalletScreenState extends State<WalletScreen> {
                         vertical: 6.h,
                       ),
                       decoration: BoxDecoration(
-                        color:
-                            isApproved
-                                ? const Color(0xFFECFDF5)
-                                : isRejected
-                                ? const Color(0xFFFEF2F2)
-                                : const Color(0xFFFFFBEB),
+                        color: isApproved
+                            ? const Color(0xFFECFDF5)
+                            : isRejected
+                            ? const Color(0xFFFEF2F2)
+                            : const Color(0xFFFFFBEB),
                         borderRadius: BorderRadius.circular(20.r),
                         border: Border.all(
-                          color:
-                              isApproved
-                                  ? const Color(0xFFBBF7D0)
-                                  : isRejected
-                                  ? const Color(0xFFFEE2E2)
-                                  : const Color(0xFFFEF3C7),
+                          color: isApproved
+                              ? const Color(0xFFBBF7D0)
+                              : isRejected
+                              ? const Color(0xFFFEE2E2)
+                              : const Color(0xFFFEF3C7),
                         ),
                       ),
                       child: Text(
@@ -1188,12 +1179,11 @@ class _WalletScreenState extends State<WalletScreen> {
                         style: TextStyle(
                           fontSize: 12.sp,
                           fontWeight: FontWeight.bold,
-                          color:
-                              isApproved
-                                  ? const Color(0xFF15803D)
-                                  : isRejected
-                                  ? const Color(0xFFB91C1C)
-                                  : const Color(0xFFB45309),
+                          color: isApproved
+                              ? const Color(0xFF15803D)
+                              : isRejected
+                              ? const Color(0xFFB91C1C)
+                              : const Color(0xFFB45309),
                         ),
                       ),
                     ),
@@ -1214,14 +1204,14 @@ class _WalletScreenState extends State<WalletScreen> {
                 'Date & Time',
                 tx.createdAt != null
                     ? (() {
-                      final parsedDate = DateTime.tryParse(tx.createdAt!);
-                      if (parsedDate != null) {
-                        return DateFormat(
-                          'MMMM dd, yyyy hh:mm a',
-                        ).format(parsedDate.toLocal());
-                      }
-                      return tx.createdAt!;
-                    })()
+                        final parsedDate = DateTime.tryParse(tx.createdAt!);
+                        if (parsedDate != null) {
+                          return DateFormat(
+                            'MMMM dd, yyyy hh:mm a',
+                          ).format(parsedDate.toLocal());
+                        }
+                        return tx.createdAt!;
+                      })()
                     : 'N/A',
               ),
               if (tx.paymentDetails != null && tx.paymentDetails!.isNotEmpty)

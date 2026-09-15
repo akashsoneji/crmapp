@@ -28,7 +28,10 @@ class SettingScreen extends StatelessWidget {
         leading: IconButton(
           icon: SvgPicture.asset(
             "assets/svg/trade/arro_back.svg",
-            colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn),
+            colorFilter: ColorFilter.mode(
+              AppColors.textPrimary,
+              BlendMode.srcIn,
+            ),
           ),
           onPressed: () => Navigator.of(context).pop(),
         ),
@@ -74,6 +77,13 @@ class SettingScreen extends StatelessWidget {
                 color: AppColors.textPrimary,
               ),
               _MenuItem(
+                icon: 'language',
+                iconAssetPath: 'assets/svg/language.svg',
+                label: languageService.tr('more_language'),
+                onTap: () => Get.toNamed(AppPages.LANGUAGE_SELECTOR),
+                color: AppColors.textPrimary,
+              ),
+              _MenuItem(
                 icon: 'ticket',
                 label: languageService.tr('tickets'),
                 onTap: () => Get.toNamed(AppPages.TICKET_LIST),
@@ -89,6 +99,7 @@ class SettingScreen extends StatelessWidget {
 
 class _MenuItem extends StatelessWidget {
   final String icon;
+  final String? iconAssetPath;
   final String label;
   final VoidCallback onTap;
   final bool showTopBorder;
@@ -97,6 +108,7 @@ class _MenuItem extends StatelessWidget {
 
   const _MenuItem({
     required this.icon,
+    this.iconAssetPath,
     required this.label,
     required this.onTap,
     required this.color,
@@ -115,14 +127,12 @@ class _MenuItem extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           border: Border(
-            top:
-                showTopBorder
-                    ? BorderSide(color: AppColors.border, width: 1)
-                    : BorderSide.none,
-            bottom:
-                showBottomBorder
-                    ? BorderSide(color: AppColors.border, width: 1)
-                    : BorderSide.none,
+            top: showTopBorder
+                ? BorderSide(color: AppColors.border, width: 1)
+                : BorderSide.none,
+            bottom: showBottomBorder
+                ? BorderSide(color: AppColors.border, width: 1)
+                : BorderSide.none,
           ),
         ),
         child: SizedBox(
@@ -131,7 +141,7 @@ class _MenuItem extends StatelessWidget {
             contentPadding: EdgeInsets.zero,
             minVerticalPadding: 0,
             leading: SvgPicture.asset(
-              'assets/svg/more/setting/$icon.svg',
+              iconAssetPath ?? 'assets/svg/more/setting/$icon.svg',
               height: 24.h,
               width: 24.w,
               color: AppColors.primary,
@@ -145,14 +155,15 @@ class _MenuItem extends StatelessWidget {
                 color: color,
               ),
             ),
-            trailing:
-                showBottomBorder
-                    ? Icon(
-                      Icons.arrow_forward_ios_sharp,
-                      size: 14.h,
-                      color: AppColors.icongrey,
-                    )
-                    : null,
+            trailing: showBottomBorder
+                ? Icon(
+                    Directionality.of(context) == TextDirection.rtl
+                        ? Icons.arrow_back_ios
+                        : Icons.arrow_forward_ios_sharp,
+                    size: 14.h,
+                    color: AppColors.icongrey,
+                  )
+                : null,
             onTap: onTap,
             minLeadingWidth: 10,
             horizontalTitleGap: 8.w,

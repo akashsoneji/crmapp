@@ -8,6 +8,7 @@ import 'package:crm_app/widgets/custom_toast.dart';
 import 'package:crm_app/controllers/dashboard_controller.dart';
 import 'package:crm_app/controllers/finance/deposit_instrction_controller.dart';
 import 'package:crm_app/controllers/finance/transaction_history_controller.dart';
+import 'package:crm_app/services/language_service.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class CregisAddressScreen extends StatefulWidget {
@@ -84,58 +85,58 @@ class _CregisAddressScreenState extends State<CregisAddressScreen> {
   void _startStatusPolling() {
     _pollingStartedAt = DateTime.now();
     _pollAttempts = 0;
-    _pollingTimer = Timer.periodic(
-      const Duration(seconds: _pollIntervalSeconds),
-      (timer) async {
-        if (!mounted || _resolved) {
-          timer.cancel();
-          return;
-        }
+    _pollingTimer = Timer.periodic(const Duration(seconds: _pollIntervalSeconds), (
+      timer,
+    ) async {
+      if (!mounted || _resolved) {
+        timer.cancel();
+        return;
+      }
 
-        final elapsed =
-            DateTime.now().difference(_pollingStartedAt!).inSeconds;
-        if (elapsed >= _maxWaitSeconds) {
-          timer.cancel();
-          _onTimeout();
-          return;
-        }
+      final elapsed = DateTime.now().difference(_pollingStartedAt!).inSeconds;
+      if (elapsed >= _maxWaitSeconds) {
+        timer.cancel();
+        _onTimeout();
+        return;
+      }
 
-        _pollAttempts++;
-        _safeDepositCtrl()?.setPollingAttemptCount(_pollAttempts);
+      _pollAttempts++;
+      _safeDepositCtrl()?.setPollingAttemptCount(_pollAttempts);
 
-        if (mounted) {
-          setState(() {
-            final remaining = _maxWaitSeconds - elapsed;
-            _statusText =
-                'Waiting for payment... (${remaining}s, attempt $_pollAttempts)';
-          });
-        }
+      if (mounted) {
+        setState(() {
+          final remaining = _maxWaitSeconds - elapsed;
+          _statusText =
+              'Waiting for payment... (${remaining}s, attempt $_pollAttempts)';
+        });
+      }
 
-        final ref = widget.referenceNumber;
-        if (ref.trim().isEmpty) return;
+      final ref = widget.referenceNumber;
+      if (ref.trim().isEmpty) return;
 
-        _debugLastCall =
-            'GET /transactions @ ${DateTime.now().toIso8601String()} '
-            '(attempt $_pollAttempts, ref=${ref.length > 10 ? '${ref.substring(0, 10)}…' : ref})';
-        final res =
-            await _thCtrl().fetchLatestTransactionForRef(ref, statusFilter: true);
+      _debugLastCall =
+          'GET /transactions @ ${DateTime.now().toIso8601String()} '
+          '(attempt $_pollAttempts, ref=${ref.length > 10 ? '${ref.substring(0, 10)}…' : ref})';
+      final res = await _thCtrl().fetchLatestTransactionForRef(
+        ref,
+        statusFilter: true,
+      );
 
-        if (!mounted || _resolved) return;
-        if (res.row != null) {
-          _debugLastResponse =
-              'MATCH status=${res.row!.status ?? '?'} amount=${res.row!.amount ?? '?'} '
-              'created_at=${res.row!.createdAt ?? '?'}';
-          _debugLastAt = DateTime.now();
-          if (mounted) setState(() {});
-          _onSuccess();
-          return;
-        }
+      if (!mounted || _resolved) return;
+      if (res.row != null) {
         _debugLastResponse =
-            'NO MATCH (status=${res.rawStatus}, totalRows=${res.totalRows})';
+            'MATCH status=${res.row!.status ?? '?'} amount=${res.row!.amount ?? '?'} '
+            'created_at=${res.row!.createdAt ?? '?'}';
         _debugLastAt = DateTime.now();
         if (mounted) setState(() {});
-      },
-    );
+        _onSuccess();
+        return;
+      }
+      _debugLastResponse =
+          'NO MATCH (status=${res.rawStatus}, totalRows=${res.totalRows})';
+      _debugLastAt = DateTime.now();
+      if (mounted) setState(() {});
+    });
   }
 
   void _onSuccess() {
@@ -149,7 +150,7 @@ class _CregisAddressScreenState extends State<CregisAddressScreen> {
       });
     }
     CustomToastService.showSuccess(
-      message: 'Deposit confirmed! Balance updated.',
+      message: TranslationUtils.tr('finance_deposit_confirmed'),
     );
 
     try {
@@ -170,13 +171,14 @@ class _CregisAddressScreenState extends State<CregisAddressScreen> {
     if (mounted) {
       setState(() {
         _isPolling = false;
-        _statusText =
-            'Transaction is processing. Check Transaction History for status.';
+        _statusText = TranslationUtils.trf(
+          'finance_transaction_processing',
+          'Transaction is processing. Check Transaction History for status.',
+        );
       });
     }
     CustomToastService.showWarning(
-      message:
-          'Transaction is processing. Please wait in Transaction History.',
+      message: 'Transaction is processing. Please wait in Transaction History.',
       title: 'Processing',
     );
     _safeDepositCtrl()?.setPollingStatus('timeout');
@@ -193,19 +195,16 @@ class _CregisAddressScreenState extends State<CregisAddressScreen> {
       context: context,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
-        title: const Text('Cancel payment?'),
-        content: const Text(
-          'Are you sure you want to cancel this payment? The transaction '
-          'will not be processed and you will be returned to the home screen.',
-        ),
+        title: Text(TranslationUtils.tr('finance_cancel_payment')),
+        content: Text(TranslationUtils.tr('finance_cancel_payment_message')),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('No, keep waiting'),
+            child: Text(TranslationUtils.tr('finance_no_keep_waiting')),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Yes, cancel'),
+            child: Text(TranslationUtils.tr('finance_yes_cancel')),
           ),
         ],
       ),
@@ -213,7 +212,9 @@ class _CregisAddressScreenState extends State<CregisAddressScreen> {
     if (confirmed != true || _resolved) return;
     _resolved = true;
     _pollingTimer?.cancel();
-    CustomToastService.showError(message: 'Transaction cancelled');
+    CustomToastService.showError(
+      message: TranslationUtils.tr('finance_transaction_cancelled'),
+    );
     _safeDepositCtrl()?.clearPollingState();
     Get.offAllNamed(Routes.TRADING);
   }
@@ -344,7 +345,7 @@ class _CregisAddressScreenState extends State<CregisAddressScreen> {
                           color: AppColors.primary,
                           value: loadingProgress.expectedTotalBytes != null
                               ? loadingProgress.cumulativeBytesLoaded /
-                                  loadingProgress.expectedTotalBytes!
+                                    loadingProgress.expectedTotalBytes!
                               : null,
                         ),
                       ),
@@ -411,7 +412,10 @@ class _CregisAddressScreenState extends State<CregisAddressScreen> {
                           ClipboardData(text: widget.cregisAddress),
                         );
                         CustomToastService.showSuccess(
-                          message: 'Address copied to clipboard',
+                          message: TranslationUtils.trf(
+                            'finance_address_copied',
+                            'Address copied to clipboard',
+                          ),
                         );
                       },
                       child: Container(
@@ -440,9 +444,7 @@ class _CregisAddressScreenState extends State<CregisAddressScreen> {
                 decoration: BoxDecoration(
                   color: Colors.red.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: Colors.red.withValues(alpha: 0.3),
-                  ),
+                  border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
                 ),
                 child: Row(
                   children: [
@@ -471,10 +473,7 @@ class _CregisAddressScreenState extends State<CregisAddressScreen> {
               // Reference
               Text(
                 'Reference: ${widget.referenceNumber}',
-                style: TextStyle(
-                  fontSize: 12.sp,
-                  color: AppColors.textGrey,
-                ),
+                style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey),
               ),
 
               const SizedBox(height: 32),

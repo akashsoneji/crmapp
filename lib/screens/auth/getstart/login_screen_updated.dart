@@ -142,10 +142,9 @@ class _LoginScreenUpdatedState extends State<LoginScreenUpdated> {
 
                 // Forgot Password
                 Align(
-                  alignment:
-                      languageService.isRTL()
-                          ? Alignment.centerLeft
-                          : Alignment.centerRight,
+                  alignment: languageService.isRTL()
+                      ? Alignment.centerLeft
+                      : Alignment.centerRight,
                   child: RTLComponents.textButton(
                     text: languageService.tr("login_forgot_password"),
                     onPressed: () {

@@ -19,6 +19,7 @@ class IbmSettingsScreen extends StatefulWidget {
 
 class _IbmSettingsScreenState extends State<IbmSettingsScreen> {
   final IbmController controller = Get.find<IbmController>();
+  final LanguageService languageService = Get.find<LanguageService>();
 
   @override
   void initState() {
@@ -33,14 +34,12 @@ class _IbmSettingsScreenState extends State<IbmSettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final languageService = Get.find<LanguageService>();
-
     return Scaffold(
       backgroundColor: AppColors.tradeBackgroundCenterColor,
       appBar: widget.embedded
           ? null
-          : const IbmTopHeader(
-              title: 'Partner Settings',
+          : IbmTopHeader(
+              title: languageService.tr('ib_partner_settings'),
               showBackButton: false,
             ),
       body: Obx(() {
@@ -142,7 +141,7 @@ class _IbmSettingsScreenState extends State<IbmSettingsScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'IB Partner Profile',
+                      languageService.tr('ib_partner_profile'),
                       style: TextStyle(
                         fontSize: 15.sp,
                         fontWeight: FontWeight.w700,
@@ -160,13 +159,16 @@ class _IbmSettingsScreenState extends State<IbmSettingsScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildProfileStat('Direct Clients', '${clients['total'] ?? 0}'),
               _buildProfileStat(
-                'Direct Partners',
+                languageService.tr('ib_direct_clients'),
+                '${clients['total'] ?? 0}',
+              ),
+              _buildProfileStat(
+                languageService.tr('ib_direct_partners'),
                 '${partners['direct'] ?? 0}',
               ),
               _buildProfileStat(
-                'Network Partners',
+                languageService.tr('ib_network_partners'),
                 '${partners['network'] ?? 0}',
               ),
             ],
@@ -216,7 +218,7 @@ class _IbmSettingsScreenState extends State<IbmSettingsScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Client Account Visibility',
+                languageService.tr('ib_client_account_visibility'),
                 style: TextStyle(
                   fontSize: 14.sp,
                   fontWeight: FontWeight.w700,
@@ -233,7 +235,7 @@ class _IbmSettingsScreenState extends State<IbmSettingsScreen> {
           ),
           SizedBox(height: 4.h),
           Text(
-            'Control which trading account groups your referred clients see when registering.',
+            languageService.tr('ib_visibility_description'),
             style: TextStyle(fontSize: 11.sp, color: AppColors.textGrey),
           ),
           SizedBox(height: 12.h),
@@ -242,7 +244,7 @@ class _IbmSettingsScreenState extends State<IbmSettingsScreen> {
             Padding(
               padding: EdgeInsets.symmetric(vertical: 14.h),
               child: Text(
-                'All standard account groups are currently enabled.',
+                languageService.tr('ib_all_groups_enabled'),
                 style: TextStyle(fontSize: 11.sp, color: AppColors.textGrey),
               ),
             )
@@ -266,16 +268,14 @@ class _IbmSettingsScreenState extends State<IbmSettingsScreen> {
                 margin: EdgeInsets.only(bottom: 8.h),
                 padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
                 decoration: BoxDecoration(
-                  color:
-                      AppColors.isDarkMode
-                          ? Colors.grey[900]
-                          : const Color(0xFFF9F9FB),
+                  color: AppColors.isDarkMode
+                      ? Colors.grey[900]
+                      : const Color(0xFFF9F9FB),
                   borderRadius: BorderRadius.circular(8.r),
                   border: Border.all(
-                    color:
-                        isDefault
-                            ? AppColors.primary.withOpacity(0.5)
-                            : AppColors.divider,
+                    color: isDefault
+                        ? AppColors.primary.withOpacity(0.5)
+                        : AppColors.divider,
                   ),
                 ),
                 child: Row(
@@ -306,7 +306,7 @@ class _IbmSettingsScreenState extends State<IbmSettingsScreen> {
                                     borderRadius: BorderRadius.circular(4.r),
                                   ),
                                   child: Text(
-                                    'Default',
+                                    languageService.tr('default'),
                                     style: TextStyle(
                                       fontSize: 9.sp,
                                       fontWeight: FontWeight.bold,
@@ -319,13 +319,12 @@ class _IbmSettingsScreenState extends State<IbmSettingsScreen> {
                           ),
                           if (isVisible && !isDefault)
                             InkWell(
-                              onTap:
-                                  () =>
-                                      controller.setDefaultVisibilityGroup(id),
+                              onTap: () =>
+                                  controller.setDefaultVisibilityGroup(id),
                               child: Padding(
                                 padding: EdgeInsets.only(top: 2.h),
                                 child: Text(
-                                  'Set as default',
+                                  languageService.tr('ib_set_as_default'),
                                   style: TextStyle(
                                     fontSize: 10.sp,
                                     color: AppColors.primary,
@@ -382,9 +381,17 @@ class _IbmSettingsScreenState extends State<IbmSettingsScreen> {
 
   Widget _buildMyPlanCard(Map<String, dynamic> myPlan) {
     final plan = myPlan['plan'] is Map ? myPlan['plan'] as Map : {};
-    final planName = plan['name']?.toString() ?? plan['plan_name']?.toString() ?? 'Default Partner Plan';
-    final isActive = plan['is_active'] == true || plan['is_active'] == 1 || plan['is_active'] == null;
-    final List<dynamic> groups = myPlan['groups'] is List ? myPlan['groups'] as List : [];
+    final planName =
+        plan['name']?.toString() ??
+        plan['plan_name']?.toString() ??
+        'Default Partner Plan';
+    final isActive =
+        plan['is_active'] == true ||
+        plan['is_active'] == 1 ||
+        plan['is_active'] == null;
+    final List<dynamic> groups = myPlan['groups'] is List
+        ? myPlan['groups'] as List
+        : [];
 
     return Container(
       padding: EdgeInsets.all(14.w),
@@ -410,7 +417,9 @@ class _IbmSettingsScreenState extends State<IbmSettingsScreen> {
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
                 decoration: BoxDecoration(
-                  color: isActive ? const Color(0xFFE8F5E9) : const Color(0xFFFFEBEE),
+                  color: isActive
+                      ? const Color(0xFFE8F5E9)
+                      : const Color(0xFFFFEBEE),
                   borderRadius: BorderRadius.circular(4.r),
                 ),
                 child: Text(
@@ -418,7 +427,9 @@ class _IbmSettingsScreenState extends State<IbmSettingsScreen> {
                   style: TextStyle(
                     fontSize: 9,
                     fontWeight: FontWeight.bold,
-                    color: isActive ? const Color(0xFF2E7D32) : const Color(0xFFC62828),
+                    color: isActive
+                        ? const Color(0xFF2E7D32)
+                        : const Color(0xFFC62828),
                   ),
                 ),
               ),

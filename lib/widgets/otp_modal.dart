@@ -5,6 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/controllers/app_notification_controller.dart';
+import 'package:crm_app/services/language_service.dart';
 
 class OtpModal extends StatefulWidget {
   final String email;
@@ -116,6 +117,7 @@ class _OtpModalState extends State<OtpModal> {
 
   @override
   Widget build(BuildContext context) {
+    final languageService = Get.find<LanguageService>();
     return Padding(
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
@@ -148,8 +150,8 @@ class _OtpModalState extends State<OtpModal> {
               // Title
               Text(
                 widget.isEmailVerification
-                    ? 'Verify Email'
-                    : 'Verify Mobile Number',
+                    ? languageService.tr('auth_verify_email')
+                    : languageService.tr('auth_verify_mobile_number'),
                 style: TextStyle(
                   fontSize: 18.sp,
                   fontWeight: FontWeight.w600,
@@ -161,8 +163,12 @@ class _OtpModalState extends State<OtpModal> {
               // Instructions - ✅ FIXED: Changed from "5-digit" to use dynamic otpLength
               Text(
                 widget.isEmailVerification
-                    ? 'Enter the ${widget.otpLength}-digit code we\'ve sent to your email'
-                    : 'Enter the ${widget.otpLength}-digit code we\'ve sent to your number',
+                    ? languageService
+                          .tr('auth_otp_sent_to_email')
+                          .replaceAll('{length}', '${widget.otpLength}')
+                    : languageService
+                          .tr('auth_otp_sent_to_mobile')
+                          .replaceAll('{length}', '${widget.otpLength}'),
                 style: TextStyle(fontSize: 14.sp, color: AppColors.textGrey),
                 textAlign: TextAlign.center,
               ),
@@ -187,10 +193,9 @@ class _OtpModalState extends State<OtpModal> {
                   return Container(
                     width: 51.w,
                     height: 50.h,
-                    child:
-                        Platform.isAndroid
-                            ? _buildOtpBoxAndroid(index)
-                            : _buildOtpBox(index),
+                    child: Platform.isAndroid
+                        ? _buildOtpBoxAndroid(index)
+                        : _buildOtpBox(index),
                   );
                 }),
               ),
@@ -212,7 +217,7 @@ class _OtpModalState extends State<OtpModal> {
                     elevation: 0,
                   ),
                   child: Text(
-                    'Verify',
+                    languageService.tr('common_verify'),
                     style: TextStyle(
                       fontSize: 16.sp,
                       fontWeight: FontWeight.w600,
@@ -228,13 +233,16 @@ class _OtpModalState extends State<OtpModal> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    'Didn\'t receive the code? ',
-                    style: TextStyle(fontSize: 14.sp, color: AppColors.textGrey),
+                    '${languageService.tr('auth_otp_not_received')} ',
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      color: AppColors.textGrey,
+                    ),
                   ),
                   TextButton(
                     onPressed: _handleResendOtp,
                     child: Text(
-                      'Resend',
+                      languageService.tr('auth_resend'),
                       style: TextStyle(
                         fontSize: 14.sp,
                         fontWeight: FontWeight.w600,
@@ -338,84 +346,15 @@ class _OtpModalState extends State<OtpModal> {
 
     return index == 0
         ? TextField(
-          controller: _otpControllers[index],
-          focusNode: _otpFocusNodes[index],
-          keyboardType: TextInputType.number,
-          textAlign: TextAlign.center,
-          maxLength: widget.otpLength, // Allow paste of full OTP in first field
-          inputFormatters: [
-            FilteringTextInputFormatter.digitsOnly,
-            LengthLimitingTextInputFormatter(widget.otpLength),
-          ],
-          style: TextStyle(
-            fontSize: 20.sp,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
-          ),
-          decoration: InputDecoration(
-            contentPadding: EdgeInsets.all(5),
-            counterText: '',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: AppColors.icongrey),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: AppColors.icongrey),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: AppColors.primary, width: 2),
-            ),
-          ),
-          onChanged: (value) {
-            if (value.length > 1 && value.length <= widget.otpLength) {
-              // Handle paste - distribute digits across fields
-              final otp = value.padRight(widget.otpLength, '');
-              for (int i = 0; i < widget.otpLength; i++) {
-                _otpControllers[i].text = i < otp.length ? otp[i] : '';
-                _previousOtpValues[i] = i < otp.length ? otp[i] : '';
-              }
-              if (otp.length == widget.otpLength) {
-                _otpFocusNodes[widget.otpLength - 1].requestFocus();
-              } else if (otp.length >
-                  _otpControllers.indexWhere((c) => c.text.isEmpty)) {
-                _otpFocusNodes[otp.length - 1].requestFocus();
-              }
-            } else if (value.length == 1 && index < widget.otpLength - 1) {
-              _previousOtpValues[index] = value;
-              _otpFocusNodes[index + 1].requestFocus();
-            }
-          },
-          onTap: () {
-            if (_otpControllers[index].text.isNotEmpty) {
-              _otpControllers[index].selection = TextSelection(
-                baseOffset: 0,
-                extentOffset: _otpControllers[index].text.length,
-              );
-            }
-          },
-        )
-        : RawKeyboardListener(
-          focusNode: keyboardFocusNode,
-          onKey: (event) {
-            if (event is RawKeyDownEvent &&
-                event.logicalKey == LogicalKeyboardKey.backspace &&
-                _otpControllers[index].text.isEmpty &&
-                index > 0) {
-              // Handle backspace on empty field - move to previous field
-              _otpFocusNodes[index - 1].requestFocus();
-            }
-          },
-          child: TextField(
             controller: _otpControllers[index],
             focusNode: _otpFocusNodes[index],
             keyboardType: TextInputType.number,
             textAlign: TextAlign.center,
-            maxLength: 1,
+            maxLength:
+                widget.otpLength, // Allow paste of full OTP in first field
             inputFormatters: [
               FilteringTextInputFormatter.digitsOnly,
-              LengthLimitingTextInputFormatter(1),
+              LengthLimitingTextInputFormatter(widget.otpLength),
             ],
             style: TextStyle(
               fontSize: 20.sp,
@@ -439,13 +378,22 @@ class _OtpModalState extends State<OtpModal> {
               ),
             ),
             onChanged: (value) {
-              if (value.isNotEmpty && index < widget.otpLength - 1) {
+              if (value.length > 1 && value.length <= widget.otpLength) {
+                // Handle paste - distribute digits across fields
+                final otp = value.padRight(widget.otpLength, '');
+                for (int i = 0; i < widget.otpLength; i++) {
+                  _otpControllers[i].text = i < otp.length ? otp[i] : '';
+                  _previousOtpValues[i] = i < otp.length ? otp[i] : '';
+                }
+                if (otp.length == widget.otpLength) {
+                  _otpFocusNodes[widget.otpLength - 1].requestFocus();
+                } else if (otp.length >
+                    _otpControllers.indexWhere((c) => c.text.isEmpty)) {
+                  _otpFocusNodes[otp.length - 1].requestFocus();
+                }
+              } else if (value.length == 1 && index < widget.otpLength - 1) {
                 _previousOtpValues[index] = value;
                 _otpFocusNodes[index + 1].requestFocus();
-              } else if (value.isEmpty && index > 0) {
-                // Move to previous box when backspace clears the current box
-                _previousOtpValues[index] = '';
-                _otpFocusNodes[index - 1].requestFocus();
               }
             },
             onTap: () {
@@ -456,11 +404,73 @@ class _OtpModalState extends State<OtpModal> {
                 );
               }
             },
-          ),
-        );
+          )
+        : RawKeyboardListener(
+            focusNode: keyboardFocusNode,
+            onKey: (event) {
+              if (event is RawKeyDownEvent &&
+                  event.logicalKey == LogicalKeyboardKey.backspace &&
+                  _otpControllers[index].text.isEmpty &&
+                  index > 0) {
+                // Handle backspace on empty field - move to previous field
+                _otpFocusNodes[index - 1].requestFocus();
+              }
+            },
+            child: TextField(
+              controller: _otpControllers[index],
+              focusNode: _otpFocusNodes[index],
+              keyboardType: TextInputType.number,
+              textAlign: TextAlign.center,
+              maxLength: 1,
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+                LengthLimitingTextInputFormatter(1),
+              ],
+              style: TextStyle(
+                fontSize: 20.sp,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+              decoration: InputDecoration(
+                contentPadding: EdgeInsets.all(5),
+                counterText: '',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: AppColors.icongrey),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: AppColors.icongrey),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: AppColors.primary, width: 2),
+                ),
+              ),
+              onChanged: (value) {
+                if (value.isNotEmpty && index < widget.otpLength - 1) {
+                  _previousOtpValues[index] = value;
+                  _otpFocusNodes[index + 1].requestFocus();
+                } else if (value.isEmpty && index > 0) {
+                  // Move to previous box when backspace clears the current box
+                  _previousOtpValues[index] = '';
+                  _otpFocusNodes[index - 1].requestFocus();
+                }
+              },
+              onTap: () {
+                if (_otpControllers[index].text.isNotEmpty) {
+                  _otpControllers[index].selection = TextSelection(
+                    baseOffset: 0,
+                    extentOffset: _otpControllers[index].text.length,
+                  );
+                }
+              },
+            ),
+          );
   }
 
   void _handleVerify() {
+    final languageService = Get.find<LanguageService>();
     final otp = _otpControllers.map((controller) => controller.text).join();
     if (otp.length == widget.otpLength) {
       if (widget.onOtpSubmitted != null) {
@@ -470,16 +480,18 @@ class _OtpModalState extends State<OtpModal> {
         Get.back(closeOverlays: true); // Close modal
         if (Get.isRegistered<AppNotificationController>()) {
           Get.find<AppNotificationController>().showSuccess(
-            message: 'OTP verified successfully!',
-            title: 'Success',
+            message: languageService.tr('auth_otp_verified_successfully'),
+            title: languageService.tr('common_success'),
           );
         }
       }
     } else {
       if (Get.isRegistered<AppNotificationController>()) {
         Get.find<AppNotificationController>().showError(
-          message: 'Please enter a valid ${widget.otpLength}-digit OTP',
-          title: 'Error',
+          message: languageService
+              .tr('auth_valid_otp')
+              .replaceAll('{length}', '${widget.otpLength}'),
+          title: languageService.tr('common_error'),
         );
       }
     }
@@ -493,8 +505,10 @@ class _OtpModalState extends State<OtpModal> {
       // Default behavior
       if (Get.isRegistered<AppNotificationController>()) {
         Get.find<AppNotificationController>().showSuccess(
-          message: 'OTP resent successfully!',
-          title: 'Success',
+          message: Get.find<LanguageService>().tr(
+            'auth_otp_resent_successfully',
+          ),
+          title: Get.find<LanguageService>().tr('common_success'),
         );
       }
     }

@@ -14,6 +14,7 @@ import '../../services/api_service.dart';
 import '../../services/secure_storage_service.dart';
 import '../../screens/home/more/finance/deposit_camera_screen.dart';
 import '../../controllers/app_notification_controller.dart';
+import '../../services/language_service.dart';
 
 class DepositInstructionController extends GetxController {
   // Observable variables
@@ -149,8 +150,9 @@ class DepositInstructionController extends GetxController {
     } catch (e) {
       if (Get.isRegistered<AppNotificationController>()) {
         Get.find<AppNotificationController>().showError(
-          message: 'Failed to fetch crypto address: ${e.toString()}',
-          title: 'Error',
+          message:
+              '${Get.find<LanguageService>().tr('finance_crypto_address_failed')}: ${e.toString()}',
+          title: Get.find<LanguageService>().tr('common_error'),
         );
       }
     } finally {
@@ -165,8 +167,8 @@ class DepositInstructionController extends GetxController {
     if (cameras == null || cameras!.isEmpty) {
       if (Get.isRegistered<AppNotificationController>()) {
         Get.find<AppNotificationController>().showError(
-          message: 'No camera available on this device.',
-          title: 'Error',
+          message: Get.find<LanguageService>().tr('finance_no_camera'),
+          title: Get.find<LanguageService>().tr('common_error'),
         );
       }
       return;
@@ -193,8 +195,9 @@ class DepositInstructionController extends GetxController {
       print('Error starting camera: $e');
       if (Get.isRegistered<AppNotificationController>()) {
         Get.find<AppNotificationController>().showError(
-          message: 'Failed to start camera: ${e.toString()}',
-          title: 'Error',
+          message:
+              '${Get.find<LanguageService>().tr('finance_camera_start_failed')}: ${e.toString()}',
+          title: Get.find<LanguageService>().tr('common_error'),
         );
       }
       await cameraController?.dispose();
@@ -211,8 +214,8 @@ class DepositInstructionController extends GetxController {
     if (cameraController == null || !cameraController!.value.isInitialized) {
       if (Get.isRegistered<AppNotificationController>()) {
         Get.find<AppNotificationController>().showError(
-          message: 'Camera is not ready. Please wait.',
-          title: 'Error',
+          message: Get.find<LanguageService>().tr('finance_camera_not_ready'),
+          title: Get.find<LanguageService>().tr('common_error'),
         );
       }
       return;
@@ -239,16 +242,17 @@ class DepositInstructionController extends GetxController {
 
       if (Get.isRegistered<AppNotificationController>()) {
         Get.find<AppNotificationController>().showSuccess(
-          message: 'Payment proof captured successfully!',
-          title: 'Success',
+          message: TranslationUtils.tr('deposit_payment_proof_captured'),
+          title: TranslationUtils.tr('common_success'),
         );
       }
     } catch (e) {
       print('Error capturing image: $e');
       if (Get.isRegistered<AppNotificationController>()) {
         Get.find<AppNotificationController>().showError(
-          message: 'Failed to capture image: ${e.toString()}',
-          title: 'Error',
+          message:
+              '${TranslationUtils.tr('finance_image_capture_failed')}: ${e.toString()}',
+          title: TranslationUtils.tr('common_error'),
         );
       }
 
@@ -279,8 +283,8 @@ class DepositInstructionController extends GetxController {
         selectedImage.value = File(result.files.single.path!);
         if (Get.isRegistered<AppNotificationController>()) {
           Get.find<AppNotificationController>().showSuccess(
-            message: 'Image selected from gallery',
-            title: 'Success',
+            message: TranslationUtils.tr('finance_image_selected_gallery'),
+            title: TranslationUtils.tr('common_success'),
           );
         }
       }
@@ -427,9 +431,7 @@ class DepositInstructionController extends GetxController {
     required String mt5AccountId,
   }) async {
     if (selectedCregisNetwork.value.isEmpty) {
-      CustomToastService.showError(
-        message: 'Please select a network',
-      );
+      CustomToastService.showError(message: 'Please select a network');
       return;
     }
 
@@ -453,14 +455,16 @@ class DepositInstructionController extends GetxController {
       if (response.success && response.data != null) {
         final data = response.data['data'] ?? response.data;
 
-        cregisReferenceNumber.value = data['reference_number']?.toString() ?? '';
+        cregisReferenceNumber.value =
+            data['reference_number']?.toString() ?? '';
         cregisChainId.value = data['chain_id']?.toString() ?? '';
         cregisCheckoutUrl.value = data['checkout_url']?.toString() ?? '';
         cregisDepositAddress.value = data['cregis_address']?.toString() ?? '';
         cregisQrPath.value = data['qr_path']?.toString() ?? '';
-print("object   imsgr cregisCheckoutUrl.value ${cregisCheckoutUrl.value}");
+        print(
+          "object   imsgr cregisCheckoutUrl.value ${cregisCheckoutUrl.value}",
+        );
         if (cregisCheckoutUrl.value.isNotEmpty) {
-
           // Checkout flow - immediately open the payment URL. The wait screen
           // itself runs the polling loop; the controller no longer drives it.
           Get.toNamed(
@@ -475,7 +479,8 @@ print("object   imsgr cregisCheckoutUrl.value ${cregisCheckoutUrl.value}");
         } else if (cregisDepositAddress.value.isNotEmpty) {
           // Address flow - show address + start polling
           CustomToastService.showSuccess(
-            message: 'Deposit address created. Send crypto to the address shown.',
+            message:
+                'Deposit address created. Send crypto to the address shown.',
           );
         } else {
           CustomToastService.showError(

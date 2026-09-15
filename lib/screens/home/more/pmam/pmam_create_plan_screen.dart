@@ -1,4 +1,5 @@
 import 'package:crm_app/widgets/app_svg_back_button.dart';
+import 'package:crm_app/services/language_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -116,7 +117,10 @@ class _PmamCreatePlanScreenState extends State<PmamCreatePlanScreen> {
         //     ),
         //   ),
         // ),
-        title: Text('Create New Plan', style: AppTextStyles.heading),
+        title: Text(
+          Get.find<LanguageService>().tr('copy_trading_create_new_plan'),
+          style: AppTextStyles.heading,
+        ),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -159,10 +163,9 @@ class _PmamCreatePlanScreenState extends State<PmamCreatePlanScreen> {
                     ),
                     _ProfileRow(
                       label: 'Manager ID',
-                      value:
-                          _ctrl.managerCode.value.isEmpty
-                              ? 'N/A'
-                              : _ctrl.managerCode.value,
+                      value: _ctrl.managerCode.value.isEmpty
+                          ? 'N/A'
+                          : _ctrl.managerCode.value,
                     ),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -247,31 +250,28 @@ class _PmamCreatePlanScreenState extends State<PmamCreatePlanScreen> {
                         hint: 'Select a trading account',
                         sheetTitle: 'Select Trading Account',
                         valueEquals: (a, b) => a['id'] == b['id'],
-                        options:
-                            accounts.map((acc) {
-                              final accNo =
-                                  acc['meta_account_number']?.toString() ?? '-';
-                              final bal =
-                                  double.tryParse(
-                                    acc['balance']?.toString() ?? '0',
-                                  ) ??
-                                  0;
-                              final availBal =
-                                  double.tryParse(
-                                    acc['available_balance']?.toString() ??
-                                        '0',
-                                  ) ??
-                                  0;
-                              return AppSelectOption<Map<String, dynamic>>(
-                                value: acc,
-                                title:
-                                    '$accNo — Balance: \$${bal.toStringAsFixed(2)}',
-                                subtitle:
-                                    'Available: \$${availBal.toStringAsFixed(2)}',
-                              );
-                            }).toList(),
-                        onChanged:
-                            (v) => setState(() => _selectedAccount = v),
+                        options: accounts.map((acc) {
+                          final accNo =
+                              acc['meta_account_number']?.toString() ?? '-';
+                          final bal =
+                              double.tryParse(
+                                acc['balance']?.toString() ?? '0',
+                              ) ??
+                              0;
+                          final availBal =
+                              double.tryParse(
+                                acc['available_balance']?.toString() ?? '0',
+                              ) ??
+                              0;
+                          return AppSelectOption<Map<String, dynamic>>(
+                            value: acc,
+                            title:
+                                '$accNo — Balance: \$${bal.toStringAsFixed(2)}',
+                            subtitle:
+                                'Available: \$${availBal.toStringAsFixed(2)}',
+                          );
+                        }).toList(),
+                        onChanged: (v) => setState(() => _selectedAccount = v),
                       );
                     }),
                     SizedBox(height: 4.h),
@@ -361,17 +361,19 @@ class _PmamCreatePlanScreenState extends State<PmamCreatePlanScreen> {
                         borderRadius: BorderRadius.circular(13.r),
                       ),
                     ),
-                    child:
-                        _ctrl.isCreatePlanLoading.value
-                            ? CommonLoadingWidget(size: 22, color: AppColors.onColoredBackground)
-                            : Text(
-                              'Submit Plan',
-                              style: TextStyle(
-                                color: AppColors.onColoredBackground,
-                                fontSize: 15.sp,
-                                fontWeight: FontWeight.w600,
-                              ),
+                    child: _ctrl.isCreatePlanLoading.value
+                        ? CommonLoadingWidget(
+                            size: 22,
+                            color: AppColors.onColoredBackground,
+                          )
+                        : Text(
+                            'Submit Plan',
+                            style: TextStyle(
+                              color: AppColors.onColoredBackground,
+                              fontSize: 15.sp,
+                              fontWeight: FontWeight.w600,
                             ),
+                          ),
                   ),
                 ),
               ),
@@ -412,7 +414,10 @@ class _FormLabel extends StatelessWidget {
                 ),
               ),
             if (required)
-              TextSpan(text: ' *', style: TextStyle(color: AppColors.error)),
+              TextSpan(
+                text: ' *',
+                style: TextStyle(color: AppColors.error),
+              ),
           ],
         ),
       ),

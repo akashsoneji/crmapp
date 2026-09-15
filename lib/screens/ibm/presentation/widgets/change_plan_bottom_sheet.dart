@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:crm_app/screens/ibm/data/ibm_api_provider.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
+import 'package:crm_app/services/language_service.dart';
 
 /// Bottom sheet for moving a specific sub-IB onto one of the partner's own
 /// commission plans.
@@ -49,19 +50,24 @@ class _ChangePlanBottomSheetState extends State<ChangePlanBottomSheet> {
       if (res.success && res.data != null) {
         final data = res.data;
         List rawPlans = [];
-        if (data is Map && data['data'] is Map && data['data']['plans'] is List) {
+        if (data is Map &&
+            data['data'] is Map &&
+            data['data']['plans'] is List) {
           rawPlans = data['data']['plans'];
         } else if (data is Map && data['plans'] is List) {
           rawPlans = data['plans'];
         } else if (data is List) {
           rawPlans = data;
         }
-        _plans = rawPlans.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+        _plans = rawPlans
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
       } else {
-        _error = res.message ?? 'Failed to load plans';
+        _error = res.message ?? TranslationUtils.tr('ibm_failed_to_load_plans');
       }
     } catch (e) {
-      _error = 'Error loading plans';
+      _error = TranslationUtils.tr('ibm_error_loading_plans');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -78,14 +84,19 @@ class _ChangePlanBottomSheetState extends State<ChangePlanBottomSheet> {
       if (res.success) {
         widget.onAssigned();
         if (mounted) Navigator.pop(context);
-        CustomToastService.showSuccess(message: 'Plan updated successfully');
+        CustomToastService.showSuccess(
+          message: TranslationUtils.tr('ib_plan_updated_successfully'),
+        );
       } else {
         CustomToastService.showError(
-          message: res.message ?? 'Failed to change plan',
+          message:
+              res.message ?? TranslationUtils.tr('ibm_failed_to_change_plan'),
         );
       }
     } catch (e) {
-      CustomToastService.showError(message: 'Error changing plan');
+      CustomToastService.showError(
+        message: TranslationUtils.tr('ibm_error_changing_plan'),
+      );
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -96,20 +107,21 @@ class _ChangePlanBottomSheetState extends State<ChangePlanBottomSheet> {
     final filtered = _query.isEmpty
         ? _plans
         : _plans
-            .where(
-              (p) => (p['name'] ?? '')
-                  .toString()
-                  .toLowerCase()
-                  .contains(_query.toLowerCase()),
-            )
-            .toList();
+              .where(
+                (p) => (p['name'] ?? '').toString().toLowerCase().contains(
+                  _query.toLowerCase(),
+                ),
+              )
+              .toList();
 
     return Container(
       width: MediaQuery.of(context).size.width,
       height: MediaQuery.of(context).size.height * 0.7,
       padding: EdgeInsets.all(20.w),
       decoration: BoxDecoration(
-        color: AppColors.isDarkMode ? AppColors.pureBlack : AppColors.whiteColor,
+        color: AppColors.isDarkMode
+            ? AppColors.pureBlack
+            : AppColors.whiteColor,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
       ),
       child: Column(
@@ -160,8 +172,8 @@ class _ChangePlanBottomSheetState extends State<ChangePlanBottomSheet> {
           TextField(
             onChanged: (v) => setState(() => _query = v.trim()),
             decoration: InputDecoration(
-              hintText: 'Search your plans',
-              prefixIcon:  Icon(Icons.search,color: AppColors.textPrimary,),
+              hintText: TranslationUtils.tr('ibm_search_your_plans'),
+              prefixIcon: Icon(Icons.search, color: AppColors.textPrimary),
               hintStyle: TextStyle(color: AppColors.textGrey),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12.r),
@@ -171,8 +183,10 @@ class _ChangePlanBottomSheetState extends State<ChangePlanBottomSheet> {
                 borderRadius: BorderRadius.circular(12.r),
                 borderSide: BorderSide(color: AppColors.divider),
               ),
-              contentPadding:
-                  EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 16.w,
+                vertical: 12.h,
+              ),
             ),
           ),
           SizedBox(height: 16.h),
@@ -182,7 +196,7 @@ class _ChangePlanBottomSheetState extends State<ChangePlanBottomSheet> {
               Expanded(
                 child: OutlinedButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel'),
+                  child: Text(TranslationUtils.tr('common_cancel')),
                 ),
               ),
               SizedBox(width: 12.w),
@@ -204,7 +218,7 @@ class _ChangePlanBottomSheetState extends State<ChangePlanBottomSheet> {
                             strokeWidth: 2,
                           ),
                         )
-                      : const Text('Move them'),
+                      : Text(TranslationUtils.tr('ibm_move_them')),
                 ),
               ),
             ],
@@ -216,7 +230,7 @@ class _ChangePlanBottomSheetState extends State<ChangePlanBottomSheet> {
 
   Widget _buildList(List<Map<String, dynamic>> plans) {
     if (_isLoading) {
-      return  Center(child: CircularProgressIndicator(color: AppColors.primary));
+      return Center(child: CircularProgressIndicator(color: AppColors.primary));
     }
     if (_error != null) {
       return Center(
@@ -257,22 +271,27 @@ class _ChangePlanBottomSheetState extends State<ChangePlanBottomSheet> {
               Flexible(
                 child: Text(
                   name,
-                  style:  TextStyle(fontWeight: FontWeight.bold,color: AppColors.textPrimary),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
               if (isCurrent) ...[
                 SizedBox(width: 8.w),
                 Container(
-                  padding:
-                      EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                  padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
                   decoration: BoxDecoration(
                     color: Colors.grey.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(4.r),
                   ),
                   child: Text(
                     'On it now',
-                    style: TextStyle(fontSize: 10.sp, color: AppColors.textGrey),
+                    style: TextStyle(
+                      fontSize: 10.sp,
+                      color: AppColors.textGrey,
+                    ),
                   ),
                 ),
               ],

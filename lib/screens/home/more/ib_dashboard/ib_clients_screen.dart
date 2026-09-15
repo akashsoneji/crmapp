@@ -6,6 +6,7 @@ import 'package:crm_app/controllers/ib_controller.dart';
 import 'package:crm_app/controllers/auth_controller.dart';
 import 'package:crm_app/models/ib_models.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
+import 'package:crm_app/utils/trl_helper.dart';
 
 class IBClientsScreen extends StatefulWidget {
   const IBClientsScreen({super.key});
@@ -87,13 +88,9 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
     return sortedClients
         .where(
           (client) =>
-              (client.name?.toLowerCase().contains(
-                    search.toLowerCase(),
-                  ) ??
+              (client.name?.toLowerCase().contains(search.toLowerCase()) ??
                   false) ||
-              (client.email?.toLowerCase().contains(
-                    search.toLowerCase(),
-                  ) ??
+              (client.email?.toLowerCase().contains(search.toLowerCase()) ??
                   false),
         )
         .toList();
@@ -110,9 +107,7 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
           (subIB) =>
               (subIB.name?.toLowerCase().contains(search.toLowerCase()) ??
                   false) ||
-              (subIB.email?.toLowerCase().contains(
-                    search.toLowerCase(),
-                  ) ??
+              (subIB.email?.toLowerCase().contains(search.toLowerCase()) ??
                   false),
         )
         .toList();
@@ -127,17 +122,13 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
     return allTrades
         .where(
           (trade) =>
-              (trade.clientName?.toLowerCase().contains(
-                    search.toLowerCase(),
-                  ) ??
+              (trade.clientName?.toLowerCase().contains(search.toLowerCase()) ??
                   false) ||
               (trade.clientEmail?.toLowerCase().contains(
                     search.toLowerCase(),
                   ) ??
                   false) ||
-              (trade.symbol?.toLowerCase().contains(
-                    search.toLowerCase(),
-                  ) ??
+              (trade.symbol?.toLowerCase().contains(search.toLowerCase()) ??
                   false),
         )
         .toList();
@@ -161,21 +152,21 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
             fontSize: 20.sp,
             fontWeight: FontWeight.w400,
             color: AppColors.textPrimary,
-          fontFamily: 'SF UI'),
+            fontFamily: 'SF UI',
+          ),
         ),
         centerTitle: true,
       ),
       body: RefreshIndicator(
-        onRefresh: () =>
-            ibController.loadIBData(
-              subIbId: ibController.clientsSelectedSubIB.value?.id,
-            ),
+        onRefresh: () => ibController.loadIBData(
+          subIbId: ibController.clientsSelectedSubIB.value?.id,
+        ),
         backgroundColor: AppColors.whiteColor,
         child: Obx(() {
           if (ibController.isLoading.value) {
             return Center(
               child: CommonLoadingWidget(
-                message: 'Loading data...',
+                message: tr('ib_loading_data'),
                 size: 50.0,
                 color: AppColors.primary,
               ),
@@ -241,20 +232,20 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
 
               // Sub-IB chips
               if (ibController.clientsHierarchy.isNotEmpty)
-                for (var i = 0;
-                    i < ibController.clientsHierarchy.length;
-                    i++) ...[
+                for (
+                  var i = 0;
+                  i < ibController.clientsHierarchy.length;
+                  i++
+                ) ...[
                   Icon(
                     Icons.chevron_right,
                     size: 16.sp,
                     color: AppColors.textGrey,
                   ),
                   _buildBreadcrumbChip(
-                    label:
-                        ibController.clientsHierarchy[i].name ?? 'Sub IB',
+                    label: ibController.clientsHierarchy[i].name ?? 'Sub IB',
                     icon: Icons.people,
-                    isActive:
-                        i == ibController.clientsHierarchy.length - 1,
+                    isActive: i == ibController.clientsHierarchy.length - 1,
                   ),
                 ],
             ],
@@ -293,7 +284,8 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
                             fontSize: 14.sp,
                             fontWeight: FontWeight.w400,
                             color: AppColors.primary,
-                          fontFamily: 'SF UI'),
+                            fontFamily: 'SF UI',
+                          ),
                         ),
                       ],
                     ),
@@ -320,8 +312,9 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
       decoration: BoxDecoration(
-        color:
-            isActive ? AppColors.primary : AppColors.primary.withOpacity(0.1),
+        color: isActive
+            ? AppColors.primary
+            : AppColors.primary.withOpacity(0.1),
         borderRadius: BorderRadius.circular(20.r),
       ),
       child: Row(
@@ -341,7 +334,8 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
                 fontSize: 13.sp,
                 fontWeight: FontWeight.w400,
                 color: isActive ? AppColors.whiteColor : AppColors.primary,
-              fontFamily: 'SF UI'),
+                fontFamily: 'SF UI',
+              ),
               overflow: TextOverflow.ellipsis,
             ),
           ),
@@ -442,7 +436,8 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
                   fontSize: 18.sp,
                   fontWeight: FontWeight.w400,
                   color: AppColors.textPrimary,
-                fontFamily: 'SF UI'),
+                  fontFamily: 'SF UI',
+                ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -481,19 +476,18 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
             size: 20.sp,
             color: AppColors.textGrey,
           ),
-          suffixIcon:
-              ibController.clientsSearchQuery.value.isNotEmpty
-                  ? IconButton(
-                    icon: Icon(
-                      Icons.clear,
-                      size: 20.sp,
-                      color: AppColors.textGrey,
-                    ),
-                    onPressed: () {
-                      ibController.setClientsSearchQuery('');
-                    },
-                  )
-                  : null,
+          suffixIcon: ibController.clientsSearchQuery.value.isNotEmpty
+              ? IconButton(
+                  icon: Icon(
+                    Icons.clear,
+                    size: 20.sp,
+                    color: AppColors.textGrey,
+                  ),
+                  onPressed: () {
+                    ibController.setClientsSearchQuery('');
+                  },
+                )
+              : null,
         ),
       ),
     );
@@ -525,22 +519,21 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
         decoration: BoxDecoration(
           color: isSelected ? AppColors.primary : AppColors.whiteColor,
           borderRadius: BorderRadius.circular(12.r),
-          boxShadow:
-              isSelected
-                  ? [
-                    BoxShadow(
-                      color: AppColors.primary.withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    ),
-                  ]
-                  : [
-                    BoxShadow(
-                      color: AppColors.border.withValues(alpha: 0.05),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: AppColors.primary.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : [
+                  BoxShadow(
+                    color: AppColors.border.withValues(alpha: 0.05),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -595,8 +588,7 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
       itemCount: filteredClients.length,
       itemBuilder: (context, index) {
         final client = filteredClients[index];
-        final isExpanded =
-            controller.clientsExpandedItems[index] ?? false;
+        final isExpanded = controller.clientsExpandedItems[index] ?? false;
         final isSubIB =
             client.ibType == 'sub-ib' && client.isSubIbApproved == true;
 
@@ -625,8 +617,7 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
       itemCount: filteredSubIBs.length,
       itemBuilder: (context, index) {
         final subIB = filteredSubIBs[index];
-        final isExpanded =
-            controller.clientsExpandedItems[index] ?? false;
+        final isExpanded = controller.clientsExpandedItems[index] ?? false;
 
         return _buildSubIBCard(subIB, index, isExpanded);
       },
@@ -650,8 +641,7 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
       itemCount: filteredTrades.length,
       itemBuilder: (context, index) {
         final trade = filteredTrades[index];
-        final isExpanded =
-            controller.clientsExpandedItems[index] ?? false;
+        final isExpanded = controller.clientsExpandedItems[index] ?? false;
 
         return _buildTradeCard(trade, index, isExpanded);
       },
@@ -682,7 +672,8 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
               fontSize: 18.sp,
               fontWeight: FontWeight.w400,
               color: AppColors.textGrey,
-            fontFamily: 'SF UI'),
+              fontFamily: 'SF UI',
+            ),
           ),
         ],
       ),
@@ -737,7 +728,8 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
                           fontSize: 18.sp,
                           fontWeight: FontWeight.w400,
                           color: AppColors.whiteColor,
-                        fontFamily: 'SF UI'),
+                          fontFamily: 'SF UI',
+                        ),
                       ),
                     ),
                   ),
@@ -757,7 +749,8 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
                                   fontSize: 17.sp,
                                   fontWeight: FontWeight.w400,
                                   color: AppColors.textPrimary,
-                                fontFamily: 'SF UI'),
+                                  fontFamily: 'SF UI',
+                                ),
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
@@ -778,7 +771,8 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
                                     fontSize: 11.sp,
                                     fontWeight: FontWeight.w400,
                                     color: AppColors.primary,
-                                  fontFamily: 'SF UI'),
+                                    fontFamily: 'SF UI',
+                                  ),
                                 ),
                               ),
                             ],
@@ -920,7 +914,8 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
                               fontSize: 18.sp,
                               fontWeight: FontWeight.w400,
                               color: AppColors.whiteColor,
-                            fontFamily: 'SF UI'),
+                              fontFamily: 'SF UI',
+                            ),
                           ),
                         ),
                       ),
@@ -932,7 +927,10 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
                           decoration: BoxDecoration(
                             color: AppColors.accentStatic,
                             shape: BoxShape.circle,
-                            border: Border.all(color: AppColors.whiteColor, width: 2),
+                            border: Border.all(
+                              color: AppColors.whiteColor,
+                              width: 2,
+                            ),
                           ),
                           child: Icon(
                             Icons.star,
@@ -956,7 +954,8 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
                             fontSize: 17.sp,
                             fontWeight: FontWeight.w400,
                             color: AppColors.textPrimary,
-                          fontFamily: 'SF UI'),
+                            fontFamily: 'SF UI',
+                          ),
                           overflow: TextOverflow.ellipsis,
                         ),
                         SizedBox(height: 4.h),
@@ -1089,10 +1088,9 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
                     width: 48.w,
                     height: 48.w,
                     decoration: BoxDecoration(
-                      color:
-                          isProfit
-                              ? AppColors.green.withValues(alpha: 0.1)
-                              : AppColors.error.withValues(alpha: 0.1),
+                      color: isProfit
+                          ? AppColors.green.withValues(alpha: 0.1)
+                          : AppColors.error.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
                     child: Center(
@@ -1102,7 +1100,8 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
                           fontSize: 18.sp,
                           fontWeight: FontWeight.w400,
                           color: isProfit ? AppColors.green : AppColors.error,
-                        fontFamily: 'SF UI'),
+                          fontFamily: 'SF UI',
+                        ),
                       ),
                     ),
                   ),
@@ -1119,7 +1118,8 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
                             fontSize: 17.sp,
                             fontWeight: FontWeight.w400,
                             color: AppColors.textPrimary,
-                          fontFamily: 'SF UI'),
+                            fontFamily: 'SF UI',
+                          ),
                           overflow: TextOverflow.ellipsis,
                         ),
                         SizedBox(height: 4.h),
@@ -1145,7 +1145,8 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
                           fontSize: 18.sp,
                           fontWeight: FontWeight.w400,
                           color: isProfit ? AppColors.green : AppColors.error,
-                        fontFamily: 'SF UI'),
+                          fontFamily: 'SF UI',
+                        ),
                       ),
                       SizedBox(height: 4.h),
                       Icon(
@@ -1208,7 +1209,8 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
               fontSize: 14.sp,
               fontWeight: FontWeight.w400,
               color: AppColors.textPrimary,
-            fontFamily: 'SF UI'),
+              fontFamily: 'SF UI',
+            ),
           ),
         ],
       ),

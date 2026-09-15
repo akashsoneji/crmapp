@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../constants/api_const.dart';
 import '../../services/api_service.dart';
 import '../../services/secure_storage_service.dart';
+import '../../services/language_service.dart';
 import '../../widgets/custom_toast.dart';
 
 class InternalTransferHistoryResponse {
@@ -22,13 +23,12 @@ class InternalTransferHistoryResponse {
     final pagination = dataMap['pagination'];
 
     return InternalTransferHistoryResponse(
-      items:
-          rows is List
-              ? rows
-                  .whereType<Map<String, dynamic>>()
-                  .map(InternalTransferHistoryItem.fromJson)
-                  .toList()
-              : <InternalTransferHistoryItem>[],
+      items: rows is List
+          ? rows
+                .whereType<Map<String, dynamic>>()
+                .map(InternalTransferHistoryItem.fromJson)
+                .toList()
+          : <InternalTransferHistoryItem>[],
       pagination: InternalTransferHistoryPagination.fromJson(
         pagination is Map<String, dynamic> ? pagination : const {},
       ),
@@ -175,23 +175,36 @@ class InternalTransferHistoryController extends GetxController {
   final errorMessage = ''.obs;
   final fromDate = Rxn<DateTime>();
   final toDate = Rxn<DateTime>();
-  final selectedStatus =
-      const InternalTransferStatusFilter(label: 'All Status', value: '').obs;
-  final pagination =
-      const InternalTransferHistoryPagination(
-        currentPage: 1,
-        lastPage: 1,
-        perPage: _perPage,
-        total: 0,
-        from: 0,
-        to: 0,
-      ).obs;
+  final selectedStatus = InternalTransferStatusFilter(
+    label: TranslationUtils.tr('internal_transfer_all_status'),
+    value: '',
+  ).obs;
+  final pagination = const InternalTransferHistoryPagination(
+    currentPage: 1,
+    lastPage: 1,
+    perPage: _perPage,
+    total: 0,
+    from: 0,
+    to: 0,
+  ).obs;
 
-  final List<InternalTransferStatusFilter> statusFilters = const [
-    InternalTransferStatusFilter(label: 'All Status', value: ''),
-    InternalTransferStatusFilter(label: 'Approved', value: 'approved'),
-    InternalTransferStatusFilter(label: 'Pending', value: 'pending'),
-    InternalTransferStatusFilter(label: 'Failed', value: 'failed'),
+  final List<InternalTransferStatusFilter> statusFilters = [
+    InternalTransferStatusFilter(
+      label: Get.find<LanguageService>().tr('internal_transfer_all_status'),
+      value: '',
+    ),
+    InternalTransferStatusFilter(
+      label: Get.find<LanguageService>().tr('common_approved'),
+      value: 'approved',
+    ),
+    InternalTransferStatusFilter(
+      label: Get.find<LanguageService>().tr('common_pending'),
+      value: 'pending',
+    ),
+    InternalTransferStatusFilter(
+      label: Get.find<LanguageService>().tr('common_failed'),
+      value: 'failed',
+    ),
   ];
 
   bool get hasNextPage =>
@@ -214,14 +227,12 @@ class InternalTransferHistoryController extends GetxController {
         queryParameters: {
           'page': '$page',
           'per_page': '$_perPage',
-          'dateFrom':
-              fromDate.value == null
-                  ? ''
-                  : _requestDateFormat.format(fromDate.value!),
-          'dateTo':
-              toDate.value == null
-                  ? ''
-                  : _requestDateFormat.format(toDate.value!),
+          'dateFrom': fromDate.value == null
+              ? ''
+              : _requestDateFormat.format(fromDate.value!),
+          'dateTo': toDate.value == null
+              ? ''
+              : _requestDateFormat.format(toDate.value!),
           'status': selectedStatus.value.value,
           '_t': DateTime.now().millisecondsSinceEpoch.toString(),
         },

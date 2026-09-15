@@ -109,7 +109,10 @@ class _PmamManagerInvestorDetailScreenState
       text: TextSpan(
         children: [
           TextSpan(text: '$label: ', style: _labelStyle(context)),
-          TextSpan(text: value, style: _valueStyle(context, color: valueColor)),
+          TextSpan(
+            text: value,
+            style: _valueStyle(context, color: valueColor),
+          ),
         ],
       ),
     );
@@ -132,10 +135,10 @@ class _PmamManagerInvestorDetailScreenState
   Widget _openAllocationCard(PmamOpenAllocation a) {
     final lotText = a.allocatedLot == 0
         ? '-'
-        : a.allocatedLot
-            .toStringAsFixed(2)
-            .replaceAll(RegExp(r'\.?0+$'), '');
-    final openPriceText = a.openPrice == 0 ? '-' : a.openPrice.toStringAsFixed(5);
+        : a.allocatedLot.toStringAsFixed(2).replaceAll(RegExp(r'\.?0+$'), '');
+    final openPriceText = a.openPrice == 0
+        ? '-'
+        : a.openPrice.toStringAsFixed(5);
     final openTimeText = _fmtDateLong(a.openTime);
 
     return Container(
@@ -204,8 +207,9 @@ class _PmamManagerInvestorDetailScreenState
   Widget _settlementCard(PmamDistribution d) {
     final net = d.netProfitCredited;
     final netColor = net >= 0 ? AppColors.green : AppColors.error;
-    final grossColor =
-        d.grossProfitShare >= 0 ? AppColors.green : AppColors.error;
+    final grossColor = d.grossProfitShare >= 0
+        ? AppColors.green
+        : AppColors.error;
     return Container(
       decoration: _cardDecoration(),
       padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
@@ -326,7 +330,9 @@ class _PmamManagerInvestorDetailScreenState
       _error = null;
     });
     try {
-      final resp = await PmamService.getManagerInvestorDetail(widget.investorId);
+      final resp = await PmamService.getManagerInvestorDetail(
+        widget.investorId,
+      );
       if (!resp.success || resp.data == null) {
         setState(() {
           _error = resp.message ?? 'Failed to load investor details';
@@ -347,10 +353,7 @@ class _PmamManagerInvestorDetailScreenState
     }
   }
 
-  Widget _metricCard({
-    required String label,
-    required String value,
-  }) {
+  Widget _metricCard({required String label, required String value}) {
     return Container(
       padding: EdgeInsets.all(14.w),
       decoration: BoxDecoration(
@@ -411,7 +414,7 @@ class _PmamManagerInvestorDetailScreenState
 
     return Scaffold(
       backgroundColor: AppColors.card,
-       appBar:AppBar(
+      appBar: AppBar(
         scrolledUnderElevation: 0,
         backgroundColor: AppColors.tradeBackgroundCenterColor,
         elevation: 0,
@@ -419,10 +422,16 @@ class _PmamManagerInvestorDetailScreenState
           onPressed: () => Get.back(),
           icon: SvgPicture.asset(
             'assets/svg/trade/arro_back.svg',
-            colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn),
+            colorFilter: ColorFilter.mode(
+              AppColors.textPrimary,
+              BlendMode.srcIn,
+            ),
           ),
         ),
-        title: Text(  'Investor: ${widget.investorName}', style: AppTextStyles.heading),
+        title: Text(
+          'Investor: ${widget.investorName}',
+          style: AppTextStyles.heading,
+        ),
         centerTitle: true,
       ),
       body: SafeArea(
@@ -431,234 +440,234 @@ class _PmamManagerInvestorDetailScreenState
                 child: CommonLoadingWidget(size: 36, color: AppColors.primary),
               )
             : _error != null
-                ? Padding(
-                    padding:
-                        EdgeInsets.symmetric(horizontal: 18.w, vertical: 18.h),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        
-                        Text(
-                          _error!,
-                          style: TextStyle(
-                            fontSize: 13.sp,
-                            color: AppColors.error,
-                            fontWeight: FontWeight.w600,
+            ? Padding(
+                padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 18.h),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _error!,
+                      style: TextStyle(
+                        fontSize: 13.sp,
+                        color: AppColors.error,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    SizedBox(height: 14.h),
+                    ElevatedButton(
+                      onPressed: _load,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.brandPrimary,
+                        foregroundColor: AppColors.onColoredBackground,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10.r),
+                        ),
+                      ),
+                      child: Text(
+                        Get.find<LanguageService>().tr('navigation_retry'),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            : DefaultTabController(
+                length: 3,
+                child: NestedScrollView(
+                  headerSliverBuilder: (context, innerBoxIsScrolled) {
+                    return [
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 18.w,
+                            vertical: 12.h,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Investment Summary',
+                                style: TextStyle(
+                                  fontSize: 16.sp,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                              SizedBox(height: 12.h),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _metricCard(
+                                      label: 'Invested',
+                                      value: _fmtMoney(invested),
+                                    ),
+                                  ),
+                                  SizedBox(width: 12.w),
+                                  Expanded(
+                                    child: _metricCard(
+                                      label: 'P&L',
+                                      value: _fmtMoney(pnl),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 12.h),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _metricCard(
+                                      label: 'Current Value',
+                                      value: _fmtMoney(currentValue),
+                                    ),
+                                  ),
+                                  SizedBox(width: 12.w),
+                                  Expanded(
+                                    child: _metricCard(
+                                      label: 'Pool Share',
+                                      value: _fmtPct(poolShare),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 14.h),
+                            ],
                           ),
                         ),
-                        SizedBox(height: 14.h),
-                        ElevatedButton(
-                          onPressed: _load,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.brandPrimary,
-                            foregroundColor: AppColors.onColoredBackground,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10.r),
+                      ),
+                      SliverPersistentHeader(
+                        pinned: true,
+                        delegate: _TabBarHeaderDelegate(
+                          height: kTextTabBarHeight,
+                          child: Container(
+                            height: kTextTabBarHeight,
+                            color: AppColors.card,
+                            padding: EdgeInsets.symmetric(horizontal: 18.w),
+                            child: TabBar(
+                              isScrollable: false,
+                              indicatorSize: TabBarIndicatorSize.tab,
+                              labelColor: AppColors.primary,
+                              unselectedLabelColor: AppColors.textGrey,
+                              indicatorColor: AppColors.primary,
+                              // indicatorWeight: 2.5,
+                              labelStyle: TextStyle(
+                                fontSize: 13.sp,
+                                fontWeight: FontWeight.w700,
+                              ),
+                              unselectedLabelStyle: TextStyle(
+                                fontSize: 13.sp,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              tabs: const [
+                                Tab(
+                                  child: Center(
+                                    child: Text(
+                                      'Open\nAllocations',
+                                      textAlign: TextAlign.center,
+                                      maxLines: 2,
+                                    ),
+                                  ),
+                                ),
+                                Tab(
+                                  child: Center(
+                                    child: Text(
+                                      'Settlement\nHistory',
+                                      textAlign: TextAlign.center,
+                                      maxLines: 2,
+                                    ),
+                                  ),
+                                ),
+                                Tab(
+                                  child: Center(
+                                    child: Text(
+                                      'Fund\nEntries',
+                                      textAlign: TextAlign.center,
+                                      maxLines: 2,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          child: const Text('Retry'),
                         ),
-                      ],
-                    ),
-                  )
-                : DefaultTabController(
-                    length: 3,
-                    child: NestedScrollView(
-                      headerSliverBuilder: (context, innerBoxIsScrolled) {
-                        return [
-                          SliverToBoxAdapter(
-                            child: Padding(
+                      ),
+                    ];
+                  },
+                  body: TabBarView(
+                    children: [
+                      Builder(
+                        builder: (context) {
+                          final items = _data?.openAllocations ?? const [];
+                          if (items.isEmpty) {
+                            return Padding(
                               padding: EdgeInsets.symmetric(
                                 horizontal: 18.w,
                                 vertical: 12.h,
                               ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                 
-                                  Text(
-                                    'Investment Summary',
-                                    style: TextStyle(
-                                      fontSize: 16.sp,
-                                      fontWeight: FontWeight.w800,
-                                      color: AppColors.textPrimary,
-                                    ),
-                                  ),
-                                  SizedBox(height: 12.h),
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: _metricCard(
-                                          label: 'Invested',
-                                          value: _fmtMoney(invested),
-                                        ),
-                                      ),
-                                      SizedBox(width: 12.w),
-                                      Expanded(
-                                        child: _metricCard(
-                                          label: 'P&L',
-                                          value: _fmtMoney(pnl),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  SizedBox(height: 12.h),
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: _metricCard(
-                                          label: 'Current Value',
-                                          value: _fmtMoney(currentValue),
-                                        ),
-                                      ),
-                                      SizedBox(width: 12.w),
-                                      Expanded(
-                                        child: _metricCard(
-                                          label: 'Pool Share',
-                                          value: _fmtPct(poolShare),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  SizedBox(height: 14.h),
-                                ],
-                              ),
+                              child: _emptyHint('No open positions.'),
+                            );
+                          }
+                          return ListView.separated(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 18.w,
+                              vertical: 12.h,
                             ),
-                          ),
-                          SliverPersistentHeader(
-                            pinned: true,
-                            delegate: _TabBarHeaderDelegate(
-                              height: kTextTabBarHeight,
-                              child: Container(
-                                height: kTextTabBarHeight,
-                                color: AppColors.card,
-                                padding: EdgeInsets.symmetric(horizontal: 18.w),
-                                child: TabBar(
-                                  isScrollable: false,
-                                  indicatorSize: TabBarIndicatorSize.tab,
-                                  labelColor: AppColors.primary,
-                                  unselectedLabelColor: AppColors.textGrey,
-                                  indicatorColor: AppColors.primary,
-                                  // indicatorWeight: 2.5,
-                                  labelStyle: TextStyle(
-                                    fontSize: 13.sp,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                  unselectedLabelStyle: TextStyle(
-                                    fontSize: 13.sp,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                  tabs: const [
-                                    Tab(
-                                      child: Center(
-                                        child: Text(
-                                          'Open\nAllocations',
-                                          textAlign: TextAlign.center,
-                                          maxLines: 2,
-                                        ),
-                                      ),
-                                    ),
-                                    Tab(
-                                      child: Center(
-                                        child: Text(
-                                          'Settlement\nHistory',
-                                          textAlign: TextAlign.center,
-                                          maxLines: 2,
-                                        ),
-                                      ),
-                                    ),
-                                    Tab(
-                                      child: Center(
-                                        child: Text(
-                                          'Fund\nEntries',
-                                          textAlign: TextAlign.center,
-                                          maxLines: 2,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ];
-                      },
-                      body: TabBarView(
-                        children: [
-                          Builder(
-                            builder: (context) {
-                              final items = _data?.openAllocations ?? const [];
-                              if (items.isEmpty) {
-                                return Padding(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 18.w,
-                                    vertical: 12.h,
-                                  ),
-                                  child: _emptyHint('No open positions.'),
-                                );
-                              }
-                              return ListView.separated(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 18.w,
-                                  vertical: 12.h,
-                                ),
-                                itemCount: items.length,
-                                separatorBuilder: (_, __) => SizedBox(height: 10.h),
-                                itemBuilder: (_, i) => _openAllocationCard(items[i]),
-                              );
-                            },
-                          ),
-                          Builder(
-                            builder: (context) {
-                              final settlements = _data?.distributions ?? const [];
-                              return ListView(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 18.w,
-                                  vertical: 12.h,
-                                ),
-                                children: [
-                                  if (settlements.isEmpty)
-                                    _emptyHint('No settlements yet.')
-                                  else
-                                    ...List.generate(settlements.length, (i) {
-                                      return Padding(
-                                        padding: EdgeInsets.only(bottom: 10.h),
-                                        child: _settlementCard(settlements[i]),
-                                      );
-                                    }),
-                                  SizedBox(height: 12.h),
-                                ],
-                              );
-                            },
-                          ),
-                          Builder(
-                            builder: (context) {
-                              final funds = _data?.fundEntries ?? const [];
-                              if (funds.isEmpty) {
-                                return Padding(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 18.w,
-                                    vertical: 12.h,
-                                  ),
-                                  child: _emptyHint('No fund entries.'),
-                                );
-                              }
-                              return ListView.separated(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 18.w,
-                                  vertical: 12.h,
-                                ),
-                                itemCount: funds.length,
-                                separatorBuilder: (_, __) => SizedBox(height: 10.h),
-                                itemBuilder: (_, i) => _fundEntryCard(funds[i]),
-                              );
-                            },
-                          ),
-                        ],
+                            itemCount: items.length,
+                            separatorBuilder: (_, __) => SizedBox(height: 10.h),
+                            itemBuilder: (_, i) =>
+                                _openAllocationCard(items[i]),
+                          );
+                        },
                       ),
-                    ),
+                      Builder(
+                        builder: (context) {
+                          final settlements = _data?.distributions ?? const [];
+                          return ListView(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 18.w,
+                              vertical: 12.h,
+                            ),
+                            children: [
+                              if (settlements.isEmpty)
+                                _emptyHint('No settlements yet.')
+                              else
+                                ...List.generate(settlements.length, (i) {
+                                  return Padding(
+                                    padding: EdgeInsets.only(bottom: 10.h),
+                                    child: _settlementCard(settlements[i]),
+                                  );
+                                }),
+                              SizedBox(height: 12.h),
+                            ],
+                          );
+                        },
+                      ),
+                      Builder(
+                        builder: (context) {
+                          final funds = _data?.fundEntries ?? const [];
+                          if (funds.isEmpty) {
+                            return Padding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 18.w,
+                                vertical: 12.h,
+                              ),
+                              child: _emptyHint('No fund entries.'),
+                            );
+                          }
+                          return ListView.separated(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 18.w,
+                              vertical: 12.h,
+                            ),
+                            itemCount: funds.length,
+                            separatorBuilder: (_, __) => SizedBox(height: 10.h),
+                            itemBuilder: (_, i) => _fundEntryCard(funds[i]),
+                          );
+                        },
+                      ),
+                    ],
                   ),
+                ),
+              ),
       ),
     );
   }
@@ -690,4 +699,3 @@ class _TabBarHeaderDelegate extends SliverPersistentHeaderDelegate {
     return oldDelegate.height != height || oldDelegate.child != child;
   }
 }
-

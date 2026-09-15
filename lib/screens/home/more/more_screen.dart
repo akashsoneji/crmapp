@@ -137,8 +137,9 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
     String? brokerName;
     final brokerData = await SecureStorageService.getTenaxBrokerSelection();
     if (brokerData != null) {
-      final selectedName =
-          (brokerData['selected_name'] ?? '').toString().trim();
+      final selectedName = (brokerData['selected_name'] ?? '')
+          .toString()
+          .trim();
       if (selectedName.isNotEmpty) {
         brokerName = selectedName;
       } else {
@@ -305,8 +306,7 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                   AppColors.primary.withValues(alpha: 0.02),
                 ],
               ),
-              borderRadius:
-                  BorderRadius.vertical(top: Radius.circular(22.r)),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(22.r)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -332,7 +332,7 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Switch Account',
+                            languageService.tr('switch_account'),
                             style: AppTextStyles.heading,
                           ),
                           SizedBox(height: 2.h),
@@ -388,8 +388,7 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                           Icon(
                             Icons.account_circle_outlined,
                             size: 44.sp,
-                            color:
-                                AppColors.textGrey.withValues(alpha: 0.6),
+                            color: AppColors.textGrey.withValues(alpha: 0.6),
                           ),
                           SizedBox(height: 10.h),
                           Text(
@@ -405,8 +404,7 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                             'Tap "Add New Broker" to link your first account.',
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              color:
-                                  AppColors.textGrey.withValues(alpha: 0.85),
+                              color: AppColors.textGrey.withValues(alpha: 0.85),
                               fontSize: 12.sp,
                             ),
                           ),
@@ -563,8 +561,10 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
             decoration: BoxDecoration(
               color: bgColor,
               borderRadius: BorderRadius.circular(14.r),
-              border:
-                  Border.all(color: borderColor, width: isSelected ? 1.4 : 1),
+              border: Border.all(
+                color: borderColor,
+                width: isSelected ? 1.4 : 1,
+              ),
               boxShadow: isSelected
                   ? [
                       BoxShadow(
@@ -732,14 +732,14 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
   String _initialsFor(String input) {
     final cleaned = input.trim();
     if (cleaned.isEmpty) return '?';
-    final parts =
-        cleaned.split(RegExp(r'\s+|@')).where((p) => p.isNotEmpty).toList();
+    final parts = cleaned
+        .split(RegExp(r'\s+|@'))
+        .where((p) => p.isNotEmpty)
+        .toList();
     if (parts.isEmpty) return cleaned.substring(0, 1).toUpperCase();
     if (parts.length == 1) {
       final p = parts.first;
-      return p.length == 1
-          ? p.toUpperCase()
-          : p.substring(0, 2).toUpperCase();
+      return p.length == 1 ? p.toUpperCase() : p.substring(0, 2).toUpperCase();
     }
     return (parts.first.substring(0, 1) + parts.last.substring(0, 1))
         .toUpperCase();
@@ -1073,13 +1073,15 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                               },
                               child: Container(
                                 padding: EdgeInsets.symmetric(
-                                horizontal: 8.w,
-                                vertical: 4.h,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.primary.withValues(alpha: 0.08),
-                                borderRadius: BorderRadius.circular(20.r),
-                              ),
+                                  horizontal: 8.w,
+                                  vertical: 4.h,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary.withValues(
+                                    alpha: 0.08,
+                                  ),
+                                  borderRadius: BorderRadius.circular(20.r),
+                                ),
                                 child: isProfileVerified
                                     ? Icon(
                                         Icons.remove_red_eye_outlined,
@@ -1107,7 +1109,9 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                                 vertical: 4.h,
                               ),
                               decoration: BoxDecoration(
-                                color: AppColors.primary.withValues(alpha: 0.08),
+                                color: AppColors.primary.withValues(
+                                  alpha: 0.08,
+                                ),
                                 borderRadius: BorderRadius.circular(20.r),
                               ),
                               child: Icon(

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-
 class PayoutRequestScreen extends StatelessWidget {
   const PayoutRequestScreen({super.key});
 

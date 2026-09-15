@@ -6,6 +6,7 @@ import 'package:fl_chart/fl_chart.dart';
 
 import '../../../../constants/color.dart';
 import '../../../../services/pmam_service.dart';
+import '../../../../services/language_service.dart';
 import '../../../../controllers/pmam/pmam_controller.dart';
 import '../../../../widgets/app_select_field.dart';
 import '../../../../widgets/common_loading_widget.dart';
@@ -1418,7 +1419,11 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
           else if (_trades.isEmpty)
             Padding(
               padding: EdgeInsets.all(24.h),
-              child: const Center(child: Text('No trades available')),
+              child: Center(
+                child: Text(
+                  Get.find<LanguageService>().tr('pmam_no_trades_available'),
+                ),
+              ),
             )
           else
             ListView.separated(

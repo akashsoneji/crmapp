@@ -76,10 +76,9 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
         .join(' ')
         .split(' ')
         .map(
-          (w) =>
-              w.isEmpty
-                  ? w
-                  : w[0].toUpperCase() + (w.length > 1 ? w.substring(1) : ''),
+          (w) => w.isEmpty
+              ? w
+              : w[0].toUpperCase() + (w.length > 1 ? w.substring(1) : ''),
         )
         .join(' ');
   }
@@ -107,35 +106,37 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
 
   // Compute filtered transactions - must be called inside Obx
   List<Data> _computeFilteredTransactions(List<Data> allTransactions) {
-    List<Data> filtered =
-        allTransactions.where((transaction) {
-          // Filter by account
-          if (selectedAccount != 'All' &&
-              (transaction.mt5AccountId ?? '') != selectedAccount) {
-            return false;
-          }
+    List<Data> filtered = allTransactions.where((transaction) {
+      // Filter by account
+      if (selectedAccount != 'All' &&
+          (transaction.mt5AccountId ?? '') != selectedAccount) {
+        return false;
+      }
 
-          // Filter by transaction type
-          if (selectedTransactionType != 'All' &&
-              (transaction.transactionType?.toLowerCase() ?? '') !=
-                  selectedTransactionType.toLowerCase()) {
-            return false;
-          }
+      // Filter by transaction type
+      if (selectedTransactionType != 'All' &&
+          (transaction.transactionType?.toLowerCase() ?? '') !=
+              selectedTransactionType.toLowerCase()) {
+        return false;
+      }
 
-          // Filter by time period
-          final transactionDate =
-              DateTime.tryParse(transaction.createdAt ?? '')?.toLocal() ?? DateTime(1970);
-          if (!_isTransactionInTimePeriod(transactionDate)) {
-            return false;
-          }
+      // Filter by time period
+      final transactionDate =
+          DateTime.tryParse(transaction.createdAt ?? '')?.toLocal() ??
+          DateTime(1970);
+      if (!_isTransactionInTimePeriod(transactionDate)) {
+        return false;
+      }
 
-          return true;
-        }).toList();
+      return true;
+    }).toList();
 
     // Sort by newest first
     filtered.sort((a, b) {
-      final aDate = DateTime.tryParse(a.createdAt ?? '')?.toLocal() ?? DateTime(1970);
-      final bDate = DateTime.tryParse(b.createdAt ?? '')?.toLocal() ?? DateTime(1970);
+      final aDate =
+          DateTime.tryParse(a.createdAt ?? '')?.toLocal() ?? DateTime(1970);
+      final bDate =
+          DateTime.tryParse(b.createdAt ?? '')?.toLocal() ?? DateTime(1970);
       return bDate.compareTo(aDate);
     });
 
@@ -325,62 +326,61 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
         ),
       ),
       child: Column(
-        children:
-            timePeriods.asMap().entries.map((entry) {
-              final index = entry.key;
-              final period = entry.value;
-              final isSelected = period == selectedTimePeriod;
-              final isLast = index == timePeriods.length - 1;
+        children: timePeriods.asMap().entries.map((entry) {
+          final index = entry.key;
+          final period = entry.value;
+          final isSelected = period == selectedTimePeriod;
+          final isLast = index == timePeriods.length - 1;
 
-              return Column(
-                children: [
-                  InkWell(
-                    onTap: () {
-                      setState(() {
-                        selectedTimePeriod = period;
-                        if (period != 'Custom') {
-                          customStartDate = null;
-                          customEndDate = null;
-                        }
-                      });
-                    },
-                    child: Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 16.w,
-                        vertical: 12.h,
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              period,
-                              style: TextStyle(
-                                fontSize: 14.sp,
-                                fontWeight: FontWeight.w400,
-                                color: AppColors.textPrimary,
-                              ),
-                            ),
-                          ),
-                          if (isSelected)
-                            Icon(
-                              Icons.check,
-                              color: AppColors.primary.withValues(alpha: 0.5),
-                              size: 18,
-                            ),
-                        ],
-                      ),
-                    ),
+          return Column(
+            children: [
+              InkWell(
+                onTap: () {
+                  setState(() {
+                    selectedTimePeriod = period;
+                    if (period != 'Custom') {
+                      customStartDate = null;
+                      customEndDate = null;
+                    }
+                  });
+                },
+                child: Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 12.h,
                   ),
-                  if (!isLast)
-                    Divider(
-                      height: 1,
-                      color: AppColors.primary.withValues(alpha: 0.6),
-                      indent: 16.w,
-                      endIndent: 16.w,
-                    ),
-                ],
-              );
-            }).toList(),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          period,
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w400,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ),
+                      if (isSelected)
+                        Icon(
+                          Icons.check,
+                          color: AppColors.primary.withValues(alpha: 0.5),
+                          size: 18,
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              if (!isLast)
+                Divider(
+                  height: 1,
+                  color: AppColors.primary.withValues(alpha: 0.6),
+                  indent: 16.w,
+                  endIndent: 16.w,
+                ),
+            ],
+          );
+        }).toList(),
       ),
     );
   }
@@ -524,7 +524,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
               Icon(Icons.receipt_long, size: 64.w, color: AppColors.primary),
               SizedBox(height: 16.h),
               Text(
-                'No transactions found',
+                languageService.tr('transaction_history_no_transactions'),
                 style: TextStyle(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.w500,
@@ -605,10 +605,9 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                     height: 40.h,
                     padding: EdgeInsets.all(8.w),
                     decoration: BoxDecoration(
-                      color:
-                          isDeposit
-                              ? AppColors.green.withValues(alpha: 0.1)
-                              : AppColors.error.withValues(alpha: 0.1),
+                      color: isDeposit
+                          ? AppColors.green.withValues(alpha: 0.1)
+                          : AppColors.error.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: SvgPicture.asset(
@@ -783,11 +782,10 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   void _showCustomDatePicker(bool isStartDate) async {
     final DateTime? picked = await AppPickerTheme.showAppDatePicker(
       context,
-      initialDate:
-          isStartDate
-              ? (customStartDate ??
-                  DateTime.now().subtract(const Duration(days: 30)))
-              : (customEndDate ?? DateTime.now()),
+      initialDate: isStartDate
+          ? (customStartDate ??
+                DateTime.now().subtract(const Duration(days: 30)))
+          : (customEndDate ?? DateTime.now()),
       firstDate: DateTime(2000),
       lastDate: DateTime.now(),
     );
@@ -874,8 +872,8 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
 
                   return ListView.separated(
                     itemCount: accounts.length,
-                    separatorBuilder:
-                        (context, index) => Divider(color: AppColors.border),
+                    separatorBuilder: (context, index) =>
+                        Divider(color: AppColors.border),
                     itemBuilder: (context, index) {
                       final account = accounts[index];
                       final isSelected =
@@ -918,10 +916,9 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                                 style: TextStyle(
                                   fontSize: 16.sp,
                                   fontWeight: FontWeight.w500,
-                                  color:
-                                      isSelected
-                                          ? AppColors.primary
-                                          : AppColors.textPrimary,
+                                  color: isSelected
+                                      ? AppColors.primary
+                                      : AppColors.textPrimary,
                                 ),
                               ),
                             ),
@@ -966,91 +963,87 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder:
-          (context) => Container(
-            padding: EdgeInsets.all(24.w),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 40.w,
-                  height: 4.h,
-                  decoration: BoxDecoration(
-                    color: AppColors.border,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                SizedBox(height: 24.h),
-                Text(
-                  'Select Transaction Type',
-                  style: TextStyle(
-                    fontSize: 18.sp,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                SizedBox(height: 24.h),
-                Container(
-                  height: 200.h,
-                  child: ListView.builder(
-                    itemCount: transactionTypes.length,
-                    itemBuilder: (context, index) {
-                      final type = transactionTypes[index];
-                      final isSelected = type == selectedTransactionType;
-
-                      return InkWell(
-                        onTap: () {
-                          setState(() {
-                            selectedTransactionType = type;
-                          });
-                          Navigator.pop(context);
-                        },
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                            vertical: 16.h,
-                            horizontal: 16.w,
-                          ),
-                          decoration: BoxDecoration(
-                            color:
-                                isSelected
-                                    ? AppColors.primary.withOpacity(0.1)
-                                    : null,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  type,
-                                  style: TextStyle(
-                                    fontSize: 16.sp,
-                                    color:
-                                        isSelected
-                                            ? AppColors.primary
-                                            : AppColors.textPrimary,
-                                    fontWeight:
-                                        isSelected
-                                            ? FontWeight.w600
-                                            : FontWeight.w400,
-                                  ),
-                                ),
-                              ),
-                              if (isSelected)
-                                Icon(
-                                  Icons.check,
-                                  color: AppColors.primary,
-                                  size: 20,
-                                ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
+      builder: (context) => Container(
+        padding: EdgeInsets.all(24.w),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40.w,
+              height: 4.h,
+              decoration: BoxDecoration(
+                color: AppColors.border,
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
-          ),
+            SizedBox(height: 24.h),
+            Text(
+              'Select Transaction Type',
+              style: TextStyle(
+                fontSize: 18.sp,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            SizedBox(height: 24.h),
+            Container(
+              height: 200.h,
+              child: ListView.builder(
+                itemCount: transactionTypes.length,
+                itemBuilder: (context, index) {
+                  final type = transactionTypes[index];
+                  final isSelected = type == selectedTransactionType;
+
+                  return InkWell(
+                    onTap: () {
+                      setState(() {
+                        selectedTransactionType = type;
+                      });
+                      Navigator.pop(context);
+                    },
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        vertical: 16.h,
+                        horizontal: 16.w,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? AppColors.primary.withOpacity(0.1)
+                            : null,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              type,
+                              style: TextStyle(
+                                fontSize: 16.sp,
+                                color: isSelected
+                                    ? AppColors.primary
+                                    : AppColors.textPrimary,
+                                fontWeight: isSelected
+                                    ? FontWeight.w600
+                                    : FontWeight.w400,
+                              ),
+                            ),
+                          ),
+                          if (isSelected)
+                            Icon(
+                              Icons.check,
+                              color: AppColors.primary,
+                              size: 20,
+                            ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

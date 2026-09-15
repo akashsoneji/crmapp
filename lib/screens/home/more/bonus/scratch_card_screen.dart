@@ -47,12 +47,11 @@ class ScratchCardApiModel {
     return ScratchCardApiModel(
       id: json['id'] as int,
       status: json['status'] as String? ?? 'active',
-      rewardAmount:
-          (rawReward is num)
-              ? rawReward.toDouble()
-              : (rawReward is String && rawReward.isNotEmpty)
-              ? double.tryParse(rawReward)
-              : null,
+      rewardAmount: (rawReward is num)
+          ? rawReward.toDouble()
+          : (rawReward is String && rawReward.isNotEmpty)
+          ? double.tryParse(rawReward)
+          : null,
       refreshWindow: json['refresh_window']?.toString() ?? '',
       expiresAt: json['expires_at']?.toString() ?? '',
       createdAt: json['created_at']?.toString(),
@@ -127,10 +126,9 @@ class ScratchCardLotsStepModel {
     return ScratchCardLotsStepModel(
       step: (json['step'] as num?)?.toInt() ?? 0,
       thresholdPercent: (json['threshold_percent'] as num?)?.toInt() ?? 0,
-      targetLots:
-          (targetLotsRaw is num)
-              ? targetLotsRaw.toDouble()
-              : double.tryParse(targetLotsRaw?.toString() ?? '') ?? 0.0,
+      targetLots: (targetLotsRaw is num)
+          ? targetLotsRaw.toDouble()
+          : double.tryParse(targetLotsRaw?.toString() ?? '') ?? 0.0,
       achieved: json['achieved'] == true,
       status: json['status']?.toString() ?? 'locked',
     );
@@ -192,71 +190,56 @@ class ScratchCardSummaryModel {
 
     final List<ScratchCardLotsStepModel> parsedSteps;
     if (rawSteps is List) {
-      parsedSteps =
-          rawSteps
-              .whereType<Map>()
-              .map(
-                (e) => ScratchCardLotsStepModel.fromJson(
-                  e.cast<String, dynamic>(),
-                ),
-              )
-              .toList();
+      parsedSteps = rawSteps
+          .whereType<Map>()
+          .map(
+            (e) => ScratchCardLotsStepModel.fromJson(e.cast<String, dynamic>()),
+          )
+          .toList();
     } else if (rawSteps is Map) {
       // Some backends send arrays as maps (e.g. {"0": {...}, "1": {...}}).
-      parsedSteps =
-          rawSteps.values
-              .whereType<Map>()
-              .map(
-                (e) => ScratchCardLotsStepModel.fromJson(
-                  e.cast<String, dynamic>(),
-                ),
-              )
-              .toList();
+      parsedSteps = rawSteps.values
+          .whereType<Map>()
+          .map(
+            (e) => ScratchCardLotsStepModel.fromJson(e.cast<String, dynamic>()),
+          )
+          .toList();
     } else {
       parsedSteps = const [];
     }
 
     return ScratchCardSummaryModel(
-      earnedAllTime:
-          (earnedAllTimeRaw is num)
-              ? earnedAllTimeRaw.toDouble()
-              : double.tryParse(earnedAllTimeRaw?.toString() ?? '') ?? 0.0,
-      earnedIn30Days:
-          (earned is num)
-              ? earned.toDouble()
-              : double.tryParse(earned?.toString() ?? '') ?? 0.0,
-      maxLimit30Days:
-          (maxLimit is num)
-              ? maxLimit.toInt()
-              : int.tryParse(maxLimit?.toString() ?? '') ?? 0,
+      earnedAllTime: (earnedAllTimeRaw is num)
+          ? earnedAllTimeRaw.toDouble()
+          : double.tryParse(earnedAllTimeRaw?.toString() ?? '') ?? 0.0,
+      earnedIn30Days: (earned is num)
+          ? earned.toDouble()
+          : double.tryParse(earned?.toString() ?? '') ?? 0.0,
+      maxLimit30Days: (maxLimit is num)
+          ? maxLimit.toInt()
+          : int.tryParse(maxLimit?.toString() ?? '') ?? 0,
       nextCardAvailableAt: json['next_card_available_at']?.toString(),
-      scratchPendingRewardTotal:
-          (scratchPendingRaw is num)
-              ? scratchPendingRaw.toDouble()
-              : double.tryParse(scratchPendingRaw?.toString() ?? '') ?? 0.0,
+      scratchPendingRewardTotal: (scratchPendingRaw is num)
+          ? scratchPendingRaw.toDouble()
+          : double.tryParse(scratchPendingRaw?.toString() ?? '') ?? 0.0,
       scratchCompletedOnce: json['scratch_completed_once'] == true,
       scratchAccountNumber: json['scratch_account_number']?.toString(),
       hasScratchAccount: json['has_scratch_account'] == true,
-      requiredLots:
-          (requiredLotsRaw is num)
-              ? requiredLotsRaw.toDouble()
-              : double.tryParse(requiredLotsRaw?.toString() ?? '') ?? 0.0,
-      lotsAccumulated:
-          (lotsAccumulatedRaw is num)
-              ? lotsAccumulatedRaw.toDouble()
-              : double.tryParse(lotsAccumulatedRaw?.toString() ?? '') ?? 0.0,
-      lotsRemaining:
-          (lotsRemainingRaw is num)
-              ? lotsRemainingRaw.toDouble()
-              : double.tryParse(lotsRemainingRaw?.toString() ?? '') ?? 0.0,
-      lotsProgressPercent:
-          (lotsProgressPercentRaw is num)
-              ? lotsProgressPercentRaw.toInt()
-              : int.tryParse(lotsProgressPercentRaw?.toString() ?? '') ?? 0,
-      activeStep:
-          (activeStepRaw is num)
-              ? activeStepRaw.toInt()
-              : int.tryParse(activeStepRaw?.toString() ?? '') ?? 0,
+      requiredLots: (requiredLotsRaw is num)
+          ? requiredLotsRaw.toDouble()
+          : double.tryParse(requiredLotsRaw?.toString() ?? '') ?? 0.0,
+      lotsAccumulated: (lotsAccumulatedRaw is num)
+          ? lotsAccumulatedRaw.toDouble()
+          : double.tryParse(lotsAccumulatedRaw?.toString() ?? '') ?? 0.0,
+      lotsRemaining: (lotsRemainingRaw is num)
+          ? lotsRemainingRaw.toDouble()
+          : double.tryParse(lotsRemainingRaw?.toString() ?? '') ?? 0.0,
+      lotsProgressPercent: (lotsProgressPercentRaw is num)
+          ? lotsProgressPercentRaw.toInt()
+          : int.tryParse(lotsProgressPercentRaw?.toString() ?? '') ?? 0,
+      activeStep: (activeStepRaw is num)
+          ? activeStepRaw.toInt()
+          : int.tryParse(activeStepRaw?.toString() ?? '') ?? 0,
       activeStepStatus: json['active_step_status']?.toString() ?? '',
       steps: parsedSteps,
       canConvertPendingToBalance:
@@ -333,10 +316,9 @@ class ScratchCardRevealModel {
     return ScratchCardRevealModel(
       cardId: (json['card_id'] as num?)?.toInt() ?? 0,
       status: json['status']?.toString() ?? 'scratched',
-      rewardAmount:
-          (reward is num)
-              ? reward.toDouble()
-              : double.tryParse(reward?.toString() ?? '') ?? 0.0,
+      rewardAmount: (reward is num)
+          ? reward.toDouble()
+          : double.tryParse(reward?.toString() ?? '') ?? 0.0,
       scratchedAt: json['scratched_at']?.toString() ?? '',
       creditStatus: json['credit_status']?.toString() ?? 'none',
       creditError: json['credit_error']?.toString() ?? '',
@@ -386,10 +368,9 @@ class ScratchLeaderboardEntryModel {
       position: (json['position'] as num?)?.toInt() ?? 0,
       displayName: json['display_name']?.toString() ?? '',
       avatarLetter: json['avatar_letter']?.toString() ?? '',
-      amount:
-          (amt is num)
-              ? amt.toDouble()
-              : double.tryParse(amt?.toString() ?? '') ?? 0.0,
+      amount: (amt is num)
+          ? amt.toDouble()
+          : double.tryParse(amt?.toString() ?? '') ?? 0.0,
     );
   }
 
@@ -486,10 +467,9 @@ class ScratchCardController extends GetxController {
       } else {
         CustomToastService.showError(
           title: 'Error',
-          message:
-              (response.message?.isNotEmpty == true)
-                  ? response.message!
-                  : 'Failed to load scratch cards',
+          message: (response.message?.isNotEmpty == true)
+              ? response.message!
+              : 'Failed to load scratch cards',
         );
       }
     } catch (e, t) {
@@ -586,7 +566,7 @@ class ScratchCardController extends GetxController {
         if (errData is Map<String, dynamic> &&
             errData['code'] == 'SCRATCH_ACCOUNT_REQUIRED') {
           _pendingRevealCardId = cardId;
-          
+
           final rawGroupId = errData['scratch_group_id'];
           if (rawGroupId is num) {
             _pendingScratchGroupId = rawGroupId.toInt();
@@ -636,20 +616,16 @@ class ScratchCardController extends GetxController {
         } else {
           CustomToastService.showError(
             title: 'Error',
-            message:
-                (response.message?.isNotEmpty == true)
-                    ? response.message!
-                    : 'Failed to reveal card',
+            message: (response.message?.isNotEmpty == true)
+                ? response.message!
+                : 'Failed to reveal card',
           );
         }
       }
     } catch (e, t) {
       debugPrint('ScratchCardScreen revealCard exception: $e');
       debugPrint('Stacktrace: $t');
-      CustomToastService.showError(
-        title: 'Error',
-        message: 'Error: $e',
-      );
+      CustomToastService.showError(title: 'Error', message: 'Error: $e');
     } finally {
       isRevealing.value = false;
     }
@@ -667,10 +643,9 @@ class ScratchCardController extends GetxController {
       if (response.success) {
         CustomToastService.showSuccess(
           title: 'Success',
-          message:
-              (response.message?.isNotEmpty == true)
-                  ? response.message!
-                  : 'Scratch credit converted successfully',
+          message: (response.message?.isNotEmpty == true)
+              ? response.message!
+              : 'Scratch credit converted successfully',
         );
         await fetchCards(showLoader: false);
         if (Get.isRegistered<AccountController>()) {
@@ -679,10 +654,9 @@ class ScratchCardController extends GetxController {
       } else {
         CustomToastService.showError(
           title: 'Error',
-          message:
-              (response.message?.isNotEmpty == true)
-                  ? response.message!
-                  : 'Failed to convert credit to balance',
+          message: (response.message?.isNotEmpty == true)
+              ? response.message!
+              : 'Failed to convert credit to balance',
         );
       }
     } catch (_) {
@@ -746,19 +720,15 @@ class ScratchCardController extends GetxController {
         if (Get.isDialogOpen ?? false) Get.back();
         CustomToastService.showError(
           title: 'Error',
-          message:
-              (response.message?.isNotEmpty == true)
-                  ? response.message!
-                  : 'Failed to create scratch account',
+          message: (response.message?.isNotEmpty == true)
+              ? response.message!
+              : 'Failed to create scratch account',
         );
       }
     } catch (e, t) {
       debugPrint('ScratchCardScreen createScratchAccount exception: $e');
       debugPrint('Stacktrace: $t');
-      CustomToastService.showError(
-        title: 'Error',
-        message: 'Error: $e',
-      );
+      CustomToastService.showError(title: 'Error', message: 'Error: $e');
     } finally {
       isCreatingAccount.value = false;
     }
@@ -886,7 +856,10 @@ class ScratchCardListScreen extends StatelessWidget {
         leading: IconButton(
           icon: SvgPicture.asset(
             "assets/svg/trade/arro_back.svg",
-            colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn),
+            colorFilter: ColorFilter.mode(
+              AppColors.textPrimary,
+              BlendMode.srcIn,
+            ),
           ),
           onPressed: () => Navigator.of(context).pop(),
         ),
@@ -1107,7 +1080,9 @@ class _ScratchLeaderboardSection extends StatelessWidget {
             decoration: BoxDecoration(
               color: AppColors.whiteColor,
               borderRadius: BorderRadius.circular(14.r),
-              border: Border.all(color: AppColors.border.withValues(alpha: 0.06)),
+              border: Border.all(
+                color: AppColors.border.withValues(alpha: 0.06),
+              ),
             ),
             child: Row(
               children: [
@@ -1159,7 +1134,9 @@ class _ScratchLeaderboardSection extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.whiteColor,
                 borderRadius: BorderRadius.circular(14.r),
-                border: Border.all(color: AppColors.border.withValues(alpha: 0.06)),
+                border: Border.all(
+                  color: AppColors.border.withValues(alpha: 0.06),
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1189,12 +1166,9 @@ class _ScratchLeaderboardSection extends StatelessWidget {
                   ),
                   SizedBox(height: 10.h),
                   ...rows.map((r) {
-                    final letter =
-                        r.avatarLetter.isNotEmpty
-                            ? r.avatarLetter
-                            : (r.displayName.isNotEmpty
-                                ? r.displayName[0]
-                                : 'U');
+                    final letter = r.avatarLetter.isNotEmpty
+                        ? r.avatarLetter
+                        : (r.displayName.isNotEmpty ? r.displayName[0] : 'U');
 
                     return Container(
                       padding: EdgeInsets.symmetric(vertical: 8.h),
@@ -1376,12 +1350,12 @@ class _ScratchLotsProgressSection extends StatelessWidget {
                   child: FractionallySizedBox(
                     widthFactor: safePct,
                     child: Container(
-                    height: 10.h,
-                    decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(6.r),
+                      height: 10.h,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(6.r),
+                      ),
                     ),
-                  ),
                   ),
                 ),
               ),
@@ -1435,7 +1409,9 @@ class _ScratchLotsProgressSection extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: AppColors.surface,
                   borderRadius: BorderRadius.circular(12.r),
-                  border: Border.all(color: AppColors.border.withValues(alpha: 0.06)),
+                  border: Border.all(
+                    color: AppColors.border.withValues(alpha: 0.06),
+                  ),
                 ),
                 child: Column(
                   children: [
@@ -1484,12 +1460,11 @@ class _ScratchLotsProgressSection extends StatelessWidget {
                                     '${step.step} Lot${step.step == 1 ? '' : 's'}',
                                     style: TextStyle(
                                       fontSize: 13.sp,
-                                      color:
-                                          isCompleted
-                                              ? AppColors.textPrimary
-                                              : (status == 'in_progress'
-                                                  ? AppColors.textPrimary
-                                                  : AppColors.textGrey),
+                                      color: isCompleted
+                                          ? AppColors.textPrimary
+                                          : (status == 'in_progress'
+                                                ? AppColors.textPrimary
+                                                : AppColors.textGrey),
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
@@ -1529,10 +1504,9 @@ class _ScratchLotsProgressSection extends StatelessWidget {
                               '\$${amount.toStringAsFixed(2)}',
                               style: TextStyle(
                                 fontSize: 13.sp,
-                                color:
-                                    isCompleted
-                                        ? AppColors.successText
-                                        : AppColors.textGrey,
+                                color: isCompleted
+                                    ? AppColors.successText
+                                    : AppColors.textGrey,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -1571,16 +1545,16 @@ class _ScratchLotsProgressSection extends StatelessWidget {
                       text: 'Convert to Balance',
                       width: double.infinity,
                       height: 42,
-                      backgroundColor:
-                          canConvert ? AppColors.primary : AppColors.border,
+                      backgroundColor: canConvert
+                          ? AppColors.primary
+                          : AppColors.border,
                       foregroundColor: AppColors.onColoredBackground,
                       isLoading: controller.isConverting.value,
-                      onPressed:
-                          canConvert
-                              ? () => controller.convertCreditToBalance(
-                                accountId: accountId,
-                              )
-                              : null,
+                      onPressed: canConvert
+                          ? () => controller.convertCreditToBalance(
+                              accountId: accountId,
+                            )
+                          : null,
                     ),
                   ],
                 );
@@ -1600,11 +1574,10 @@ class _MockLeaderboardCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final rows =
-        ((data["rows"] as List?) ?? const [])
-            .cast<Map>()
-            .map((e) => e.cast<String, dynamic>())
-            .toList();
+    final rows = ((data["rows"] as List?) ?? const [])
+        .cast<Map>()
+        .map((e) => e.cast<String, dynamic>())
+        .toList();
 
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
@@ -1649,7 +1622,9 @@ class _MockLeaderboardCard extends StatelessWidget {
               padding: EdgeInsets.symmetric(vertical: 8.h),
               decoration: BoxDecoration(
                 border: Border(
-                  bottom: BorderSide(color: AppColors.border.withValues(alpha: 0.05)),
+                  bottom: BorderSide(
+                    color: AppColors.border.withValues(alpha: 0.05),
+                  ),
                 ),
               ),
               child: Row(
@@ -1661,8 +1636,9 @@ class _MockLeaderboardCard extends StatelessWidget {
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 14.sp,
-                        color:
-                            isYou ? AppColors.primary : AppColors.textPrimary,
+                        color: isYou
+                            ? AppColors.primary
+                            : AppColors.textPrimary,
                         fontWeight: isYou ? FontWeight.w500 : FontWeight.w600,
                       ),
                     ),
@@ -1672,10 +1648,9 @@ class _MockLeaderboardCard extends StatelessWidget {
                     width: 30.w,
                     height: 30.w,
                     decoration: BoxDecoration(
-                      color:
-                          isYou
-                              ? AppColors.primary
-                              : AppColors.primary.withOpacity(0.12),
+                      color: isYou
+                          ? AppColors.primary
+                          : AppColors.primary.withOpacity(0.12),
                       shape: BoxShape.circle,
                     ),
                     child: Center(
@@ -1684,10 +1659,9 @@ class _MockLeaderboardCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 12.sp,
                           fontWeight: FontWeight.w600,
-                          color:
-                              isYou
-                                  ? const Color(0xFFFDCC29)
-                                  : AppColors.primary,
+                          color: isYou
+                              ? const Color(0xFFFDCC29)
+                              : AppColors.primary,
                         ),
                       ),
                     ),
@@ -1700,12 +1674,12 @@ class _MockLeaderboardCard extends StatelessWidget {
                           name,
                           style: TextStyle(
                             fontSize: 13.sp,
-                            color:
-                                isYou
-                                    ? AppColors.primary
-                                    : AppColors.textPrimary,
-                            fontWeight:
-                                isYou ? FontWeight.w500 : FontWeight.w600,
+                            color: isYou
+                                ? AppColors.primary
+                                : AppColors.textPrimary,
+                            fontWeight: isYou
+                                ? FontWeight.w500
+                                : FontWeight.w600,
                             letterSpacing: 0.3,
                           ),
                         ),
@@ -1783,7 +1757,9 @@ class _MockHistoryCard extends StatelessWidget {
             decoration: BoxDecoration(
               color: AppColors.whiteColor,
               borderRadius: BorderRadius.circular(12.r),
-              border: Border.all(color: AppColors.border.withValues(alpha: 0.06)),
+              border: Border.all(
+                color: AppColors.border.withValues(alpha: 0.06),
+              ),
             ),
             child: Row(
               children: [
@@ -1875,10 +1851,9 @@ class _ScratchHistoryListState extends State<_ScratchHistoryList> {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final history =
-          widget.controller.cards
-              .where((c) => c.isScratched && !c.isToday)
-              .toList();
+      final history = widget.controller.cards
+          .where((c) => c.isScratched && !c.isToday)
+          .toList();
 
       if (history.isEmpty) return const SizedBox.shrink();
 
@@ -1915,10 +1890,9 @@ class _ScratchHistoryListState extends State<_ScratchHistoryList> {
               separatorBuilder: (_, __) => SizedBox(height: 10.h),
               itemBuilder: (context, index) {
                 final card = history[index];
-                final reward =
-                    (card.rewardAmount is num)
-                        ? (card.rewardAmount as num).toDouble()
-                        : 0.0;
+                final reward = (card.rewardAmount is num)
+                    ? (card.rewardAmount as num).toDouble()
+                    : 0.0;
 
                 return Container(
                   padding: EdgeInsets.symmetric(
@@ -1987,8 +1961,9 @@ class _ScratchHistoryListState extends State<_ScratchHistoryList> {
                         style: TextStyle(
                           fontSize: 13.sp,
                           fontWeight: FontWeight.w500,
-                          color:
-                              reward > 0 ? AppColors.success : AppColors.textGrey,
+                          color: reward > 0
+                              ? AppColors.success
+                              : AppColors.textGrey,
                         ),
                       ),
                     ],
@@ -2094,7 +2069,9 @@ class _SummaryBanner extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.primary.withOpacity(0.05),
                 borderRadius: BorderRadius.circular(12.r),
-                border: Border.all(color: AppColors.border.withValues(alpha: 0.06)),
+                border: Border.all(
+                  color: AppColors.border.withValues(alpha: 0.06),
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -2864,7 +2841,10 @@ class ScratchCardDetailScreen extends StatelessWidget {
         leading: IconButton(
           icon: SvgPicture.asset(
             "assets/svg/trade/arro_back.svg",
-            colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn),
+            colorFilter: ColorFilter.mode(
+              AppColors.textPrimary,
+              BlendMode.srcIn,
+            ),
           ),
           onPressed: () => Navigator.of(context).pop(),
         ),
@@ -3392,7 +3372,8 @@ class _RevealedCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(20.r),
           boxShadow: [
             BoxShadow(
-              color: (isWin ? AppColors.primary : AppColors.textGrey).withOpacity(0.4),
+              color: (isWin ? AppColors.primary : AppColors.textGrey)
+                  .withOpacity(0.4),
               blurRadius: 24,
               offset: const Offset(0, 10),
             ),
@@ -3629,19 +3610,12 @@ class _CreditStatusBadge extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.warning_amber,
-              color: AppColors.warningBg,
-              size: 16.r,
-            ),
+            Icon(Icons.warning_amber, color: AppColors.warningBg, size: 16.r),
             SizedBox(width: 6.w),
             Flexible(
               child: Text(
                 'Credit failed: ${reveal.creditError.isNotEmpty ? reveal.creditError : 'Please contact support'}',
-                style: TextStyle(
-                  fontSize: 11.sp,
-                  color: AppColors.warningBg,
-                ),
+                style: TextStyle(fontSize: 11.sp, color: AppColors.warningBg),
               ),
             ),
           ],
@@ -3652,31 +3626,28 @@ class _CreditStatusBadge extends StatelessWidget {
     final scratchAccNo =
         (Get.isRegistered<ScratchCardController>()
             ? Get.find<ScratchCardController>()
-                .summary
-                .value
-                ?.scratchAccountNumber
+                  .summary
+                  .value
+                  ?.scratchAccountNumber
             : null) ??
         '';
 
     final isCredited = reveal.creditStatus == 'credited';
-    final label =
-        isCredited
-            ? (scratchAccNo.isNotEmpty
-                ? 'Your reward has been credited to trading account #$scratchAccNo'
-                : 'Your reward has been credited to your trading account')
-            : 'Pending — will be credited shortly';
+    final label = isCredited
+        ? (scratchAccNo.isNotEmpty
+              ? 'Your reward has been credited to trading account #$scratchAccNo'
+              : 'Your reward has been credited to your trading account')
+        : 'Pending — will be credited shortly';
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
       decoration: BoxDecoration(
-        color:
-            isCredited
-                ? AppColors.primary.withOpacity(0.15)
-                : AppColors.surface,
+        color: isCredited
+            ? AppColors.primary.withOpacity(0.15)
+            : AppColors.surface,
         border: Border.all(
-          color:
-              isCredited
-                  ? AppColors.primary.withOpacity(0.15)
-                  : Colors.transparent,
+          color: isCredited
+              ? AppColors.primary.withOpacity(0.15)
+              : Colors.transparent,
         ),
         borderRadius: BorderRadius.circular(10.r),
       ),
@@ -3915,8 +3886,8 @@ class _CreateScratchAccountDialogState
               controller: _investorPwCtrl,
               hint: 'Enter investor password',
               obscure: !_showInvestorPw,
-              onToggle:
-                  () => setState(() => _showInvestorPw = !_showInvestorPw),
+              onToggle: () =>
+                  setState(() => _showInvestorPw = !_showInvestorPw),
             ),
 
             // Error
@@ -3976,23 +3947,22 @@ class _CreateScratchAccountDialogState
                         padding: EdgeInsets.symmetric(vertical: 12.h),
                         elevation: 0,
                       ),
-                      child:
-                          loading
-                              ? SizedBox(
-                                width: 18.w,
-                                height: 18.w,
-                                child: CircularProgressIndicator(
-                                  color: AppColors.whiteColor,
-                                  strokeWidth: 2,
-                                ),
-                              )
-                              : Text(
-                                'Create',
-                                style: TextStyle(
-                                  fontSize: 14.sp,
-                                  fontWeight: FontWeight.w700,
-                                ),
+                      child: loading
+                          ? SizedBox(
+                              width: 18.w,
+                              height: 18.w,
+                              child: CircularProgressIndicator(
+                                color: AppColors.whiteColor,
+                                strokeWidth: 2,
                               ),
+                            )
+                          : Text(
+                              'Create',
+                              style: TextStyle(
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
                     ),
                   ),
                 ],
@@ -4070,13 +4040,12 @@ class PurpleToAppColorMapper extends ColorMapper {
     String attributeName,
     Color color,
   ) {
-    final opaqueHex =
-        color
-            .withOpacity(1.0)
-            .value
-            .toRadixString(16)
-            .substring(2)
-            .toUpperCase();
+    final opaqueHex = color
+        .withOpacity(1.0)
+        .value
+        .toRadixString(16)
+        .substring(2)
+        .toUpperCase();
 
     final isPurple =
         opaqueHex == '461872' ||

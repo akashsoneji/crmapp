@@ -119,8 +119,9 @@ class WinnersScreen extends StatelessWidget {
                               width: 36.w,
                               height: 36.w,
                               decoration: BoxDecoration(
-                                color:
-                                    AppColors.warning.withValues(alpha: 0.12),
+                                color: AppColors.warning.withValues(
+                                  alpha: 0.12,
+                                ),
                                 shape: BoxShape.circle,
                               ),
                               alignment: Alignment.center,
@@ -164,15 +165,15 @@ class _WinnerRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pnlColor = winner.pnlPercent >= 0 ? AppColors.success : AppColors.error;
+    final pnlColor = winner.pnlPercent >= 0
+        ? AppColors.success
+        : AppColors.error;
     final medal = winner.rank <= 3 ? ['🥇', '🥈', '🥉'][winner.rank - 1] : null;
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
       decoration: BoxDecoration(
         border: Border(
-          top: BorderSide(
-            color: AppColors.border.withValues(alpha: 0.5),
-          ),
+          top: BorderSide(color: AppColors.border.withValues(alpha: 0.5)),
         ),
       ),
       child: Row(

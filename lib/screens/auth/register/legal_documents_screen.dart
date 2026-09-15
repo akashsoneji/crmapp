@@ -246,7 +246,9 @@ class _LegalDocumentsScreenState extends State<LegalDocumentsScreen> {
         text: languageService.tr("common_submit"),
         onPressed: _isFormValid ? _submitDocuments : null,
         backgroundColor: AppColors.primary,
-        foregroundColor: _isFormValid ? AppColors.whiteColor : AppColors.textGrey,
+        foregroundColor: _isFormValid
+            ? AppColors.whiteColor
+            : AppColors.textGrey,
       ),
     );
   }
@@ -265,10 +267,9 @@ class _LegalDocumentsScreenState extends State<LegalDocumentsScreen> {
       } else {
         // Registration failed - error is already shown by controller
         // but we can also show it here if needed
-        final errorMessage =
-            authController.errorMessage.isNotEmpty
-                ? authController.errorMessage
-                : 'Registration failed. Please check your information and try again.';
+        final errorMessage = authController.errorMessage.isNotEmpty
+            ? authController.errorMessage
+            : 'Registration failed. Please check your information and try again.';
         _showError(errorMessage);
       }
     } catch (e) {
@@ -310,15 +311,14 @@ class _LegalDocumentsScreenState extends State<LegalDocumentsScreen> {
 
         // Show success message
         CustomToastService.showSuccess(
-          title: 'Success',
-          message: 'OTP resent successfully. Please check your email.',
+          title: languageService.tr('common_success'),
+          message: languageService.tr('auth_otp_resent_check_email'),
         );
       } else {
         // Show error if resend failed
-        final errorMessage =
-            authController.errorMessage.isNotEmpty
-                ? authController.errorMessage
-                : 'Failed to resend OTP. Please try again.';
+        final errorMessage = authController.errorMessage.isNotEmpty
+            ? authController.errorMessage
+            : 'Failed to resend OTP. Please try again.';
         _showError(errorMessage);
       }
     } catch (e) {
@@ -338,24 +338,23 @@ class _LegalDocumentsScreenState extends State<LegalDocumentsScreen> {
       backgroundColor: Colors.transparent,
       isDismissible: false, // Prevent accidental dismissal
       enableDrag: false, // Prevent dragging down
-      builder:
-          (context) => OtpModal(
-            email: widget.registrationData['email'],
-            isEmailVerification: true,
-            otpLength: 6,
-            onModalReady: (clearFields) {
-              // Store the clearFields function for later use
-              _clearOtpFields = clearFields;
-            },
-            onOtpSubmitted: (otp) async {
-              // Handle OTP verification
-              await _verifyOtpAndCompleteRegistration(otp, context);
-            },
-            onResendOtp: () async {
-              // Handle resending OTP - don't close modal, just resend
-              await _resendOTP(context);
-            },
-          ),
+      builder: (context) => OtpModal(
+        email: widget.registrationData['email'],
+        isEmailVerification: true,
+        otpLength: 6,
+        onModalReady: (clearFields) {
+          // Store the clearFields function for later use
+          _clearOtpFields = clearFields;
+        },
+        onOtpSubmitted: (otp) async {
+          // Handle OTP verification
+          await _verifyOtpAndCompleteRegistration(otp, context);
+        },
+        onResendOtp: () async {
+          // Handle resending OTP - don't close modal, just resend
+          await _resendOTP(context);
+        },
+      ),
     );
   }
 
@@ -396,10 +395,9 @@ class _LegalDocumentsScreenState extends State<LegalDocumentsScreen> {
         // Clear OTP fields so user can try again
         _clearOtpFields?.call();
 
-        final errorMessage =
-            authController.errorMessage.isNotEmpty
-                ? authController.errorMessage
-                : 'OTP verification failed. Please try again.';
+        final errorMessage = authController.errorMessage.isNotEmpty
+            ? authController.errorMessage
+            : 'OTP verification failed. Please try again.';
         _showError(errorMessage);
       }
     } catch (e) {
@@ -455,7 +453,9 @@ class _LegalDocumentsScreenState extends State<LegalDocumentsScreen> {
       builder: (ctx) {
         return AlertDialog(
           backgroundColor: AppColors.cardBackground,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16.r),
+          ),
           title: Text(
             languageService.tr('biometric_not_enabled_title'),
             style: TextStyle(
@@ -465,9 +465,7 @@ class _LegalDocumentsScreenState extends State<LegalDocumentsScreen> {
           ),
           content: Text(
             languageService.tr('biometric_not_enabled_message'),
-            style: TextStyle(
-              color: AppColors.textSecondary,
-            ),
+            style: TextStyle(color: AppColors.textSecondary),
           ),
           actions: [
             TextButton(

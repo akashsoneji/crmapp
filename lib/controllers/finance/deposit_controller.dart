@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import 'package:crm_app/services/api_service.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
+import '../../services/language_service.dart' show TranslationUtils;
 
 import '../../constants/api_const.dart';
 import '../../services/secure_storage_service.dart';
@@ -53,17 +54,22 @@ class DepositController extends GetxController {
         Get.back(closeOverlays: true);
         _setLoading(false);
         CustomToastService.showSuccess(
-          message: response.message ?? 'Deposited successfully!',
+          message:
+              response.message ??
+              TranslationUtils.tr('finance_deposited_successfully'),
         );
       } else {
         _setLoading(false);
         CustomToastService.showError(
-          message: response.message ?? 'Deposited error!',
+          message:
+              response.message ?? TranslationUtils.tr('finance_deposit_error'),
         );
       }
     } catch (e) {
       _setLoading(false);
-      CustomToastService.showError(message: 'Error while depositing: $e');
+      CustomToastService.showError(
+        message: '${TranslationUtils.tr('finance_error_while_depositing')}: $e',
+      );
     } finally {
       _setLoading(false);
     }
@@ -163,8 +169,9 @@ class DepositController extends GetxController {
           if (preselectedAccountNumber != null &&
               preselectedAccountNumber.isNotEmpty) {
             // Normalize preselected account number
-            final normalizedPreselected =
-                preselectedAccountNumber.toString().trim();
+            final normalizedPreselected = preselectedAccountNumber
+                .toString()
+                .trim();
             print(
               'DepositController: Looking for account matching: "$normalizedPreselected"',
             );
@@ -176,53 +183,52 @@ class DepositController extends GetxController {
               print(
                 'DepositController: Starting to search through ${mt5Accounts.length} accounts...',
               );
-              final matchingAccounts =
-                  mt5Accounts.where((account) {
-                    final accountNumber = account['meta_account_number'];
-                    if (accountNumber == null) {
-                      print(
-                        'DepositController: Account has null meta_account_number',
-                      );
-                      return false;
-                    }
+              final matchingAccounts = mt5Accounts.where((account) {
+                final accountNumber = account['meta_account_number'];
+                if (accountNumber == null) {
+                  print(
+                    'DepositController: Account has null meta_account_number',
+                  );
+                  return false;
+                }
 
-                    // Normalize both sides for comparison
-                    final normalizedAccount = accountNumber.toString().trim();
-                    final normalizedPreselectedTrimmed =
-                        normalizedPreselected.trim();
+                // Normalize both sides for comparison
+                final normalizedAccount = accountNumber.toString().trim();
+                final normalizedPreselectedTrimmed = normalizedPreselected
+                    .trim();
 
-                    // Log each comparison attempt
-                    print(
-                      'DepositController: Comparing list account "$normalizedAccount" (${accountNumber.runtimeType}) with preselected "$normalizedPreselectedTrimmed"',
-                    );
+                // Log each comparison attempt
+                print(
+                  'DepositController: Comparing list account "$normalizedAccount" (${accountNumber.runtimeType}) with preselected "$normalizedPreselectedTrimmed"',
+                );
 
-                    // Try multiple comparison methods
-                    final isExactMatch =
-                        normalizedAccount == normalizedPreselectedTrimmed;
+                // Try multiple comparison methods
+                final isExactMatch =
+                    normalizedAccount == normalizedPreselectedTrimmed;
 
-                    final accountInt = int.tryParse(normalizedAccount);
-                    final preselectedInt = int.tryParse(
-                      normalizedPreselectedTrimmed,
-                    );
-                    final isIntMatch =
-                        accountInt != null &&
-                        preselectedInt != null &&
-                        accountInt == preselectedInt;
+                final accountInt = int.tryParse(normalizedAccount);
+                final preselectedInt = int.tryParse(
+                  normalizedPreselectedTrimmed,
+                );
+                final isIntMatch =
+                    accountInt != null &&
+                    preselectedInt != null &&
+                    accountInt == preselectedInt;
 
-                    final isMatch = isExactMatch || isIntMatch;
+                final isMatch = isExactMatch || isIntMatch;
 
-                    if (isMatch) {
-                      print(
-                        'DepositController: ✅ MATCH FOUND! Account "$normalizedAccount" matches preselected "$normalizedPreselectedTrimmed"',
-                      );
-                    } else {
-                      print(
-                        'DepositController: ❌ No match - "$normalizedAccount" != "$normalizedPreselectedTrimmed" (exact: $isExactMatch, int: $isIntMatch)',
-                      );
-                    }
+                if (isMatch) {
+                  print(
+                    'DepositController: ✅ MATCH FOUND! Account "$normalizedAccount" matches preselected "$normalizedPreselectedTrimmed"',
+                  );
+                } else {
+                  print(
+                    'DepositController: ❌ No match - "$normalizedAccount" != "$normalizedPreselectedTrimmed" (exact: $isExactMatch, int: $isIntMatch)',
+                  );
+                }
 
-                    return isMatch;
-                  }).toList();
+                return isMatch;
+              }).toList();
 
               if (matchingAccounts.isNotEmpty) {
                 matchingAccount = matchingAccounts.first;

@@ -12,6 +12,7 @@ import 'package:crm_app/models/trade_win/trade_win_leaderboard_entry_model.dart'
 import 'package:crm_app/utils/trade_win_format.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
 import 'package:crm_app/screens/ibm/presentation/widgets/ibm_top_header.dart';
+import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/screens/trade_win/widgets/trade_win_product_image.dart';
 
 class IbmPromotionScreen extends StatefulWidget {
@@ -75,8 +76,8 @@ class _IbmPromotionScreenState extends State<IbmPromotionScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.tradeBackgroundCenterColor,
-      appBar: const IbmTopHeader(
-        title: 'Promotion & Rewards',
+      appBar: IbmTopHeader(
+        title: TranslationUtils.tr('ibm_promotion_rewards'),
         showBackButton: false,
       ),
       body: Obx(() {
@@ -121,28 +122,28 @@ class _IbmPromotionScreenState extends State<IbmPromotionScreen> {
                         width: cardWidth,
                         icon: Icons.bar_chart,
                         iconBg: AppColors.primary,
-                        title: 'Available IB Lots',
+                        title: TranslationUtils.tr('ib_available_lots'),
                         value: availableLots.toStringAsFixed(1),
                         subtitle:
-                            'Lifetime ${lifetimeLots.toStringAsFixed(1)} · spent ${spentLots.toStringAsFixed(1)}',
+                            '${TranslationUtils.tr('ibm_lifetime')} ${lifetimeLots.toStringAsFixed(1)} · ${TranslationUtils.tr('ibm_spent')} ${spentLots.toStringAsFixed(1)}',
                       ),
                       SizedBox(width: 6.w),
                       _buildTopStatCard(
                         width: cardWidth,
                         icon: Icons.verified_user_outlined,
                         iconBg: AppColors.primary,
-                        title: 'Past Wins',
+                        title: TranslationUtils.tr('ibm_past_wins'),
                         value: '$totalWins',
-                        subtitle: 'Total redemptions',
+                        subtitle: TranslationUtils.tr('ibm_total_redemptions'),
                       ),
                       SizedBox(width: 6.w),
                       _buildTopStatCard(
                         width: cardWidth,
                         icon: Icons.account_balance_wallet_outlined,
                         iconBg: AppColors.primary,
-                        title: 'Value Won',
+                        title: TranslationUtils.tr('ibm_value_won'),
                         value: '\$${totalValueWon.toStringAsFixed(0)}',
-                        subtitle: 'Total prize value',
+                        subtitle: TranslationUtils.tr('ibm_total_prize_value'),
                       ),
                     ],
                   );
@@ -156,7 +157,8 @@ class _IbmPromotionScreenState extends State<IbmPromotionScreen> {
                 child: Row(
                   children: [
                     _buildPillChip(
-                      label: 'All (${products.length})',
+                      label:
+                          '${TranslationUtils.tr('common_all')} (${products.length})',
                       isSelected: isAllSelected,
                       onTap: () {
                         if (!isAllSelected) {
@@ -241,7 +243,7 @@ class _IbmPromotionScreenState extends State<IbmPromotionScreen> {
                   padding: EdgeInsets.symmetric(vertical: 30.h),
                   alignment: Alignment.center,
                   child: Text(
-                    'No promotional rewards available in this category.',
+                    TranslationUtils.tr('ibm_no_promotional_rewards'),
                     style: TextStyle(
                       fontSize: 12.sp,
                       color: AppColors.textGrey,
@@ -336,12 +338,11 @@ class _IbmPromotionScreenState extends State<IbmPromotionScreen> {
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
         decoration: BoxDecoration(
-          color:
-              isSelected
-                  ? AppColors.primary
-                  : (AppColors.isDarkMode
-                      ? Colors.grey[800]
-                      : const Color(0xFFF1F1F4)),
+          color: isSelected
+              ? AppColors.primary
+              : (AppColors.isDarkMode
+                    ? Colors.grey[800]
+                    : const Color(0xFFF1F1F4)),
           borderRadius: BorderRadius.circular(20.r),
         ),
         child: Text(
@@ -489,10 +490,9 @@ class _IbmPromotionScreenState extends State<IbmPromotionScreen> {
                 Container(
                   padding: EdgeInsets.all(10.w),
                   decoration: BoxDecoration(
-                    color:
-                        AppColors.isDarkMode
-                            ? Colors.grey[900]
-                            : const Color(0xFFF9F9FB),
+                    color: AppColors.isDarkMode
+                        ? Colors.grey[900]
+                        : const Color(0xFFF9F9FB),
                     borderRadius: BorderRadius.circular(10.r),
                     border: Border.all(color: AppColors.divider),
                   ),
@@ -577,14 +577,13 @@ class _IbmPromotionScreenState extends State<IbmPromotionScreen> {
                               minWidth: 32.w,
                               minHeight: 32.h,
                             ),
-                            onPressed:
-                                qty > 1
-                                    ? () {
-                                      setState(() {
-                                        productQuantities[product.id] = qty - 1;
-                                      });
-                                    }
-                                    : null,
+                            onPressed: qty > 1
+                                ? () {
+                                    setState(() {
+                                      productQuantities[product.id] = qty - 1;
+                                    });
+                                  }
+                                : null,
                           ),
                           Text(
                             '$qty',
@@ -601,14 +600,13 @@ class _IbmPromotionScreenState extends State<IbmPromotionScreen> {
                               minWidth: 32.w,
                               minHeight: 32.h,
                             ),
-                            onPressed:
-                                qty < product.stock
-                                    ? () {
-                                      setState(() {
-                                        productQuantities[product.id] = qty + 1;
-                                      });
-                                    }
-                                    : null,
+                            onPressed: qty < product.stock
+                                ? () {
+                                    setState(() {
+                                      productQuantities[product.id] = qty + 1;
+                                    });
+                                  }
+                                : null,
                           ),
                         ],
                       ),
@@ -617,8 +615,8 @@ class _IbmPromotionScreenState extends State<IbmPromotionScreen> {
                     // Redeem Button
                     Expanded(
                       child: ElevatedButton.icon(
-                        onPressed:
-                            () => _showRedeemDialog(context, product, qty),
+                        onPressed: () =>
+                            _showRedeemDialog(context, product, qty),
                         icon: Icon(
                           Icons.redeem,
                           size: 16.w,
@@ -687,7 +685,9 @@ class _IbmPromotionScreenState extends State<IbmPromotionScreen> {
                         child: SizedBox(
                           width: 56.w,
                           height: 56.w,
-                          child: TradeWinProductImage(imagePath: product.imagePath),
+                          child: TradeWinProductImage(
+                            imagePath: product.imagePath,
+                          ),
                         ),
                       ),
                       SizedBox(width: 12.w),
@@ -745,7 +745,7 @@ class _IbmPromotionScreenState extends State<IbmPromotionScreen> {
                       Container(
                         width: 24.w,
                         height: 24.w,
-                        decoration:  BoxDecoration(
+                        decoration: BoxDecoration(
                           color: AppColors.primary,
                           shape: BoxShape.circle,
                         ),
@@ -763,7 +763,7 @@ class _IbmPromotionScreenState extends State<IbmPromotionScreen> {
                         child: Container(
                           height: 2,
                           color: currentStep == 2
-                              ?  AppColors.primary
+                              ? AppColors.primary
                               : AppColors.divider,
                           margin: EdgeInsets.symmetric(horizontal: 8.w),
                         ),
@@ -773,10 +773,10 @@ class _IbmPromotionScreenState extends State<IbmPromotionScreen> {
                         height: 24.w,
                         decoration: BoxDecoration(
                           color: currentStep == 2
-                              ?  AppColors.primary
+                              ? AppColors.primary
                               : (AppColors.isDarkMode
-                                  ? Colors.grey[800]
-                                  : const Color(0xFFE0E0E0)),
+                                    ? Colors.grey[800]
+                                    : const Color(0xFFE0E0E0)),
                           shape: BoxShape.circle,
                         ),
                         alignment: Alignment.center,
@@ -945,9 +945,11 @@ class _IbmPromotionScreenState extends State<IbmPromotionScreen> {
 
                                       if (response.success &&
                                           response.data != null) {
-                                        final ref = response.data['reference_no'] ??
+                                        final ref =
+                                            response.data['reference_no'] ??
                                             response.data['reference'] ??
-                                            response.data['claim_id']?.toString() ??
+                                            response.data['claim_id']
+                                                ?.toString() ??
                                             '';
                                         setModalState(() {
                                           referenceNo = ref.toString();
@@ -959,7 +961,8 @@ class _IbmPromotionScreenState extends State<IbmPromotionScreen> {
                                           isSubmitting = false;
                                         });
                                         CustomToastService.showError(
-                                          message: response.message ??
+                                          message:
+                                              response.message ??
                                               'Claim failed',
                                         );
                                       }
@@ -1092,7 +1095,7 @@ class _IbmPromotionScreenState extends State<IbmPromotionScreen> {
                           ),
                           SizedBox(height: 14.h),
                           Text(
-                            'You will receive status updates via email and the "Past Wins" section.',
+                            TranslationUtils.tr('ibm_past_wins_status_note'),
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 11.sp,
@@ -1202,8 +1205,8 @@ class _IbmPromotionScreenState extends State<IbmPromotionScreen> {
                       size: 16.w,
                       color: AppColors.textGrey,
                     ),
-                    onPressed:
-                        () => controller.fetchProducts(showLoader: false),
+                    onPressed: () =>
+                        controller.fetchProducts(showLoader: false),
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
                   ),
@@ -1233,10 +1236,9 @@ class _IbmPromotionScreenState extends State<IbmPromotionScreen> {
                   int rank = index + 1;
 
                   if (item is TradeWinLeaderboardEntryModel) {
-                    name =
-                        item.name.isNotEmpty
-                            ? TradeWinFormat.maskName(item.name)
-                            : 'Trader #${item.rank > 0 ? item.rank : index + 1}';
+                    name = item.name.isNotEmpty
+                        ? TradeWinFormat.maskName(item.name)
+                        : 'Trader #${item.rank > 0 ? item.rank : index + 1}';
                     lots = item.lots.toStringAsFixed(1);
                     if (item.rank > 0) rank = item.rank;
                   } else if (item is Map) {
@@ -1244,18 +1246,18 @@ class _IbmPromotionScreenState extends State<IbmPromotionScreen> {
                         item['name']?.toString() ??
                         item['trader']?.toString() ??
                         '';
-                    name =
-                        rawName.isNotEmpty
-                            ? TradeWinFormat.maskName(rawName)
-                            : 'Trader #${index + 1}';
+                    name = rawName.isNotEmpty
+                        ? TradeWinFormat.maskName(rawName)
+                        : 'Trader #${index + 1}';
                     final rawLots =
                         item['closed_lots'] ?? item['lots'] ?? '0.0';
                     if (rawLots is num) {
                       lots = rawLots.toDouble().toStringAsFixed(1);
                     } else if (rawLots is String) {
                       final parsed = double.tryParse(rawLots);
-                      lots =
-                          parsed != null ? parsed.toStringAsFixed(1) : rawLots;
+                      lots = parsed != null
+                          ? parsed.toStringAsFixed(1)
+                          : rawLots;
                     }
                     if (item['rank'] != null) {
                       rank =
@@ -1381,24 +1383,22 @@ class _IbmPromotionScreenState extends State<IbmPromotionScreen> {
 
                   if (win is Map) {
                     title = win['product_name']?.toString() ?? 'Prize';
-                    date =
-                        (win['claim_date'] ?? win['created_at'] ?? '')
-                            .toString();
-                    ref =
-                        (win['reference_no'] ?? 'INDP-${win['id'] ?? ''}')
-                            .toString();
+                    date = (win['claim_date'] ?? win['created_at'] ?? '')
+                        .toString();
+                    ref = (win['reference_no'] ?? 'INDP-${win['id'] ?? ''}')
+                        .toString();
                     status = (win['status'] ?? 'Delivered').toString();
                     imagePath = (win['image_path'] ?? '').toString();
                     prizeValue =
                         double.tryParse((win['prize_value'] ?? 0).toString()) ??
                         0;
                   } else {
-                    title =
-                        win.productName.isNotEmpty ? win.productName : 'Prize';
-                    date =
-                        win.claimDate.isNotEmpty
-                            ? win.claimDate
-                            : win.statusDate;
+                    title = win.productName.isNotEmpty
+                        ? win.productName
+                        : 'Prize';
+                    date = win.claimDate.isNotEmpty
+                        ? win.claimDate
+                        : win.statusDate;
                     ref = win.referenceCode;
                     status = win.status.isNotEmpty ? win.status : 'Delivered';
                     imagePath = win.imagePath;
@@ -1409,10 +1409,9 @@ class _IbmPromotionScreenState extends State<IbmPromotionScreen> {
                     margin: EdgeInsets.only(bottom: 10.h),
                     padding: EdgeInsets.all(10.w),
                     decoration: BoxDecoration(
-                      color:
-                          AppColors.isDarkMode
-                              ? Colors.grey[900]
-                              : const Color(0xFFF9F9FB),
+                      color: AppColors.isDarkMode
+                          ? Colors.grey[900]
+                          : const Color(0xFFF9F9FB),
                       borderRadius: BorderRadius.circular(10.r),
                       border: Border.all(color: AppColors.divider),
                     ),
@@ -1454,10 +1453,9 @@ class _IbmPromotionScreenState extends State<IbmPromotionScreen> {
                                     decoration: BoxDecoration(
                                       color:
                                           status.toLowerCase() == 'delivered' ||
-                                                  status.toLowerCase() ==
-                                                      'approved'
-                                              ? const Color(0xFFE8F5E9)
-                                              : const Color(0xFFFFF3E0),
+                                              status.toLowerCase() == 'approved'
+                                          ? const Color(0xFFE8F5E9)
+                                          : const Color(0xFFFFF3E0),
                                       borderRadius: BorderRadius.circular(4.r),
                                     ),
                                     child: Text(
@@ -1467,11 +1465,11 @@ class _IbmPromotionScreenState extends State<IbmPromotionScreen> {
                                         fontWeight: FontWeight.bold,
                                         color:
                                             status.toLowerCase() ==
-                                                        'delivered' ||
-                                                    status.toLowerCase() ==
-                                                        'approved'
-                                                ? const Color(0xFF2E7D32)
-                                                : const Color(0xFFE65100),
+                                                    'delivered' ||
+                                                status.toLowerCase() ==
+                                                    'approved'
+                                            ? const Color(0xFF2E7D32)
+                                            : const Color(0xFFE65100),
                                       ),
                                     ),
                                   ),

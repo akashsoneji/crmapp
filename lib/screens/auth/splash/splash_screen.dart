@@ -42,10 +42,9 @@ class _SplashScreenState extends State<SplashScreen> {
       FlavorConfig.applyTenaxBrokerRuntimeConfig(
         config: runtimeConfig,
         brokerName: brokerName.isNotEmpty ? brokerName : null,
-        brokerLogoUrl:
-            logoLocalPath?.isNotEmpty == true
-                ? logoLocalPath
-                : (saved['selected_logo_url'] ?? '').toString(),
+        brokerLogoUrl: logoLocalPath?.isNotEmpty == true
+            ? logoLocalPath
+            : (saved['selected_logo_url'] ?? '').toString(),
         brokerData: saved,
       );
       print(
@@ -158,10 +157,9 @@ class _SplashScreenState extends State<SplashScreen> {
     final bool isProfx = FlavorConfig.isProfx();
     final bool isAFX = FlavorConfig.isAFX();
 
-    final splashLogoSource =
-        FlavorConfig.hasRemoteLogo
-            ? FlavorConfig.effectiveLogo
-            : FlavorConfig.instance.splashLogoPath;
+    final splashLogoSource = FlavorConfig.hasRemoteLogo
+        ? FlavorConfig.effectiveLogo
+        : FlavorConfig.instance.splashLogoPath;
     return Scaffold(
       body: _buildBackground(isONSA, isTenax, isProfx, isAFX, splashLogoSource),
     );

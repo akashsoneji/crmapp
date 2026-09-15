@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
+import 'package:crm_app/services/language_service.dart';
 
 class LoadingService extends GetxService {
   static LoadingService get to => Get.find();
@@ -12,14 +13,20 @@ class LoadingService extends GetxService {
   String get loadingMessage => _loadingMessage.value;
 
   // Show loading overlay with custom message
-  void showLoading({String message = 'Loading...', Color? color}) {
-    _loadingMessage.value = message;
+  void showLoading({String? message, Color? color}) {
+    final resolvedMessage =
+        message ?? Get.find<LanguageService>().tr('common_loading');
+    _loadingMessage.value = resolvedMessage;
     _isLoading.value = true;
 
     Get.dialog(
       WillPopScope(
         onWillPop: () async => false, // Prevent closing with back button
-        child: OverlayLoadingWidget(message: message, size: 60.0, color: color),
+        child: OverlayLoadingWidget(
+          message: resolvedMessage,
+          size: 60.0,
+          color: color,
+        ),
       ),
       barrierDismissible: false,
     );

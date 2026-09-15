@@ -2,6 +2,7 @@ import 'package:crm_app/constants/color.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/chart_controller.dart';
+import 'package:crm_app/services/language_service.dart' show TranslationUtils;
 import '../controllers/app_notification_controller.dart';
 
 class SoundTestWidget extends StatelessWidget {
@@ -11,7 +12,7 @@ class SoundTestWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Sound Test'),
+        title: Text(TranslationUtils.tr('sound_test_title')),
         backgroundColor: AppColors.blue,
       ),
       body: Padding(
@@ -19,8 +20,8 @@ class SoundTestWidget extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text(
-              'Test Audio Playback',
+            Text(
+              TranslationUtils.tr('sound_test_audio_playback'),
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 30),
@@ -35,14 +36,19 @@ class SoundTestWidget extends StatelessWidget {
                   // Show success message
                   if (Get.isRegistered<AppNotificationController>()) {
                     Get.find<AppNotificationController>().showSuccess(
-                      message: 'No Money Sound Test Completed',
+                      message: TranslationUtils.tr(
+                        'sound_test_no_money_completed',
+                      ),
                     );
                   }
                 } catch (e) {
                   // Show error message
                   if (Get.isRegistered<AppNotificationController>()) {
                     Get.find<AppNotificationController>().showError(
-                      message: 'Error: $e',
+                      message: TranslationUtils.trArgs(
+                        'common_error_with_detail',
+                        {'error': '$e'},
+                      ),
                     );
                   }
                 }
@@ -54,8 +60,8 @@ class SoundTestWidget extends StatelessWidget {
                   vertical: 15,
                 ),
               ),
-              child:   Text(
-                'Test No Money Sound',
+              child: Text(
+                TranslationUtils.tr('sound_test_no_money'),
                 style: TextStyle(fontSize: 18, color: AppColors.whiteColor),
               ),
             ),
@@ -63,26 +69,24 @@ class SoundTestWidget extends StatelessWidget {
             const SizedBox(height: 20),
 
             // Instructions
-            const Card(
+            Card(
               child: Padding(
                 padding: EdgeInsets.all(16.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Instructions:',
+                      TranslationUtils.tr('sound_test_instructions'),
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                       ),
                     ),
                     SizedBox(height: 8),
-                    Text('1. Make sure your device volume is turned up'),
-                    Text('2. Click the button above to test the sound'),
-                    Text('3. Check the console logs for debug information'),
-                    Text(
-                      '4. The sound should play when you get "Not enough money" error',
-                    ),
+                    Text(TranslationUtils.tr('sound_test_instruction_volume')),
+                    Text(TranslationUtils.tr('sound_test_instruction_button')),
+                    Text(TranslationUtils.tr('sound_test_instruction_logs')),
+                    Text(TranslationUtils.tr('sound_test_instruction_error')),
                   ],
                 ),
               ),

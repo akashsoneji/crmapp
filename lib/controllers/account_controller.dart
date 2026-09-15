@@ -1,4 +1,3 @@
-
 import 'package:flutter/widgets.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
@@ -14,6 +13,7 @@ import 'package:crm_app/services/websocket_endpoint_helper.dart';
 import 'package:crm_app/services/account_cache_service.dart';
 import 'package:crm_app/services/symbol_details_cache_service.dart';
 import 'package:crm_app/services/api_service.dart';
+import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/constants/api_const.dart';
 import 'package:crm_app/services/app_lock_service.dart';
 import '../services/account_service.dart';
@@ -24,7 +24,9 @@ import '../services/market_watch_v2_service.dart';
 
 class AccountController extends GetxController with WidgetsBindingObserver {
   DateTime? _lastBackgroundAt;
-  static const Duration _forcePriceReconnectAfterBackground = Duration(seconds: 30);
+  static const Duration _forcePriceReconnectAfterBackground = Duration(
+    seconds: 30,
+  );
   final AccountService _accountService = Get.find<AccountService>();
   late final DashboardController _dashboardController;
 
@@ -92,8 +94,11 @@ class AccountController extends GetxController with WidgetsBindingObserver {
         // Reconnect only if app is currently resumed.
         // IMPORTANT: This is a resume-only path, not an account switch.
         // Do not clear lists or refresh full account data here; only restore sockets/prices.
-        if (WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed) {
-          print('=== WS CENTRAL: App unlocked while resumed, restoring sockets only ===');
+        if (WidgetsBinding.instance.lifecycleState ==
+            AppLifecycleState.resumed) {
+          print(
+            '=== WS CENTRAL: App unlocked while resumed, restoring sockets only ===',
+          );
           resumeSocketsForCurrentAccount();
         }
       }
@@ -108,10 +113,12 @@ class AccountController extends GetxController with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-
-    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive) {
       _lastBackgroundAt = DateTime.now();
-      print('=== WS CENTRAL: App minimized ($state), disconnecting sockets without clearing data ===');
+      print(
+        '=== WS CENTRAL: App minimized ($state), disconnecting sockets without clearing data ===',
+      );
       _disconnectAllSocketsCentral(clearVisibleData: false);
     } else if (state == AppLifecycleState.resumed) {
       // ✅ Delay check slightly to let AppLockLifecycle evaluate lock status first.
@@ -128,16 +135,22 @@ class AccountController extends GetxController with WidgetsBindingObserver {
           print(
             '=== WS CENTRAL: App resumed and not locked, restoring sockets only (forcePriceReconnect=$forcePriceReconnect, background=${wasBackgroundedFor.inSeconds}s) ===',
           );
-          resumeSocketsForCurrentAccount(forcePriceReconnect: forcePriceReconnect);
+          resumeSocketsForCurrentAccount(
+            forcePriceReconnect: forcePriceReconnect,
+          );
         } else {
-          print('=== WS CENTRAL: App resumed but locked, keeping sockets disconnected ===');
+          print(
+            '=== WS CENTRAL: App resumed but locked, keeping sockets disconnected ===',
+          );
         }
       });
     }
   }
 
   void _disconnectAllSocketsCentral({bool clearVisibleData = false}) {
-    print('=== WS CENTRAL: Disconnecting all sockets centrally (clearVisibleData=$clearVisibleData) ===');
+    print(
+      '=== WS CENTRAL: Disconnecting all sockets centrally (clearVisibleData=$clearVisibleData) ===',
+    );
     // Instruments
     try {
       if (Get.isRegistered<InstrumentsController>()) {
@@ -400,7 +413,7 @@ class AccountController extends GetxController with WidgetsBindingObserver {
       if (Get.isRegistered<AppNotificationController>()) {
         Get.find<AppNotificationController>().showError(
           message: error,
-          title: 'Error',
+          title: TranslationUtils.tr('common_error'),
         );
       }
     }
@@ -833,7 +846,9 @@ class AccountController extends GetxController with WidgetsBindingObserver {
   /// This intentionally does NOT clear instruments/trading lists and does NOT
   /// call [refreshAccounts]. It only reconnects sockets and requests current
   /// account streams so visible screen data stays stable while fresh prices arrive.
-  Future<void> resumeSocketsForCurrentAccount({bool forcePriceReconnect = false}) async {
+  Future<void> resumeSocketsForCurrentAccount({
+    bool forcePriceReconnect = false,
+  }) async {
     final active = _activeMT5Account.value;
     if (active == null) return;
 
@@ -980,16 +995,10 @@ class AccountController extends GetxController with WidgetsBindingObserver {
     // Ensure active is set before reconnects
     _activeMT5Account.value = account;
 
-    print(
-      '═══════════════════════════════════════════════════════════',
-    );
+    print('═══════════════════════════════════════════════════════════');
     print('🔄 AccountController: Reconnecting all WebSockets');
-    print(
-      '   Account: ${account.metaAccountNumber}',
-    );
-    print(
-      '═══════════════════════════════════════════════════════════',
-    );
+    print('   Account: ${account.metaAccountNumber}');
+    print('═══════════════════════════════════════════════════════════');
 
     // ✅ STEP 1: Switch account in unified service (atomic - closes old, opens new)
     // This is the SINGLE source of truth for account switching
@@ -1034,7 +1043,8 @@ class AccountController extends GetxController with WidgetsBindingObserver {
         Future.delayed(const Duration(milliseconds: 150), () async {
           try {
             if (Get.isRegistered<MarketWatchV2Service>()) {
-              await Get.find<MarketWatchV2Service>().reconnectAndResyncFavorites();
+              await Get.find<MarketWatchV2Service>()
+                  .reconnectAndResyncFavorites();
             }
           } catch (_) {}
         });
@@ -1102,9 +1112,7 @@ class AccountController extends GetxController with WidgetsBindingObserver {
       }
     } catch (_) {}
 
-    print(
-      '✅ AccountController: All WebSockets reconnected and bound',
-    );
+    print('✅ AccountController: All WebSockets reconnected and bound');
   }
 
   // Convert MT5 account to AccountModel for compatibility

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:crm_app/widgets/app_svg_back_button.dart';
+import 'package:crm_app/services/language_service.dart';
 import 'package:flutter/material.dart';
 
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -355,14 +356,14 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
       context: context,
       builder: (ctx) {
         return AlertDialog(
-          title: const Text('Unsubscribe'),
-          content: const Text(
-            'Are you sure you want to Unsubscribe from this plan? This will trigger proportional trade settlement.',
+          title: Text(Get.find<LanguageService>().tr('copy_unsubscribe')),
+          content: Text(
+            Get.find<LanguageService>().tr('copy_unsubscribe_message'),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('Cancel'),
+              child: Text(Get.find<LanguageService>().tr('common_cancel')),
             ),
             TextButton(
               onPressed: () async {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:crm_app/constants/color.dart';
+import 'package:crm_app/services/language_service.dart' show TranslationUtils;
 
 /// Shows a theme-aware Date Range Dialog supporting Light and Dark modes
 Future<DateTimeRange?> showIbmDateRangeDialog(
@@ -104,7 +105,10 @@ Future<DateTimeRange?> showIbmDateRangeDialog(
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16.r),
             ),
-            insetPadding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 24.h),
+            insetPadding: EdgeInsets.symmetric(
+              horizontal: 20.w,
+              vertical: 24.h,
+            ),
             child: Padding(
               padding: EdgeInsets.all(20.w),
               child: Column(
@@ -269,7 +273,7 @@ Future<DateTimeRange?> showIbmDateRangeDialog(
                           ),
                         ),
                         child: Text(
-                          'Cancel',
+                          TranslationUtils.tr('common_cancel'),
                           style: TextStyle(
                             fontSize: 13.sp,
                             color: AppColors.textGrey,

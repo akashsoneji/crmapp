@@ -26,6 +26,7 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
   String? _shadowAuthToken;
   String? _shadowWsToken;
   String? _shadowUserDataJson;
+
   /// Branding (color, logo, app name, URLs) that was active *before* the
   /// user opened this screen. Captured in initState so the Home button
   /// can restore the previous broker's branding when the user changes
@@ -158,7 +159,7 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
               leading: IconButton(
                 icon: const Icon(Icons.home_outlined),
                 color: AppColors.textPrimary,
-                tooltip: 'Back to home',
+                tooltip: languageService.tr('navigation_back'),
                 onPressed: _restoreSessionAndExit,
               ),
             )
@@ -180,9 +181,9 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
                           source: FlavorConfig.effectiveLogo,
                           color:
                               FlavorConfig.isONSA() &&
-                                      !FlavorConfig.hasRemoteLogo
-                                  ? AppColors.primary
-                                  : null,
+                                  !FlavorConfig.hasRemoteLogo
+                              ? AppColors.primary
+                              : null,
                           height: 100.h,
                           width: 180.w,
                         ),
@@ -264,7 +265,7 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
                                   //     arguments: {'allowBack': false},
                                   //   );
                                   // }
-                                   Get.offAllNamed(
+                                  Get.offAllNamed(
                                     AppPages.TENAX_BROKER_SELECTION,
                                     arguments: {'allowBack': false},
                                   );
@@ -304,11 +305,10 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
                         color: AppColors.primary,
                         fontWeight: FontWeight.w500,
                       ),
-                      recognizer:
-                          TapGestureRecognizer()
-                            ..onTap = () => AgreementLauncher.openTerms(),
+                      recognizer: TapGestureRecognizer()
+                        ..onTap = () => AgreementLauncher.openTerms(),
                     ),
-                    const TextSpan(text: " and "),
+                    TextSpan(text: " ${languageService.tr('common_and')} "),
                     TextSpan(
                       text: "${languageService.tr("privacy_policy_title").tr}",
                       style: TextStyle(
@@ -316,9 +316,8 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
                         color: AppColors.primary,
                         fontWeight: FontWeight.w500,
                       ),
-                      recognizer:
-                          TapGestureRecognizer()
-                            ..onTap = () => AgreementLauncher.openPrivacy(),
+                      recognizer: TapGestureRecognizer()
+                        ..onTap = () => AgreementLauncher.openPrivacy(),
                     ),
                   ],
                 ),

@@ -4,6 +4,7 @@ import 'package:crm_app/controllers/copy_trading/copy_trading_master_dashboard_c
 import 'package:crm_app/controllers/copy_trading/copy_trading_master_plan_detail_controller.dart';
 import 'package:crm_app/screens/home/more/copytrading/copy_trading_edit_plan_screen.dart';
 import 'package:crm_app/services/theme_service.dart';
+import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/widgets/app_svg_back_button.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
 import 'package:flutter/material.dart';
@@ -58,8 +59,7 @@ class MasterPlanDetailScreen extends StatelessWidget {
           ),
         ),
         body: Obx(() {
-          if (controller.isLoading.value &&
-              controller.detail.value == null) {
+          if (controller.isLoading.value && controller.detail.value == null) {
             return Center(
               child: CircularProgressIndicator(color: tokens.brand),
             );
@@ -161,8 +161,7 @@ class _PlanDetailBodyState extends State<_PlanDetailBody> {
                   controller: widget.controller,
                   tokens: widget.tokens,
                   onEdit: () => _openEditScreen(context),
-                  onConfirmInactivate: () =>
-                      _confirmInactivate(context),
+                  onConfirmInactivate: () => _confirmInactivate(context),
                 ),
                 const SizedBox(height: 14),
                 _buildActiveTab(),
@@ -223,14 +222,13 @@ class _PlanDetailBodyState extends State<_PlanDetailBody> {
     );
     final dashController =
         Get.isRegistered<CopyTradingMasterDashboardController>()
-            ? Get.find<CopyTradingMasterDashboardController>()
-            : Get.put(
-                CopyTradingMasterDashboardController(masterCode: ''),
-                permanent: true,
-              );
+        ? Get.find<CopyTradingMasterDashboardController>()
+        : Get.put(
+            CopyTradingMasterDashboardController(masterCode: ''),
+            permanent: true,
+          );
     Get.to(
-      () =>
-          CopyTradingEditPlanScreen(plan: item, controller: dashController),
+      () => CopyTradingEditPlanScreen(plan: item, controller: dashController),
       transition: Transition.rightToLeft,
       duration: const Duration(milliseconds: 300),
     )?.then((_) {
@@ -244,9 +242,11 @@ class _PlanDetailBodyState extends State<_PlanDetailBody> {
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Inactivate plan?'),
-        content: const Text(
-          'New copiers will not be able to subscribe. Existing copiers and trades are not affected.',
+        title: Text(
+          Get.find<LanguageService>().tr('copy_inactivate_plan_title'),
+        ),
+        content: Text(
+          Get.find<LanguageService>().tr('copy_inactivate_plan_message'),
         ),
         actions: [
           TextButton(

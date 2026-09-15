@@ -11,11 +11,7 @@ class PlanOverviewTab extends StatelessWidget {
   final CopyTradingMasterPlanDetail plan;
   final PlanTokens tokens;
 
-  const PlanOverviewTab({
-    super.key,
-    required this.plan,
-    required this.tokens,
-  });
+  const PlanOverviewTab({super.key, required this.plan, required this.tokens});
 
   @override
   Widget build(BuildContext context) {
@@ -190,16 +186,16 @@ class _EquityChart extends StatelessWidget {
             show: true,
             drawVerticalLine: false,
             horizontalInterval: yInterval,
-            getDrawingHorizontalLine: (_) => FlLine(
-              color: tokens.divider,
-              strokeWidth: 1,
-            ),
+            getDrawingHorizontalLine: (_) =>
+                FlLine(color: tokens.divider, strokeWidth: 1),
           ),
           titlesData: FlTitlesData(
-            topTitles:
-                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            rightTitles:
-                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            topTitles: const AxisTitles(
+              sideTitles: SideTitles(showTitles: false),
+            ),
+            rightTitles: const AxisTitles(
+              sideTitles: SideTitles(showTitles: false),
+            ),
             bottomTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
@@ -214,10 +210,7 @@ class _EquityChart extends StatelessWidget {
                     padding: const EdgeInsets.only(top: 4),
                     child: Text(
                       DateFormat('MMM d').format(pts[idx].d),
-                      style: TextStyle(
-                        fontSize: 9,
-                        color: tokens.mutedText,
-                      ),
+                      style: TextStyle(fontSize: 9, color: tokens.mutedText),
                     ),
                   );
                 },
@@ -232,10 +225,7 @@ class _EquityChart extends StatelessWidget {
                   padding: const EdgeInsets.only(right: 4),
                   child: Text(
                     PlanFormat.compactMoney(value),
-                    style: TextStyle(
-                      fontSize: 9,
-                      color: tokens.mutedText,
-                    ),
+                    style: TextStyle(fontSize: 9, color: tokens.mutedText),
                   ),
                 ),
               ),
@@ -309,9 +299,7 @@ class _CommissionSummarySection extends StatelessWidget {
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Text(
-                c.pendingSource.isEmpty
-                    ? '—'
-                    : c.pendingSource.toUpperCase(),
+                c.pendingSource.isEmpty ? '—' : c.pendingSource.toUpperCase(),
                 style: TextStyle(
                   fontSize: 9,
                   color: tokens.warningText,
@@ -371,8 +359,10 @@ class _SettlementSection extends StatelessWidget {
             tokens: tokens,
             trailing: s.isDue
                 ? Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: tokens.warningSoft,
                       borderRadius: BorderRadius.circular(4),
@@ -418,11 +408,7 @@ class _RulesSection extends StatelessWidget {
             tokens: tokens,
           ),
           PlanDivider(tokens: tokens),
-          PlanKeyValueRow(
-            label: 'Active / cap',
-            value: cap,
-            tokens: tokens,
-          ),
+          PlanKeyValueRow(label: 'Active / cap', value: cap, tokens: tokens),
           PlanDivider(tokens: tokens),
           PlanKeyValueRow(
             label: 'Plan full',
@@ -442,7 +428,8 @@ class _RulesSection extends StatelessWidget {
           PlanKeyValueRow(
             label: 'Type',
             value: PlanFormat.capitalize(
-                plan.commissionType.isEmpty ? 'per_trade' : plan.commissionType),
+              plan.commissionType.isEmpty ? 'per_trade' : plan.commissionType,
+            ),
             tokens: tokens,
           ),
         ],
@@ -515,11 +502,7 @@ class _LabelText extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           body,
-          style: TextStyle(
-            fontSize: 13,
-            color: tokens.bodyText,
-            height: 1.45,
-          ),
+          style: TextStyle(fontSize: 13, color: tokens.bodyText, height: 1.45),
         ),
       ],
     );
@@ -538,8 +521,8 @@ class _AccountSection extends StatelessWidget {
     final server = plan.tradingServer.isNotEmpty
         ? plan.tradingServer
         : plan.lpProviderName.isEmpty
-            ? '—'
-            : plan.lpProviderName;
+        ? '—'
+        : plan.lpProviderName;
     return PlanSectionCard(
       title: 'Account & system',
       subtitle: 'Routing & metadata',
@@ -555,16 +538,13 @@ class _AccountSection extends StatelessWidget {
           PlanKeyValueRow(
             label: 'Copying',
             value: plan.copyingPaused ? 'Paused' : 'Active',
-            valueColor:
-                plan.copyingPaused ? tokens.warningText : tokens.successText,
+            valueColor: plan.copyingPaused
+                ? tokens.warningText
+                : tokens.successText,
             tokens: tokens,
           ),
           PlanDivider(tokens: tokens),
-          PlanKeyValueRow(
-            label: 'Server',
-            value: server,
-            tokens: tokens,
-          ),
+          PlanKeyValueRow(label: 'Server', value: server, tokens: tokens),
           PlanDivider(tokens: tokens),
           PlanKeyValueRow(
             label: 'Trading account',

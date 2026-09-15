@@ -16,23 +16,20 @@ class CameraScreen extends StatelessWidget {
         children: [
           // Camera Preview
           Positioned.fill(
-            child: controller.cameraController != null &&
-                controller.cameraController!.value.isInitialized
+            child:
+                controller.cameraController != null &&
+                    controller.cameraController!.value.isInitialized
                 ? CameraPreview(controller.cameraController!)
                 : Center(
-              child: CommonLoadingWidget(
-                size: 40.0,
-                color: AppColors.onColoredBackground,
-              ),
-            ),
+                    child: CommonLoadingWidget(
+                      size: 40.0,
+                      color: AppColors.onColoredBackground,
+                    ),
+                  ),
           ),
 
           // Overlay for ID card frame
-          Positioned.fill(
-            child: CustomPaint(
-              painter: IdCardOverlayPainter(),
-            ),
-          ),
+          Positioned.fill(child: CustomPaint(painter: IdCardOverlayPainter())),
 
           // Top instruction
           Positioned(
@@ -46,13 +43,15 @@ class CameraScreen extends StatelessWidget {
                   color: AppColors.scrim,
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: Obx(() => Text(
-                  'Position ${controller.currentSide.value} side of your ID within the frame',
-                  style: TextStyle(
-                    color: AppColors.onColoredBackground,
-                    fontSize: 16,
+                child: Obx(
+                  () => Text(
+                    'Position ${controller.currentSide.value} side of your ID within the frame',
+                    style: TextStyle(
+                      color: AppColors.onColoredBackground,
+                      fontSize: 16,
+                    ),
                   ),
-                )),
+                ),
               ),
             ),
           ),
@@ -81,37 +80,39 @@ class CameraScreen extends StatelessWidget {
                 ),
 
                 // Capture button
-                Obx(() => GestureDetector(
-                  onTap: controller.isLoading.value
-                      ? null
-                      : controller.captureImage,
-                  child: Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      color: AppColors.onColoredBackground,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: AppColors.onColoredBackground,
-                        width: 4,
-                      ),
-                    ),
-                    child: controller.isLoading.value
-                        ? Center(
-                      child: CommonLoadingWidget(
-                        size: 30.0,
-                        color: AppColors.textPrimary,
-                      ),
-                    )
-                        : Container(
-                      margin: EdgeInsets.all(6),
+                Obx(
+                  () => GestureDetector(
+                    onTap: controller.isLoading.value
+                        ? null
+                        : controller.captureImage,
+                    child: Container(
+                      width: 80,
+                      height: 80,
                       decoration: BoxDecoration(
                         color: AppColors.onColoredBackground,
                         shape: BoxShape.circle,
+                        border: Border.all(
+                          color: AppColors.onColoredBackground,
+                          width: 4,
+                        ),
                       ),
+                      child: controller.isLoading.value
+                          ? Center(
+                              child: CommonLoadingWidget(
+                                size: 30.0,
+                                color: AppColors.textPrimary,
+                              ),
+                            )
+                          : Container(
+                              margin: EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: AppColors.onColoredBackground,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
                     ),
                   ),
-                )),
+                ),
 
                 // Flip camera button
                 Container(
@@ -136,7 +137,6 @@ class CameraScreen extends StatelessWidget {
   }
 }
 
-
 class IdCardOverlayPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
@@ -149,7 +149,10 @@ class IdCardOverlayPainter extends CustomPainter {
       ..color = AppColors.textPrimary.withValues(alpha: 0.5);
 
     // Draw dark overlay
-    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), backgroundPaint);
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      backgroundPaint,
+    );
 
     // Calculate card frame dimensions
     final cardWidth = size.width * 0.8;

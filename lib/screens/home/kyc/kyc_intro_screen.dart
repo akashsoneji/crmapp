@@ -61,7 +61,10 @@ class KycIntroScreen extends StatelessWidget {
           onPressed: () => Get.back(closeOverlays: true),
           icon: SvgPicture.asset(
             "assets/svg/trade/arro_back.svg",
-            colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn),
+            colorFilter: ColorFilter.mode(
+              AppColors.textPrimary,
+              BlendMode.srcIn,
+            ),
           ),
         ),
       ),
@@ -81,7 +84,7 @@ class KycIntroScreen extends StatelessWidget {
                       child: Column(
                         children: [
                           Text(
-                            "Verify your account",
+                            languageService.tr('verify_your_account'),
                             style: AppTextStyles.black24600h1_42,
                           ),
                           SizedBox(height: 8.h),
@@ -107,30 +110,28 @@ class KycIntroScreen extends StatelessWidget {
                       title: languageService.tr('kyc_intro_personal_details'),
                       status:
                           stageCompletion?.mobileVerified == true &&
-                                  stageCompletion?.emailVerified == true &&
-                                  stageCompletion?.personalDetails == true
-                              ? 'Completed'
-                              : 'Incomplete',
+                              stageCompletion?.emailVerified == true &&
+                              stageCompletion?.personalDetails == true
+                          ? 'Completed'
+                          : 'Incomplete',
                       backgroundColor:
                           stageCompletion?.mobileVerified == true &&
-                                  stageCompletion?.emailVerified == true &&
-                                  stageCompletion?.personalDetails == true
-                              ? AppColors.successBg
-                              : AppColors.primary.withOpacity(
-                                0.1,
-                              ), // Light purple
+                              stageCompletion?.emailVerified == true &&
+                              stageCompletion?.personalDetails == true
+                          ? AppColors.successBg
+                          : AppColors.primary.withOpacity(0.1), // Light purple
                       iconColor:
                           stageCompletion?.mobileVerified == true &&
-                                  stageCompletion?.emailVerified == true &&
-                                  stageCompletion?.personalDetails == true
-                              ? AppColors.green
-                              : AppColors.primary,
+                              stageCompletion?.emailVerified == true &&
+                              stageCompletion?.personalDetails == true
+                          ? AppColors.green
+                          : AppColors.primary,
                       textColor:
                           stageCompletion?.mobileVerified == true &&
-                                  stageCompletion?.emailVerified == true &&
-                                  stageCompletion?.personalDetails == true
-                              ? AppColors.green
-                              : AppColors.primary,
+                              stageCompletion?.emailVerified == true &&
+                              stageCompletion?.personalDetails == true
+                          ? AppColors.green
+                          : AppColors.primary,
                       features: [
                         'Deposit up to \$2000 within 14 days',
                         'Limited deposit methods',
@@ -138,10 +139,10 @@ class KycIntroScreen extends StatelessWidget {
                       ],
                       isActive:
                           stageCompletion?.mobileVerified == true &&
-                                  stageCompletion?.emailVerified == true &&
-                                  stageCompletion?.personalDetails == true
-                              ? false
-                              : true,
+                              stageCompletion?.emailVerified == true &&
+                              stageCompletion?.personalDetails == true
+                          ? false
+                          : true,
                     ),
 
                     SizedBox(height: 24.h),
@@ -152,32 +153,32 @@ class KycIntroScreen extends StatelessWidget {
                       title: languageService.tr('kyc_intro_id_verification'),
                       status:
                           stageCompletion?.identityVerified == true &&
-                                  stageCompletion?.addressProofVerified == true
-                              ? 'Completed'
-                              : 'Incomplete',
+                              stageCompletion?.addressProofVerified == true
+                          ? 'Completed'
+                          : 'Incomplete',
                       backgroundColor:
                           stageCompletion?.identityVerified == true &&
-                                  stageCompletion?.addressProofVerified == true
-                              ? AppColors.successBg
-                              : (stageCompletion?.mobileVerified == true &&
-                                  stageCompletion?.emailVerified == true &&
-                                  stageCompletion?.personalDetails == true)
-                              ? AppColors.primary.withAlpha(20)
-                              : AppColors.whiteColor,
+                              stageCompletion?.addressProofVerified == true
+                          ? AppColors.successBg
+                          : (stageCompletion?.mobileVerified == true &&
+                                stageCompletion?.emailVerified == true &&
+                                stageCompletion?.personalDetails == true)
+                          ? AppColors.primary.withAlpha(20)
+                          : AppColors.whiteColor,
                       iconColor:
                           stageCompletion?.identityVerified == true &&
-                                  stageCompletion?.addressProofVerified == true
-                              ? AppColors.green
-                              : AppColors.textGrey!,
+                              stageCompletion?.addressProofVerified == true
+                          ? AppColors.green
+                          : AppColors.textGrey!,
                       textColor:
                           stageCompletion?.identityVerified == true &&
-                                  stageCompletion?.addressProofVerified == true
-                              ? AppColors.green
-                              : (stageCompletion?.mobileVerified == true &&
-                                  stageCompletion?.emailVerified == true &&
-                                  stageCompletion?.personalDetails == true)
-                              ? AppColors.primary.withAlpha(1000)
-                              : AppColors.textGrey!,
+                              stageCompletion?.addressProofVerified == true
+                          ? AppColors.green
+                          : (stageCompletion?.mobileVerified == true &&
+                                stageCompletion?.emailVerified == true &&
+                                stageCompletion?.personalDetails == true)
+                          ? AppColors.primary.withAlpha(1000)
+                          : AppColors.textGrey!,
                       features: [
                         'Unlimited deposits',
                         'Global and local payments',
@@ -194,30 +195,27 @@ class KycIntroScreen extends StatelessWidget {
                       title: languageService.tr(
                         'kyc_intro_address_verification',
                       ),
-                      status:
-                          stageCompletion?.addressProofVerified == true
-                              ? 'Completed'
-                              : stageCompletion?.identityVerified == true
-                              ? 'Available'
-                              : 'Locked',
-                      textColor:
-                          stageCompletion?.addressProofVerified == true
-                              ? AppColors.green
-                              : stageCompletion?.identityVerified == true
-                              ? AppColors.primary
-                              : AppColors.textGrey!,
+                      status: stageCompletion?.addressProofVerified == true
+                          ? 'Completed'
+                          : stageCompletion?.identityVerified == true
+                          ? 'Available'
+                          : 'Locked',
+                      textColor: stageCompletion?.addressProofVerified == true
+                          ? AppColors.green
+                          : stageCompletion?.identityVerified == true
+                          ? AppColors.primary
+                          : AppColors.textGrey!,
                       backgroundColor:
                           stageCompletion?.addressProofVerified == true
-                              ? AppColors.successBg
-                              : stageCompletion?.identityVerified == true
-                              ? AppColors.cardBackGround
-                              : AppColors.whiteColor,
-                      iconColor:
-                          stageCompletion?.addressProofVerified == true
-                              ? AppColors.green
-                              : stageCompletion?.identityVerified == true
-                              ? AppColors.primary
-                              : AppColors.textGrey!,
+                          ? AppColors.successBg
+                          : stageCompletion?.identityVerified == true
+                          ? AppColors.cardBackGround
+                          : AppColors.whiteColor,
+                      iconColor: stageCompletion?.addressProofVerified == true
+                          ? AppColors.green
+                          : stageCompletion?.identityVerified == true
+                          ? AppColors.primary
+                          : AppColors.textGrey!,
                       features: [
                         'Unlimited deposits',
                         'Global and local payments',
@@ -270,7 +268,7 @@ class KycIntroScreen extends StatelessWidget {
                     elevation: 0,
                   ),
                   child: Text(
-                    'Start Verification',
+                    languageService.tr('kyc_verification'),
                     style: TextStyle(
                       fontSize: 16.sp,
                       fontWeight: FontWeight.w600,
@@ -320,10 +318,9 @@ class KycIntroScreen extends StatelessWidget {
         decoration: BoxDecoration(
           color: backgroundColor,
           borderRadius: BorderRadius.circular(16),
-          border:
-              isActive
-                  ? Border.all(color: AppColors.primary, width: 1)
-                  : Border.all(color: AppColors.border, width: 1),
+          border: isActive
+              ? Border.all(color: AppColors.primary, width: 1)
+              : Border.all(color: AppColors.border, width: 1),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,

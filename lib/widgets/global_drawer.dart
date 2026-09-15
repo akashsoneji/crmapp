@@ -22,7 +22,7 @@ class GlobalDrawer extends StatelessWidget {
             // Header
             Container(
               width: double.infinity,
-              padding: EdgeInsets.fromLTRB(16.w, 60.h, 16.w, 20.h),
+              padding: EdgeInsetsDirectional.fromSTEB(16.w, 60.h, 16.w, 20.h),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [AppColors.primary, AppColors.primary],
@@ -44,7 +44,7 @@ class GlobalDrawer extends StatelessWidget {
                   ),
                   SizedBox(height: 12.h),
                   Text(
-                    languageService.tr('Welcome User'),
+                    languageService.tr('common_welcome_user'),
                     style: TextStyle(
                       color: AppColors.whiteColor,
                       fontSize: 18.sp,
@@ -90,8 +90,10 @@ class GlobalDrawer extends StatelessWidget {
                       Get.back(closeOverlays: true);
                       if (Get.isRegistered<AppNotificationController>()) {
                         Get.find<AppNotificationController>().showInfo(
-                          message: 'Notifications coming soon',
-                          title: 'Info',
+                          message: languageService.tr(
+                            'common_notifications_coming_soon',
+                          ),
+                          title: languageService.tr('common_info'),
                         );
                       }
                     },
@@ -103,8 +105,10 @@ class GlobalDrawer extends StatelessWidget {
                       Get.back(closeOverlays: true);
                       if (Get.isRegistered<AppNotificationController>()) {
                         Get.find<AppNotificationController>().showInfo(
-                          message: 'About section coming soon',
-                          title: 'Info',
+                          message: languageService.tr(
+                            'common_about_coming_soon',
+                          ),
+                          title: languageService.tr('common_info'),
                         );
                       }
                     },
@@ -178,7 +182,7 @@ class GlobalDrawer extends StatelessWidget {
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
             child: Text(
               languageService.tr('logout'),
-              style:   TextStyle(color: AppColors.whiteColor),
+              style: TextStyle(color: AppColors.whiteColor),
             ),
           ),
         ],

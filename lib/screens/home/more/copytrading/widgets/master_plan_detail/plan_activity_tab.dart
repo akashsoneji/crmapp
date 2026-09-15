@@ -9,11 +9,7 @@ class PlanActivityTab extends StatelessWidget {
   final CopyTradingMasterPlanDetail plan;
   final PlanTokens tokens;
 
-  const PlanActivityTab({
-    super.key,
-    required this.plan,
-    required this.tokens,
-  });
+  const PlanActivityTab({super.key, required this.plan, required this.tokens});
 
   @override
   Widget build(BuildContext context) {
@@ -120,9 +116,7 @@ class _FeedRow extends StatelessWidget {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: tokens.isDark
-                    ? r.color.withValues(alpha: 0.18)
-                    : r.soft,
+                color: tokens.isDark ? r.color.withValues(alpha: 0.18) : r.soft,
                 borderRadius: BorderRadius.circular(10),
               ),
               alignment: Alignment.center,
@@ -154,10 +148,7 @@ class _FeedRow extends StatelessWidget {
                   const SizedBox(height: 3),
                   Text(
                     _fmtTime(item.at),
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: tokens.mutedText,
-                    ),
+                    style: TextStyle(fontSize: 10, color: tokens.mutedText),
                   ),
                 ],
               ),
@@ -241,9 +232,9 @@ class _TimelineRow extends StatelessWidget {
   String _fmt(String iso) {
     if (iso.isEmpty) return '—';
     try {
-      return DateFormat('d MMM yyyy, HH:mm').format(
-        DateTime.parse(iso).toLocal(),
-      );
+      return DateFormat(
+        'd MMM yyyy, HH:mm',
+      ).format(DateTime.parse(iso).toLocal());
     } catch (_) {
       return iso;
     }
@@ -261,66 +252,58 @@ class _TimelineRow extends StatelessWidget {
             Column(
               children: [
                 Container(
-                width: 12,
-                height: 12,
-                margin: const EdgeInsets.only(top: 4),
-                decoration: BoxDecoration(
-                  color: _dotColor(),
-                  shape: BoxShape.circle,
-                ),
-              ),
-              if (!isLast)
-                Expanded(
-                  child: Container(
-                    width: 2,
-                    color: tokens.border,
+                  width: 12,
+                  height: 12,
+                  margin: const EdgeInsets.only(top: 4),
+                  decoration: BoxDecoration(
+                    color: _dotColor(),
+                    shape: BoxShape.circle,
                   ),
                 ),
-            ],
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Padding(
-              padding: EdgeInsets.only(bottom: isLast ? 0 : 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          item.label,
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: tokens.textPrimary,
+                if (!isLast)
+                  Expanded(child: Container(width: 2, color: tokens.border)),
+              ],
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.only(bottom: isLast ? 0 : 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            item.label,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: tokens.textPrimary,
+                            ),
                           ),
                         ),
-                      ),
-                      Text(
-                        _fmt(item.at),
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: tokens.mutedText,
+                        Text(
+                          _fmt(item.at),
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: tokens.mutedText,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  const SizedBox(height: 2),
-                  Text(
-                    item.detail,
-                    style: TextStyle(
-                      fontSize: 11.5,
-                      color: tokens.subText,
+                      ],
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 2),
+                    const SizedBox(height: 2),
+                    Text(
+                      item.detail,
+                      style: TextStyle(fontSize: 11.5, color: tokens.subText),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
-      ),
+          ],
+        ),
       ),
     );
   }

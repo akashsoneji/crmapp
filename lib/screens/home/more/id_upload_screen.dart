@@ -21,7 +21,7 @@ class IdUploadScreen extends StatelessWidget {
           onPressed: () => Get.back(closeOverlays: true),
         ),
         title: Text(
-          'ID/Aadhar card',
+          Get.find<LanguageService>().tr('kyc_id_aadhar_card'),
           style: TextStyle(
             color: AppColors.textPrimary,
             fontSize: 18,
@@ -126,60 +126,59 @@ class IdUploadScreen extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.border!),
+          border: Border.all(color: AppColors.border),
         ),
-        child:
-            imagePath.isEmpty
-                ? Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+        child: imagePath.isEmpty
+            ? Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.cloud_upload_outlined,
+                    size: 40,
+                    color: AppColors.textGrey,
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    title,
+                    style: TextStyle(fontSize: 14, color: AppColors.textGrey),
+                  ),
+                ],
+              )
+            : ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Stack(
                   children: [
-                    Icon(
-                      Icons.cloud_upload_outlined,
-                      size: 40,
-                      color: AppColors.textGrey,
+                    Image.file(
+                      File(imagePath),
+                      width: double.infinity,
+                      height: 140,
+                      fit: BoxFit.cover,
                     ),
-                    SizedBox(height: 8),
-                    Text(
-                      title,
-                      style: TextStyle(fontSize: 14, color: AppColors.textGrey),
-                    ),
-                  ],
-                )
-                : ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Stack(
-                    children: [
-                      Image.file(
-                        File(imagePath),
-                        width: double.infinity,
-                        height: 140,
-                        fit: BoxFit.cover,
-                      ),
-                      Positioned(
-                        top: 8,
-                        right: 8,
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.green,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            title,
-                            style: TextStyle(
-                              color: AppColors.whiteColor,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                            ),
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.green,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          title,
+                          style: TextStyle(
+                            color: AppColors.whiteColor,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
+              ),
       ),
     );
   }
@@ -192,7 +191,11 @@ class IdUploadScreen extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, color: isPositive ? AppColors.green : AppColors.error, size: 20),
+        Icon(
+          icon,
+          color: isPositive ? AppColors.green : AppColors.error,
+          size: 20,
+        ),
         SizedBox(width: 12),
         Expanded(
           child: Text(

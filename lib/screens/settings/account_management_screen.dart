@@ -33,7 +33,7 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
         title: Text(
-          'Account Management',
+          languageService.tr('account_management_title'),
           style: AppTextStyles.label.copyWith(
             fontSize: 18.sp,
             fontWeight: FontWeight.w700,
@@ -43,7 +43,7 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
         backgroundColor: AppColors.whiteColor,
         elevation: 0,
         leading: IconButton(
-          icon:   Icon(Icons.arrow_back, color: AppColors.textPrimary),
+          icon: Icon(Icons.arrow_back, color: AppColors.textPrimary),
           onPressed: () => Get.back(closeOverlays: true),
         ),
         actions: [
@@ -90,8 +90,9 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
           child: ListTile(
             contentPadding: EdgeInsets.all(16.w),
             leading: CircleAvatar(
-              backgroundColor:
-                  isActive ? AppColors.primary : AppColors.textGrey,
+              backgroundColor: isActive
+                  ? AppColors.primary
+                  : AppColors.textGrey,
               child: Icon(
                 account.type == 'REAL'
                     ? Icons.account_balance
@@ -100,18 +101,18 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
               ),
             ),
             title: Text(
-              '${account.type} Account',
+              '${account.type} ${languageService.tr('account_management_account')}',
               style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16.sp),
             ),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'ID: ${account.id}',
+                  '${languageService.tr('common_number')}: ${account.id}',
                   style: TextStyle(color: AppColors.textGrey, fontSize: 12.sp),
                 ),
                 Text(
-                  'Balance: ${account.currency} ${account.balance.toStringAsFixed(2)}',
+                  '${languageService.tr('account_management_balance')}: ${account.currency} ${account.balance.toStringAsFixed(2)}',
                   style: TextStyle(
                     color: AppColors.textPrimary,
                     fontSize: 14.sp,
@@ -120,70 +121,66 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
                 ),
               ],
             ),
-            trailing:
-                isActive
-                    ? Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 8.w,
-                        vertical: 4.h,
+            trailing: isActive
+                ? Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 8.w,
+                      vertical: 4.h,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                    child: Text(
+                      'Active',
+                      style: TextStyle(
+                        color: AppColors.whiteColor,
+                        fontSize: 10.sp,
+                        fontWeight: FontWeight.w500,
                       ),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary,
-                        borderRadius: BorderRadius.circular(12.r),
-                      ),
-                      child: Text(
-                        'Active',
-                        style: TextStyle(
-                          color: AppColors.whiteColor,
-                          fontSize: 10.sp,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    )
-                    : PopupMenuButton<String>(
-                      onSelected:
-                          (value) => _handleAccountAction(value, account),
-                      itemBuilder:
-                          (context) => [
-                            PopupMenuItem(
-                              value: 'activate',
-                              child: Row(
-                                children: [
-                                  const Icon(Icons.check_circle, size: 16),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    languageService.tr(
-                                      'account_management_set_active',
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            PopupMenuItem(
-                              value: 'delete',
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.delete,
-                                    size: 16,
-                                    color: AppColors.error,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  const Text(
-                                    'Delete',
-                                    style: TextStyle(color: AppColors.error),
-                                  ),
-                                ],
+                    ),
+                  )
+                : PopupMenuButton<String>(
+                    onSelected: (value) => _handleAccountAction(value, account),
+                    itemBuilder: (context) => [
+                      PopupMenuItem(
+                        value: 'activate',
+                        child: Row(
+                          children: [
+                            const Icon(Icons.check_circle, size: 16),
+                            const SizedBox(width: 8),
+                            Text(
+                              languageService.tr(
+                                'account_management_set_active',
                               ),
                             ),
                           ],
-                    ),
-            onTap:
-                isActive
-                    ? null
-                    : () {
-                      accountController.setActiveAccount(account.id);
-                    },
+                        ),
+                      ),
+                      PopupMenuItem(
+                        value: 'delete',
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.delete,
+                              size: 16,
+                              color: AppColors.error,
+                            ),
+                            const SizedBox(width: 8),
+                            const Text(
+                              'Delete',
+                              style: TextStyle(color: AppColors.error),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+            onTap: isActive
+                ? null
+                : () {
+                    accountController.setActiveAccount(account.id);
+                  },
           ),
         );
       },
@@ -213,7 +210,7 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
         actions: [
           TextButton(
             onPressed: () => Get.back(closeOverlays: true),
-            child: const Text('Cancel'),
+            child: Text(languageService.tr('account_management_cancel')),
           ),
           ElevatedButton(
             onPressed: () {
@@ -244,11 +241,14 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             DropdownButtonFormField<String>(
-              decoration: const InputDecoration(labelText: 'Account Type'),
-              items:
-                  ['REAL', 'DEMO'].map((type) {
-                    return DropdownMenuItem(value: type, child: Text(type));
-                  }).toList(),
+              decoration: InputDecoration(
+                labelText: languageService.tr(
+                  'account_management_account_type',
+                ),
+              ),
+              items: ['REAL', 'DEMO'].map((type) {
+                return DropdownMenuItem(value: type, child: Text(type));
+              }).toList(),
               onChanged: (value) {
                 typeController.text = value ?? '';
               },
@@ -256,7 +256,11 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
             const SizedBox(height: 16),
             TextFormField(
               controller: balanceController,
-              decoration: const InputDecoration(labelText: 'Initial Balance'),
+              decoration: InputDecoration(
+                labelText: languageService.tr(
+                  'account_management_initial_balance',
+                ),
+              ),
               keyboardType: TextInputType.number,
             ),
           ],
@@ -264,7 +268,7 @@ class _AccountManagementScreenState extends State<AccountManagementScreen> {
         actions: [
           TextButton(
             onPressed: () => Get.back(closeOverlays: true),
-            child: const Text('Cancel'),
+            child: Text(languageService.tr('account_management_cancel')),
           ),
           ElevatedButton(
             onPressed: () {

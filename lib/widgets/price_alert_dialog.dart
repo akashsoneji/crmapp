@@ -7,6 +7,7 @@ import '../services/price_alert_monitor_service.dart';
 import '../utils/precision_helper.dart';
 import '../controllers/app_notification_controller.dart';
 import 'package:get/get.dart';
+import 'package:crm_app/services/language_service.dart' show TranslationUtils;
 
 class PriceAlertDialog extends StatefulWidget {
   final String symbol;
@@ -135,7 +136,7 @@ class _PriceAlertDialogState extends State<PriceAlertDialog> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'New Price Alert',
+                    TranslationUtils.tr('price_alert_new_title'),
                     style: AppTextStyles.heading.copyWith(
                       fontSize: 18.sp,
                       fontWeight: FontWeight.w600,
@@ -200,7 +201,7 @@ class _PriceAlertDialogState extends State<PriceAlertDialog> {
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Text(
-                            'Price',
+                            TranslationUtils.tr('price_alert_price'),
                             style: AppTextStyles.labelOnTradeQuantity,
                           ),
                           TextField(
@@ -303,7 +304,7 @@ class _PriceAlertDialogState extends State<PriceAlertDialog> {
 
               // Condition selection using Radio Buttons
               Text(
-                "Condition",
+                TranslationUtils.tr('price_alert_condition'),
                 style: AppTextStyles.labelOnTradePriceAlertGrey,
               ),
               SizedBox(height: 4.h),
@@ -312,7 +313,7 @@ class _PriceAlertDialogState extends State<PriceAlertDialog> {
                   Expanded(
                     child: RadioListTile<String>(
                       title: Text(
-                        'Above',
+                        TranslationUtils.tr('price_alert_above'),
                         style: AppTextStyles.labelOnTradePriceAlertBlack,
                       ),
                       value: 'above',
@@ -331,7 +332,7 @@ class _PriceAlertDialogState extends State<PriceAlertDialog> {
                   Expanded(
                     child: RadioListTile<String>(
                       title: Text(
-                        'Below',
+                        TranslationUtils.tr('price_alert_below'),
                         style: AppTextStyles.labelOnTradePriceAlertBlack,
                       ),
                       value: 'below',
@@ -355,7 +356,7 @@ class _PriceAlertDialogState extends State<PriceAlertDialog> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    "Current bid price",
+                    TranslationUtils.tr('price_alert_current_bid_price'),
                     style: AppTextStyles.labelOnTradePriceAlertGrey,
                   ),
                   Text(
@@ -380,28 +381,26 @@ class _PriceAlertDialogState extends State<PriceAlertDialog> {
                       child: ElevatedButton(
                         onPressed: _isLoading ? null : _setPriceAlert,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              AppColors.isDarkMode
-                                  ? AppColors.primary.withValues(alpha: 0.1)
-                                  : AppColors.brandPrimary,
+                          backgroundColor: AppColors.isDarkMode
+                              ? AppColors.primary.withValues(alpha: 0.1)
+                              : AppColors.brandPrimary,
                           padding: EdgeInsets.symmetric(vertical: 12.h),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12.r),
                           ),
                         ),
-                        child:
-                            _isLoading
-                                ? SizedBox(
-                                  height: 20.h,
-                                  width: 20.w,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      AppColors.whiteColor,
-                                    ),
+                        child: _isLoading
+                            ? SizedBox(
+                                height: 20.h,
+                                width: 20.w,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    AppColors.whiteColor,
                                   ),
-                                )
-                                : const Text('Set Alert'),
+                                ),
+                              )
+                            : Text(TranslationUtils.tr('price_alert_set')),
                       ),
                     ),
                   ],
@@ -419,7 +418,7 @@ class _PriceAlertDialogState extends State<PriceAlertDialog> {
     if (_priceController.text.isEmpty) {
       if (Get.isRegistered<AppNotificationController>()) {
         Get.find<AppNotificationController>().showError(
-          message: 'Please enter a price',
+          message: TranslationUtils.tr('price_alert_enter_price'),
         );
       }
       return;
@@ -454,16 +453,21 @@ class _PriceAlertDialogState extends State<PriceAlertDialog> {
         targetPrice: price,
         condition: _selectedCondition,
         currentPrice: widget.currentPrice,
-        message:
-            _messageController.text.isNotEmpty ? _messageController.text : null,
+        message: _messageController.text.isNotEmpty
+            ? _messageController.text
+            : null,
       );
 
       if (mounted) {
         Navigator.pop(context);
         if (Get.isRegistered<AppNotificationController>()) {
           Get.find<AppNotificationController>().showSuccess(
-            message:
-                'Price alert set successfully! You will be notified when ${widget.symbol} reaches \$${PrecisionHelper.formatPrice(price, decimals: _decimalDigits)}.',
+            message: TranslationUtils.tr('price_alert_set_successfully')
+                .replaceAll('{symbol}', widget.symbol)
+                .replaceAll(
+                  '{price}',
+                  PrecisionHelper.formatPrice(price, decimals: _decimalDigits),
+                ),
           );
         }
       }
@@ -471,7 +475,9 @@ class _PriceAlertDialogState extends State<PriceAlertDialog> {
       if (mounted) {
         if (Get.isRegistered<AppNotificationController>()) {
           Get.find<AppNotificationController>().showError(
-            message: 'Error setting price alert: $e',
+            message: TranslationUtils.tr(
+              'price_alert_setting_error',
+            ).replaceAll('{error}', e.toString()),
           );
         }
       }
@@ -490,7 +496,7 @@ class _PriceAlertDialogState extends State<PriceAlertDialog> {
       if (mounted) {
         if (Get.isRegistered<AppNotificationController>()) {
           Get.find<AppNotificationController>().showInfo(
-            message: 'Test notification sent! Check your notification panel.',
+            message: 'chart_test_notification_sent'.tr,
           );
         }
       }

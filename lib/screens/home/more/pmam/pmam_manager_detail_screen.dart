@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
+import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/pmam/pmam_controller.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
@@ -62,297 +63,286 @@ class _PmamManagerDetailScreenState extends State<PmamManagerDetailScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder:
-          (ctx) => StatefulBuilder(
-            builder: (ctx, setSheetState) {
-              final double balance =
-                  double.tryParse(
-                    _selectedAccount?['available_balance']?.toString() ?? '0',
-                  ) ??
-                  0;
-              final double minInvest = _selectedPlan?.minimumInvestment ?? 0;
-              final bool isBalanceEnough = balance >= minInvest;
-              final bool canInvest =
-                  isBalanceEnough && _selectedAccount != null;
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) {
+          final double balance =
+              double.tryParse(
+                _selectedAccount?['available_balance']?.toString() ?? '0',
+              ) ??
+              0;
+          final double minInvest = _selectedPlan?.minimumInvestment ?? 0;
+          final bool isBalanceEnough = balance >= minInvest;
+          final bool canInvest = isBalanceEnough && _selectedAccount != null;
 
-              return Container(
-                decoration: BoxDecoration(
-                  color: AppColors.card,
-                  borderRadius: BorderRadius.vertical(
-                    top: Radius.circular(22.r),
+          return Container(
+            decoration: BoxDecoration(
+              color: AppColors.card,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(22.r)),
+            ),
+            padding: EdgeInsets.only(
+              left: 20.w,
+              right: 20.w,
+              top: 20.h,
+              bottom: MediaQuery.of(ctx).viewInsets.bottom + 30.h,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40.w,
+                    height: 4.h,
+                    decoration: BoxDecoration(
+                      color: AppColors.border,
+                      borderRadius: BorderRadius.circular(4.r),
+                    ),
                   ),
                 ),
-                padding: EdgeInsets.only(
-                  left: 20.w,
-                  right: 20.w,
-                  top: 20.h,
-                  bottom: MediaQuery.of(ctx).viewInsets.bottom + 30.h,
+                SizedBox(height: 18.h),
+                Text(
+                  'Invest Now',
+                  style: TextStyle(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Center(
-                      child: Container(
-                        width: 40.w,
-                        height: 4.h,
-                        decoration: BoxDecoration(
-                          color: AppColors.border,
-                          borderRadius: BorderRadius.circular(4.r),
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 18.h),
-                    Text(
-                      'Invest Now',
-                      style: TextStyle(
-                        fontSize: 18.sp,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    SizedBox(height: 16.h),
+                SizedBox(height: 16.h),
 
-                    // Plan Selection Dropdown
-                    if (_manager.plans.length > 1) ...[
-                      Text(
-                        'Select Plan',
-                        style: TextStyle(
-                          fontSize: 13.sp,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textGrey,
-                        ),
-                      ),
-                      SizedBox(height: 8.h),
-                      AppSelectField<PmamPlan>(
-                        value: _selectedPlan,
-                        hint: 'Select a plan',
-                        sheetTitle: 'Select Plan',
-                        valueEquals: (a, b) => a.id == b.id,
-                        options:
-                            _manager.plans
-                                .map(
-                                  (p) => AppSelectOption<PmamPlan>(
-                                    value: p,
-                                    title: p.planName,
-                                  ),
-                                )
-                                .toList(),
-                        onChanged: (val) {
-                          if (val != null) {
-                            setSheetState(() {
-                              _selectedPlan = val;
-                              _selectedAccount = null;
-                              _ctrl.loadEligibleAccounts(val.id);
-                            });
-                            setState(() {});
-                          }
-                        },
-                      ),
-                      SizedBox(height: 16.h),
-                    ],
-
-                    Text(
-                      'Select Trading Account',
-                      style: TextStyle(
-                        fontSize: 13.sp,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textGrey,
-                      ),
+                // Plan Selection Dropdown
+                if (_manager.plans.length > 1) ...[
+                  Text(
+                    'Select Plan',
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textGrey,
                     ),
-                    SizedBox(height: 8.h),
-                    Obx(() {
-                      if (_ctrl.isLoading.value) {
-                        return Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(10.h),
-                            child: CommonLoadingWidget(
-                              size: 24,
-                              color: AppColors.primary,
-                            ),
+                  ),
+                  SizedBox(height: 8.h),
+                  AppSelectField<PmamPlan>(
+                    value: _selectedPlan,
+                    hint: 'Select a plan',
+                    sheetTitle: 'Select Plan',
+                    valueEquals: (a, b) => a.id == b.id,
+                    options: _manager.plans
+                        .map(
+                          (p) => AppSelectOption<PmamPlan>(
+                            value: p,
+                            title: p.planName,
                           ),
-                        );
+                        )
+                        .toList(),
+                    onChanged: (val) {
+                      if (val != null) {
+                        setSheetState(() {
+                          _selectedPlan = val;
+                          _selectedAccount = null;
+                          _ctrl.loadEligibleAccounts(val.id);
+                        });
+                        setState(() {});
                       }
-                      return AppSelectField<Map<String, dynamic>>(
-                        value: _selectedAccount,
-                        hint: 'Choose an account',
-                        sheetTitle: 'Select Trading Account',
-                        valueEquals: (a, b) => a['id'] == b['id'],
-                        options:
-                            _ctrl.eligibleAccounts.map((acc) {
-                              final accNo =
-                                  acc['meta_account_number']?.toString() ?? '-';
-                              final bal =
-                                  double.tryParse(
-                                    acc['balance']?.toString() ?? '0',
-                                  ) ??
-                                  0;
-                              final availBal =
-                                  double.tryParse(
-                                    acc['available_balance']?.toString() ?? '0',
-                                  ) ??
-                                  0;
-                              return AppSelectOption<Map<String, dynamic>>(
-                                value: acc,
-                                title:
-                                    '$accNo — Balance: \$${bal.toStringAsFixed(2)}',
-                                subtitle:
-                                    'Available: \$${availBal.toStringAsFixed(2)}',
-                              );
-                            }).toList(),
-                        onChanged: (val) {
-                          setSheetState(() => _selectedAccount = val);
-                        },
-                      );
-                    }),
-                    SizedBox(height: 20.h),
+                    },
+                  ),
+                  SizedBox(height: 16.h),
+                ],
 
-                    // Info Card: Min Invest vs Balance
-                    if (_selectedPlan != null)
-                      Container(
-                        width: double.infinity,
-                        padding: EdgeInsets.all(12.w),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.05),
-                          borderRadius: BorderRadius.circular(10.r),
+                Text(
+                  'Select Trading Account',
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textGrey,
+                  ),
+                ),
+                SizedBox(height: 8.h),
+                Obx(() {
+                  if (_ctrl.isLoading.value) {
+                    return Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(10.h),
+                        child: CommonLoadingWidget(
+                          size: 24,
+                          color: AppColors.primary,
                         ),
-                        child: Column(
+                      ),
+                    );
+                  }
+                  return AppSelectField<Map<String, dynamic>>(
+                    value: _selectedAccount,
+                    hint: 'Choose an account',
+                    sheetTitle: 'Select Trading Account',
+                    valueEquals: (a, b) => a['id'] == b['id'],
+                    options: _ctrl.eligibleAccounts.map((acc) {
+                      final accNo =
+                          acc['meta_account_number']?.toString() ?? '-';
+                      final bal =
+                          double.tryParse(acc['balance']?.toString() ?? '0') ??
+                          0;
+                      final availBal =
+                          double.tryParse(
+                            acc['available_balance']?.toString() ?? '0',
+                          ) ??
+                          0;
+                      return AppSelectOption<Map<String, dynamic>>(
+                        value: acc,
+                        title: '$accNo — Balance: \$${bal.toStringAsFixed(2)}',
+                        subtitle: 'Available: \$${availBal.toStringAsFixed(2)}',
+                      );
+                    }).toList(),
+                    onChanged: (val) {
+                      setSheetState(() => _selectedAccount = val);
+                    },
+                  );
+                }),
+                SizedBox(height: 20.h),
+
+                // Info Card: Min Invest vs Balance
+                if (_selectedPlan != null)
+                  Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.all(12.w),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(10.r),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  'Min. Investment:',
-                                  style: TextStyle(
-                                    fontSize: 12.sp,
-                                    color: AppColors.textGrey,
-                                  ),
-                                ),
-                                Text(
-                                  _fmt(_selectedPlan!.minimumInvestment),
-                                  style: TextStyle(
-                                    fontSize: 12.sp,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.textPrimary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            if (_selectedAccount != null) ...[
-                              SizedBox(height: 6.h),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    'Your Balance:',
-                                    style: TextStyle(
-                                      fontSize: 12.sp,
-                                      color: AppColors.textGrey,
-                                    ),
-                                  ),
-                                  Text(
-                                    _fmt(balance),
-                                    style: TextStyle(
-                                      fontSize: 12.sp,
-                                      fontWeight: FontWeight.w700,
-                                      color:
-                                          isBalanceEnough
-                                              ? AppColors.green
-                                              : AppColors.error,
-                                    ),
-                                  ),
-                                ],
+                            Text(
+                              'Min. Investment:',
+                              style: TextStyle(
+                                fontSize: 12.sp,
+                                color: AppColors.textGrey,
                               ),
-                            ],
+                            ),
+                            Text(
+                              _fmt(_selectedPlan!.minimumInvestment),
+                              style: TextStyle(
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
                           ],
                         ),
-                      ),
-
-                    if (_selectedAccount != null && !isBalanceEnough)
-                      Padding(
-                        padding: EdgeInsets.only(top: 8.h),
-                        child: Text(
-                          'Insufficient balance for this plan.',
-                          style: TextStyle(
-                            fontSize: 11.sp,
-                            color: AppColors.error,
-                            fontWeight: FontWeight.w500,
+                        if (_selectedAccount != null) ...[
+                          SizedBox(height: 6.h),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Your Balance:',
+                                style: TextStyle(
+                                  fontSize: 12.sp,
+                                  color: AppColors.textGrey,
+                                ),
+                              ),
+                              Text(
+                                _fmt(balance),
+                                style: TextStyle(
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.w700,
+                                  color: isBalanceEnough
+                                      ? AppColors.green
+                                      : AppColors.error,
+                                ),
+                              ),
+                            ],
                           ),
+                        ],
+                      ],
+                    ),
+                  ),
+
+                if (_selectedAccount != null && !isBalanceEnough)
+                  Padding(
+                    padding: EdgeInsets.only(top: 8.h),
+                    child: Text(
+                      'Insufficient balance for this plan.',
+                      style: TextStyle(
+                        fontSize: 11.sp,
+                        color: AppColors.error,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+
+                SizedBox(height: 24.h),
+
+                // Confirm Invest Button
+                SafeArea(
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 44.h,
+                    child: ElevatedButton(
+                      onPressed: canInvest
+                          ? () {
+                              //                                     print('''
+                              //  _selectedAccount!['id'],${ _selectedAccount!['id']},
+
+                              //                                       _selectedPlan!.id,${ _selectedPlan!.id},
+                              //                                       invest_amount(balance),$balance,''');
+                              Navigator.pop(ctx);
+                              _ctrl.joinPlan(
+                                _selectedAccount!['id'],
+                                _selectedPlan!.id,
+                                balance, // invest full available balance
+                              );
+                            }
+                          : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.brandPrimary,
+                        disabledBackgroundColor: AppColors.textGrey.withOpacity(
+                          0.3,
                         ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
+                        elevation: 0,
                       ),
-
-                    SizedBox(height: 24.h),
-
-                    // Confirm Invest Button
-                    SafeArea(
-                      child: SizedBox(
-                        width: double.infinity,
-                        height: 44.h,
-                        child: ElevatedButton(
-                          onPressed:
-                              canInvest
-                                  ? () {
-                                    //                                     print('''
-                                    //  _selectedAccount!['id'],${ _selectedAccount!['id']},
-
-                                    //                                       _selectedPlan!.id,${ _selectedPlan!.id},
-                                    //                                       invest_amount(balance),$balance,''');
-                                    Navigator.pop(ctx);
-                                    _ctrl.joinPlan(
-                                      _selectedAccount!['id'],
-                                      _selectedPlan!.id,
-                                      balance, // invest full available balance
-                                    );
-                                  }
-                                  : null,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.brandPrimary,
-                            disabledBackgroundColor: AppColors.textGrey
-                                .withOpacity(0.3),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12.r),
-                            ),
-                            elevation: 0,
-                          ),
-                          child: Text(
-                            'Confirm Invest',
-                            style: TextStyle(
-                              color: AppColors.onColoredBackground,
-                              fontSize: 15.sp,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
+                      child: Text(
+                        'Confirm Invest',
+                        style: TextStyle(
+                          color: AppColors.onColoredBackground,
+                          fontSize: 15.sp,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ),
-                    // SizedBox(height: kBottomNavigationBarHeight),
-                  ],
+                  ),
                 ),
-              );
-            },
-          ),
+                // SizedBox(height: kBottomNavigationBarHeight),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final name = _manager.managerName ?? 'Fund Manager';
-    final initials =
-        name
-            .split(' ')
-            .take(2)
-            .map((e) => e.isNotEmpty ? e[0].toUpperCase() : '')
-            .join();
+    final initials = name
+        .split(' ')
+        .take(2)
+        .map((e) => e.isNotEmpty ? e[0].toUpperCase() : '')
+        .join();
 
     final hasActivePlan = _manager.plans.isNotEmpty && _selectedPlan != null;
     final gain = _manager.profitPercentage;
     final aum = _fmt(_manager.totalAum);
-    final commission =
-        hasActivePlan ? '${_selectedPlan!.commissionPercentage}%' : 'N/A';
+    final commission = hasActivePlan
+        ? '${_selectedPlan!.commissionPercentage}%'
+        : 'N/A';
     final investors = '${_manager.totalInvestors}';
-    final minInvest =
-        hasActivePlan ? _fmt(_selectedPlan!.minimumInvestment) : 'N/A';
+    final minInvest = hasActivePlan
+        ? _fmt(_selectedPlan!.minimumInvestment)
+        : 'N/A';
 
     return Scaffold(
       backgroundColor: AppColors.tradeBackgroundCenterColor,
@@ -365,7 +355,10 @@ class _PmamManagerDetailScreenState extends State<PmamManagerDetailScreen> {
           iconWidth: 30.w,
           iconHeight: 30.h,
         ),
-        title: Text('Manager Detail', style: AppTextStyles.heading),
+        title: Text(
+          Get.find<LanguageService>().tr('pmam_manager_detail'),
+          style: AppTextStyles.heading,
+        ),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -503,7 +496,9 @@ class _PmamManagerDetailScreenState extends State<PmamManagerDetailScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'No Active Plan Yet',
+                                  Get.find<LanguageService>().tr(
+                                    'common_no_data',
+                                  ),
                                   style: TextStyle(
                                     fontSize: 14.sp,
                                     fontWeight: FontWeight.w500,

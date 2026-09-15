@@ -9,6 +9,7 @@ import 'package:http/http.dart' as http;
 import 'package:get/get.dart';
 import 'package:crm_app/routes/app_pages.dart';
 import 'package:crm_app/services/secure_storage_service.dart';
+import 'package:crm_app/services/language_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:crm_app/controllers/copy_trading/copy_trading_hub_controller.dart';
 import 'package:crm_app/screens/home/trading_main_screen.dart';
@@ -160,13 +161,14 @@ class NotificationService {
 
       // 3. Listen to messages when app is in the background and opened by user
       FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-        debugPrint('App opened from background via notification! Payload: ${message.data}');
+        debugPrint(
+          'App opened from background via notification! Payload: ${message.data}',
+        );
         _handleNotificationRedirection(message.data);
       });
 
       // 4. Check for initial message if app opened from terminated/killed state
       await setupInteractedMessage();
-
     } catch (e, st) {
       debugPrint('FCM: Failed to set up listeners: $e');
       debugPrint('$st');
@@ -178,42 +180,52 @@ class NotificationService {
     try {
       // 1. Check FCM RemoteMessage from killed state
       if (Firebase.apps.isNotEmpty) {
-        RemoteMessage? initialMessage =
-            await FirebaseMessaging.instance.getInitialMessage();
+        RemoteMessage? initialMessage = await FirebaseMessaging.instance
+            .getInitialMessage();
 
         if (initialMessage != null && initialMessage.data.isNotEmpty) {
-          debugPrint('🔔 [NOTIFICATION REDIRECTION] Initial FCM message received from killed state: ${initialMessage.data}');
+          debugPrint(
+            '🔔 [NOTIFICATION REDIRECTION] Initial FCM message received from killed state: ${initialMessage.data}',
+          );
           await _handleNotificationRedirection(initialMessage.data);
           return;
         }
       }
 
       // 2. Check local notifications plugin from killed state
-      final launchDetails = await _notifications.getNotificationAppLaunchDetails();
+      final launchDetails = await _notifications
+          .getNotificationAppLaunchDetails();
       if (launchDetails != null && launchDetails.didNotificationLaunchApp) {
         final payloadStr = launchDetails.notificationResponse?.payload;
         if (payloadStr != null && payloadStr.isNotEmpty) {
           try {
             final Map<String, dynamic> data = json.decode(payloadStr);
-            debugPrint('🔔 [NOTIFICATION REDIRECTION] Initial local notification received from killed state: $data');
+            debugPrint(
+              '🔔 [NOTIFICATION REDIRECTION] Initial local notification received from killed state: $data',
+            );
             await _handleNotificationRedirection(data);
           } catch (e) {
-            debugPrint('🔔 [NOTIFICATION REDIRECTION] Error parsing local notification launch payload: $e');
+            debugPrint(
+              '🔔 [NOTIFICATION REDIRECTION] Error parsing local notification launch payload: $e',
+            );
           }
         }
       }
     } catch (e, st) {
-      debugPrint('🔔 [NOTIFICATION REDIRECTION] Error in setupInteractedMessage: $e\n$st');
+      debugPrint(
+        '🔔 [NOTIFICATION REDIRECTION] Error in setupInteractedMessage: $e\n$st',
+      );
     }
   }
 
   Future<void> _showLocalNotification(RemoteMessage message) async {
     String? imageUrl;
-    
+
     // Check various places for image URL in the payload
     if (Platform.isAndroid && message.notification?.android?.imageUrl != null) {
       imageUrl = message.notification!.android!.imageUrl;
-    } else if (Platform.isIOS && message.notification?.apple?.imageUrl != null) {
+    } else if (Platform.isIOS &&
+        message.notification?.apple?.imageUrl != null) {
       imageUrl = message.notification!.apple!.imageUrl;
     } else if (message.data['image'] != null) {
       imageUrl = message.data['image'];
@@ -225,8 +237,11 @@ class NotificationService {
 
     if (imageUrl != null && imageUrl.isNotEmpty) {
       try {
-        bigPicturePath = await _downloadAndSaveFile(imageUrl, 'notification_image_${DateTime.now().millisecondsSinceEpoch}.jpg');
-        
+        bigPicturePath = await _downloadAndSaveFile(
+          imageUrl,
+          'notification_image_${DateTime.now().millisecondsSinceEpoch}.jpg',
+        );
+
         if (Platform.isAndroid) {
           styleInformation = BigPictureStyleInformation(
             FilePathAndroidBitmap(bigPicturePath),
@@ -290,7 +305,9 @@ class NotificationService {
   Future<void> _handleNotificationRedirection(Map<String, dynamic> data) async {
     debugPrint('🔔 [NOTIFICATION REDIRECTION] Started. Payload data: $data');
     if (data['type'] == null || data['type'].toString().trim().isEmpty) {
-      debugPrint('🔔 [NOTIFICATION REDIRECTION] type is null or empty. Aborting.');
+      debugPrint(
+        '🔔 [NOTIFICATION REDIRECTION] type is null or empty. Aborting.',
+      );
       return;
     }
 
@@ -298,10 +315,12 @@ class NotificationService {
     bool isLoggedIn = false;
     final token = await SecureStorageService.getAuthToken();
     isLoggedIn = token != null && token.isNotEmpty;
-    
+
     debugPrint('🔔 [NOTIFICATION REDIRECTION] isLoggedIn: $isLoggedIn');
     if (!isLoggedIn) {
-      debugPrint('🔔 [NOTIFICATION REDIRECTION] User is not logged in. Ignoring redirection.');
+      debugPrint(
+        '🔔 [NOTIFICATION REDIRECTION] User is not logged in. Ignoring redirection.',
+      );
       _pendingRedirectionData = null;
       return;
     }
@@ -317,7 +336,9 @@ class NotificationService {
         currentRoute == AppPages.SPLASH ||
         currentRoute == AppPages.GET_STARTED ||
         currentRoute == '/AuthCheckScreen') {
-      debugPrint('🔔 [NOTIFICATION REDIRECTION] App is still in startup/auth check. Storing pending redirection.');
+      debugPrint(
+        '🔔 [NOTIFICATION REDIRECTION] App is still in startup/auth check. Storing pending redirection.',
+      );
       _pendingRedirectionData = data;
       return;
     }
@@ -328,7 +349,9 @@ class NotificationService {
 
   void processPendingNotification() {
     if (_pendingRedirectionData != null) {
-      debugPrint('🔔 [NOTIFICATION REDIRECTION] Processing pending notification now that main screen is loaded: $_pendingRedirectionData');
+      debugPrint(
+        '🔔 [NOTIFICATION REDIRECTION] Processing pending notification now that main screen is loaded: $_pendingRedirectionData',
+      );
       final data = Map<String, dynamic>.from(_pendingRedirectionData!);
       String type = data['type']?.toString().trim() ?? '';
       _pendingRedirectionData = null;
@@ -342,7 +365,9 @@ class NotificationService {
   }
 
   void _executeRouting(String type, [Map<String, dynamic>? data]) {
-    debugPrint('🔔 [NOTIFICATION REDIRECTION] Executing routing for type: $type');
+    debugPrint(
+      '🔔 [NOTIFICATION REDIRECTION] Executing routing for type: $type',
+    );
     try {
       switch (type) {
         // Ignored types: Just open the app without redirecting to a sub-screen
@@ -350,7 +375,9 @@ class NotificationService {
         case 'leverage_change':
         case 'email_failed':
         case 'trading_restriction':
-          debugPrint('🔔 [NOTIFICATION REDIRECTION] Type "$type" ignored - opening app only.');
+          debugPrint(
+            '🔔 [NOTIFICATION REDIRECTION] Type "$type" ignored - opening app only.',
+          );
           break;
 
         // KYC / Compliance: Navigate to 5th bottom tab (More / Assets / Dashboard at index 4)
@@ -387,7 +414,7 @@ class NotificationService {
         case 'helpdesk':
           Get.toNamed(AppPages.TICKET_LIST);
           break;
-        
+
         // Partnerships (IB / PAMM / CopyTrading)
         case 'ib_request':
         case 'ib_commission_transfer':
@@ -458,12 +485,16 @@ class NotificationService {
           break;
 
         default:
-          debugPrint('🔔 [NOTIFICATION REDIRECTION] Unhandled type "$type", navigating to Notifications list');
+          debugPrint(
+            '🔔 [NOTIFICATION REDIRECTION] Unhandled type "$type", navigating to Notifications list',
+          );
           Get.toNamed(AppPages.NOTIFICATIONS);
           break;
       }
     } catch (e, st) {
-      debugPrint('🔔 [NOTIFICATION REDIRECTION] Error navigating for type "$type": $e\n$st');
+      debugPrint(
+        '🔔 [NOTIFICATION REDIRECTION] Error navigating for type "$type": $e\n$st',
+      );
     }
   }
 
@@ -472,7 +503,9 @@ class NotificationService {
       // In crmapp, we don't have changeTab, just route to trading with arguments
       Get.offAllNamed(AppPages.TRADING, arguments: tabIndex);
     } else {
-      Get.until((route) => Get.currentRoute == AppPages.TRADING || route.isFirst);
+      Get.until(
+        (route) => Get.currentRoute == AppPages.TRADING || route.isFirst,
+      );
       if (Get.currentRoute == AppPages.TRADING) {
         Get.offAllNamed(AppPages.TRADING, arguments: tabIndex);
       } else {
@@ -482,7 +515,9 @@ class NotificationService {
   }
 
   Future<void> handleNotificationResponse(NotificationResponse response) async {
-    debugPrint('🔔 [NOTIFICATION SERVICE] handleNotificationResponse: payload = ${response.payload}');
+    debugPrint(
+      '🔔 [NOTIFICATION SERVICE] handleNotificationResponse: payload = ${response.payload}',
+    );
     await _onNotificationTapped(response);
   }
 
@@ -595,7 +630,11 @@ class NotificationService {
   }
 
   String _buildNotificationTitle(String symbol, String condition) {
-    return 'Price Alert: $symbol ${condition == 'above' ? '↑' : '↓'}';
+    final direction = condition == 'above' ? '↑' : '↓';
+    return TranslationUtils.trArgs('notification_price_alert_title', {
+      'symbol': symbol,
+      'direction': direction,
+    });
   }
 
   String _buildNotificationContent(
@@ -605,8 +644,13 @@ class NotificationService {
     double currentPrice,
     String? message,
   ) {
-    String content =
-        '$symbol price is ${condition == 'above' ? 'above' : 'below'} \$${targetPrice.toStringAsFixed(5)}';
+    final key = condition == 'above'
+        ? 'notification_price_alert_above'
+        : 'notification_price_alert_below';
+    String content = TranslationUtils.trArgs(key, {
+      'symbol': symbol,
+      'targetPrice': targetPrice.toStringAsFixed(5),
+    });
 
     if (message != null && message.isNotEmpty) {
       content += '\n\n$message';
@@ -725,8 +769,8 @@ class NotificationService {
 
     await _notifications.show(
       999,
-      'Test Price Alert',
-      'This is a test notification for price alerts',
+      TranslationUtils.tr('notification_test_price_alert_title'),
+      TranslationUtils.tr('notification_test_price_alert_body'),
       notificationDetails,
     );
 

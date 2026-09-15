@@ -7,6 +7,7 @@ import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/controllers/ib_controller.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
 import 'package:crm_app/screens/home/more/ib_dashboard/my_structure_screen.dart';
+import 'package:crm_app/utils/trl_helper.dart';
 
 class IBMoreScreen extends StatefulWidget {
   const IBMoreScreen({super.key});
@@ -51,8 +52,14 @@ class _IBMoreScreenState extends State<IBMoreScreen> {
         scrolledUnderElevation: 0,
         backgroundColor: AppColors.tradeBackgroundCenterColor,
         elevation: 0,
-         leading: IconButton(
-          icon: SvgPicture.asset("assets/svg/ib_dashboard/home.svg", colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn)),
+        leading: IconButton(
+          icon: SvgPicture.asset(
+            "assets/svg/ib_dashboard/home.svg",
+            colorFilter: ColorFilter.mode(
+              AppColors.textPrimary,
+              BlendMode.srcIn,
+            ),
+          ),
           onPressed: () => Get.offAll(() => const TradingMainScreen()),
         ),
         title: Text(
@@ -61,7 +68,8 @@ class _IBMoreScreenState extends State<IBMoreScreen> {
             fontSize: 20.sp,
             fontWeight: FontWeight.w400,
             color: AppColors.textPrimary,
-          fontFamily: 'SF UI'),
+            fontFamily: 'SF UI',
+          ),
         ),
         centerTitle: true,
       ),
@@ -76,7 +84,7 @@ class _IBMoreScreenState extends State<IBMoreScreen> {
                 controller.ibStructureData.value == null) {
               return Center(
                 child: CommonLoadingWidget(
-                  message: 'Loading...',
+                  message: tr('ib_loading'),
                   size: 50.0,
                   color: AppColors.primary,
                 ),
@@ -108,8 +116,7 @@ class _IBMoreScreenState extends State<IBMoreScreen> {
                           label: 'Home',
                           onTap: () {
                             // Navigate to dashboard/home
-                                      Get.offAll(() => const TradingMainScreen());
-
+                            Get.offAll(() => const TradingMainScreen());
                           },
                           showTopBorder: false,
                         ),
@@ -166,11 +173,7 @@ class _IBMoreScreenState extends State<IBMoreScreen> {
                 color: AppColors.primary.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                icon,
-                size: 20.sp,
-                color: AppColors.primary,
-              ),
+              child: Icon(icon, size: 20.sp, color: AppColors.primary),
             ),
             title: Text(
               label,

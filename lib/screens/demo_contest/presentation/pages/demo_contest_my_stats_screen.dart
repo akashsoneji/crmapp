@@ -51,10 +51,9 @@ class _DemoContestMyStatsScreenState extends State<DemoContestMyStatsScreen> {
       _error = null;
     });
     try {
-      final controller =
-          Get.isRegistered<DemoContestController>()
-              ? Get.find<DemoContestController>()
-              : null;
+      final controller = Get.isRegistered<DemoContestController>()
+          ? Get.find<DemoContestController>()
+          : null;
       final contest = controller?.contestById(widget.contestId);
 
       if (contest == null) {
@@ -65,10 +64,9 @@ class _DemoContestMyStatsScreenState extends State<DemoContestMyStatsScreen> {
         return;
       }
 
-      final c =
-          Get.isRegistered<DemoContestController>()
-              ? Get.find<DemoContestController>()
-              : null;
+      final c = Get.isRegistered<DemoContestController>()
+          ? Get.find<DemoContestController>()
+          : null;
       final fetched = c != null ? await c.fetchMyStats(widget.contestId) : null;
       setState(() {
         _stats = fetched;
@@ -103,78 +101,76 @@ class _DemoContestMyStatsScreenState extends State<DemoContestMyStatsScreen> {
         leading: AppSvgBackButton(onPressed: () => Get.back()),
         centerTitle: true,
       ),
-      body:
-          _loading
-              ? const Center(child: CommonLoadingWidget(size: 50.0))
-              : _error != null
-              ? _buildError(isDark)
-              : RefreshIndicator(
-                color: AppColors.primary,
-                onRefresh: _loadStats,
-                child: SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: EdgeInsets.only(bottom: 32.h),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _RankingBanner(
+      body: _loading
+          ? const Center(child: CommonLoadingWidget(size: 50.0))
+          : _error != null
+          ? _buildError(isDark)
+          : RefreshIndicator(
+              color: AppColors.primary,
+              onRefresh: _loadStats,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: EdgeInsets.only(bottom: 32.h),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _RankingBanner(
+                      stats: _stats!,
+                      contest: contest,
+                      languageService: languageService,
+                    ),
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 0),
+                      child: _ContestCard(
                         stats: _stats!,
                         contest: contest,
                         languageService: languageService,
+                        cardBg: cardBg,
+                        isDark: isDark,
                       ),
-                      Padding(
-                        padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 0),
-                        child: _ContestCard(
-                          stats: _stats!,
-                          contest: contest,
-                          languageService: languageService,
-                          cardBg: cardBg,
-                          isDark: isDark,
+                    ),
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 0),
+                      child: _StatsRow(
+                        stats: _stats!,
+                        languageService: languageService,
+                        cardBg: cardBg,
+                        isDark: isDark,
+                      ),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _PrizeStructureCard(
+                            languageService: languageService,
+                            cardBg: cardBg,
+                            isDark: isDark,
+                          ),
+                          SizedBox(height: 16.h),
+                          _ContestRulesCard(
+                            languageService: languageService,
+                            cardBg: cardBg,
+                            isDark: isDark,
+                          ),
+                        ],
+                      ),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 0),
+                      child: _LeaderboardCta(
+                        onTap: () => Get.toNamed(
+                          AppPages.DEMO_CONTEST_LEADERBOARD,
+                          arguments: widget.contestId,
                         ),
+                        languageService: languageService,
                       ),
-                      Padding(
-                        padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 0),
-                        child: _StatsRow(
-                          stats: _stats!,
-                          languageService: languageService,
-                          cardBg: cardBg,
-                          isDark: isDark,
-                        ),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            _PrizeStructureCard(
-                              languageService: languageService,
-                              cardBg: cardBg,
-                              isDark: isDark,
-                            ),
-                            SizedBox(height: 16.h),
-                            _ContestRulesCard(
-                              languageService: languageService,
-                              cardBg: cardBg,
-                              isDark: isDark,
-                            ),
-                          ],
-                        ),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 0),
-                        child: _LeaderboardCta(
-                          onTap:
-                              () => Get.toNamed(
-                                AppPages.DEMO_CONTEST_LEADERBOARD,
-                                arguments: widget.contestId,
-                              ),
-                          languageService: languageService,
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
+            ),
     );
   }
 
@@ -196,7 +192,10 @@ class _DemoContestMyStatsScreenState extends State<DemoContestMyStatsScreen> {
               ),
             ),
             SizedBox(height: 16.h),
-            ElevatedButton(onPressed: _loadStats, child: const Text('Retry')),
+            ElevatedButton(
+              onPressed: _loadStats,
+              child: Text(Get.find<LanguageService>().tr('navigation_retry')),
+            ),
           ],
         ),
       ),
@@ -334,10 +333,9 @@ class _ContestCard extends StatelessWidget {
     final dateFmt = DateFormat('d MMMM yyyy');
     final startsAt = contest?.startsAt as DateTime?;
     final endsAt = contest?.endsAt as DateTime?;
-    final dateRange =
-        (startsAt != null && endsAt != null)
-            ? '${dateFmt.format(startsAt)} — ${dateFmt.format(endsAt)}'
-            : '3 August 2026 — 31 August 2026';
+    final dateRange = (startsAt != null && endsAt != null)
+        ? '${dateFmt.format(startsAt)} — ${dateFmt.format(endsAt)}'
+        : '3 August 2026 — 31 August 2026';
 
     final title = contest?.title?.toString() ?? 'Contest One';
     final description =
@@ -450,10 +448,9 @@ class _StatsRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = stats.participant;
-    final returnColor =
-        p.returnPercent >= 0
-            ? const Color(0xFF22C55E)
-            : const Color(0xFFEF4444);
+    final returnColor = p.returnPercent >= 0
+        ? const Color(0xFF22C55E)
+        : const Color(0xFFEF4444);
 
     return Container(
       decoration: BoxDecoration(
@@ -613,7 +610,7 @@ class _PrizeStructureCard extends StatelessWidget {
             ),
           )
         else
-          const Text('No prizes available.'),
+          Text(Get.find<LanguageService>().tr('common_no_data')),
       ],
     );
   }
@@ -687,7 +684,7 @@ class _ContestRulesCard extends StatelessWidget {
     if (rules.isEmpty) {
       rules.addAll([
         ('Min Trade Duration', '3 minutes — scalping not allowed'),
-        ('Max Leverage', '1:200 capped'),
+        (languageService.tr('demo_contest_max_leverage'), '1:200 capped'),
         ('Max Concurrent Positions', 'Capped at 5 positions'),
         ('Max Lots Per Trade', 'Capped at 10 lots'),
         ('Allowed Instruments', 'All Instruments'),
@@ -897,8 +894,9 @@ class _LeaderboardCta extends StatelessWidget {
             Text(
               'View Full Leaderboard',
               style: AppTextStyles.bodyText.copyWith(
-                color:
-                    AppColors.isDarkMode ? AppColors.pureBlack : Colors.white,
+                color: AppColors.isDarkMode
+                    ? AppColors.pureBlack
+                    : Colors.white,
                 fontSize: 14.sp,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.2,

@@ -5,6 +5,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:crm_app/constants/color.dart';
+import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/copy_trading/copy_trading_master_copiers_controller.dart';
 import 'package:crm_app/widgets/app_svg_back_button.dart';
@@ -66,7 +67,10 @@ class _MyCopiesScreenState extends State<MyCopiesScreen> {
         backgroundColor: AppColors.tradeBackgroundCenterColor,
         elevation: 0,
         centerTitle: true,
-        title: Text('My Copiers', style: AppTextStyles.screenTitle),
+        title: Text(
+          Get.find<LanguageService>().tr('copy_trading_my_copiers'),
+          style: AppTextStyles.screenTitle,
+        ),
         leading: IconButton(
           icon: SvgPicture.asset(
             'assets/svg/ib_dashboard/home.svg',
@@ -246,14 +250,16 @@ class _MyCopiesScreenState extends State<MyCopiesScreen> {
                             ),
                             SizedBox(height: 16.h),
                             ElevatedButton(
-                              onPressed:
-                                  () => controller.load(showLoading: true),
+                              onPressed: () =>
+                                  controller.load(showLoading: true),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.brandPrimary,
                               ),
                               child: Text(
                                 'Retry',
-                                style: TextStyle(color: AppColors.onColoredBackground),
+                                style: TextStyle(
+                                  color: AppColors.onColoredBackground,
+                                ),
                               ),
                             ),
                           ],
@@ -349,10 +355,9 @@ class _MyCopiesScreenState extends State<MyCopiesScreen> {
           'COMBINED P&L',
           '\$${controller.summaryTotalPnl.value.toStringAsFixed(2)}',
           'Lifetime copier P&L',
-          valueColor:
-              controller.summaryTotalPnl.value >= 0
-                  ? AppColors.green
-                  : AppColors.error,
+          valueColor: controller.summaryTotalPnl.value >= 0
+              ? AppColors.green
+              : AppColors.error,
         ),
         _summaryBox(
           boxWidth,
@@ -480,16 +485,14 @@ class _MyCopiesScreenState extends State<MyCopiesScreen> {
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
         decoration: BoxDecoration(
-          color:
-              isSelected
-                  ? AppColors.primary.withValues(alpha: 0.12)
-                  : AppColors.whiteColor,
+          color: isSelected
+              ? AppColors.primary.withValues(alpha: 0.12)
+              : AppColors.whiteColor,
           borderRadius: BorderRadius.circular(20.r),
           border: Border.all(
-            color:
-                isSelected
-                    ? AppColors.primary
-                    : AppColors.border.withValues(alpha: 0.15),
+            color: isSelected
+                ? AppColors.primary
+                : AppColors.border.withValues(alpha: 0.15),
             width: isSelected ? 1.5 : 1.0,
           ),
         ),
@@ -508,10 +511,9 @@ class _MyCopiesScreenState extends State<MyCopiesScreen> {
             Container(
               padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 1.h),
               decoration: BoxDecoration(
-                color:
-                    isSelected
-                        ? AppColors.primary
-                        : AppColors.tradeBackgroundCenterColor,
+                color: isSelected
+                    ? AppColors.primary
+                    : AppColors.tradeBackgroundCenterColor,
                 borderRadius: BorderRadius.circular(10.r),
               ),
               child: Text(
@@ -519,7 +521,9 @@ class _MyCopiesScreenState extends State<MyCopiesScreen> {
                 style: TextStyle(
                   fontSize: 9.sp,
                   fontWeight: FontWeight.bold,
-                  color: isSelected ? AppColors.onColoredBackground : AppColors.textGrey,
+                  color: isSelected
+                      ? AppColors.onColoredBackground
+                      : AppColors.textGrey,
                 ),
               ),
             ),
@@ -527,10 +531,9 @@ class _MyCopiesScreenState extends State<MyCopiesScreen> {
             Icon(
               Icons.check,
               size: 10.r,
-              color:
-                  isSelected
-                      ? AppColors.primary
-                      : AppColors.textGrey.withValues(alpha: 0.3),
+              color: isSelected
+                  ? AppColors.primary
+                  : AppColors.textGrey.withValues(alpha: 0.3),
             ),
           ],
         ),
@@ -666,8 +669,9 @@ class _CopierCardItem extends StatelessWidget {
                   cellWidth,
                   'COMBINED P&L',
                   '\$${item.totalPnl.toStringAsFixed(2)}',
-                  valueColor:
-                      item.totalPnl >= 0 ? AppColors.green : AppColors.error,
+                  valueColor: item.totalPnl >= 0
+                      ? AppColors.green
+                      : AppColors.error,
                 ),
                 _metricBox(
                   cellWidth,
@@ -840,96 +844,89 @@ class _CopierCardItem extends StatelessWidget {
   }
 
   void _togglePauseResume(BuildContext context) {
-    final actionText =
-        item.status.toLowerCase() == 'paused'
-            ? 'Resume copying'
-            : 'Pause copying';
-    final confirmationMessage =
-        item.status.toLowerCase() == 'paused'
-            ? 'Are you sure you want to resume copying for this investor?'
-            : 'Are you sure you want to pause copying for this investor? Copying will be suspended.';
+    final actionText = item.status.toLowerCase() == 'paused'
+        ? 'Resume copying'
+        : 'Pause copying';
+    final confirmationMessage = item.status.toLowerCase() == 'paused'
+        ? 'Are you sure you want to resume copying for this investor?'
+        : 'Are you sure you want to pause copying for this investor? Copying will be suspended.';
 
     showDialog(
       context: context,
-      builder:
-          (ctx) => AlertDialog(
-            title: Text(actionText),
-            content: Text(confirmationMessage),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () async {
-                  Navigator.of(ctx).pop();
-                  final res =
-                      item.status.toLowerCase() == 'paused'
-                          ? await controller.resume(item.id)
-                          : await controller.pause(item.id);
-                  if (res.success) {
-                    CustomToastService.showSuccess(
-                      title: 'Success',
-                      message: res.message ?? 'State updated successfully',
-                    );
-                  } else {
-                    CustomToastService.showError(
-                      title: 'Failed',
-                      message:
-                          res.message ??
-                          'Failed to update copier copying state',
-                    );
-                  }
-                },
-                child: Text(
-                  item.status.toLowerCase() == 'paused' ? 'Resume' : 'Pause',
-                  style: TextStyle(
-                    color:
-                        item.status.toLowerCase() == 'paused'
-                            ? AppColors.green
-                            : AppColors.warning,
-                  ),
-                ),
-              ),
-            ],
+      builder: (ctx) => AlertDialog(
+        title: Text(actionText),
+        content: Text(confirmationMessage),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
           ),
+          TextButton(
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              final res = item.status.toLowerCase() == 'paused'
+                  ? await controller.resume(item.id)
+                  : await controller.pause(item.id);
+              if (res.success) {
+                CustomToastService.showSuccess(
+                  title: 'Success',
+                  message: res.message ?? 'State updated successfully',
+                );
+              } else {
+                CustomToastService.showError(
+                  title: 'Failed',
+                  message:
+                      res.message ?? 'Failed to update copier copying state',
+                );
+              }
+            },
+            child: Text(
+              item.status.toLowerCase() == 'paused' ? 'Resume' : 'Pause',
+              style: TextStyle(
+                color: item.status.toLowerCase() == 'paused'
+                    ? AppColors.green
+                    : AppColors.warning,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   void _stopCopier(BuildContext context) {
     showDialog(
       context: context,
-      builder:
-          (ctx) => AlertDialog(
-            title: const Text('Stop Copy'),
-            content: const Text(
-              'Are you sure you want to permanently stop copying for this investor? This action cannot be undone.',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () async {
-                  Navigator.of(ctx).pop();
-                  final res = await controller.stop(item.id);
-                  if (res.success) {
-                    CustomToastService.showSuccess(
-                      title: 'Success',
-                      message: res.message ?? 'Copier stopped successfully',
-                    );
-                  } else {
-                    CustomToastService.showError(
-                      title: 'Failed',
-                      message: res.message ?? 'Failed to stop copier',
-                    );
-                  }
-                },
-                child: Text('Stop', style: TextStyle(color: AppColors.error)),
-              ),
-            ],
+      builder: (ctx) => AlertDialog(
+        title: const Text('Stop Copy'),
+        content: const Text(
+          'Are you sure you want to permanently stop copying for this investor? This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
           ),
+          TextButton(
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              final res = await controller.stop(item.id);
+              if (res.success) {
+                CustomToastService.showSuccess(
+                  title: 'Success',
+                  message: res.message ?? 'Copier stopped successfully',
+                );
+              } else {
+                CustomToastService.showError(
+                  title: 'Failed',
+                  message: res.message ?? 'Failed to stop copier',
+                );
+              }
+            },
+            child: Text('Stop', style: TextStyle(color: AppColors.error)),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -89,14 +89,17 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
           return Center(
             child: Text(
               languageService.tr('dc_empty_all_desc'),
-              style: AppTextStyles.bodyText.copyWith(color: AppColors.textGrey, fontSize: 14.sp),
+              style: AppTextStyles.bodyText.copyWith(
+                color: AppColors.textGrey,
+                fontSize: 14.sp,
+              ),
             ),
           );
         }
 
         final selectedContest =
             controller.contestById(_selectedContestId) ??
-                controller.contests.first;
+            controller.contests.first;
 
         final entries =
             controller.leaderboards[selectedContest.id] ?? <LeaderboardEntry>[];
@@ -121,10 +124,10 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                       (r) => r == 'Today'
                           ? languageService.tr('dc_range_today')
                           : r == 'Weekly'
-                              ? languageService.tr('dc_range_weekly')
-                              : r == 'Monthly'
-                                  ? languageService.tr('dc_range_monthly')
-                                  : languageService.tr('dc_range_all_time'),
+                          ? languageService.tr('dc_range_weekly')
+                          : r == 'Monthly'
+                          ? languageService.tr('dc_range_monthly')
+                          : languageService.tr('dc_range_all_time'),
                     )
                     .toList(),
                 selectedIndex: _selectedRange,
@@ -144,7 +147,8 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                   isLoading: controller.isLoadingLeaderboard.value,
                   entries: entries,
                   myEntry: myEntry,
-                  hasContest: selectedContest.acceptingEntries ||
+                  hasContest:
+                      selectedContest.acceptingEntries ||
                       selectedContest.isLive,
                 ),
               ),
@@ -199,14 +203,19 @@ class _ContestPicker extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  Text(c.bannerEmoji, style: AppTextStyles.bodyText.copyWith(fontSize: 14.sp)),
+                  Text(
+                    c.bannerEmoji,
+                    style: AppTextStyles.bodyText.copyWith(fontSize: 14.sp),
+                  ),
                   SizedBox(width: 6.w),
                   Text(
                     c.title,
                     style: AppTextStyles.bodyText.copyWith(
                       fontSize: 12.sp,
                       fontWeight: FontWeight.w700,
-                      color: selected ? AppColors.primary : AppColors.textPrimary,
+                      color: selected
+                          ? AppColors.primary
+                          : AppColors.textPrimary,
                     ),
                   ),
                 ],
@@ -243,7 +252,10 @@ class _SelectedContestHeader extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Text(contest.bannerEmoji, style: AppTextStyles.bodyText.copyWith(fontSize: 26.sp)),
+            Text(
+              contest.bannerEmoji,
+              style: AppTextStyles.bodyText.copyWith(fontSize: 26.sp),
+            ),
             SizedBox(width: 10.w),
             Expanded(
               child: Column(
@@ -306,9 +318,7 @@ class _LeaderboardBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (isLoading && entries.isEmpty) {
-      return Center(
-        child: CircularProgressIndicator(color: AppColors.primary),
-      );
+      return Center(child: CircularProgressIndicator(color: AppColors.primary));
     }
     if (entries.isEmpty) {
       return _EmptyLeaderboard();
@@ -376,10 +386,7 @@ class _LeaderboardBody extends StatelessWidget {
                   ),
                 ),
               ...rest.map(
-                (e) => LeaderboardRow(
-                  entry: e,
-                  highlightRank: myEntry?.rank,
-                ),
+                (e) => LeaderboardRow(entry: e, highlightRank: myEntry?.rank),
               ),
             ],
           ),
@@ -401,7 +408,10 @@ class _EmptyLeaderboard extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('🏁', style: AppTextStyles.bodyText.copyWith(fontSize: 60.sp)),
+              Text(
+                '🏁',
+                style: AppTextStyles.bodyText.copyWith(fontSize: 60.sp),
+              ),
               SizedBox(height: 14.h),
               Text(
                 languageService.tr('dc_no_leaderboard_yet'),

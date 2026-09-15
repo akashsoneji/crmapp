@@ -190,13 +190,12 @@ class _DepositRealScreenState extends State<DepositRealScreen> {
         scrolledUnderElevation: 0,
         backgroundColor: AppColors.backgroundLight,
         elevation: 0,
-        leading: 
-        AppSvgBackButton(
+        leading: AppSvgBackButton(
           onPressed: () => NavigationHelper.safeBack(context: context),
           iconWidth: 30.w,
           iconHeight: 30.h,
         ),
-            title: Text(
+        title: Text(
           languageService.tr('deposit'),
           style: AppTextStyles.screenTitle,
         ),
@@ -268,7 +267,7 @@ class _DepositRealScreenState extends State<DepositRealScreen> {
       readOnly: true, // field is non-editable
       onTap: null, // disable dropdown tap
       decoration: InputDecoration(
-        labelText: 'Payment Mode',
+        labelText: languageService.tr('finance_payment_mode'),
         contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -304,7 +303,10 @@ class _DepositRealScreenState extends State<DepositRealScreen> {
         onTap: () => _showAccountDropdown(),
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 14.w),
-          child: RTLHelper.rtlIcon(Icons.arrow_drop_down, color: AppColors.textGrey),
+          child: RTLHelper.rtlIcon(
+            Icons.arrow_drop_down,
+            color: AppColors.textGrey,
+          ),
         ),
       ),
       decoration: InputDecoration(
@@ -377,7 +379,10 @@ class _DepositRealScreenState extends State<DepositRealScreen> {
               ? 'Limit: \$${minLimit.toStringAsFixed(2)} - \$${maxLimit.toStringAsFixed(2)}'
               : null,
           helperStyle: TextStyle(color: AppColors.textGrey, fontSize: 12.sp),
-          contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: 16.w,
+            vertical: 16.h,
+          ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide(color: AppColors.border),
@@ -525,7 +530,12 @@ class _DepositRealScreenState extends State<DepositRealScreen> {
     final raw = amountController.text.trim();
     final entered = double.tryParse(raw);
     if (entered == null || entered <= 0) {
-      CustomToastService.showError(message: 'Please enter a valid amount');
+      CustomToastService.showError(
+        message: TranslationUtils.trf(
+          'finance_valid_amount',
+          'Please enter a valid amount',
+        ),
+      );
       return;
     }
 
@@ -535,13 +545,15 @@ class _DepositRealScreenState extends State<DepositRealScreen> {
       final maxLimit = double.tryParse(m['max_limit']?.toString() ?? '');
       if (minLimit != null && entered < minLimit) {
         CustomToastService.showError(
-          message: 'Amount cannot be less than minimum limit of \$${minLimit.toStringAsFixed(2)}',
+          message:
+              'Amount cannot be less than minimum limit of \$${minLimit.toStringAsFixed(2)}',
         );
         return;
       }
       if (maxLimit != null && entered > maxLimit) {
         CustomToastService.showError(
-          message: 'Amount cannot be more than maximum limit of \$${maxLimit.toStringAsFixed(2)}',
+          message:
+              'Amount cannot be more than maximum limit of \$${maxLimit.toStringAsFixed(2)}',
         );
         return;
       }
@@ -556,7 +568,10 @@ class _DepositRealScreenState extends State<DepositRealScreen> {
             controller.selectedTransferAccount.value!['meta_account_number']
                 as String,
         currency: selectedCurrency,
-        fromBonus: Get.arguments != null && Get.arguments is Map && Get.arguments['from'] == 'bonus',
+        fromBonus:
+            Get.arguments != null &&
+            Get.arguments is Map &&
+            Get.arguments['from'] == 'bonus',
       ),
     );
 
@@ -599,8 +614,8 @@ class _DepositRealScreenState extends State<DepositRealScreen> {
           return ListView.separated(
             shrinkWrap: true,
             itemCount: accounts.length,
-            separatorBuilder:
-                (_, __) => Divider(height: 1, color: AppColors.border),
+            separatorBuilder: (_, __) =>
+                Divider(height: 1, color: AppColors.border),
             itemBuilder: (context, index) {
               final account = accounts[index];
 

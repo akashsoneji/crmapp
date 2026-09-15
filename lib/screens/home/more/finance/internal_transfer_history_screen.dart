@@ -9,6 +9,7 @@ import 'package:intl/intl.dart';
 import '../../../../constants/color.dart';
 import '../../../../constants/text_styles.dart';
 import '../../../../controllers/finance/internal_transfer_history_controller.dart';
+import '../../../../services/language_service.dart';
 import '../../../../widgets/common_loading_widget.dart';
 
 class InternalTransferHistoryScreen extends StatefulWidget {
@@ -26,6 +27,7 @@ class _InternalTransferHistoryScreenState
   );
   final ScrollController _scrollController = ScrollController();
   final DateFormat _displayDateFormat = DateFormat('dd/MM/yyyy');
+  final LanguageService languageService = Get.find<LanguageService>();
 
   @override
   void initState() {
@@ -58,13 +60,13 @@ class _InternalTransferHistoryScreenState
         scrolledUnderElevation: 0,
         elevation: 0,
         backgroundColor: AppColors.background,
-        leading:  AppSvgBackButton(
+        leading: AppSvgBackButton(
           onPressed: () => NavigationHelper.safeBack(context: context),
           iconWidth: 30.w,
           iconHeight: 30.h,
         ),
         title: Text(
-          'Internal Transfer History',
+          languageService.tr('internal_transfer_history'),
           style: AppTextStyles.screenTitle,
         ),
         centerTitle: true,
@@ -141,7 +143,7 @@ class _InternalTransferHistoryScreenState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Filter History',
+            languageService.tr('internal_transfer_filter_history'),
             style: TextStyle(
               color: AppColors.textPrimary,
               fontSize: 15.sp,
@@ -154,7 +156,7 @@ class _InternalTransferHistoryScreenState
               Expanded(
                 child: Obx(
                   () => _buildFilterField(
-                    label: 'From Date',
+                    label: languageService.tr('from_date'),
                     value: _formatFilterDate(controller.fromDate.value),
                     icon: Icons.calendar_month_outlined,
                     onTap: () => _pickDate(isFromDate: true),
@@ -165,7 +167,7 @@ class _InternalTransferHistoryScreenState
               Expanded(
                 child: Obx(
                   () => _buildFilterField(
-                    label: 'To Date',
+                    label: languageService.tr('to_date'),
                     value: _formatFilterDate(controller.toDate.value),
                     icon: Icons.calendar_month_outlined,
                     onTap: () => _pickDate(isFromDate: false),
@@ -177,7 +179,7 @@ class _InternalTransferHistoryScreenState
           SizedBox(height: 10.h),
           Obx(
             () => _buildFilterField(
-              label: 'Status',
+              label: languageService.tr('status'),
               value: controller.selectedStatus.value.label,
               icon: Icons.keyboard_arrow_down_rounded,
               onTap: _showStatusSheet,
@@ -293,10 +295,9 @@ class _InternalTransferHistoryScreenState
   Widget _buildSummaryHeader() {
     return Obx(() {
       final pagination = controller.pagination.value;
-      final showing =
-          pagination.total == 0
-              ? 'No entries'
-              : 'Showing ${pagination.from} to ${pagination.to} of ${pagination.total} entries';
+      final showing = pagination.total == 0
+          ? 'No entries'
+          : 'Showing ${pagination.from} to ${pagination.to} of ${pagination.total} entries';
 
       return Row(
         children: [
@@ -428,7 +429,7 @@ class _InternalTransferHistoryScreenState
               children: [
                 Expanded(
                   child: _buildAccountBlock(
-                    title: 'From',
+                    title: TranslationUtils.trf('finance_from', 'From'),
                     account: item.fromAccount,
                     alignment: CrossAxisAlignment.start,
                   ),
@@ -503,7 +504,6 @@ class _InternalTransferHistoryScreenState
             fontWeight: FontWeight.w800,
           ),
         ),
-       
       ],
     );
   }
@@ -601,12 +601,11 @@ class _InternalTransferHistoryScreenState
   }
 
   Future<void> _pickDate({required bool isFromDate}) async {
-    final initialDate =
-        isFromDate
-            ? controller.fromDate.value ?? DateTime.now()
-            : controller.toDate.value ??
-                controller.fromDate.value ??
-                DateTime.now();
+    final initialDate = isFromDate
+        ? controller.fromDate.value ?? DateTime.now()
+        : controller.toDate.value ??
+              controller.fromDate.value ??
+              DateTime.now();
 
     final picked = await showDatePicker(
       context: context,
@@ -616,14 +615,14 @@ class _InternalTransferHistoryScreenState
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-           colorScheme: ColorScheme.light(
-           primary: AppColors.primary,
-            onPrimary: AppColors.whiteColor,
+            colorScheme: ColorScheme.light(
+              primary: AppColors.primary,
+              onPrimary: AppColors.whiteColor,
               surface: AppColors.whiteColor,
-            onSurface: AppColors.textPrimary,
+              onSurface: AppColors.textPrimary,
             ),
-            ),
-            child: child!,
+          ),
+          child: child!,
         );
       },
     );
@@ -681,24 +680,24 @@ class _InternalTransferHistoryScreenState
                         final status = controller.statusFilters[index];
                         return Obx(() {
                           final isSelected =
-                              status.value == controller.selectedStatus.value.value;
+                              status.value ==
+                              controller.selectedStatus.value.value;
                           return ListTile(
                             contentPadding: EdgeInsets.zero,
                             title: Text(
                               status.label,
                               style: TextStyle(
-                                color:
-                                    isSelected
-                                        ? AppColors.primary
-                                        : AppColors.textPrimary,
-                                fontWeight:
-                                    isSelected ? FontWeight.w700 : FontWeight.w500,
+                                color: isSelected
+                                    ? AppColors.primary
+                                    : AppColors.textPrimary,
+                                fontWeight: isSelected
+                                    ? FontWeight.w700
+                                    : FontWeight.w500,
                               ),
                             ),
-                            trailing:
-                                isSelected
-                                    ? Icon(Icons.check, color: AppColors.primary)
-                                    : null,
+                            trailing: isSelected
+                                ? Icon(Icons.check, color: AppColors.primary)
+                                : null,
                             onTap: () {
                               controller.setStatus(status);
                               Navigator.pop(context);

@@ -60,6 +60,7 @@ class _LoginScreenState extends State<LoginScreen> {
   String? _shadowAuthToken;
   String? _shadowWsToken;
   String? _shadowUserDataJson;
+
   /// Branding (color, logo, app name, URLs) that was active *before* the
   /// user opened this screen. Captured in initState so the Home button
   /// can restore the previous broker's branding when the user changes
@@ -258,7 +259,9 @@ class _LoginScreenState extends State<LoginScreen> {
       builder: (ctx) {
         return AlertDialog(
           backgroundColor: AppColors.cardBackground,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16.r),
+          ),
           title: Text(
             languageService.tr('biometric_not_enabled_title'),
             style: TextStyle(
@@ -268,9 +271,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           content: Text(
             languageService.tr('biometric_not_enabled_message'),
-            style: TextStyle(
-              color: AppColors.textSecondary,
-            ),
+            style: TextStyle(color: AppColors.textSecondary),
           ),
           actions: [
             TextButton(
@@ -312,8 +313,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 return;
               }
 
-              final supported =
-                  await BiometricService.instance.isDeviceSupported();
+              final supported = await BiometricService.instance
+                  .isDeviceSupported();
               final enrolled = await BiometricService.instance.isEnrolled();
               if (!supported || !enrolled) {
                 if (!mounted) return;
@@ -334,10 +335,7 @@ class _LoginScreenState extends State<LoginScreen> {
         Expanded(
           child: Text(
             languageService.tr('biometric_enable_on_register'),
-            style: TextStyle(
-              color: AppColors.textGrey,
-              height: 1.3,
-            ),
+            style: TextStyle(color: AppColors.textGrey, height: 1.3),
           ),
         ),
       ],
@@ -356,7 +354,7 @@ class _LoginScreenState extends State<LoginScreen> {
               leading: IconButton(
                 icon: const Icon(Icons.home_outlined),
                 color: AppColors.textPrimary,
-                tooltip: 'Back to home',
+                tooltip: languageService.tr('navigation_back'),
                 onPressed: _restoreSessionAndExit,
               ),
             )
@@ -387,7 +385,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                   Center(
                                     child: BrandLogo(
                                       source: FlavorConfig.effectiveLogo,
-                                      color: FlavorConfig.isONSA() &&
+                                      color:
+                                          FlavorConfig.isONSA() &&
                                               !FlavorConfig.hasRemoteLogo
                                           ? AppColors.primary
                                           : null,
@@ -472,8 +471,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                     },
                                     onChanged: (value) {
                                       setState(() {
-                                        isPasswordValid =
-                                            _validatePassword(value);
+                                        isPasswordValid = _validatePassword(
+                                          value,
+                                        );
                                       });
                                     },
                                   ),
@@ -511,7 +511,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                       textStyle: TextStyle(
                                         fontSize: 16.sp,
                                         fontWeight: FontWeight.w600,
-                                        color: AppColors.isDarkMode ? AppColors.textPrimaryLight : AppColors.textPrimaryDark,
+                                        color: AppColors.isDarkMode
+                                            ? AppColors.textPrimaryLight
+                                            : AppColors.textPrimaryDark,
                                       ),
                                     );
                                   }),
@@ -539,9 +541,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         TextSpan(
                           text:
                               "${languageService.tr("login_no_account_login")} ",
-                          style: TextStyle(
-                            color: AppColors.textGrey,
-                          ),
+                          style: TextStyle(color: AppColors.textGrey),
                           children: [
                             TextSpan(
                               text: languageService.tr("login_register"),
@@ -560,9 +560,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             Obx(
               () => authController.isLoading
-                  ? Center(
-                      child: CommonLoadingWidget(isFullScreen: true),
-                    )
+                  ? Center(child: CommonLoadingWidget(isFullScreen: true))
                   : const SizedBox.shrink(),
             ),
           ],

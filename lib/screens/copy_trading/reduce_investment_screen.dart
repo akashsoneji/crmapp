@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/widgets/labeled_app_text_field.dart';
+import 'package:crm_app/services/language_service.dart';
 
 class ReduceInvestmentScreen extends StatefulWidget {
   final String traderName;
@@ -30,11 +31,17 @@ class _ReduceInvestmentScreenState extends State<ReduceInvestmentScreen> {
         leading: IconButton(
           icon: SvgPicture.asset(
             'assets/svg/trade/arro_back.svg',
-            colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn),
+            colorFilter: ColorFilter.mode(
+              AppColors.textPrimary,
+              BlendMode.srcIn,
+            ),
           ),
           onPressed: () => Get.back(),
         ),
-        title: Text('Reduce Investment', style: AppTextStyles.heading),
+        title: Text(
+          TranslationUtils.tr('copy_reduce_investment'),
+          style: AppTextStyles.heading,
+        ),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -44,7 +51,7 @@ class _ReduceInvestmentScreenState extends State<ReduceInvestmentScreen> {
             _buildHeaderCard(),
             SizedBox(height: 16.h),
             LabeledAppTextField(
-              label: 'I want to disinvest',
+              label: TranslationUtils.tr('copy_disinvest'),
               controller: _amountController,
               keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
@@ -64,7 +71,9 @@ class _ReduceInvestmentScreenState extends State<ReduceInvestmentScreen> {
             Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                'Available for withdrawal : \$${_amountController.text}',
+                TranslationUtils.tr(
+                  'copy_available_withdrawal',
+                ).replaceFirst('{amount}', _amountController.text),
                 style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey),
               ),
             ),
@@ -73,12 +82,14 @@ class _ReduceInvestmentScreenState extends State<ReduceInvestmentScreen> {
             SizedBox(height: 20.h),
             _buildInfoRow(
               'assets/svg/copy_trading/investment/coin.svg',
-              'Your remaining investment will total \$0.00',
+              TranslationUtils.tr(
+                'copy_remaining_investment',
+              ).replaceFirst('{amount}', r'\$0.00'),
             ),
             SizedBox(height: 12.h),
             _buildInfoRow(
               'assets/svg/copy_trading/investment/percentage.svg',
-              'The bonus will be cancelled and you will not be able to reapply it.',
+              TranslationUtils.tr('copy_bonus_cancelled'),
             ),
           ],
         ),
@@ -102,7 +113,7 @@ class _ReduceInvestmentScreenState extends State<ReduceInvestmentScreen> {
               elevation: 0,
             ),
             child: Text(
-              'Confirm',
+              TranslationUtils.tr('confirm'),
               style: TextStyle(
                 fontSize: 16.sp,
                 fontWeight: FontWeight.w600,
@@ -129,7 +140,7 @@ class _ReduceInvestmentScreenState extends State<ReduceInvestmentScreen> {
             SvgPicture.asset('assets/svg/copy_trading/person_svg.svg'),
             SizedBox(width: 12),
             Text(
-              'Prime_traders',
+              TranslationUtils.tr('copy_prime_traders'),
               style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
             ),
           ],
@@ -156,7 +167,7 @@ class _ReduceInvestmentScreenState extends State<ReduceInvestmentScreen> {
               ),
               SizedBox(width: 10.w),
               Text(
-                'Important',
+                TranslationUtils.tr('important'),
                 style: TextStyle(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.w600,
@@ -170,7 +181,7 @@ class _ReduceInvestmentScreenState extends State<ReduceInvestmentScreen> {
           ),
           SizedBox(height: 12.h),
           Text(
-            'Enter the amount you want to add to your current investment with this master trader.',
+            TranslationUtils.tr('copy_add_investment_note'),
             style: TextStyle(
               fontFamily: 'Roboto',
               fontWeight: FontWeight.w400,

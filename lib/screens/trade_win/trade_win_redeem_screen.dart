@@ -82,20 +82,18 @@ class _TradeWinRedeemScreenState extends State<TradeWinRedeemScreen> {
       if (raw is! Map) return;
       final data = raw['data'];
       if (data is! List) return;
-      final list =
-          data
-              .whereType<Map>()
-              .map(
-                (e) => TradeWinShippingDetailsModel.fromJson(
-                  Map<String, dynamic>.from(e),
-                ),
-              )
-              .toList();
+      final list = data
+          .whereType<Map>()
+          .map(
+            (e) => TradeWinShippingDetailsModel.fromJson(
+              Map<String, dynamic>.from(e),
+            ),
+          )
+          .toList();
       setState(
-        () =>
-            _apiSavedAddresses
-              ..clear()
-              ..addAll(list),
+        () => _apiSavedAddresses
+          ..clear()
+          ..addAll(list),
       );
     } catch (_) {
       // Non-fatal: user can still type manually
@@ -181,10 +179,9 @@ class _TradeWinRedeemScreenState extends State<TradeWinRedeemScreen> {
           Obx(() {
             final step = controller.currentStep.value;
             return IconButton(
-              onPressed:
-                  step >= 3
-                      ? () => controller.completeAndGoHome()
-                      : () => Get.back(),
+              onPressed: step >= 3
+                  ? () => controller.completeAndGoHome()
+                  : () => Get.back(),
               icon: Icon(Icons.close, color: AppColors.textPrimary),
             );
           }),
@@ -206,44 +203,43 @@ class _TradeWinRedeemScreenState extends State<TradeWinRedeemScreen> {
             Expanded(
               child: SingleChildScrollView(
                 padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 16.h),
-                child:
-                    step == 1
-                        ? _StepConfirm(
-                          controller: controller,
-                          languageService: languageService,
-                        )
-                        : step == 2
-                        ? _StepShipping(
-                          languageService: languageService,
-                          nameController: _nameController,
-                          phoneController: _phoneController,
-                          emailController: _emailController,
-                          addressController: _addressController,
-                          cityController: _cityController,
-                          countryController: _countryController,
-                          rememberAddress: _rememberAddress,
-                          savedAddresses: _apiSavedAddresses,
-                          savedDropdownIndex: _savedAddressDropdownIndex,
-                          onSavedAddressPick: (index) {
-                            setState(() {
-                              _savedAddressDropdownIndex = index;
-                              if (index >= 0 &&
-                                  index < _apiSavedAddresses.length) {
-                                final d = _apiSavedAddresses[index];
-                                _nameController.text = d.name;
-                                _phoneController.text = d.phone;
-                                _emailController.text = d.email;
-                                _addressController.text = d.address;
-                                _cityController.text = d.city;
-                                _countryController.text = d.country;
-                              }
-                            });
-                          },
-                        )
-                        : _StepSuccess(
-                          controller: controller,
-                          languageService: languageService,
-                        ),
+                child: step == 1
+                    ? _StepConfirm(
+                        controller: controller,
+                        languageService: languageService,
+                      )
+                    : step == 2
+                    ? _StepShipping(
+                        languageService: languageService,
+                        nameController: _nameController,
+                        phoneController: _phoneController,
+                        emailController: _emailController,
+                        addressController: _addressController,
+                        cityController: _cityController,
+                        countryController: _countryController,
+                        rememberAddress: _rememberAddress,
+                        savedAddresses: _apiSavedAddresses,
+                        savedDropdownIndex: _savedAddressDropdownIndex,
+                        onSavedAddressPick: (index) {
+                          setState(() {
+                            _savedAddressDropdownIndex = index;
+                            if (index >= 0 &&
+                                index < _apiSavedAddresses.length) {
+                              final d = _apiSavedAddresses[index];
+                              _nameController.text = d.name;
+                              _phoneController.text = d.phone;
+                              _emailController.text = d.email;
+                              _addressController.text = d.address;
+                              _cityController.text = d.city;
+                              _countryController.text = d.country;
+                            }
+                          });
+                        },
+                      )
+                    : _StepSuccess(
+                        controller: controller,
+                        languageService: languageService,
+                      ),
               ),
             ),
             _BottomActions(
@@ -674,7 +670,7 @@ class _StepShipping extends StatelessWidget {
               ),
               Expanded(
                 child: Padding(
-                  padding: EdgeInsets.only(top: 3.h, left: 5.w),
+                  padding: EdgeInsetsDirectional.only(top: 3.h, start: 5.w),
                   child: Text(
                     languageService.tr('tw_remember_address'),
                     style: AppTextStyles.subheading.copyWith(
@@ -806,9 +802,9 @@ class _BottomActions extends StatelessWidget {
   Widget build(BuildContext context) {
     final btnTextColor =
         ThemeData.estimateBrightnessForColor(AppColors.primary) ==
-                Brightness.light
-            ? Colors.black
-            : Colors.white;
+            Brightness.light
+        ? Colors.black
+        : Colors.white;
 
     return Obx(() {
       final step = controller.currentStep.value;
@@ -893,22 +889,21 @@ class _BottomActions extends StatelessWidget {
                         borderRadius: BorderRadius.circular(10.r),
                       ),
                     ),
-                    child:
-                        submitting
-                            ? SizedBox(
-                              height: 20.h,
-                              width: 20.w,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: btnTextColor,
-                              ),
-                            )
-                            : Text(
-                              languageService.tr('tw_submit_redemption'),
-                              style: AppTextStyles.bodyText.copyWith(
-                                color: btnTextColor,
-                              ),
+                    child: submitting
+                        ? SizedBox(
+                            height: 20.h,
+                            width: 20.w,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: btnTextColor,
                             ),
+                          )
+                        : Text(
+                            languageService.tr('tw_submit_redemption'),
+                            style: AppTextStyles.bodyText.copyWith(
+                              color: btnTextColor,
+                            ),
+                          ),
                   ),
                 ),
               ],

@@ -12,8 +12,6 @@ import '../../../../services/language_service.dart';
 class SupportScreen extends StatelessWidget {
   const SupportScreen({super.key});
 
-
-
   @override
   Widget build(BuildContext context) {
     final languageService = Get.find<LanguageService>();
@@ -31,7 +29,10 @@ class SupportScreen extends StatelessWidget {
         leading: IconButton(
           icon: SvgPicture.asset(
             "assets/svg/trade/arro_back.svg",
-            colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn),
+            colorFilter: ColorFilter.mode(
+              AppColors.textPrimary,
+              BlendMode.srcIn,
+            ),
           ),
           onPressed: () => Navigator.of(context).pop(),
         ),
@@ -68,17 +69,13 @@ class SupportScreen extends StatelessWidget {
                 },
                 color: AppColors.textPrimary,
               ),
-
             ],
           ),
         ),
       ),
     );
   }
-
-
 }
-
 
 class _MenuItem extends StatelessWidget {
   final String icon;
@@ -136,7 +133,15 @@ class _MenuItem extends StatelessWidget {
                 color: color,
               ),
             ),
-            trailing: showBottomBorder ? Icon(Icons.arrow_forward_ios_sharp,size: 14.h,color: AppColors.icongrey,) : null,
+            trailing: showBottomBorder
+                ? Icon(
+                    Directionality.of(context) == TextDirection.rtl
+                        ? Icons.arrow_back_ios
+                        : Icons.arrow_forward_ios_sharp,
+                    size: 14.h,
+                    color: AppColors.icongrey,
+                  )
+                : null,
             onTap: onTap,
             minLeadingWidth: 10,
             horizontalTitleGap: 8.w,

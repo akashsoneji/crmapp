@@ -168,7 +168,7 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
       child: IconButton(
         onPressed: () => Navigator.pop(context),
         icon: Icon(Icons.arrow_back_ios, color: AppColors.textPrimary),
-                iconSize: 17.h,
+        iconSize: 17.h,
         padding: EdgeInsets.only(left: 5.w),
       ),
     );
@@ -254,8 +254,9 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
       width: double.infinity,
       child: Obx(
         () => ElevatedButton(
-          onPressed:
-              authController.isLoading || !_isFormValid ? null : _verifyCode,
+          onPressed: authController.isLoading || !_isFormValid
+              ? null
+              : _verifyCode,
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,
             disabledBackgroundColor: AppColors.border,

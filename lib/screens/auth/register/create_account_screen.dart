@@ -73,6 +73,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
   String? _shadowAuthToken;
   String? _shadowWsToken;
   String? _shadowUserDataJson;
+
   /// Branding (color, logo, app name, URLs) that was active *before* the
   /// user opened this screen. Captured in initState so the Home button
   /// can restore the previous broker's branding when the user changes
@@ -289,8 +290,10 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
     final digits = _phoneDigits;
     if (iso == null || digits.isEmpty) return;
     try {
-      final formatted =
-          PhoneNumber.parse(digits, destinationCountry: iso).formatNsn();
+      final formatted = PhoneNumber.parse(
+        digits,
+        destinationCountry: iso,
+      ).formatNsn();
       if (formatted.isNotEmpty && formatted != _phoneController.text) {
         _phoneController.value = TextEditingValue(
           text: formatted,
@@ -379,20 +382,19 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
       backgroundColor: Colors.transparent,
       isDismissible: false, // Prevent accidental dismissal
       enableDrag: false, // Prevent dragging down
-      builder:
-          (context) => OtpModal(
-            email: _emailController.text.trim(),
-            isEmailVerification: true,
-            otpLength: 5,
-            onOtpSubmitted: (otp) async {
-              // Handle OTP verification
-              await _verifyOtpAndCompleteRegistration(otp);
-            },
-            onResendOtp: () async {
-              // Handle resending OTP
-              await _sendOTPForVerification();
-            },
-          ),
+      builder: (context) => OtpModal(
+        email: _emailController.text.trim(),
+        isEmailVerification: true,
+        otpLength: 5,
+        onOtpSubmitted: (otp) async {
+          // Handle OTP verification
+          await _verifyOtpAndCompleteRegistration(otp);
+        },
+        onResendOtp: () async {
+          // Handle resending OTP
+          await _sendOTPForVerification();
+        },
+      ),
     );
   }
 
@@ -431,8 +433,8 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
 
         // Show success message
         CustomToastService.showSuccess(
-          title: 'Success',
-          message: 'Account created successfully!',
+          title: _languageService.tr('common_success'),
+          message: _languageService.tr('auth_account_created_successfully'),
         );
 
         // Navigate to next screen
@@ -449,16 +451,16 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
     final email = _emailController.text.trim();
     if (email.isEmpty) {
       CustomToastService.showError(
-        title: 'Error',
-        message: 'Please enter your email address',
+        title: _languageService.tr('common_error'),
+        message: _languageService.tr('auth_enter_email'),
       );
       return;
     }
 
     if (!_isValidEmail(email)) {
       CustomToastService.showError(
-        title: 'Error',
-        message: 'Please check email, email is not valid',
+        title: _languageService.tr('common_error'),
+        message: _languageService.tr('auth_invalid_email'),
       );
       return;
     }
@@ -490,9 +492,8 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder:
-            (context) =>
-                LegalDocumentsScreen(registrationData: registrationData),
+        builder: (context) =>
+            LegalDocumentsScreen(registrationData: registrationData),
       ),
     );
   }
@@ -507,7 +508,6 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
     final allowed = RegExp(r"^[\p{L}\s]+$", unicode: true);
     return !allowed.hasMatch(value);
   }
-
 
   void _showLoadingDialog(String message) {
     CommonLoadingWidget(isFullScreen: true);
@@ -610,47 +610,44 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
   void _showTradingExperiencePopup() {
     showDialog(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            backgroundColor: AppColors.cardBackground,
-            title: Text(
-              _languageService.tr("register_trading_experience"),
-              style: TextStyle(color: AppColors.textPrimary),
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children:
-                  _tradingExperienceOptions.map((option) {
-                    return ListTile(
-                      title: Text(
-                        option,
-                        style: TextStyle(color: AppColors.textPrimary),
-                      ),
-                      onTap: () {
-                        Navigator.of(context).pop();
-                        setState(() {
-                          _selectedTradingExperience = option;
-                          _tradingExperienceController.text = option;
-                          _validateForm();
-                        });
-                      },
-                      trailing:
-                          _selectedTradingExperience == option
-                              ? Icon(Icons.check, color: AppColors.primary)
-                              : null,
-                    );
-                  }).toList(),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: Text(
-                  _languageService.tr("cancel"),
-                  style: TextStyle(color: AppColors.primary),
-                ),
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.cardBackground,
+        title: Text(
+          _languageService.tr("register_trading_experience"),
+          style: TextStyle(color: AppColors.textPrimary),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: _tradingExperienceOptions.map((option) {
+            return ListTile(
+              title: Text(
+                option,
+                style: TextStyle(color: AppColors.textPrimary),
               ),
-            ],
+              onTap: () {
+                Navigator.of(context).pop();
+                setState(() {
+                  _selectedTradingExperience = option;
+                  _tradingExperienceController.text = option;
+                  _validateForm();
+                });
+              },
+              trailing: _selectedTradingExperience == option
+                  ? Icon(Icons.check, color: AppColors.primary)
+                  : null,
+            );
+          }).toList(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(
+              _languageService.tr("cancel"),
+              style: TextStyle(color: AppColors.primary),
+            ),
           ),
+        ],
+      ),
     );
   }
 
@@ -717,15 +714,15 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
           controller: _firstNameController,
           label: _languageService.tr("register_first_name"),
           showInvalidCharsError: _firstNameHasInvalidChars,
-          validator:
-              (value) => _validateRequired(value, 'validation_name_required'),
+          validator: (value) =>
+              _validateRequired(value, 'validation_name_required'),
         ),
         _buildNameTextField(
           controller: _lastNameController,
           label: _languageService.tr("register_last_name"),
           showInvalidCharsError: _lastNameHasInvalidChars,
-          validator:
-              (value) => _validateRequired(value, 'validation_name_required'),
+          validator: (value) =>
+              _validateRequired(value, 'validation_name_required'),
         ),
         // _buildDateOfBirthField(),
         _buildCountryField(),
@@ -826,10 +823,9 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
         keyboardType: keyboardType,
         validator: validator,
         suffixIcon: suffixIcon,
-        inputFormatters:
-            maxLength != null
-                ? [LengthLimitingTextInputFormatter(maxLength)]
-                : null,
+        inputFormatters: maxLength != null
+            ? [LengthLimitingTextInputFormatter(maxLength)]
+            : null,
       ),
     );
   }
@@ -869,42 +865,37 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
             labelText: label,
             keyboardType: keyboardType ?? TextInputType.text,
             validator: validator,
-            inputFormatters:
-                maxLength != null
-                    ? [LengthLimitingTextInputFormatter(maxLength)]
-                    : null,
+            inputFormatters: maxLength != null
+                ? [LengthLimitingTextInputFormatter(maxLength)]
+                : null,
             decoration: InputDecoration(
               labelText: label,
               labelStyle: TextStyle(color: AppColors.textGrey),
-              floatingLabelStyle:
-                  showInvalidCharsError
-                      ? TextStyle(color: AppColors.error)
-                      : TextStyle(color: AppColors.primary),
+              floatingLabelStyle: showInvalidCharsError
+                  ? TextStyle(color: AppColors.error)
+                  : TextStyle(color: AppColors.primary),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide(
-                  color:
-                      showInvalidCharsError
-                          ? AppColors.error
-                          : AppColors.border,
+                  color: showInvalidCharsError
+                      ? AppColors.error
+                      : AppColors.border,
                 ),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide(
-                  color:
-                      showInvalidCharsError
-                          ? AppColors.error
-                          : AppColors.border,
+                  color: showInvalidCharsError
+                      ? AppColors.error
+                      : AppColors.border,
                 ),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide(
-                  color:
-                      showInvalidCharsError
-                          ? AppColors.error
-                          : AppColors.primary,
+                  color: showInvalidCharsError
+                      ? AppColors.error
+                      : AppColors.primary,
                   width: 2,
                 ),
               ),
@@ -945,10 +936,9 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
         readOnly: true,
         onTap: _selectDate,
         controller: TextEditingController(
-          text:
-              _selectedDate == null
-                  ? ''
-                  : DateFormat('dd MMM yyyy').format(_selectedDate!),
+          text: _selectedDate == null
+              ? ''
+              : DateFormat('dd MMM yyyy').format(_selectedDate!),
         ),
         labelText: _languageService.tr("register_date_of_birth"),
         suffixIcon: InkWell(
@@ -962,11 +952,9 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
             ),
           ),
         ),
-        validator:
-            (value) =>
-                _selectedDate == null
-                    ? _languageService.tr('validation_date_required')
-                    : null,
+        validator: (value) => _selectedDate == null
+            ? _languageService.tr('validation_date_required')
+            : null,
       ),
     );
   }
@@ -1050,11 +1038,9 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
             ),
           ),
         ),
-        validator:
-            (value) =>
-                _selectedTradingExperience.isEmpty
-                    ? _languageService.tr('validation_experience_required')
-                    : null,
+        validator: (value) => _selectedTradingExperience.isEmpty
+            ? _languageService.tr('validation_experience_required')
+            : null,
       ),
     );
   }
@@ -1109,10 +1095,12 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
         height: 46.h,
         text: _languageService.tr("onboarding_next"),
         onPressed: _isFormValid ? _navigateToNextScreen : null,
-        backgroundColor:
-            AppColors.isDarkMode ? AppColors.primary : AppColors.primary,
-        foregroundColor:
-            _isFormValid ? AppColors.whiteColor : AppColors.textGrey,
+        backgroundColor: AppColors.isDarkMode
+            ? AppColors.primary
+            : AppColors.primary,
+        foregroundColor: _isFormValid
+            ? AppColors.whiteColor
+            : AppColors.textGrey,
       ),
     );
   }
@@ -1128,9 +1116,8 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
             TextSpan(
               text: _languageService.tr("register_log_in"),
               style: AppTextStyles.link,
-              recognizer:
-                  TapGestureRecognizer()
-                    ..onTap = () => Get.toNamed(AppPages.LOGIN),
+              recognizer: TapGestureRecognizer()
+                ..onTap = () => Get.toNamed(AppPages.LOGIN),
             ),
           ],
         ),

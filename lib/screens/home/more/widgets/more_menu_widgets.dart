@@ -17,25 +17,24 @@ class MoreMenuCardGroup extends StatelessWidget {
         border: Border.all(color: AppColors.icongrey.withValues(alpha: 0.14)),
       ),
       child: Column(
-        children:
-            children.asMap().entries.map((entry) {
-              final index = entry.key;
-              final child = entry.value;
-              if (index == children.length - 1) return child;
+        children: children.asMap().entries.map((entry) {
+          final index = entry.key;
+          final child = entry.value;
+          if (index == children.length - 1) return child;
 
-              return Column(
-                children: [
-                  child,
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 14.w),
-                    child: Divider(
-                      height: 1,
-                      color: AppColors.icongrey.withValues(alpha: 0.14),
-                    ),
-                  ),
-                ],
-              );
-            }).toList(),
+          return Column(
+            children: [
+              child,
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 14.w),
+                child: Divider(
+                  height: 1,
+                  color: AppColors.icongrey.withValues(alpha: 0.14),
+                ),
+              ),
+            ],
+          );
+        }).toList(),
       ),
     );
   }
@@ -64,8 +63,9 @@ class MoreMenuTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final iconPath =
-        iconAssetPath != null ? iconAssetPath! : 'assets/svg/more/$iconName.svg';
+    final iconPath = iconAssetPath != null
+        ? iconAssetPath!
+        : 'assets/svg/more/$iconName.svg';
 
     return Material(
       color: Colors.transparent,

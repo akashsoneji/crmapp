@@ -8,6 +8,7 @@ import 'package:get/get.dart';
 import 'package:crm_app/controllers/copy_trading/copy_trading_settings_controller.dart';
 import 'package:crm_app/widgets/brand_logo.dart';
 import 'package:crm_app/flavor_config.dart';
+import 'package:crm_app/services/language_service.dart';
 
 class SettingsTab extends StatelessWidget {
   const SettingsTab({super.key});
@@ -80,48 +81,48 @@ class SettingsTab extends StatelessWidget {
             // Menu Items
             _MenuItem(
               svgIconPath: 'assets/svg/bottom_navigation/wallet.svg',
-              label: 'Wallet',
+              label: TranslationUtils.tr('wallet_title'),
 
               onTap: () => Get.toNamed('/copy-trading-wallet'),
             ),
             _MenuItem(
               svgIconPath: 'assets/svg/deshboard/money-recive.svg',
-              label: 'Deposit',
+              label: TranslationUtils.tr('common_deposit'),
               onTap: () => Get.toNamed(AppPages.FINANCE),
             ),
             _MenuItem(
               svgIconPath: 'assets/svg/ib_dashboard/copy.svg',
-              label: 'Copier Area',
+              label: TranslationUtils.tr('copy_copier_area'),
               onTap: () {},
             ),
             _MenuItem(
               svgIconPath: 'assets/svg/chart_screen_icon/bell_icon.svg',
-              label: 'Notification',
+              label: TranslationUtils.tr('copy_notification'),
               onTap: () {},
             ),
             _MenuItem(
               svgIconPath: 'assets/svg/copy_trading/setting/trade_win.svg',
-              label: 'Trade and Win',
+              label: TranslationUtils.tr('copy_trade_and_win'),
               onTap: () {},
             ),
             _MenuItem(
               svgIconPath: 'assets/svg/copy_trading/setting/share.svg',
-              label: 'Invite a Friend',
+              label: TranslationUtils.tr('copy_invite_friend'),
               onTap: () => Get.toNamed('/copy-trading-invite-friend'),
             ),
             _MenuItem(
               svgIconPath: 'assets/svg/bottom_navigation/setting.svg',
-              label: 'Settings',
+              label: TranslationUtils.tr('copy_settings'),
               onTap: () {},
             ),
             _MenuItem(
               svgIconPath: 'assets/svg/more/ib_dashboard/ib-support.svg',
-              label: 'Start a live chat',
+              label: TranslationUtils.tr('copy_start_live_chat'),
               onTap: () {},
             ),
             _MenuItem(
               svgIconPath: 'assets/svg/copy_trading/setting/document-text.svg',
-              label: 'Terms & Conditions',
+              label: TranslationUtils.tr('copy_terms_conditions'),
               onTap: () {},
             ),
 

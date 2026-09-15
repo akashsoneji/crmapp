@@ -103,11 +103,10 @@ class AppSelectField<T> extends StatelessWidget {
                   child: ListView.separated(
                     shrinkWrap: true,
                     itemCount: options.length,
-                    separatorBuilder:
-                        (_, __) => Divider(
-                          height: 1,
-                          color: AppColors.border.withValues(alpha: 0.5),
-                        ),
+                    separatorBuilder: (_, __) => Divider(
+                      height: 1,
+                      color: AppColors.border.withValues(alpha: 0.5),
+                    ),
                     itemBuilder: (context, index) {
                       final opt = options[index];
                       final selected = _isSelected(opt.value);
@@ -123,10 +122,9 @@ class AppSelectField<T> extends StatelessWidget {
                             horizontal: 8.w,
                           ),
                           decoration: BoxDecoration(
-                            color:
-                                selected
-                                    ? AppColors.primary.withValues(alpha: 0.1)
-                                    : null,
+                            color: selected
+                                ? AppColors.primary.withValues(alpha: 0.1)
+                                : null,
                             borderRadius: BorderRadius.circular(8.r),
                           ),
                           child: Row(
@@ -140,14 +138,12 @@ class AppSelectField<T> extends StatelessWidget {
                                       opt.title,
                                       style: TextStyle(
                                         fontSize: 14.sp,
-                                        fontWeight:
-                                            selected
-                                                ? FontWeight.w600
-                                                : FontWeight.w500,
-                                        color:
-                                            selected
-                                                ? AppColors.primary
-                                                : AppColors.textPrimary,
+                                        fontWeight: selected
+                                            ? FontWeight.w600
+                                            : FontWeight.w500,
+                                        color: selected
+                                            ? AppColors.primary
+                                            : AppColors.textPrimary,
                                       ),
                                     ),
                                     if (opt.subtitle != null &&
@@ -217,12 +213,12 @@ class AppSelectField<T> extends StatelessWidget {
                     label ?? hint,
                     style: TextStyle(
                       fontSize: textSize,
-                      fontWeight:
-                          label != null ? FontWeight.w500 : FontWeight.w400,
-                      color:
-                          label != null
-                              ? AppColors.textPrimary
-                              : AppColors.textGrey,
+                      fontWeight: label != null
+                          ? FontWeight.w500
+                          : FontWeight.w400,
+                      color: label != null
+                          ? AppColors.textPrimary
+                          : AppColors.textGrey,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,

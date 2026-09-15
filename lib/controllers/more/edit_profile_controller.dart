@@ -6,6 +6,7 @@ import 'package:crm_app/services/dropdown_service.dart';
 import 'package:crm_app/models/settings_profile_model.dart';
 import 'package:crm_app/controllers/auth_controller.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
+import 'package:crm_app/services/language_service.dart';
 
 class EditProfileController extends GetxController {
   // Observable variables
@@ -55,7 +56,8 @@ class EditProfileController extends GetxController {
       }
     } catch (e) {
       print('Error initializing profile data: $e');
-      errorMessage.value = 'Error loading profile data: $e';
+      errorMessage.value =
+          '${TranslationUtils.tr('edit_profile_load_failed')}: $e';
     } finally {
       isInitializing.value = false;
     }
@@ -206,8 +208,9 @@ class EditProfileController extends GetxController {
           await authController.refreshUserData();
           return true;
         }
-        errorMessage.value =
-            message.isNotEmpty ? message : 'Failed to update profile';
+        errorMessage.value = message.isNotEmpty
+            ? message
+            : 'Failed to update profile';
         return false;
       }
     } catch (e) {

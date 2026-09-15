@@ -66,9 +66,12 @@ class KycVerificationScreen extends StatelessWidget {
               children: [
                 IconButton(
                   icon: SvgPicture.asset(
-            "assets/svg/trade/arro_back.svg",
-            colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn),
-          ),
+                    "assets/svg/trade/arro_back.svg",
+                    colorFilter: ColorFilter.mode(
+                      AppColors.textPrimary,
+                      BlendMode.srcIn,
+                    ),
+                  ),
                   onPressed: () => Get.back(closeOverlays: true),
                 ),
 
@@ -363,12 +366,20 @@ class KycVerificationScreen extends StatelessWidget {
           Positioned(
             bottom: 0,
             left: 20,
-            child: Container(width: 8, height: 20, color: AppColors.textPrimary),
+            child: Container(
+              width: 8,
+              height: 20,
+              color: AppColors.textPrimary,
+            ),
           ),
           Positioned(
             bottom: 0,
             right: 20,
-            child: Container(width: 8, height: 20, color: AppColors.textPrimary),
+            child: Container(
+              width: 8,
+              height: 20,
+              color: AppColors.textPrimary,
+            ),
           ),
         ],
       ),
@@ -386,7 +397,9 @@ class KycVerificationScreen extends StatelessWidget {
               onTap: controller.hideDocumentSelection,
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-                child: Container(color: AppColors.border.withValues(alpha: 0.3)),
+                child: Container(
+                  color: AppColors.border.withValues(alpha: 0.3),
+                ),
               ),
             ),
           ),
@@ -405,12 +418,13 @@ class KycVerificationScreen extends StatelessWidget {
 
   Widget _buildBottomSheet(KYCController controller) {
     return AnimatedSlide(
-      offset:
-          controller.showBottomSheet.value ? Offset.zero : const Offset(0, 1),
+      offset: controller.showBottomSheet.value
+          ? Offset.zero
+          : const Offset(0, 1),
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
       child: Container(
-        decoration:   BoxDecoration(
+        decoration: BoxDecoration(
           color: AppColors.whiteColor,
           borderRadius: BorderRadius.only(
             topLeft: Radius.circular(24),

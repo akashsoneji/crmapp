@@ -69,7 +69,7 @@ class FinanceScreen extends StatelessWidget {
                   ),
                   MoreMenuTile(
                     iconName: 'transaction_history',
-                    label: 'Internal Transfer History',
+                    label: languageService.tr('internal_transfer_history'),
                     onTap: () {
                       Get.toNamed(AppPages.INTERNAL_TRANSFER_HISTORY);
                     },
@@ -85,7 +85,7 @@ class FinanceScreen extends StatelessWidget {
                   ),
                   MoreMenuTile(
                     iconName: 'wallet',
-                    label: 'Withdrawal Method',
+                    label: languageService.tr('withdrawal_method'),
                     onTap: () {
                       Get.toNamed(AppPages.BANK_LIST);
                     },

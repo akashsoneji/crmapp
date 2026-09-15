@@ -24,13 +24,15 @@ class TradingBottomNavigation extends StatelessWidget {
     return Obx(() {
       return SafeArea(
         child: Padding(
-          padding: EdgeInsets.only(left: 16.w, right: 16.w, bottom: 12.h),
+          padding: EdgeInsetsDirectional.fromSTEB(16.w, 0, 16.w, 12.h),
           child: Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(32.r),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.textPrimary.withValues(alpha: AppColors.isDarkMode ? 0.22 : 0.15),
+                  color: AppColors.textPrimary.withValues(
+                    alpha: AppColors.isDarkMode ? 0.22 : 0.15,
+                  ),
                   blurRadius: 22,
                   spreadRadius: 2,
                   offset: const Offset(0, 8),
@@ -42,7 +44,10 @@ class TradingBottomNavigation extends StatelessWidget {
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
                 child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 12.w,
+                    vertical: 8.h,
+                  ),
                   decoration: BoxDecoration(
                     // Glass effect
                     color: AppColors.whiteColor,
@@ -110,11 +115,10 @@ class TradingBottomNavigation extends StatelessWidget {
           vertical: 6.h,
         ),
         decoration: BoxDecoration(
-          color:
-              isSelected
-                  // ? AppColors.primary.withOpacity(0.14)
-                  ? AppColors.primary.withOpacity(0.1)
-                  : Colors.transparent,
+          color: isSelected
+              // ? AppColors.primary.withOpacity(0.14)
+              ? AppColors.primary.withOpacity(0.1)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(50.r),
         ),
         child: Column(

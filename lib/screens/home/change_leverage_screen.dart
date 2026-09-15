@@ -6,6 +6,7 @@ import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/services/auth_service.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
 import 'package:crm_app/utils/trl_helper.dart';
+import 'package:crm_app/services/language_service.dart';
 
 class ChangeLeverageScreen extends StatefulWidget {
   final String accountNumber;
@@ -62,9 +63,11 @@ class _ChangeLeverageScreenState extends State<ChangeLeverageScreen> {
         final maxHeight = screenHeight * 0.7; // Use 70% of screen height max
         final itemHeight = 56.0; // Approximate height per item
         final headerHeight = 80.0; // Header + padding
-        final calculatedHeight = (_leverageValues.length * itemHeight +
-                headerHeight)
-            .clamp(200.0, maxHeight);
+        final calculatedHeight =
+            (_leverageValues.length * itemHeight + headerHeight).clamp(
+              200.0,
+              maxHeight,
+            );
 
         return Container(
           constraints: BoxConstraints(maxHeight: calculatedHeight),
@@ -88,7 +91,10 @@ class _ChangeLeverageScreenState extends State<ChangeLeverageScreen> {
                     child: Row(
                       children: [
                         Text(
-                          'Select Leverage',
+                          TranslationUtils.trf(
+                            'trading_select_leverage',
+                            'Select Leverage',
+                          ),
                           style: TextStyle(
                             fontSize: 18.sp,
                             fontWeight: FontWeight.w600,
@@ -128,10 +134,9 @@ class _ChangeLeverageScreenState extends State<ChangeLeverageScreen> {
                               horizontal: 24.w,
                             ),
                             decoration: BoxDecoration(
-                              color:
-                                  isSelected
-                                      ? AppColors.primary.withOpacity(0.1)
-                                      : Colors.transparent,
+                              color: isSelected
+                                  ? AppColors.primary.withOpacity(0.1)
+                                  : Colors.transparent,
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Row(
@@ -140,14 +145,12 @@ class _ChangeLeverageScreenState extends State<ChangeLeverageScreen> {
                                   _formatLeverage(leverage),
                                   style: TextStyle(
                                     fontSize: 16.sp,
-                                    fontWeight:
-                                        isSelected
-                                            ? FontWeight.w600
-                                            : FontWeight.normal,
-                                    color:
-                                        isSelected
-                                            ? AppColors.primary
-                                            : AppColors.textPrimary,
+                                    fontWeight: isSelected
+                                        ? FontWeight.w600
+                                        : FontWeight.normal,
+                                    color: isSelected
+                                        ? AppColors.primary
+                                        : AppColors.textPrimary,
                                   ),
                                 ),
                                 Spacer(),
@@ -175,7 +178,12 @@ class _ChangeLeverageScreenState extends State<ChangeLeverageScreen> {
 
   Future<void> _submitLeverageChange() async {
     if (_selectedLeverage == null) {
-      CustomToastService.showError(message: 'Please select a leverage value');
+      CustomToastService.showError(
+        message: TranslationUtils.trf(
+          'trading_select_leverage_value',
+          'Please select a leverage value',
+        ),
+      );
       return;
     }
 
@@ -191,12 +199,22 @@ class _ChangeLeverageScreenState extends State<ChangeLeverageScreen> {
 
       if (response.success) {
         CustomToastService.showSuccess(
-          message: response.data?['message'] ?? 'Leverage changed successfully',
+          message:
+              response.data?['message'] ??
+              TranslationUtils.trf(
+                'trading_leverage_changed_successfully',
+                'Leverage changed successfully',
+              ),
         );
         Get.back(closeOverlays: true);
       } else {
         CustomToastService.showError(
-          message: response.message ?? 'Failed to change leverage',
+          message:
+              response.message ??
+              TranslationUtils.trf(
+                'trading_failed_to_change_leverage',
+                'Failed to change leverage',
+              ),
         );
       }
     } catch (e) {
@@ -211,7 +229,17 @@ class _ChangeLeverageScreenState extends State<ChangeLeverageScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Change Leverage'), centerTitle: true,leading: AppSvgBackButton(onPressed: () => Get.back(closeOverlays: true), iconWidth: 30.w, iconHeight: 30.h),),
+      appBar: AppBar(
+        title: Text(
+          TranslationUtils.trf('trading_change_leverage', 'Change Leverage'),
+        ),
+        centerTitle: true,
+        leading: AppSvgBackButton(
+          onPressed: () => Get.back(closeOverlays: true),
+          iconWidth: 30.w,
+          iconHeight: 30.h,
+        ),
+      ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(24.w),
         child: Column(
@@ -221,13 +249,18 @@ class _ChangeLeverageScreenState extends State<ChangeLeverageScreen> {
             Container(
               padding: EdgeInsets.all(16.w),
               decoration: BoxDecoration(
-                color: AppColors.isDarkMode ? AppColors.primary.withValues(alpha: 0.1) : AppColors.primary,
+                color: AppColors.isDarkMode
+                    ? AppColors.primary.withValues(alpha: 0.1)
+                    : AppColors.primary,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.account_circle, 
-                      color: AppColors.isDarkMode ? AppColors.primary : AppColors.whiteColor,
+                  Icon(
+                    Icons.account_circle,
+                    color: AppColors.isDarkMode
+                        ? AppColors.primary
+                        : AppColors.whiteColor,
                   ),
                   SizedBox(width: 12.w),
                   Text(
@@ -235,7 +268,9 @@ class _ChangeLeverageScreenState extends State<ChangeLeverageScreen> {
                     style: TextStyle(
                       fontSize: 16.sp,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.isDarkMode ? AppColors.primary : AppColors.whiteColor,
+                      color: AppColors.isDarkMode
+                          ? AppColors.primary
+                          : AppColors.whiteColor,
                     ),
                   ),
                 ],
@@ -255,10 +290,9 @@ class _ChangeLeverageScreenState extends State<ChangeLeverageScreen> {
             SizedBox(height: 8.h),
             RTLHelper.rtlTextField(
               controller: TextEditingController(
-                text:
-                    _selectedLeverage != null
-                        ? _formatLeverage(_selectedLeverage!)
-                        : '',
+                text: _selectedLeverage != null
+                    ? _formatLeverage(_selectedLeverage!)
+                    : '',
               ),
               readOnly: true,
               onTap: _showLeveragePicker,
@@ -307,26 +341,25 @@ class _ChangeLeverageScreenState extends State<ChangeLeverageScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child:
-                    _isLoading
-                        ? SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              AppColors.whiteColor,
-                            ),
-                          ),
-                        )
-                        : Text(
-                          'Change Leverage',
-                          style: TextStyle(
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.whiteColor,
+                child: _isLoading
+                    ? SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            AppColors.whiteColor,
                           ),
                         ),
+                      )
+                    : Text(
+                        'Change Leverage',
+                        style: TextStyle(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.whiteColor,
+                        ),
+                      ),
               ),
             ),
           ],

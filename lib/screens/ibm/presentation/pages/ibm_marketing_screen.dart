@@ -8,6 +8,7 @@ import 'package:crm_app/widgets/AppTextField.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
 import 'package:crm_app/screens/ibm/presentation/widgets/ibm_top_header.dart';
+import 'package:crm_app/services/language_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class IbmMarketingScreen extends StatefulWidget {
@@ -48,8 +49,8 @@ class _IbmMarketingScreenState extends State<IbmMarketingScreen> {
       backgroundColor: AppColors.tradeBackgroundCenterColor,
       appBar: widget.embedded
           ? null
-          : const IbmTopHeader(
-              title: 'Marketing Material',
+          : IbmTopHeader(
+              title: TranslationUtils.tr('ibm_marketing_material'),
               showBackButton: false,
             ),
       body: Obx(() {
@@ -68,7 +69,7 @@ class _IbmMarketingScreenState extends State<IbmMarketingScreen> {
             children: [
               // Header title
               Text(
-                'Marketing Material',
+                TranslationUtils.tr('ibm_marketing_material'),
                 style: AppTextStyles.heading.copyWith(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.w700,
@@ -77,7 +78,7 @@ class _IbmMarketingScreenState extends State<IbmMarketingScreen> {
               ),
               SizedBox(height: 2.h),
               Text(
-                'Banners, decks and copy your broker has published for you to promote with',
+                TranslationUtils.tr('ibm_marketing_description'),
                 style: AppTextStyles.bodyText.copyWith(
                   fontSize: 11.sp,
                   color: AppColors.textGrey,
@@ -88,22 +89,21 @@ class _IbmMarketingScreenState extends State<IbmMarketingScreen> {
               // Search Bar
               AppTextField(
                 controller: _searchCtrl,
-                hintText: 'Search material',
+                hintText: TranslationUtils.tr('ibm_search_material'),
                 prefixIcon: Icon(
                   Icons.search,
                   size: 18.w,
                   color: AppColors.textGrey,
                 ),
-                suffixIcon:
-                    _searchCtrl.text.isNotEmpty
-                        ? IconButton(
-                          icon: const Icon(Icons.clear, size: 16),
-                          onPressed: () {
-                            _searchCtrl.clear();
-                            _onSearch('');
-                          },
-                        )
-                        : null,
+                suffixIcon: _searchCtrl.text.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear, size: 16),
+                        onPressed: () {
+                          _searchCtrl.clear();
+                          _onSearch('');
+                        },
+                      )
+                    : null,
                 onChanged: (val) {
                   _onSearch(val);
                 },
@@ -168,12 +168,11 @@ class _IbmMarketingScreenState extends State<IbmMarketingScreen> {
         child: Container(
           padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
           decoration: BoxDecoration(
-            color:
-                isSelected
-                    ? AppColors.primary
-                    : (AppColors.isDarkMode
-                        ? Colors.grey[800]
-                        : const Color(0xFFF1F1F4)),
+            color: isSelected
+                ? AppColors.primary
+                : (AppColors.isDarkMode
+                      ? Colors.grey[800]
+                      : const Color(0xFFF1F1F4)),
             borderRadius: BorderRadius.circular(16.r),
           ),
           child: Text(
@@ -215,7 +214,7 @@ class _IbmMarketingScreenState extends State<IbmMarketingScreen> {
             ),
             SizedBox(height: 14.h),
             Text(
-              'Nothing published yet',
+              TranslationUtils.tr('ibm_nothing_published_yet'),
               style: TextStyle(
                 fontSize: 15.sp,
                 fontWeight: FontWeight.w700,
@@ -224,7 +223,7 @@ class _IbmMarketingScreenState extends State<IbmMarketingScreen> {
             ),
             SizedBox(height: 6.h),
             Text(
-              'When your broker publishes banners or documents for partners,\nthey show up here.',
+              TranslationUtils.tr('ibm_marketing_empty_description'),
               style: TextStyle(
                 fontSize: 11.sp,
                 color: AppColors.textGrey,
@@ -242,12 +241,13 @@ class _IbmMarketingScreenState extends State<IbmMarketingScreen> {
     if (item is! Map) return const SizedBox();
 
     final materialId = (item['material_id'] ?? item['id'] ?? 0) as int;
-    final title = item['title']?.toString() ?? 'Marketing Asset';
+    final title =
+        item['title']?.toString() ?? TranslationUtils.tr('ibm_marketing_asset');
     final desc = item['description']?.toString() ?? '';
     final categoryLabel =
         item['category_label']?.toString() ??
         item['category']?.toString() ??
-        'Asset';
+        TranslationUtils.tr('ibm_asset');
     final dimensions = item['dimensions']?.toString() ?? '';
     final language = item['language']?.toString() ?? 'EN';
     final thumbnailUrl = item['thumbnail_url']?.toString() ?? '';
@@ -412,6 +412,8 @@ class _IbmMarketingScreenState extends State<IbmMarketingScreen> {
         return;
       }
     }
-    CustomToastService.showSuccess(message: 'Starting material download...');
+    CustomToastService.showSuccess(
+      message: TranslationUtils.tr('common_starting_material_download'),
+    );
   }
 }

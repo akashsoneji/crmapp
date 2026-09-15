@@ -80,7 +80,8 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
       while (controller.isLoading.value && mounted) {
         await Future.delayed(const Duration(milliseconds: 50));
       }
-    } else if (controller.mt5Accounts.isEmpty && controller.wallet.value == null) {
+    } else if (controller.mt5Accounts.isEmpty &&
+        controller.wallet.value == null) {
       await controller.fetchWalletData();
     }
 
@@ -158,7 +159,7 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
         backgroundColor: AppColors.background,
         scrolledUnderElevation: 0,
         elevation: 0,
-         leading: AppSvgBackButton(
+        leading: AppSvgBackButton(
           onPressed: () => NavigationHelper.safeBack(context: context),
           iconWidth: 30.w,
           iconHeight: 30.h,
@@ -219,10 +220,9 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
 
                       // Dynamic bottom padding based on keyboard visibility
                       SizedBox(
-                        height:
-                            isKeyboardVisible
-                                ? 20.h
-                                : kBottomNavigationBarHeight - 20.h,
+                        height: isKeyboardVisible
+                            ? 20.h
+                            : kBottomNavigationBarHeight - 20.h,
                       ),
                     ],
                   ),
@@ -232,16 +232,15 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
 
             // Center overlay loader while submitting (reactive)
             Obx(
-              () =>
-                  _isSubmitting.value
-                      ? Positioned.fill(
-                        child: Container(
-                          color: AppColors.border.withValues(alpha: 0.15),
-                          alignment: Alignment.center,
-                          child: const CommonLoadingWidget(isFullScreen: true),
-                        ),
-                      )
-                      : const SizedBox.shrink(),
+              () => _isSubmitting.value
+                  ? Positioned.fill(
+                      child: Container(
+                        color: AppColors.border.withValues(alpha: 0.15),
+                        alignment: Alignment.center,
+                        child: const CommonLoadingWidget(isFullScreen: true),
+                      ),
+                    )
+                  : const SizedBox.shrink(),
             ),
           ],
         ),
@@ -286,21 +285,20 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
         controller: _transferFromController,
         readOnly: true,
         onTap: _showOtpSection ? null : () => _showTransferFromDropdown(),
-        suffixIcon:
-            _showOtpSection
-                ? null
-                : InkWell(
-                  onTap: () => _showTransferFromDropdown(),
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 14.w),
-                    child: RTLHelper.rtlIcon(
-                      Icons.arrow_drop_down,
-                      color: AppColors.textGrey,
-                    ),
+        suffixIcon: _showOtpSection
+            ? null
+            : InkWell(
+                onTap: () => _showTransferFromDropdown(),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 14.w),
+                  child: RTLHelper.rtlIcon(
+                    Icons.arrow_drop_down,
+                    color: AppColors.textGrey,
                   ),
                 ),
+              ),
         decoration: InputDecoration(
-          labelText: 'Transfer From',
+          labelText: languageService.tr('finance_transfer_from'),
           labelStyle: TextStyle(color: AppColors.textGrey),
           floatingLabelStyle: TextStyle(color: AppColors.primary),
           contentPadding: EdgeInsets.symmetric(
@@ -340,19 +338,18 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
         controller: _transferToController,
         readOnly: true,
         onTap: _showOtpSection ? null : () => _showTransferToDropdown(),
-        suffixIcon:
-            _showOtpSection
-                ? null
-                : InkWell(
-                  onTap: () => _showTransferToDropdown(),
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 14.w),
-                    child: RTLHelper.rtlIcon(
-                      Icons.arrow_drop_down,
-                      color: AppColors.textGrey,
-                    ),
+        suffixIcon: _showOtpSection
+            ? null
+            : InkWell(
+                onTap: () => _showTransferToDropdown(),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 14.w),
+                  child: RTLHelper.rtlIcon(
+                    Icons.arrow_drop_down,
+                    color: AppColors.textGrey,
                   ),
                 ),
+              ),
         decoration: InputDecoration(
           labelText: 'Transfer to',
           labelStyle: TextStyle(color: AppColors.textGrey),
@@ -387,9 +384,11 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
     if (_selectedTransferFromType == 'wallet') {
       final wallet = _selectedTransferFromAccount as Wallet;
       return double.tryParse(wallet.walletBalance ?? '');
-    } else if (_selectedTransferFromType == 'mt5' || _selectedTransferFromType == 'ib') {
+    } else if (_selectedTransferFromType == 'mt5' ||
+        _selectedTransferFromType == 'ib') {
       final account = _selectedTransferFromAccount as UserMT5Account;
-      return account.availableForTransfer ?? double.tryParse(account.balance ?? '');
+      return account.availableForTransfer ??
+          double.tryParse(account.balance ?? '');
     }
     return null;
   }
@@ -519,10 +518,9 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
             return SizedBox(
               width: 50.w,
               height: 56.h,
-              child:
-                  Platform.isAndroid
-                      ? _buildOtpBoxAndroid(index)
-                      : _buildOtpBox(index),
+              child: Platform.isAndroid
+                  ? _buildOtpBoxAndroid(index)
+                  : _buildOtpBox(index),
             );
           }),
         ),
@@ -543,31 +541,30 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
           ),
           elevation: 0,
         ),
-        child:
-            _isSubmitting.value
-                ? Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    ButtonLoadingWidget(size: 18.0, color: AppColors.pureWhite),
-                    SizedBox(width: 10.w),
-                    Text(
-                      _showOtpSection ? 'Submitting...' : 'Sending OTP...',
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.pureWhite,
-                      ),
+        child: _isSubmitting.value
+            ? Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ButtonLoadingWidget(size: 18.0, color: AppColors.pureWhite),
+                  SizedBox(width: 10.w),
+                  Text(
+                    _showOtpSection ? 'Submitting...' : 'Sending OTP...',
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.pureWhite,
                     ),
-                  ],
-                )
-                : Text(
-                  _showOtpSection ? 'Submit OTP' : 'Transfer Now',
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.pureWhite,
                   ),
+                ],
+              )
+            : Text(
+                _showOtpSection ? 'Submit OTP' : 'Transfer Now',
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.pureWhite,
                 ),
+              ),
       ),
     );
   }
@@ -645,8 +642,8 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
           return ListView.separated(
             shrinkWrap: true,
             itemCount: accountItems.length,
-            separatorBuilder:
-                (_, __) => Divider(height: 1, color: AppColors.border),
+            separatorBuilder: (_, __) =>
+                Divider(height: 1, color: AppColors.border),
             itemBuilder: (context, index) {
               final item = accountItems[index];
               final accountType = item['type'] as String;
@@ -705,8 +702,9 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
                     vertical: 12.h,
                   ),
                   decoration: BoxDecoration(
-                    color:
-                        isSelected ? AppColors.primary.withOpacity(0.1) : null,
+                    color: isSelected
+                        ? AppColors.primary.withOpacity(0.1)
+                        : null,
                   ),
                   child: Row(
                     children: [
@@ -726,7 +724,7 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
                               : accountType == 'ib'
                               ? FlavorConfig.instance.appName
                               : (item['account'] as UserMT5Account)
-                                  .masterGroupId,
+                                    .masterGroupId,
                           style: TextStyle(
                             fontSize: 12.sp,
                             fontWeight: FontWeight.w500,
@@ -741,12 +739,13 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
                           accountType == 'wallet'
                               ? (item['wallet'] as Wallet).walletId
                               : (item['account'] as UserMT5Account)
-                                  .metaAccountNumber,
+                                    .metaAccountNumber,
                           style: TextStyle(
                             fontSize: 15.sp,
                             fontWeight: FontWeight.w600,
-                            color:
-                                isSelected ? AppColors.primary : AppColors.textPrimary,
+                            color: isSelected
+                                ? AppColors.primary
+                                : AppColors.textPrimary,
                           ),
                         ),
                       ),
@@ -758,10 +757,9 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
                         style: TextStyle(
                           fontSize: 14.sp,
                           fontWeight: FontWeight.w500,
-                          color:
-                              isSelected
-                                  ? AppColors.primary
-                                  : AppColors.textGrey,
+                          color: isSelected
+                              ? AppColors.primary
+                              : AppColors.textGrey,
                         ),
                       ),
                       if (isSelected) ...[
@@ -857,8 +855,8 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
           return ListView.separated(
             shrinkWrap: true,
             itemCount: accountItems.length,
-            separatorBuilder:
-                (_, __) => Divider(height: 1, color: AppColors.border),
+            separatorBuilder: (_, __) =>
+                Divider(height: 1, color: AppColors.border),
             itemBuilder: (context, index) {
               final item = accountItems[index];
               final accountType = item['type'] as String;
@@ -912,8 +910,9 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
                     vertical: 12.h,
                   ),
                   decoration: BoxDecoration(
-                    color:
-                        isSelected ? AppColors.primary.withOpacity(0.1) : null,
+                    color: isSelected
+                        ? AppColors.primary.withOpacity(0.1)
+                        : null,
                   ),
                   child: Row(
                     children: [
@@ -933,7 +932,7 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
                               : accountType == 'ib'
                               ? FlavorConfig.instance.appName
                               : (item['account'] as UserMT5Account)
-                                  .masterGroupId,
+                                    .masterGroupId,
                           style: TextStyle(
                             fontSize: 12.sp,
                             fontWeight: FontWeight.w500,
@@ -948,12 +947,13 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
                           accountType == 'wallet'
                               ? (item['wallet'] as Wallet).walletId
                               : (item['account'] as UserMT5Account)
-                                  .metaAccountNumber,
+                                    .metaAccountNumber,
                           style: TextStyle(
                             fontSize: 15.sp,
                             fontWeight: FontWeight.w600,
-                            color:
-                                isSelected ? AppColors.primary : AppColors.textPrimary,
+                            color: isSelected
+                                ? AppColors.primary
+                                : AppColors.textPrimary,
                           ),
                         ),
                       ),
@@ -965,10 +965,9 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
                         style: TextStyle(
                           fontSize: 14.sp,
                           fontWeight: FontWeight.w500,
-                          color:
-                              isSelected
-                                  ? AppColors.primary
-                                  : AppColors.textGrey,
+                          color: isSelected
+                              ? AppColors.primary
+                              : AppColors.textGrey,
                         ),
                       ),
                       if (isSelected) ...[
@@ -1070,86 +1069,14 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
 
     return index == 0
         ? TextField(
-          controller: _otpControllers[index],
-          focusNode: _otpFocusNodes[index],
-          keyboardType: TextInputType.number,
-          textAlign: TextAlign.center,
-          maxLength: 6, // Allow paste of full OTP in first field
-          inputFormatters: [
-            FilteringTextInputFormatter.digitsOnly,
-            LengthLimitingTextInputFormatter(6),
-          ],
-          style: TextStyle(
-            fontSize: 20.sp,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
-            height: 1.2,
-          ),
-          decoration: InputDecoration(
-            counterText: '',
-            contentPadding: EdgeInsets.symmetric(vertical: 16.h),
-            isDense: true,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: AppColors.border!),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: AppColors.border!),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: AppColors.primary, width: 2),
-            ),
-          ),
-          onChanged: (value) {
-            if (value.length > 1 && value.length <= 6) {
-              // Handle paste - distribute digits across fields
-              final otp = value.padRight(6, '');
-              for (int i = 0; i < 6; i++) {
-                _otpControllers[i].text = i < otp.length ? otp[i] : '';
-                _previousOtpValues[i] = i < otp.length ? otp[i] : '';
-              }
-              if (otp.length == 6) {
-                _otpFocusNodes[5].requestFocus();
-              } else if (otp.length >
-                  _otpControllers.indexWhere((c) => c.text.isEmpty)) {
-                _otpFocusNodes[otp.length - 1].requestFocus();
-              }
-            } else if (value.length == 1 && index < 5) {
-              _previousOtpValues[index] = value;
-              _otpFocusNodes[index + 1].requestFocus();
-            }
-          },
-          onTap: () {
-            if (_otpControllers[index].text.isNotEmpty) {
-              _otpControllers[index].selection = TextSelection(
-                baseOffset: 0,
-                extentOffset: _otpControllers[index].text.length,
-              );
-            }
-          },
-        )
-        : RawKeyboardListener(
-          focusNode: keyboardFocusNode,
-          onKey: (event) {
-            if (event is RawKeyDownEvent &&
-                event.logicalKey == LogicalKeyboardKey.backspace &&
-                _otpControllers[index].text.isEmpty &&
-                index > 0) {
-              // Handle backspace on empty field - move to previous field
-              _otpFocusNodes[index - 1].requestFocus();
-            }
-          },
-          child: TextField(
             controller: _otpControllers[index],
             focusNode: _otpFocusNodes[index],
             keyboardType: TextInputType.number,
             textAlign: TextAlign.center,
-            maxLength: 1,
+            maxLength: 6, // Allow paste of full OTP in first field
             inputFormatters: [
               FilteringTextInputFormatter.digitsOnly,
-              LengthLimitingTextInputFormatter(1),
+              LengthLimitingTextInputFormatter(6),
             ],
             style: TextStyle(
               fontSize: 20.sp,
@@ -1175,13 +1102,22 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
               ),
             ),
             onChanged: (value) {
-              if (value.isNotEmpty && index < 5) {
+              if (value.length > 1 && value.length <= 6) {
+                // Handle paste - distribute digits across fields
+                final otp = value.padRight(6, '');
+                for (int i = 0; i < 6; i++) {
+                  _otpControllers[i].text = i < otp.length ? otp[i] : '';
+                  _previousOtpValues[i] = i < otp.length ? otp[i] : '';
+                }
+                if (otp.length == 6) {
+                  _otpFocusNodes[5].requestFocus();
+                } else if (otp.length >
+                    _otpControllers.indexWhere((c) => c.text.isEmpty)) {
+                  _otpFocusNodes[otp.length - 1].requestFocus();
+                }
+              } else if (value.length == 1 && index < 5) {
                 _previousOtpValues[index] = value;
                 _otpFocusNodes[index + 1].requestFocus();
-              } else if (value.isEmpty && index > 0) {
-                // Move to previous box when backspace clears the current box
-                _previousOtpValues[index] = '';
-                _otpFocusNodes[index - 1].requestFocus();
               }
             },
             onTap: () {
@@ -1192,8 +1128,71 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
                 );
               }
             },
-          ),
-        );
+          )
+        : RawKeyboardListener(
+            focusNode: keyboardFocusNode,
+            onKey: (event) {
+              if (event is RawKeyDownEvent &&
+                  event.logicalKey == LogicalKeyboardKey.backspace &&
+                  _otpControllers[index].text.isEmpty &&
+                  index > 0) {
+                // Handle backspace on empty field - move to previous field
+                _otpFocusNodes[index - 1].requestFocus();
+              }
+            },
+            child: TextField(
+              controller: _otpControllers[index],
+              focusNode: _otpFocusNodes[index],
+              keyboardType: TextInputType.number,
+              textAlign: TextAlign.center,
+              maxLength: 1,
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+                LengthLimitingTextInputFormatter(1),
+              ],
+              style: TextStyle(
+                fontSize: 20.sp,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+                height: 1.2,
+              ),
+              decoration: InputDecoration(
+                counterText: '',
+                contentPadding: EdgeInsets.symmetric(vertical: 16.h),
+                isDense: true,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: AppColors.border!),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: AppColors.border!),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: AppColors.primary, width: 2),
+                ),
+              ),
+              onChanged: (value) {
+                if (value.isNotEmpty && index < 5) {
+                  _previousOtpValues[index] = value;
+                  _otpFocusNodes[index + 1].requestFocus();
+                } else if (value.isEmpty && index > 0) {
+                  // Move to previous box when backspace clears the current box
+                  _previousOtpValues[index] = '';
+                  _otpFocusNodes[index - 1].requestFocus();
+                }
+              },
+              onTap: () {
+                if (_otpControllers[index].text.isNotEmpty) {
+                  _otpControllers[index].selection = TextSelection(
+                    baseOffset: 0,
+                    extentOffset: _otpControllers[index].text.length,
+                  );
+                }
+              },
+            ),
+          );
   }
 
   void _onActionButtonPressed() async {
@@ -1249,7 +1248,8 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
       final limit = _getTransferFromLimit();
       if (limit != null && parsedAmount > limit) {
         CustomToastService.showError(
-          message: 'Amount cannot exceed available limit of \$${limit.toStringAsFixed(2)}',
+          message:
+              'Amount cannot exceed available limit of \$${limit.toStringAsFixed(2)}',
         );
         return;
       }

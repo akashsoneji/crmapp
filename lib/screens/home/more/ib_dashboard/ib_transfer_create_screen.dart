@@ -5,6 +5,7 @@ import 'package:crm_app/controllers/ib_transfer_controller.dart';
 import 'package:crm_app/widgets/app_svg_back_button.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
+import 'package:crm_app/services/language_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -39,21 +40,35 @@ class _IbTransferCreateScreenState extends State<IbTransferCreateScreen> {
 
   void _submitTransfer() async {
     if (_selectedClientId == null) {
-      CustomToastService.showError(message: 'Please select a recipient client.');
+      CustomToastService.showError(
+        message: TranslationUtils.tr('ib_select_recipient_client'),
+      );
       return;
     }
     final amount = double.tryParse(_amountController.text);
     if (amount == null || amount <= 0) {
-      CustomToastService.showError(message: 'Please enter a valid amount.');
+      CustomToastService.showError(
+        message: TranslationUtils.tr('ib_enter_valid_amount'),
+      );
       return;
     }
     final initData = _controller.initData.value;
-    if (initData != null && initData.minAmount != null && amount < initData.minAmount!) {
-      CustomToastService.showError(message: 'Minimum transfer amount is \$${initData.minAmount}.');
+    if (initData != null &&
+        initData.minAmount != null &&
+        amount < initData.minAmount!) {
+      CustomToastService.showError(
+        message: TranslationUtils.tr(
+          'ib_minimum_transfer_amount',
+        ).replaceFirst('{amount}', '\$${initData.minAmount}'),
+      );
       return;
     }
-    if (initData != null && initData.availableBalance != null && amount > initData.availableBalance!) {
-      CustomToastService.showError(message: 'Amount exceeds available balance.');
+    if (initData != null &&
+        initData.availableBalance != null &&
+        amount > initData.availableBalance!) {
+      CustomToastService.showError(
+        message: TranslationUtils.tr('ib_amount_exceeds_balance'),
+      );
       return;
     }
 
@@ -96,7 +111,7 @@ class _IbTransferCreateScreenState extends State<IbTransferCreateScreen> {
                 ),
               ),
               Text(
-                'Select Recipient',
+                TranslationUtils.tr('ib_select_recipient'),
                 style: TextStyle(
                   color: AppColors.textPrimary,
                   fontSize: 18.sp,
@@ -110,7 +125,7 @@ class _IbTransferCreateScreenState extends State<IbTransferCreateScreen> {
                   style: TextStyle(color: AppColors.textPrimary),
                   decoration: InputDecoration(
                     prefixIcon: Icon(Icons.search, color: AppColors.textGrey),
-                    hintText: 'Search by name or email...',
+                    hintText: TranslationUtils.tr('ib_search_name_or_email'),
                     hintStyle: TextStyle(color: AppColors.textGrey),
                     filled: true,
                     fillColor: AppColors.cardBackGround,
@@ -131,27 +146,57 @@ class _IbTransferCreateScreenState extends State<IbTransferCreateScreen> {
               Expanded(
                 child: Obx(() {
                   if (_controller.isSearching.value) {
-                    return Center(child: CommonLoadingWidget(size: 30, color: AppColors.primary));
+                    return Center(
+                      child: CommonLoadingWidget(
+                        size: 30,
+                        color: AppColors.primary,
+                      ),
+                    );
                   }
                   if (_controller.searchResults.isEmpty) {
                     return Center(
                       child: Text(
-                        'No clients found.',
+                        TranslationUtils.tr('ib_no_clients_found'),
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: AppColors.textGrey, fontSize: 14.sp),
+                        style: TextStyle(
+                          color: AppColors.textGrey,
+                          fontSize: 14.sp,
+                        ),
                       ),
                     );
                   }
                   return ListView.separated(
-                    padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 16.w,
+                      vertical: 10.h,
+                    ),
                     itemCount: _controller.searchResults.length,
-                    separatorBuilder: (_, __) => Divider(color: AppColors.border.withValues(alpha: 0.3)),
+                    separatorBuilder: (_, __) =>
+                        Divider(color: AppColors.border.withValues(alpha: 0.3)),
                     itemBuilder: (context, index) {
                       final client = _controller.searchResults[index];
                       return ListTile(
-                        title: Text(client.name ?? '', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w400)),
-                        subtitle: Text(client.email ?? '', style: TextStyle(color: AppColors.textGrey, fontSize: 12.sp)),
-                        trailing: Text('#${client.id}', style: TextStyle(color: AppColors.textGrey, fontSize: 12.sp)),
+                        title: Text(
+                          client.name ?? '',
+                          style: TextStyle(
+                            color: AppColors.textPrimary,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                        subtitle: Text(
+                          client.email ?? '',
+                          style: TextStyle(
+                            color: AppColors.textGrey,
+                            fontSize: 12.sp,
+                          ),
+                        ),
+                        trailing: Text(
+                          '#${client.id}',
+                          style: TextStyle(
+                            color: AppColors.textGrey,
+                            fontSize: 12.sp,
+                          ),
+                        ),
                         onTap: () {
                           setState(() {
                             _selectedClientId = client.id;
@@ -205,7 +250,8 @@ class _IbTransferCreateScreenState extends State<IbTransferCreateScreen> {
         centerTitle: true,
       ),
       body: Obx(() {
-        if (_controller.isLoadingInit.value && _controller.initData.value == null) {
+        if (_controller.isLoadingInit.value &&
+            _controller.initData.value == null) {
           return Center(
             child: CommonLoadingWidget(size: 40, color: AppColors.primary),
           );
@@ -240,7 +286,10 @@ class _IbTransferCreateScreenState extends State<IbTransferCreateScreen> {
               GestureDetector(
                 onTap: _showClientSearchSheet,
                 child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 14.h,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.cardBackGround,
                     borderRadius: BorderRadius.circular(10.r),
@@ -252,11 +301,16 @@ class _IbTransferCreateScreenState extends State<IbTransferCreateScreen> {
                       Text(
                         _selectedClientName ?? 'Select a client',
                         style: TextStyle(
-                          color: _selectedClientName == null ? AppColors.textGrey : AppColors.textPrimary,
+                          color: _selectedClientName == null
+                              ? AppColors.textGrey
+                              : AppColors.textPrimary,
                           fontSize: 14.sp,
                         ),
                       ),
-                      Icon(Icons.keyboard_arrow_down, color: AppColors.textGrey),
+                      Icon(
+                        Icons.keyboard_arrow_down,
+                        color: AppColors.textGrey,
+                      ),
                     ],
                   ),
                 ),
@@ -269,15 +323,28 @@ class _IbTransferCreateScreenState extends State<IbTransferCreateScreen> {
                   Expanded(
                     child: TextFormField(
                       controller: _amountController,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      style: TextStyle(color: AppColors.textPrimary, fontSize: 18.sp, fontWeight: FontWeight.w400),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 18.sp,
+                        fontWeight: FontWeight.w400,
+                      ),
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: AppColors.cardBackGround,
-                        prefixIcon: Icon(Icons.attach_money, color: AppColors.textGrey, size: 20.sp),
+                        prefixIcon: Icon(
+                          Icons.attach_money,
+                          color: AppColors.textGrey,
+                          size: 20.sp,
+                        ),
                         hintText: '0.00',
                         hintStyle: TextStyle(color: AppColors.textGrey),
-                        contentPadding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 16.w),
+                        contentPadding: EdgeInsets.symmetric(
+                          vertical: 14.h,
+                          horizontal: 16.w,
+                        ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10.r),
                           borderSide: BorderSide(color: AppColors.border),
@@ -293,11 +360,15 @@ class _IbTransferCreateScreenState extends State<IbTransferCreateScreen> {
                   GestureDetector(
                     onTap: () {
                       if (data?.availableBalance != null) {
-                        _amountController.text = data!.availableBalance!.toStringAsFixed(2);
+                        _amountController.text = data!.availableBalance!
+                            .toStringAsFixed(2);
                       }
                     },
                     child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 16.w,
+                        vertical: 14.h,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(10.r),
@@ -327,7 +398,10 @@ class _IbTransferCreateScreenState extends State<IbTransferCreateScreen> {
                   fillColor: AppColors.cardBackGround,
                   hintText: 'Add a note for admin...',
                   hintStyle: TextStyle(color: AppColors.textGrey),
-                  contentPadding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 16.w),
+                  contentPadding: EdgeInsets.symmetric(
+                    vertical: 14.h,
+                    horizontal: 16.w,
+                  ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10.r),
                     borderSide: BorderSide(color: AppColors.border),
@@ -341,7 +415,9 @@ class _IbTransferCreateScreenState extends State<IbTransferCreateScreen> {
               SizedBox(height: 30.h),
 
               ElevatedButton(
-                onPressed: _controller.isSubmitting.value ? null : _submitTransfer,
+                onPressed: _controller.isSubmitting.value
+                    ? null
+                    : _submitTransfer,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.brandPrimary,
                   padding: EdgeInsets.symmetric(vertical: 14.h),

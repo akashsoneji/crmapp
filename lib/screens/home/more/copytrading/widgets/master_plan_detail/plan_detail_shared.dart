@@ -104,9 +104,9 @@ class PlanStatusPill extends StatelessWidget {
     Color? color,
     Color? soft,
     Color? text,
-  })  : color = color ?? AppColors.primary,
-        soft = soft ?? const Color(0xFFEEF2FF),
-        text = text ?? AppColors.primary;
+  }) : color = color ?? AppColors.primary,
+       soft = soft ?? const Color(0xFFEEF2FF),
+       text = text ?? AppColors.primary;
 
   @override
   Widget build(BuildContext context) {
@@ -206,10 +206,7 @@ class PlanKeyValueRow extends StatelessWidget {
                   color: valueColor ?? tokens.textPrimary,
                 ),
               ),
-              if (trailing != null) ...[
-                const SizedBox(height: 4),
-                trailing!,
-              ],
+              if (trailing != null) ...[const SizedBox(height: 4), trailing!],
             ],
           ),
         ],
@@ -252,10 +249,7 @@ class PlanEmptyHint extends StatelessWidget {
           Text(
             message,
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 12.5,
-              color: tokens.mutedText,
-            ),
+            style: TextStyle(fontSize: 12.5, color: tokens.mutedText),
           ),
         ],
       ),
@@ -363,9 +357,9 @@ class PlanFormat {
   static String isoToDateTime(String iso) {
     if (iso.isEmpty) return '—';
     try {
-      return DateFormat('d MMM yyyy, HH:mm').format(
-        DateTime.parse(iso).toLocal(),
-      );
+      return DateFormat(
+        'd MMM yyyy, HH:mm',
+      ).format(DateTime.parse(iso).toLocal());
     } catch (_) {
       return iso;
     }

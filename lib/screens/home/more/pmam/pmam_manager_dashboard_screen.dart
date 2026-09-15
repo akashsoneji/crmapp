@@ -18,7 +18,8 @@ class PmamManagerDashboardScreen extends StatefulWidget {
       _PmamManagerDashboardScreenState();
 }
 
-class _PmamManagerDashboardScreenState extends State<PmamManagerDashboardScreen> {
+class _PmamManagerDashboardScreenState
+    extends State<PmamManagerDashboardScreen> {
   late final PmamController _ctrl;
   String _selectedChartTab = 'Equity';
 
@@ -75,7 +76,9 @@ class _PmamManagerDashboardScreenState extends State<PmamManagerDashboardScreen>
       // ),
       body: Obx(() {
         if (_ctrl.isLoading.value) {
-          return Center(child: CommonLoadingWidget(size: 40, color: AppColors.primary));
+          return Center(
+            child: CommonLoadingWidget(size: 40, color: AppColors.primary),
+          );
         }
 
         return RefreshIndicator(
@@ -129,14 +132,18 @@ class _PmamManagerDashboardScreenState extends State<PmamManagerDashboardScreen>
               selectedColor: AppColors.primary,
               backgroundColor: AppColors.card,
               labelStyle: TextStyle(
-                color: isSelected ? AppColors.onColoredBackground : AppColors.textPrimary,
+                color: isSelected
+                    ? AppColors.onColoredBackground
+                    : AppColors.textPrimary,
                 fontWeight: FontWeight.w600,
                 fontSize: 12.sp,
               ),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20.r),
                 side: BorderSide(
-                  color: isSelected ? AppColors.primary : AppColors.border.withOpacity(0.2),
+                  color: isSelected
+                      ? AppColors.primary
+                      : AppColors.border.withOpacity(0.2),
                 ),
               ),
             ),
@@ -191,7 +198,7 @@ class _PmamManagerDashboardScreenState extends State<PmamManagerDashboardScreen>
 
   Widget _buildPerformanceChart() {
     final chartData = _ctrl.mainChartData;
-    
+
     return Container(
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
@@ -229,15 +236,22 @@ class _PmamManagerDashboardScreenState extends State<PmamManagerDashboardScreen>
                   },
                   child: Container(
                     margin: EdgeInsets.only(right: 12.w),
-                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 12.w,
+                      vertical: 6.h,
+                    ),
                     decoration: BoxDecoration(
-                      color: isSelected ? AppColors.primary.withOpacity(0.1) : Colors.transparent,
+                      color: isSelected
+                          ? AppColors.primary.withOpacity(0.1)
+                          : Colors.transparent,
                       borderRadius: BorderRadius.circular(20.r),
                     ),
                     child: Text(
                       tab,
                       style: TextStyle(
-                        color: isSelected ? AppColors.primary : AppColors.textGrey,
+                        color: isSelected
+                            ? AppColors.primary
+                            : AppColors.textGrey,
                         fontWeight: FontWeight.w600,
                         fontSize: 13.sp,
                       ),
@@ -248,10 +262,7 @@ class _PmamManagerDashboardScreenState extends State<PmamManagerDashboardScreen>
             ),
           ),
           SizedBox(height: 20.h),
-          SizedBox(
-            height: 200.h,
-            child: _buildLineChart(chartData),
-          ),
+          SizedBox(height: 200.h, child: _buildLineChart(chartData)),
         ],
       ),
     );
@@ -264,10 +275,14 @@ class _PmamManagerDashboardScreenState extends State<PmamManagerDashboardScreen>
     if (_selectedChartTab == 'Net P&L') dataKey = 'pnl';
 
     final series = chartData[dataKey]?['series'];
-    if (series == null || series['data'] == null || (series['data'] as List).isEmpty) {
+    if (series == null ||
+        series['data'] == null ||
+        (series['data'] as List).isEmpty) {
       return Center(
-        child: Text('No data available for $_selectedChartTab',
-            style: TextStyle(color: AppColors.textGrey)),
+        child: Text(
+          'No data available for $_selectedChartTab',
+          style: TextStyle(color: AppColors.textGrey),
+        ),
       );
     }
 
@@ -314,8 +329,18 @@ class _PmamManagerDashboardScreenState extends State<PmamManagerDashboardScreen>
       try {
         final dt = DateTime.parse(raw.replaceFirst(' ', 'T'));
         const months = [
-          'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-          'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+          'Jan',
+          'Feb',
+          'Mar',
+          'Apr',
+          'May',
+          'Jun',
+          'Jul',
+          'Aug',
+          'Sep',
+          'Oct',
+          'Nov',
+          'Dec',
         ];
         return '${months[dt.month - 1]} ${dt.day}';
       } catch (_) {
@@ -347,9 +372,15 @@ class _PmamManagerDashboardScreenState extends State<PmamManagerDashboardScreen>
           ),
         ),
         titlesData: FlTitlesData(
-          leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          leftTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          rightTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          topTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
@@ -383,8 +414,10 @@ class _PmamManagerDashboardScreenState extends State<PmamManagerDashboardScreen>
           touchTooltipData: LineTouchTooltipData(
             getTooltipColor: (_) => AppColors.textPrimary.withOpacity(0.92),
             tooltipBorderRadius: BorderRadius.circular(8),
-            tooltipPadding:
-                EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+            tooltipPadding: EdgeInsets.symmetric(
+              horizontal: 10.w,
+              vertical: 6.h,
+            ),
             getTooltipItems: (touched) {
               return touched.map((s) {
                 final label = fmtLabel(s.x);
@@ -491,33 +524,35 @@ class _PmamManagerDashboardScreenState extends State<PmamManagerDashboardScreen>
                   PieChartData(
                     sectionsSpace: 2,
                     centerSpaceRadius: 30.r,
-                    sections: total == 0 ? [
-                      PieChartSectionData(
-                        color: AppColors.textGrey.withOpacity(0.2),
-                        value: 1,
-                        title: '',
-                        radius: 12.r,
-                      )
-                    ] : [
-                      PieChartSectionData(
-                        color: AppColors.green,
-                        value: active.toDouble(),
-                        title: '',
-                        radius: 12.r,
-                      ),
-                      PieChartSectionData(
-                        color: AppColors.warning,
-                        value: pending.toDouble(),
-                        title: '',
-                        radius: 12.r,
-                      ),
-                      PieChartSectionData(
-                        color: AppColors.textGrey,
-                        value: inactive.toDouble(),
-                        title: '',
-                        radius: 12.r,
-                      ),
-                    ],
+                    sections: total == 0
+                        ? [
+                            PieChartSectionData(
+                              color: AppColors.textGrey.withOpacity(0.2),
+                              value: 1,
+                              title: '',
+                              radius: 12.r,
+                            ),
+                          ]
+                        : [
+                            PieChartSectionData(
+                              color: AppColors.green,
+                              value: active.toDouble(),
+                              title: '',
+                              radius: 12.r,
+                            ),
+                            PieChartSectionData(
+                              color: AppColors.warning,
+                              value: pending.toDouble(),
+                              title: '',
+                              radius: 12.r,
+                            ),
+                            PieChartSectionData(
+                              color: AppColors.textGrey,
+                              value: inactive.toDouble(),
+                              title: '',
+                              radius: 12.r,
+                            ),
+                          ],
                   ),
                 ),
               ),
@@ -525,11 +560,23 @@ class _PmamManagerDashboardScreenState extends State<PmamManagerDashboardScreen>
               Expanded(
                 child: Column(
                   children: [
-                    _HealthRow(color: AppColors.green, label: 'Active', value: active.toString()),
+                    _HealthRow(
+                      color: AppColors.green,
+                      label: 'Active',
+                      value: active.toString(),
+                    ),
                     SizedBox(height: 8.h),
-                    _HealthRow(color: AppColors.warning, label: 'Pending', value: pending.toString()),
+                    _HealthRow(
+                      color: AppColors.warning,
+                      label: 'Pending',
+                      value: pending.toString(),
+                    ),
                     SizedBox(height: 8.h),
-                    _HealthRow(color: AppColors.textGrey, label: 'Inactive', value: inactive.toString()),
+                    _HealthRow(
+                      color: AppColors.textGrey,
+                      label: 'Inactive',
+                      value: inactive.toString(),
+                    ),
                   ],
                 ),
               ),
@@ -539,10 +586,19 @@ class _PmamManagerDashboardScreenState extends State<PmamManagerDashboardScreen>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _StatItem(label: 'New (Period)', value: _fmtNum(health['new_this_period'])),
+              _StatItem(
+                label: 'New (Period)',
+                value: _fmtNum(health['new_this_period']),
+              ),
               _StatItem(label: 'Churned', value: _fmtNum(health['churned'])),
-              _StatItem(label: 'Avg Age', value: '${_fmtNum(health['avg_age_days'])}d'),
-              _StatItem(label: 'Retention', value: '${_fmtNum(health['retention_rate'])}%'),
+              _StatItem(
+                label: 'Avg Age',
+                value: '${_fmtNum(health['avg_age_days'])}d',
+              ),
+              _StatItem(
+                label: 'Retention',
+                value: '${_fmtNum(health['retention_rate'])}%',
+              ),
             ],
           ),
         ],
@@ -591,13 +647,17 @@ class _PmamManagerDashboardScreenState extends State<PmamManagerDashboardScreen>
           ),
           SizedBox(height: 12.h),
           if (plans.isEmpty)
-            Text('No plans available', style: TextStyle(color: AppColors.textGrey))
+            Text(
+              'No plans available',
+              style: TextStyle(color: AppColors.textGrey),
+            )
           else
             ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: plans.length > 3 ? 3 : plans.length,
-              separatorBuilder: (_, __) => Divider(color: AppColors.border.withOpacity(0.1)),
+              separatorBuilder: (_, __) =>
+                  Divider(color: AppColors.border.withOpacity(0.1)),
               itemBuilder: (context, i) {
                 final p = plans[i];
                 return Padding(
@@ -622,7 +682,10 @@ class _PmamManagerDashboardScreenState extends State<PmamManagerDashboardScreen>
                             SizedBox(height: 2.h),
                             Text(
                               '${p['active_investors'] ?? 0} Investors',
-                              style: TextStyle(fontSize: 11.sp, color: AppColors.textGrey),
+                              style: TextStyle(
+                                fontSize: 11.sp,
+                                color: AppColors.textGrey,
+                              ),
                             ),
                           ],
                         ),
@@ -641,7 +704,10 @@ class _PmamManagerDashboardScreenState extends State<PmamManagerDashboardScreen>
                           SizedBox(height: 2.h),
                           Text(
                             'AUM',
-                            style: TextStyle(fontSize: 11.sp, color: AppColors.textGrey),
+                            style: TextStyle(
+                              fontSize: 11.sp,
+                              color: AppColors.textGrey,
+                            ),
                           ),
                         ],
                       ),
@@ -690,7 +756,10 @@ class _PmamManagerDashboardScreenState extends State<PmamManagerDashboardScreen>
                     children: [
                       Text(
                         'Earned (30d)',
-                        style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey),
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          color: AppColors.textGrey,
+                        ),
                       ),
                       SizedBox(height: 4.h),
                       Text(
@@ -718,7 +787,10 @@ class _PmamManagerDashboardScreenState extends State<PmamManagerDashboardScreen>
                     children: [
                       Text(
                         'Pending',
-                        style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey),
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          color: AppColors.textGrey,
+                        ),
                       ),
                       SizedBox(height: 4.h),
                       Text(
@@ -767,16 +839,21 @@ class _PmamManagerDashboardScreenState extends State<PmamManagerDashboardScreen>
           ),
           SizedBox(height: 12.h),
           if (trades.isEmpty)
-            Text('No recent trades', style: TextStyle(color: AppColors.textGrey))
+            Text(
+              'No recent trades',
+              style: TextStyle(color: AppColors.textGrey),
+            )
           else
             ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: trades.length > 5 ? 5 : trades.length,
-              separatorBuilder: (_, __) => Divider(color: AppColors.border.withOpacity(0.1)),
+              separatorBuilder: (_, __) =>
+                  Divider(color: AppColors.border.withOpacity(0.1)),
               itemBuilder: (context, i) {
                 final t = trades[i];
-                final pnl = double.tryParse(t['profit']?.toString() ?? '0') ?? 0.0;
+                final pnl =
+                    double.tryParse(t['profit']?.toString() ?? '0') ?? 0.0;
                 final isProfit = pnl >= 0;
                 return Padding(
                   padding: EdgeInsets.symmetric(vertical: 8.h),
@@ -785,7 +862,9 @@ class _PmamManagerDashboardScreenState extends State<PmamManagerDashboardScreen>
                       Container(
                         padding: EdgeInsets.all(8.r),
                         decoration: BoxDecoration(
-                          color: isProfit ? AppColors.green.withOpacity(0.1) : AppColors.error.withOpacity(0.1),
+                          color: isProfit
+                              ? AppColors.green.withOpacity(0.1)
+                              : AppColors.error.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(8.r),
                         ),
                         child: Icon(
@@ -809,8 +888,12 @@ class _PmamManagerDashboardScreenState extends State<PmamManagerDashboardScreen>
                             ),
                             SizedBox(height: 2.h),
                             Text(
-                              t['close_time']?.toString().split(' ').first ?? '-',
-                              style: TextStyle(fontSize: 11.sp, color: AppColors.textGrey),
+                              t['close_time']?.toString().split(' ').first ??
+                                  '-',
+                              style: TextStyle(
+                                fontSize: 11.sp,
+                                color: AppColors.textGrey,
+                              ),
                             ),
                           ],
                         ),
@@ -823,13 +906,18 @@ class _PmamManagerDashboardScreenState extends State<PmamManagerDashboardScreen>
                             style: TextStyle(
                               fontSize: 13.sp,
                               fontWeight: FontWeight.bold,
-                              color: isProfit ? AppColors.green : AppColors.error,
+                              color: isProfit
+                                  ? AppColors.green
+                                  : AppColors.error,
                             ),
                           ),
                           SizedBox(height: 2.h),
                           Text(
                             'Vol: ${t['volume'] ?? 0}',
-                            style: TextStyle(fontSize: 11.sp, color: AppColors.textGrey),
+                            style: TextStyle(
+                              fontSize: 11.sp,
+                              color: AppColors.textGrey,
+                            ),
                           ),
                         ],
                       ),
@@ -848,7 +936,11 @@ class _HealthRow extends StatelessWidget {
   final Color color;
   final String label;
   final String value;
-  const _HealthRow({required this.color, required this.label, required this.value});
+  const _HealthRow({
+    required this.color,
+    required this.label,
+    required this.value,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -863,10 +955,20 @@ class _HealthRow extends StatelessWidget {
               decoration: BoxDecoration(color: color, shape: BoxShape.circle),
             ),
             SizedBox(width: 8.w),
-            Text(label, style: TextStyle(fontSize: 13.sp, color: AppColors.textGrey)),
+            Text(
+              label,
+              style: TextStyle(fontSize: 13.sp, color: AppColors.textGrey),
+            ),
           ],
         ),
-        Text(value, style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 13.sp,
+            fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
+          ),
+        ),
       ],
     );
   }
@@ -884,7 +986,11 @@ class _StatItem extends StatelessWidget {
       children: [
         Text(
           value,
-          style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+          style: TextStyle(
+            fontSize: 14.sp,
+            fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
+          ),
         ),
         SizedBox(height: 4.h),
         Text(
@@ -918,7 +1024,9 @@ class _HeroCard extends StatelessWidget {
     double d = double.tryParse(delta ?? '0') ?? 0.0;
     bool isPositive = d >= 0;
     Color dColor = isPositive ? AppColors.green : AppColors.error;
-    String dText = isPositive ? '+${d.toStringAsFixed(1)}' : d.toStringAsFixed(1);
+    String dText = isPositive
+        ? '+${d.toStringAsFixed(1)}'
+        : d.toStringAsFixed(1);
     if (!deltaIsAbsolute) dText += '%';
 
     return Container(
@@ -936,15 +1044,27 @@ class _HeroCard extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey, fontWeight: FontWeight.w500),
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  color: AppColors.textGrey,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
-              Icon(icon, size: 16.sp, color: AppColors.primary.withOpacity(0.6)),
+              Icon(
+                icon,
+                size: 16.sp,
+                color: AppColors.primary.withOpacity(0.6),
+              ),
             ],
           ),
           SizedBox(height: 8.h),
           Text(
             value,
-            style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+            style: TextStyle(
+              fontSize: 16.sp,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -959,14 +1079,23 @@ class _HeroCard extends StatelessWidget {
                 ),
                 child: Text(
                   dText,
-                  style: TextStyle(fontSize: 10.sp, fontWeight: FontWeight.bold, color: dColor),
+                  style: TextStyle(
+                    fontSize: 10.sp,
+                    fontWeight: FontWeight.bold,
+                    color: dColor,
+                  ),
                 ),
               ),
-              if (sparklineData != null && sparklineData is List && (sparklineData as List).isNotEmpty)
+              if (sparklineData != null &&
+                  sparklineData is List &&
+                  (sparklineData as List).isNotEmpty)
                 Expanded(
                   child: SizedBox(
                     height: 20.h,
-                    child: _MiniSparkline(data: sparklineData as List, color: AppColors.primary),
+                    child: _MiniSparkline(
+                      data: sparklineData as List,
+                      color: AppColors.primary,
+                    ),
                   ),
                 ),
             ],
@@ -985,7 +1114,7 @@ class _MiniSparkline extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (data.isEmpty) return const SizedBox();
-    
+
     double minY = double.infinity;
     double maxY = -double.infinity;
     final spots = <FlSpot>[];
@@ -995,7 +1124,7 @@ class _MiniSparkline extends StatelessWidget {
       if (y > maxY) maxY = y;
       spots.add(FlSpot(i.toDouble(), y));
     }
-    
+
     if (minY == maxY) {
       minY -= 1;
       maxY += 1;

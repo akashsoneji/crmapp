@@ -105,14 +105,17 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
 
   void _initCregisNetworks() {
     try {
-      final networkMap = widget.object['payment_gateway']?['cregis_network_map'];
+      final networkMap =
+          widget.object['payment_gateway']?['cregis_network_map'];
       if (networkMap != null && networkMap is Map) {
         controller.cregisNetworkMap = Map<String, dynamic>.from(networkMap);
         final keys = networkMap.keys.map((e) => e.toString()).toList();
         controller.cregisNetworks.assignAll(keys);
 
         // Set default network based on deposit_chain_id from API
-        final defaultChainId = widget.object['payment_gateway']?['deposit_chain_id']?.toString();
+        final defaultChainId = widget
+            .object['payment_gateway']?['deposit_chain_id']
+            ?.toString();
         if (defaultChainId != null && defaultChainId.isNotEmpty) {
           // Find the network key that matches the default chain_id
           String? matchedNetwork;
@@ -123,7 +126,8 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
               break;
             }
           }
-          controller.selectedCregisNetwork.value = matchedNetwork ?? (keys.isNotEmpty ? keys.first : '');
+          controller.selectedCregisNetwork.value =
+              matchedNetwork ?? (keys.isNotEmpty ? keys.first : '');
         } else if (keys.isNotEmpty) {
           controller.selectedCregisNetwork.value = keys.first;
         }
@@ -227,13 +231,15 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
       print('═══════════════════════════════════════════════════════════');
 
       final streamedResponse = await request.send();
-      
+
       // Log response
-      final statusEmoji = streamedResponse.statusCode >= 200 && streamedResponse.statusCode < 300 
-          ? '✅' 
-          : streamedResponse.statusCode >= 400 
-              ? '❌' 
-              : '⚠️';
+      final statusEmoji =
+          streamedResponse.statusCode >= 200 &&
+              streamedResponse.statusCode < 300
+          ? '✅'
+          : streamedResponse.statusCode >= 400
+          ? '❌'
+          : '⚠️';
       print('═══════════════════════════════════════════════════════════');
       print('$statusEmoji DIRECT HTTP RESPONSE [$timestamp]');
       print('═══════════════════════════════════════════════════════════');
@@ -241,7 +247,7 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
       print('Status Code: ${streamedResponse.statusCode}');
       print('Headers: ${streamedResponse.headers}');
       print('═══════════════════════════════════════════════════════════');
-      
+
       if (streamedResponse.statusCode == 200) {
         final bytes = await streamedResponse.stream.toBytes();
         print('Image loaded: ${bytes.length} bytes');
@@ -287,7 +293,10 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
                 },
               ),
               ListTile(
-                leading: Icon(Icons.photo_library, color: AppColors.textPrimary),
+                leading: Icon(
+                  Icons.photo_library,
+                  color: AppColors.textPrimary,
+                ),
                 title: Text(
                   languageService.tr('deposit_instruction_choose_from_gallery'),
                   style: TextStyle(color: AppColors.textPrimary),
@@ -336,7 +345,10 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
           leading: Padding(
             padding: EdgeInsets.only(left: 10.w),
             child: IconButton(
-              icon: SvgPicture.asset("assets/svg/trade/arro_back.svg",color: AppColors.textPrimary),
+              icon: SvgPicture.asset(
+                "assets/svg/trade/arro_back.svg",
+                color: AppColors.textPrimary,
+              ),
               onPressed: _handleBackNavigation,
             ),
           ),
@@ -348,16 +360,15 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
             body,
             // Loading overlay
             Obx(
-              () =>
-                  controller.isLoading.value
-                      ? Positioned.fill(
-                        child: Container(
-                          color: AppColors.border.withValues(alpha: 0.15),
-                          alignment: Alignment.center,
-                          child: const CommonLoadingWidget(isFullScreen: true),
-                        ),
-                      )
-                      : const SizedBox.shrink(),
+              () => controller.isLoading.value
+                  ? Positioned.fill(
+                      child: Container(
+                        color: AppColors.border.withValues(alpha: 0.15),
+                        alignment: Alignment.center,
+                        child: const CommonLoadingWidget(isFullScreen: true),
+                      ),
+                    )
+                  : const SizedBox.shrink(),
             ),
           ],
         ),
@@ -470,7 +481,7 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
           TextField(
             controller: transactionNumberController,
             decoration: InputDecoration(
-              hintText: 'Transaction Number',
+              hintText: languageService.tr('finance_transaction_number'),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
                 borderSide: BorderSide(color: AppColors.textGrey),
@@ -608,7 +619,8 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
                 Clipboard.setData(ClipboardData(text: value));
                 // Get.snackbar('Copied', '$label copied to clipboard');
                 CustomToastService.showSuccess(
-                  message: '$label copied to clipboard',
+                  message:
+                      '$label ${languageService.tr('common_copied_to_clipboard')}',
                   title: languageService.tr('deposit_instruction_copied'),
                 );
               },
@@ -651,9 +663,13 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
                 borderRadius: BorderRadius.zero,
                 side: BorderSide.none,
               ),
-              title:  Text(
+              title: Text(
                 'Instruction',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600,color: AppColors.textPrimary),
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
               ),
               childrenPadding: const EdgeInsets.all(16),
               children: [
@@ -721,7 +737,7 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
                   Expanded(
                     child: Text(
                       bankDetail!['crypto_address'].toString(),
-                      style:  TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
                         color: AppColors.textPrimary,
@@ -852,9 +868,13 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
                 borderRadius: BorderRadius.zero,
                 side: BorderSide.none,
               ),
-              title:  Text(
+              title: Text(
                 'Instruction',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600,color: AppColors.textPrimary),
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
               ),
               childrenPadding: const EdgeInsets.all(16),
               children: [
@@ -1015,9 +1035,7 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
               ),
               childrenPadding: const EdgeInsets.all(16),
               children: [
-                _buildInstructionItem(
-                  'Choose a network and amount.',
-                ),
+                _buildInstructionItem('Choose a network and amount.'),
                 const SizedBox(height: 8),
                 _buildInstructionItem(
                   'We will generate a unique deposit address for this payment.',
@@ -1042,7 +1060,10 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
             final networks = controller.cregisNetworks;
             if (networks.isEmpty) {
               return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.whiteColor,
                   borderRadius: BorderRadius.circular(8),
@@ -1057,7 +1078,10 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
             return GestureDetector(
               onTap: () => _showCregisNetworkDropdown(context),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.whiteColor,
                   borderRadius: BorderRadius.circular(8),
@@ -1069,7 +1093,9 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
                       child: Text(
                         controller.selectedCregisNetwork.value.isEmpty
                             ? 'Select Network'
-                            : _formatNetworkName(controller.selectedCregisNetwork.value),
+                            : _formatNetworkName(
+                                controller.selectedCregisNetwork.value,
+                              ),
                         style: TextStyle(
                           fontSize: 16,
                           color: controller.selectedCregisNetwork.value.isEmpty
@@ -1103,7 +1129,11 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.warning_amber_rounded, color: Colors.red, size: 20),
+                  Icon(
+                    Icons.warning_amber_rounded,
+                    color: Colors.red,
+                    size: 20,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -1170,9 +1200,7 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
               children: [
                 // QR Code if available
                 if (controller.cregisQrPath.value.isNotEmpty) ...[
-                  Center(
-                    child: _buildQRCodeImage(),
-                  ),
+                  Center(child: _buildQRCodeImage()),
                   const SizedBox(height: 24),
                 ],
 
@@ -1186,7 +1214,10 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
                 ),
                 const SizedBox(height: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.whiteColor,
                     borderRadius: BorderRadius.circular(8),
@@ -1208,7 +1239,9 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
                       GestureDetector(
                         onTap: () {
                           Clipboard.setData(
-                            ClipboardData(text: controller.cregisDepositAddress.value),
+                            ClipboardData(
+                              text: controller.cregisDepositAddress.value,
+                            ),
                           );
                           CustomToastService.showSuccess(
                             message: "Address copied to clipboard",
@@ -1251,7 +1284,10 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
                     Expanded(
                       child: Text(
                         'Polling ended. Check Transaction History for status.',
-                        style: TextStyle(fontSize: 13, color: Colors.orange.shade800),
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.orange.shade800,
+                        ),
                       ),
                     ),
                   ],
@@ -1273,13 +1309,19 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
                     SizedBox(
                       width: 16,
                       height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.blue),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.blue,
+                      ),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         'Waiting for payment... polling ${controller.cregisPollingAttemptCount}/20',
-                        style: TextStyle(fontSize: 13, color: Colors.blue.shade800),
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.blue.shade800,
+                        ),
                       ),
                     ),
                   ],
@@ -1311,10 +1353,12 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
           return ListView.separated(
             shrinkWrap: true,
             itemCount: networks.length,
-            separatorBuilder: (_, __) => Divider(height: 1, color: AppColors.border),
+            separatorBuilder: (_, __) =>
+                Divider(height: 1, color: AppColors.border),
             itemBuilder: (context, index) {
               final network = networks[index];
-              final isSelected = controller.selectedCregisNetwork.value == network;
+              final isSelected =
+                  controller.selectedCregisNetwork.value == network;
               return InkWell(
                 onTap: () {
                   controller.selectedCregisNetwork.value = network;
@@ -1393,20 +1437,20 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
           child: isGenerating
               ? ButtonLoadingWidget(size: 20.0, color: AppColors.whiteColor)
               : isSubmitting
-                  ? ButtonLoadingWidget(size: 20.0, color: AppColors.whiteColor)
-                  : Text(
-                      hasCheckoutUrl
-                          ? 'Open link to payment'
-                          : hasAddress
-                              ? languageService.tr("deposit_confirm_deposit")
-                              : 'Generate Address',
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        height: 1.71,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.whiteColor,
-                      ),
-                    ),
+              ? ButtonLoadingWidget(size: 20.0, color: AppColors.whiteColor)
+              : Text(
+                  hasCheckoutUrl
+                      ? 'Open link to payment'
+                      : hasAddress
+                      ? languageService.tr("deposit_confirm_deposit")
+                      : 'Generate Address',
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    height: 1.71,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.whiteColor,
+                  ),
+                ),
         ),
       );
     });
@@ -1416,62 +1460,61 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
     return Obx(
       () => SafeArea(
         child: ElevatedButton(
-          onPressed:
-              controller.isLoading.value
-                  ? null
-                  : () {
-                    print(widget.object);
-                    if (widget.object['type'].toString().toLowerCase() ==
-                        'bank') {
-                      if (transactionNumberController.text.isEmpty) {
-                        CustomToastService.showError(
-                          message: 'Please enter transaction number',
-                        );
-                      } else {
-                        controller.submitDepositInstruction({
-                          "gateway_method_id": widget.object['deposit_slug'],
-                          "amount": widget.amountString,
-                          "mt5_account_id": widget.selectedMT5AccountID,
-                          "currency": widget.currency,
-                          "utr_referce": transactionNumberController.text,
-                          if (widget.fromBonus) "is_bonus": 1,
-                        });
-                      }
-                    } else if (widget.object['type'].toString().toLowerCase() ==
-                        'local') {
-                      controller.submitDepositInstruction({
-                        "gateway_method_id": widget.object['deposit_slug'],
-                        "amount": widget.amountString,
-                        "mt5_account_id": widget.selectedMT5AccountID,
-                        "currency": widget.currency,
-                        "utr_referce": transactionNumberController.text,
-                        if (widget.fromBonus) "is_bonus": 1,
-                      });
-                    } else if (widget.object['type'].toString().toLowerCase() ==
-                        'crypto') {
-                      controller.submitDepositInstruction({
-                        "gateway_method_id": widget.object['deposit_slug'],
-                        "amount": widget.amountString,
-                        "mt5_account_id": widget.selectedMT5AccountID,
-                        "currency": widget.currency,
-                        "utr_referce": transactionNumberController.text,
-                        if (widget.fromBonus) "is_bonus": 1,
-                      });
+          onPressed: controller.isLoading.value
+              ? null
+              : () {
+                  print(widget.object);
+                  if (widget.object['type'].toString().toLowerCase() ==
+                      'bank') {
+                    if (transactionNumberController.text.isEmpty) {
+                      CustomToastService.showError(
+                        message: 'Please enter transaction number',
+                      );
                     } else {
-                      // UPI
-                      if (widget.object['type'].toString().toLowerCase() ==
-                          'upi') {
-                        controller.submitDepositInstruction({
-                          "gateway_method_id": widget.object['deposit_slug'],
-                          "amount": widget.amountString,
-                          "mt5_account_id": widget.selectedMT5AccountID,
-                          "currency": widget.currency,
-                          "utr_referce": transactionNumberController.text,
-                          if (widget.fromBonus) "is_bonus": 1,
-                        });
-                      }
+                      controller.submitDepositInstruction({
+                        "gateway_method_id": widget.object['deposit_slug'],
+                        "amount": widget.amountString,
+                        "mt5_account_id": widget.selectedMT5AccountID,
+                        "currency": widget.currency,
+                        "utr_referce": transactionNumberController.text,
+                        if (widget.fromBonus) "is_bonus": 1,
+                      });
                     }
-                  },
+                  } else if (widget.object['type'].toString().toLowerCase() ==
+                      'local') {
+                    controller.submitDepositInstruction({
+                      "gateway_method_id": widget.object['deposit_slug'],
+                      "amount": widget.amountString,
+                      "mt5_account_id": widget.selectedMT5AccountID,
+                      "currency": widget.currency,
+                      "utr_referce": transactionNumberController.text,
+                      if (widget.fromBonus) "is_bonus": 1,
+                    });
+                  } else if (widget.object['type'].toString().toLowerCase() ==
+                      'crypto') {
+                    controller.submitDepositInstruction({
+                      "gateway_method_id": widget.object['deposit_slug'],
+                      "amount": widget.amountString,
+                      "mt5_account_id": widget.selectedMT5AccountID,
+                      "currency": widget.currency,
+                      "utr_referce": transactionNumberController.text,
+                      if (widget.fromBonus) "is_bonus": 1,
+                    });
+                  } else {
+                    // UPI
+                    if (widget.object['type'].toString().toLowerCase() ==
+                        'upi') {
+                      controller.submitDepositInstruction({
+                        "gateway_method_id": widget.object['deposit_slug'],
+                        "amount": widget.amountString,
+                        "mt5_account_id": widget.selectedMT5AccountID,
+                        "currency": widget.currency,
+                        "utr_referce": transactionNumberController.text,
+                        if (widget.fromBonus) "is_bonus": 1,
+                      });
+                    }
+                  }
+                },
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,
             foregroundColor: AppColors.whiteColor,
@@ -1481,18 +1524,17 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
             elevation: 0,
             padding: EdgeInsets.zero,
           ),
-          child:
-              controller.isLoading.value
-                  ? ButtonLoadingWidget(size: 20.0, color: AppColors.whiteColor)
-                  : Text(
-                    languageService.tr("deposit_confirm_deposit"),
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      height: 1.71,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.whiteColor,
-                    ),
+          child: controller.isLoading.value
+              ? ButtonLoadingWidget(size: 20.0, color: AppColors.whiteColor)
+              : Text(
+                  languageService.tr("deposit_confirm_deposit"),
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    height: 1.71,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.whiteColor,
                   ),
+                ),
         ),
       ),
     );

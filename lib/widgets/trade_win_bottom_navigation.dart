@@ -41,13 +41,15 @@ class TradeWinBottomNavigation extends StatelessWidget {
 
     return SafeArea(
       child: Padding(
-        padding: EdgeInsets.only(left: 16.w, right: 16.w, bottom: 12.h),
+        padding: EdgeInsetsDirectional.fromSTEB(16.w, 0, 16.w, 12.h),
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(32.r),
             boxShadow: [
               BoxShadow(
-                color: AppColors.textPrimary.withValues(alpha: AppColors.isDarkMode ? 0.22 : 0.15),
+                color: AppColors.textPrimary.withValues(
+                  alpha: AppColors.isDarkMode ? 0.22 : 0.15,
+                ),
                 blurRadius: 22,
                 spreadRadius: 2,
                 offset: const Offset(0, 8),
@@ -67,14 +69,15 @@ class TradeWinBottomNavigation extends StatelessWidget {
                     color: AppColors.icongrey.withValues(alpha: 0.14),
                   ),
                 ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: List.generate(
-                  _items.length,
-                  (index) => _buildItem(
-                    index: index,
-                    item: _items[index],
-                    label: languageService.tr(_items[index].labelKey),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: List.generate(
+                    _items.length,
+                    (index) => _buildItem(
+                      index: index,
+                      item: _items[index],
+                      label: languageService.tr(_items[index].labelKey),
+                    ),
                   ),
                 ),
               ),
@@ -82,9 +85,8 @@ class TradeWinBottomNavigation extends StatelessWidget {
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildItem({
     required int index,
@@ -93,8 +95,9 @@ class TradeWinBottomNavigation extends StatelessWidget {
   }) {
     final selected = currentIndex == index;
     final inactiveColor = AppColors.textGrey;
-    final activeColor =
-        AppColors.isDarkMode ? AppColors.textPrimary : AppColors.primary;
+    final activeColor = AppColors.isDarkMode
+        ? AppColors.textPrimary
+        : AppColors.primary;
 
     return Expanded(
       child: InkWell(
@@ -103,12 +106,11 @@ class TradeWinBottomNavigation extends StatelessWidget {
         child: Container(
           padding: EdgeInsets.symmetric(vertical: 6.h),
           decoration: BoxDecoration(
-            color:
-                selected
-                    ? AppColors.primary.withValues(
-                      alpha: AppColors.isDarkMode ? 0.15 : 0.12,
-                    )
-                    : Colors.transparent,
+            color: selected
+                ? AppColors.primary.withValues(
+                    alpha: AppColors.isDarkMode ? 0.15 : 0.12,
+                  )
+                : Colors.transparent,
             borderRadius: BorderRadius.circular(24.r),
           ),
           child: Column(

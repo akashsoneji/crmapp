@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
+import 'package:crm_app/services/language_service.dart';
 
 import '../routes/app_pages.dart';
 
@@ -27,7 +28,7 @@ class KycScaffold extends StatelessWidget {
           elevation: 0,
           automaticallyImplyLeading: false, // No back arrow
           title: Text(
-            title ?? 'Verify your account',
+            title ?? Get.find<LanguageService>().tr('verify_your_account'),
             style: AppTextStyles.heading,
           ),
           centerTitle: false,
@@ -71,7 +72,7 @@ class KycScaffold extends StatelessWidget {
           title: Column(
             children: [
               Align(
-                alignment: Alignment.topRight,
+                alignment: AlignmentDirectional.topEnd,
                 child: GestureDetector(
                   onTap: () => Get.back(closeOverlays: true),
                   child: Container(
@@ -97,11 +98,14 @@ class KycScaffold extends StatelessWidget {
                 color: AppColors.primary,
               ),
               SizedBox(height: 20.h, width: 20.w),
-              Text('Verify Later?', style: AppTextStyles.black16600),
+              Text(
+                Get.find<LanguageService>().tr('navigation_skip'),
+                style: AppTextStyles.black16600,
+              ),
             ],
           ),
           content: Text(
-            'You can continue later, but you won\'t get all benefits until verification is complete',
+            Get.find<LanguageService>().tr('common_skip_for_now'),
             style: AppTextStyles.grey14400h57,
             textAlign: TextAlign.center,
           ),
@@ -127,7 +131,7 @@ class KycScaffold extends StatelessWidget {
                       padding: EdgeInsets.symmetric(vertical: 12.h),
                     ),
                     child: Text(
-                      'Verify\nLater',
+                      Get.find<LanguageService>().tr('navigation_skip'),
                       style: TextStyle(
                         fontSize: 14.sp,
                         fontWeight: FontWeight.w600,
@@ -150,7 +154,7 @@ class KycScaffold extends StatelessWidget {
                     ),
                     child: Text(
                       textAlign: TextAlign.center,
-                      'Continue Verification',
+                      Get.find<LanguageService>().tr('navigation_continue'),
                       style: TextStyle(
                         fontSize: 14.sp,
                         fontWeight: FontWeight.w600,

@@ -161,10 +161,7 @@ class ContestRulesScreen extends StatelessWidget {
             SizedBox(height: 28.h),
             Center(
               child: Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 14.w,
-                  vertical: 10.h,
-                ),
+                padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
                 decoration: BoxDecoration(
                   color: AppColors.textGrey.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(10.r),
@@ -210,9 +207,7 @@ class _RuleCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(14.r),
-        border: Border.all(
-          color: AppColors.icongrey.withValues(alpha: 0.18),
-        ),
+        border: Border.all(color: AppColors.icongrey.withValues(alpha: 0.18)),
         boxShadow: [
           BoxShadow(
             color: AppColors.border.withValues(alpha: 0.04),

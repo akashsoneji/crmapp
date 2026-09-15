@@ -11,6 +11,7 @@ import 'package:crm_app/controllers/copy_trading/copy_trading_hub_controller.dar
 import 'package:crm_app/routes/app_pages.dart';
 import 'package:crm_app/widgets/labeled_app_text_field.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
+import 'package:crm_app/services/language_service.dart';
 
 class BecomeMasterTab extends StatefulWidget {
   const BecomeMasterTab({super.key});
@@ -46,6 +47,7 @@ class _BecomeMasterTabState extends State<BecomeMasterTab> {
   Widget build(BuildContext context) {
     final hub = Get.find<CopyTradingHubController>();
     final auth = Get.find<AuthController>();
+    final languageService = Get.find<LanguageService>();
     final user = auth.userData;
 
     MoreController? moreController;
@@ -55,10 +57,9 @@ class _BecomeMasterTabState extends State<BecomeMasterTab> {
       moreController = Get.put(MoreController());
     }
 
-    final userName =
-        user != null
-            ? '${user.firstName} ${user.lastName}'.trim()
-            : 'demo account';
+    final userName = user != null
+        ? '${user.firstName} ${user.lastName}'.trim()
+        : 'demo account';
 
     return Scaffold(
       backgroundColor: AppColors.tradeBackgroundCenterColor,
@@ -103,19 +104,19 @@ class _BecomeMasterTabState extends State<BecomeMasterTab> {
             return _buildPendingReviewView(code);
           }
 
-          final applyBtnFg =
-              AppColors.primary.computeLuminance() > 0.5
-                  ? AppColors.textPrimaryLight
-                  : AppColors.onColoredBackground;
+          final applyBtnFg = AppColors.primary.computeLuminance() > 0.5
+              ? AppColors.textPrimaryLight
+              : AppColors.onColoredBackground;
           final isDark = AppColors.isDarkMode;
-          final checkBorder =
-              isDark ? AppColors.textPrimaryDark : AppColors.primary;
-          final checkFill =
-              isDark ? AppColors.textPrimaryDark : AppColors.primary;
-          final checkMark =
-              isDark
-                  ? AppColors.textPrimaryLight
-                  : AppColors.onColoredBackground;
+          final checkBorder = isDark
+              ? AppColors.textPrimaryDark
+              : AppColors.primary;
+          final checkFill = isDark
+              ? AppColors.textPrimaryDark
+              : AppColors.primary;
+          final checkMark = isDark
+              ? AppColors.textPrimaryLight
+              : AppColors.onColoredBackground;
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -141,87 +142,80 @@ class _BecomeMasterTabState extends State<BecomeMasterTab> {
                 childAspectRatio: 1.5,
                 children: [
                   _buildStepCard(
-                    title: 'Email Verification',
+                    title: TranslationUtils.tr('auth_email_verification'),
                     completed: isEmailVerified,
-                    icon:
-                        isEmailVerified
-                            ? Icons.check_circle_rounded
-                            : Icons.info_outline_rounded,
+                    icon: isEmailVerified
+                        ? Icons.check_circle_rounded
+                        : Icons.info_outline_rounded,
                     onTap: () async {
                       if (!isEmailVerified) {
-                        final stage =
-                            moreController
-                                ?.dashboardModel
-                                .value
-                                ?.data
-                                ?.stageCompletion;
+                        final stage = moreController
+                            ?.dashboardModel
+                            .value
+                            ?.data
+                            ?.stageCompletion;
                         await Get.toNamed(AppPages.KYC_INTRO, arguments: stage);
                         moreController?.loadMoreScreenData();
                       }
                     },
                   ),
                   _buildStepCard(
-                    title: 'Mobile Verification',
+                    title: TranslationUtils.tr('copy_mobile_verification'),
                     completed: isMobileVerified,
-                    icon:
-                        isMobileVerified
-                            ? Icons.check_circle_rounded
-                            : Icons.info_outline_rounded,
+                    icon: isMobileVerified
+                        ? Icons.check_circle_rounded
+                        : Icons.info_outline_rounded,
                     onTap: () async {
                       if (!isMobileVerified) {
-                        final stage =
-                            moreController
-                                ?.dashboardModel
-                                .value
-                                ?.data
-                                ?.stageCompletion;
+                        final stage = moreController
+                            ?.dashboardModel
+                            .value
+                            ?.data
+                            ?.stageCompletion;
                         await Get.toNamed(AppPages.KYC_INTRO, arguments: stage);
                         moreController?.loadMoreScreenData();
                       }
                     },
                   ),
                   _buildStepCard(
-                    title: 'Personal Information',
+                    title: TranslationUtils.tr('personal_information'),
                     completed: isPersonalInfoVerified,
-                    icon:
-                        isPersonalInfoVerified
-                            ? Icons.check_circle_rounded
-                            : Icons.info_outline_rounded,
+                    icon: isPersonalInfoVerified
+                        ? Icons.check_circle_rounded
+                        : Icons.info_outline_rounded,
                     onTap: () async {
                       if (!isPersonalInfoVerified) {
-                        final stage =
-                            moreController
-                                ?.dashboardModel
-                                .value
-                                ?.data
-                                ?.stageCompletion;
+                        final stage = moreController
+                            ?.dashboardModel
+                            .value
+                            ?.data
+                            ?.stageCompletion;
                         await Get.toNamed(AppPages.KYC_INTRO, arguments: stage);
                         moreController?.loadMoreScreenData();
                       }
                     },
                   ),
                   _buildStepCard(
-                    title: 'Copy Trading Application',
+                    title: TranslationUtils.tr('copy_trading_application'),
                     completed:
                         status == CopyTradingMasterApplicationStatus.approved,
-                    icon:
-                        status == CopyTradingMasterApplicationStatus.approved
-                            ? Icons.check_circle_rounded
-                            : (status ==
-                                    CopyTradingMasterApplicationStatus.pending
-                                ? Icons.hourglass_empty_rounded
-                                : Icons.notifications_none_rounded),
+                    icon: status == CopyTradingMasterApplicationStatus.approved
+                        ? Icons.check_circle_rounded
+                        : (status == CopyTradingMasterApplicationStatus.pending
+                              ? Icons.hourglass_empty_rounded
+                              : Icons.notifications_none_rounded),
                     labelOverride:
                         status == CopyTradingMasterApplicationStatus.none
-                            ? 'Not Applied'
-                            : (status ==
-                                    CopyTradingMasterApplicationStatus.pending
-                                ? 'Pending'
-                                : (status ==
+                        ? TranslationUtils.tr('copy_trading_not_applied')
+                        : (status == CopyTradingMasterApplicationStatus.pending
+                              ? languageService.tr('kyc_verification_pending')
+                              : (status ==
                                         CopyTradingMasterApplicationStatus
                                             .rejected
-                                    ? 'Rejected'
-                                    : 'Completed')),
+                                    ? languageService.tr(
+                                        'kyc_verification_rejected',
+                                      )
+                                    : languageService.tr('completed'))),
                   ),
                 ],
               ),
@@ -229,12 +223,11 @@ class _BecomeMasterTabState extends State<BecomeMasterTab> {
               if (!isKycCompleted) ...[
                 GestureDetector(
                   onTap: () async {
-                    final stage =
-                        moreController
-                            ?.dashboardModel
-                            .value
-                            ?.data
-                            ?.stageCompletion;
+                    final stage = moreController
+                        ?.dashboardModel
+                        .value
+                        ?.data
+                        ?.stageCompletion;
                     await Get.toNamed(AppPages.KYC_INTRO, arguments: stage);
                     moreController?.loadMoreScreenData();
                   },
@@ -348,7 +341,7 @@ class _BecomeMasterTabState extends State<BecomeMasterTab> {
                     ),
                     SizedBox(height: 4.h),
                     Text(
-                      'Shown for admin reference; update in profile if incorrect.',
+                      TranslationUtils.tr('copy_admin_reference_hint'),
                       style: TextStyle(
                         fontSize: 10.sp,
                         color: AppColors.textGrey,
@@ -357,15 +350,15 @@ class _BecomeMasterTabState extends State<BecomeMasterTab> {
                     SizedBox(height: 4.h),
                     // Public nickname
                     LabeledAppTextField(
-                      label: 'Public nickname *',
+                      label: '${TranslationUtils.tr('copy_public_nickname')} *',
                       controller: _nicknameCtrl,
                       keyboardType: TextInputType.text,
-                      hintText: 'e.g. Alpha Trader',
+                      hintText: TranslationUtils.tr('copy_nickname_hint'),
                       onChanged: (s) => hub.masterApplyNicknameDraft.value = s,
                     ),
                     SizedBox(height: 4.h),
                     Text(
-                      'Displayed on the public leaderboard and master profile.',
+                      TranslationUtils.tr('copy_public_nickname_hint'),
                       style: TextStyle(
                         fontSize: 10.sp,
                         color: AppColors.textGrey,
@@ -375,15 +368,18 @@ class _BecomeMasterTabState extends State<BecomeMasterTab> {
 
                     // Strategy Description
                     LabeledAppTextField(
-                      label: 'Strategy Description *',
+                      label:
+                          '${TranslationUtils.tr('copy_strategy_description')} *',
                       controller: _strategyCtrl,
                       keyboardType: TextInputType.text,
-                      hintText: 'e.g. Conservative gold scalping strategy',
+                      hintText: TranslationUtils.tr(
+                        'copy_strategy_description_hint',
+                      ),
                       onChanged: (s) => hub.masterApplyStrategyDraft.value = s,
                     ),
                     SizedBox(height: 4.h),
                     Text(
-                      'Explain your trading logic and strategy to copy investors.',
+                      TranslationUtils.tr('copy_strategy_description_help'),
                       style: TextStyle(
                         fontSize: 10.sp,
                         color: AppColors.textGrey,
@@ -431,10 +427,8 @@ class _BecomeMasterTabState extends State<BecomeMasterTab> {
                             materialTapTargetSize:
                                 MaterialTapTargetSize.shrinkWrap,
                             visualDensity: VisualDensity.compact,
-                            onChanged:
-                                (v) =>
-                                    hub.masterApplyTermsAccepted.value =
-                                        v ?? false,
+                            onChanged: (v) =>
+                                hub.masterApplyTermsAccepted.value = v ?? false,
                           ),
                         ),
                         SizedBox(width: 8.w),
@@ -457,108 +451,108 @@ class _BecomeMasterTabState extends State<BecomeMasterTab> {
                       width: double.infinity,
                       height: 44.h,
                       child: ElevatedButton(
-                        onPressed:
-                            applying
-                                ? null
-                                : (!isKycCompleted
-                                    ? () async {
-                                      final stage =
-                                          moreController
-                                              ?.dashboardModel
-                                              .value
-                                              ?.data
-                                              ?.stageCompletion;
+                        onPressed: applying
+                            ? null
+                            : (!isKycCompleted
+                                  ? () async {
+                                      final stage = moreController
+                                          ?.dashboardModel
+                                          .value
+                                          ?.data
+                                          ?.stageCompletion;
                                       await Get.toNamed(
                                         AppPages.KYC_INTRO,
                                         arguments: stage,
                                       );
                                       moreController?.loadMoreScreenData();
                                     }
-                                    : (canSubmit
+                                  : (canSubmit
                                         ? () async {
-                                          final nick =
-                                              hub.masterApplyNicknameDraft.value
-                                                  .trim();
-                                          final strategy =
-                                              hub.masterApplyStrategyDraft.value
-                                                  .trim();
-                                          final riskInfo =
-                                              hub.masterApplyRiskInfoDraft.value
-                                                  .trim();
-                                          final res = await hub.applyForMaster(
-                                            nickname: nick,
-                                            termsAccepted:
-                                                hub
-                                                    .masterApplyTermsAccepted
-                                                    .value,
-                                            strategy: strategy,
-                                            riskInfo: riskInfo,
-                                          );
-                                          if (res.success) {
-                                            CustomToastService.showSuccess(
-                                              title: 'Submitted',
-                                              message:
-                                                  res.message ??
-                                                  'Application submitted',
-                                              duration: const Duration(
-                                                milliseconds: 2500,
-                                              ),
-                                            );
-                                          } else {
-                                            CustomToastService.showError(
-                                              title: 'Failed',
-                                              message:
-                                                  res.message ??
-                                                  hub.errorMessage.value,
-                                              duration: const Duration(
-                                                milliseconds: 2500,
-                                              ),
-                                            );
+                                            final nick = hub
+                                                .masterApplyNicknameDraft
+                                                .value
+                                                .trim();
+                                            final strategy = hub
+                                                .masterApplyStrategyDraft
+                                                .value
+                                                .trim();
+                                            final riskInfo = hub
+                                                .masterApplyRiskInfoDraft
+                                                .value
+                                                .trim();
+                                            final res = await hub
+                                                .applyForMaster(
+                                                  nickname: nick,
+                                                  termsAccepted: hub
+                                                      .masterApplyTermsAccepted
+                                                      .value,
+                                                  strategy: strategy,
+                                                  riskInfo: riskInfo,
+                                                );
+                                            if (res.success) {
+                                              CustomToastService.showSuccess(
+                                                title: 'Submitted',
+                                                message:
+                                                    res.message ??
+                                                    'Application submitted',
+                                                duration: const Duration(
+                                                  milliseconds: 2500,
+                                                ),
+                                              );
+                                            } else {
+                                              CustomToastService.showError(
+                                                title: TranslationUtils.tr(
+                                                  'general_failed',
+                                                ),
+                                                message:
+                                                    res.message ??
+                                                    hub.errorMessage.value,
+                                                duration: const Duration(
+                                                  milliseconds: 2500,
+                                                ),
+                                              );
+                                            }
                                           }
-                                        }
                                         : null)),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              !isKycCompleted
-                                  ? AppColors.primary
-                                  : AppColors.primary,
-                          foregroundColor:
-                              !isKycCompleted
-                                  ? AppColors.whiteColor
-                                  : applyBtnFg,
+                          backgroundColor: !isKycCompleted
+                              ? AppColors.primary
+                              : AppColors.primary,
+                          foregroundColor: !isKycCompleted
+                              ? AppColors.whiteColor
+                              : applyBtnFg,
                           disabledBackgroundColor: AppColors.textGrey
                               .withValues(alpha: 0.2),
-                          disabledForegroundColor: (!isKycCompleted
-                                  ? AppColors.whiteColor
-                                  : applyBtnFg)
-                              .withValues(alpha: 0.4),
+                          disabledForegroundColor:
+                              (!isKycCompleted
+                                      ? AppColors.whiteColor
+                                      : applyBtnFg)
+                                  .withValues(alpha: 0.4),
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10.r),
                           ),
                         ),
-                        child:
-                            applying
-                                ? SizedBox(
-                                  width: 18.r,
-                                  height: 18.r,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: applyBtnFg,
-                                  ),
-                                )
-                                : Text(
-                                  !isKycCompleted
-                                      ? 'Complete KYC to Apply'
-                                      : 'Submit Application',
-                                  style: AppTextStyles.button.copyWith(
-                                    color:
-                                        !isKycCompleted
-                                            ? AppColors.whiteColor
-                                            : applyBtnFg,
-                                    fontSize: 14.sp,
-                                  ),
+                        child: applying
+                            ? SizedBox(
+                                width: 18.r,
+                                height: 18.r,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: applyBtnFg,
                                 ),
+                              )
+                            : Text(
+                                !isKycCompleted
+                                    ? 'Complete KYC to Apply'
+                                    : 'Submit Application',
+                                style: AppTextStyles.button.copyWith(
+                                  color: !isKycCompleted
+                                      ? AppColors.whiteColor
+                                      : applyBtnFg,
+                                  fontSize: 14.sp,
+                                ),
+                              ),
                       ),
                     ),
                   ],
@@ -580,13 +574,12 @@ class _BecomeMasterTabState extends State<BecomeMasterTab> {
   }) {
     final isprimary =
         !completed &&
-        (title == 'Email Verification' ||
-            title == 'Mobile Verification' ||
-            title == 'Personal Information');
-    final statusColor =
-        completed
-            ? AppColors.primary
-            : (isprimary ? AppColors.primary : AppColors.textGrey);
+        (title == TranslationUtils.tr('auth_email_verification') ||
+            title == TranslationUtils.tr('mobile_verification') ||
+            title == TranslationUtils.tr('personal_information'));
+    final statusColor = completed
+        ? AppColors.primary
+        : (isprimary ? AppColors.primary : AppColors.textGrey);
     final statusText = labelOverride ?? (completed ? 'Completed' : 'Pending');
 
     return GestureDetector(
@@ -597,10 +590,9 @@ class _BecomeMasterTabState extends State<BecomeMasterTab> {
           color: AppColors.card,
           borderRadius: BorderRadius.circular(12.r),
           border: Border.all(
-            color:
-                onTap != null && !completed
-                    ? AppColors.primary.withValues(alpha: 0.3)
-                    : AppColors.textGrey.withValues(alpha: 0.12),
+            color: onTap != null && !completed
+                ? AppColors.primary.withValues(alpha: 0.3)
+                : AppColors.textGrey.withValues(alpha: 0.12),
           ),
         ),
         child: Column(

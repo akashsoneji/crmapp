@@ -2,6 +2,7 @@ import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/models/demo_contest/demo_contest_model.dart';
 import 'package:flutter/material.dart';
+import 'package:crm_app/services/language_service.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 /// Big, eye-catching promo card shown at the top of the Join Contest
@@ -25,13 +26,13 @@ class ContestPromoCard extends StatelessWidget {
     final tagColor = live
         ? AppColors.success
         : upcoming
-            ? AppColors.warning
-            : AppColors.textGrey;
+        ? AppColors.warning
+        : AppColors.textGrey;
     final tagLabel = live
         ? '● LIVE'
         : upcoming
-            ? 'UPCOMING'
-            : 'ENDED';
+        ? 'UPCOMING'
+        : 'ENDED';
 
     return Material(
       color: Colors.transparent,
@@ -149,17 +150,20 @@ class ContestPromoCard extends StatelessWidget {
                 children: [
                   _StatPill(
                     emoji: '👥',
-                    label: '${contest.joinedParticipants}/${contest.maxParticipants}',
+                    label:
+                        '${contest.joinedParticipants}/${contest.maxParticipants}',
                   ),
                   SizedBox(width: 8.w),
                   _StatPill(
                     emoji: '💰',
-                    label: '\$${(contest.prizes.isNotEmpty ? contest.prizes.first.amount : 0).toStringAsFixed(0)} prize',
+                    label:
+                        '\$${(contest.prizes.isNotEmpty ? contest.prizes.first.amount : 0).toStringAsFixed(0)} ${TranslationUtils.tr('demo_contest_prize')}',
                   ),
                   SizedBox(width: 8.w),
                   _StatPill(
                     emoji: '📈',
-                    label: '\$${_formatK(contest.startingBalance)} start',
+                    label:
+                        '\$${_formatK(contest.startingBalance)} ${TranslationUtils.tr('demo_contest_start')}',
                   ),
                 ],
               ),

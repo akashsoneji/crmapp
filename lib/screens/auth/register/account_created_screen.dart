@@ -118,8 +118,7 @@ class AccountCreatedScreen extends StatelessWidget {
     return Column(
       children: [
         Text(
-          // "${languageService.tr("onboarding_welcome")} ${FlavorConfig.appNameDisplay}",
-          "Welcome to ${FlavorConfig.appNameDisplay}",
+          "${languageService.tr("onboarding_welcome")} ${FlavorConfig.appNameDisplay}",
           style: AppTextStyles.heading.copyWith(
             fontSize: 28.sp,
             fontWeight: FontWeight.w700,
@@ -183,7 +182,10 @@ class AccountCreatedScreen extends StatelessWidget {
               ),
               elevation: 0,
             ),
-            child: Text("Create Trading Account", style: AppTextStyles.button),
+            child: Text(
+              languageService.tr("auth_create_trading_account"),
+              style: AppTextStyles.button,
+            ),
           ),
         ),
         SizedBox(height: 12.h),

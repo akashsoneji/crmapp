@@ -413,7 +413,10 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
     widget.limitPriceController.addListener(() {
       final text = widget.limitPriceController.text;
       if (text.isNotEmpty) {
-        final newPrice = PrecisionHelper.parseDouble(text, decimals: currentDigits);
+        final newPrice = PrecisionHelper.parseDouble(
+          text,
+          decimals: currentDigits,
+        );
         if (newPrice > 0) {
           if (widget.limitPrice.value != newPrice) {
             widget.limitPrice.value = newPrice;
@@ -613,7 +616,10 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
       return null;
     }
 
-    final slPrice = PrecisionHelper.parseDouble(widget.stopLossController.text, decimals: currentDigits);
+    final slPrice = PrecisionHelper.parseDouble(
+      widget.stopLossController.text,
+      decimals: currentDigits,
+    );
     if (slPrice == null || slPrice <= 0) return null;
 
     // Use limit price as entry price for pending orders
@@ -660,10 +666,9 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
 
   // Calculate required margin
   double _calculateRequiredMargin() {
-    final currentPrice =
-        widget.selectedPendingOrderType.value == 0
-            ? currentBidPrice
-            : currentAskPrice;
+    final currentPrice = widget.selectedPendingOrderType.value == 0
+        ? currentBidPrice
+        : currentAskPrice;
 
     if (currentPrice == null) return 0.0;
 
@@ -685,12 +690,11 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
     if (!widget.stopLossEnabled.value) return null;
 
     // Use limit price for limit orders, current market price for market orders
-    final entryPrice =
-        widget.whenPriceIsEnabled.value
-            ? widget.limitPrice.value
-            : (widget.selectedPendingOrderType.value == 0
-                ? currentBidPrice
-                : currentAskPrice);
+    final entryPrice = widget.whenPriceIsEnabled.value
+        ? widget.limitPrice.value
+        : (widget.selectedPendingOrderType.value == 0
+              ? currentBidPrice
+              : currentAskPrice);
 
     if (entryPrice == null) return null;
 
@@ -714,12 +718,11 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
     if (!widget.takeProfitEnabled.value) return null;
 
     // Use limit price for limit orders, current market price for market orders
-    final entryPrice =
-        widget.whenPriceIsEnabled.value
-            ? widget.limitPrice.value
-            : (widget.selectedPendingOrderType.value == 0
-                ? currentBidPrice
-                : currentAskPrice);
+    final entryPrice = widget.whenPriceIsEnabled.value
+        ? widget.limitPrice.value
+        : (widget.selectedPendingOrderType.value == 0
+              ? currentBidPrice
+              : currentAskPrice);
 
     if (entryPrice == null) return null;
 
@@ -744,10 +747,9 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
     // Only validate if "When price is" toggle is ON
     if (!widget.whenPriceIsEnabled.value) return null;
 
-    final currentPrice =
-        widget.selectedPendingOrderType.value == 0
-            ? currentBidPrice
-            : currentAskPrice;
+    final currentPrice = widget.selectedPendingOrderType.value == 0
+        ? currentBidPrice
+        : currentAskPrice;
 
     if (currentPrice == null) return null;
 
@@ -781,12 +783,24 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
     } else if (orderType == 'Buy Stop Limit') {
       // Trigger Price should be ABOVE current price
       if (roundedOpenPrice <= roundedCurrentPrice) {
-        return 'Trigger price should be above ${PrecisionHelper.formatPrice(currentPrice, decimals: currentDigits)}';
+        return TranslationUtils.trf(
+          'trigger_price_above',
+          'Trigger price should be above {price}',
+        ).replaceFirst(
+          '{price}',
+          PrecisionHelper.formatPrice(currentPrice, decimals: currentDigits),
+        );
       }
     } else if (orderType == 'Sell Stop Limit') {
       // Trigger Price should be BELOW current price
       if (roundedOpenPrice >= roundedCurrentPrice) {
-        return 'Trigger price should be below ${PrecisionHelper.formatPrice(currentPrice, decimals: currentDigits)}';
+        return TranslationUtils.trf(
+          'trigger_price_below',
+          'Trigger price should be below {price}',
+        ).replaceFirst(
+          '{price}',
+          PrecisionHelper.formatPrice(currentPrice, decimals: currentDigits),
+        );
       }
     }
 
@@ -920,9 +934,9 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                   } else {
                     final label =
                         (orderType == OrderType.buyStop ||
-                                orderType == OrderType.sellStop)
-                            ? 'Trigger Price'
-                            : 'Price';
+                            orderType == OrderType.sellStop)
+                        ? 'Trigger Price'
+                        : 'Price';
                     return Column(
                       children: [
                         _buildDynamicPriceInput(
@@ -986,8 +1000,9 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                         width: double.infinity,
                         height: 40.h,
                         child: ElevatedButton(
-                          onPressed:
-                              isButtonEnabled ? widget.onPlaceOrder : null,
+                          onPressed: isButtonEnabled
+                              ? widget.onPlaceOrder
+                              : null,
                           style: ElevatedButton.styleFrom(
                             padding: EdgeInsets.zero,
                             backgroundColor: AppColors.primary,
@@ -996,43 +1011,46 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                             ),
                             elevation: 2,
                           ),
-                          child:
-                              widget.isLoading
-                                  ? Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      SizedBox(
-                                        width: 20.w,
-                                        height: 20.h,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          valueColor:
-                                              AlwaysStoppedAnimation<Color>(
-                                                AppColors.whiteColor,
-                                              ),
-                                        ),
+                          child: widget.isLoading
+                              ? Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    SizedBox(
+                                      width: 20.w,
+                                      height: 20.h,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                              AppColors.whiteColor,
+                                            ),
                                       ),
-                                      SizedBox(width: 12.w),
-                                      Text(
-                                        'Processing...',
-                                        style: AppTextStyles.label.copyWith(
-                                          fontSize: 16.sp,
-                                          fontWeight: FontWeight.w700,
-                                          color: AppColors.whiteColor,
-                                        ),
-                                      ),
-                                    ],
-                                  )
-                                  : Text(
-                                    isValid
-                                        ? 'Place Pending Order'
-                                        : 'Fix validation errors',
-                                    style: AppTextStyles.label.copyWith(
-                                      fontSize: 16.sp,
-                                      fontWeight: FontWeight.w700,
-                                      color: AppColors.whiteColor,
                                     ),
+                                    SizedBox(width: 12.w),
+                                    Text(
+                                      'Processing...',
+                                      style: AppTextStyles.label.copyWith(
+                                        fontSize: 16.sp,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.whiteColor,
+                                      ),
+                                    ),
+                                  ],
+                                )
+                              : Text(
+                                  isValid
+                                      ? languageService.tr(
+                                          'pending_order_place',
+                                        )
+                                      : languageService.tr(
+                                          'toast_validation_errors',
+                                        ),
+                                  style: AppTextStyles.label.copyWith(
+                                    fontSize: 16.sp,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.whiteColor,
                                   ),
+                                ),
                         ),
                       );
                     },
@@ -1042,10 +1060,9 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
 
               // Extra padding for keyboard
               SizedBox(
-                height:
-                    MediaQuery.of(context).viewInsets.bottom > 0
-                        ? MediaQuery.of(context).viewInsets.bottom + 20.h
-                        : 20.h,
+                height: MediaQuery.of(context).viewInsets.bottom > 0
+                    ? MediaQuery.of(context).viewInsets.bottom + 20.h
+                    : 20.h,
               ),
             ],
           ),
@@ -1168,10 +1185,9 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                     onEditingComplete: () {
                       // Clamp to [_minLot, _maxLot] when user leaves the field.
                       final parsed = double.tryParse(volumeController.text);
-                      final clamped =
-                          (parsed == null || parsed <= 0)
-                              ? _minLot
-                              : parsed.clamp(_minLot, _maxLot);
+                      final clamped = (parsed == null || parsed <= 0)
+                          ? _minLot
+                          : parsed.clamp(_minLot, _maxLot);
                       setState(() {
                         volume = double.parse(clamped.toStringAsFixed(2));
                         widget.onVolumeChanged(volume);
@@ -1342,8 +1358,12 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                           isDense: true,
                         ),
                         onChanged: (value) {
-                          isManuallyEditingPrice = true; // User is manually editing
-                          final newPrice = PrecisionHelper.parseDouble(value, decimals: currentDigits);
+                          isManuallyEditingPrice =
+                              true; // User is manually editing
+                          final newPrice = PrecisionHelper.parseDouble(
+                            value,
+                            decimals: currentDigits,
+                          );
                           if (newPrice > 0) {
                             if (priceNotifier.value != newPrice) {
                               priceNotifier.value = newPrice;
@@ -1756,10 +1776,9 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
 
     // For TP: positive = profit (green), negative = loss (red)
     // For SL: ALWAYS show in red (it's always a loss)
-    final color =
-        isProfit
-            ? (isPositive ? AppColors.success : AppColors.error)
-            : AppColors.error; // SL is always a loss, always show in red
+    final color = isProfit
+        ? (isPositive ? AppColors.success : AppColors.error)
+        : AppColors.error; // SL is always a loss, always show in red
 
     return Padding(
       padding: EdgeInsets.only(top: 8.h, left: 12.w, right: 12.w),
@@ -1855,99 +1874,96 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder:
-          (context) => Container(
-            decoration: BoxDecoration(
-              color: AppColors.whiteColor,
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(20.r),
-                topRight: Radius.circular(20.r),
-              ),
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: AppColors.whiteColor,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20.r),
+            topRight: Radius.circular(20.r),
+          ),
+        ),
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
             ),
-            child: SafeArea(
-              top: false,
-              child: Padding(
-                padding: EdgeInsets.only(
-                  bottom: MediaQuery.of(context).viewInsets.bottom,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Handle Bar
+                Container(
+                  margin: EdgeInsets.only(top: 12.h),
+                  width: 40.w,
+                  height: 4.h,
+                  decoration: BoxDecoration(
+                    color: AppColors.border,
+                    borderRadius: BorderRadius.circular(2.r),
+                  ),
                 ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Handle Bar
-                    Container(
-                      margin: EdgeInsets.only(top: 12.h),
-                      width: 40.w,
-                      height: 4.h,
-                      decoration: BoxDecoration(
-                        color: AppColors.border,
-                        borderRadius: BorderRadius.circular(2.r),
-                      ),
-                    ),
-                    SizedBox(height: 24.h),
-                    // Title
-                    Text(
-                      'Select Order Type',
-                      style: TextStyle(
-                        fontSize: 20.sp,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    SizedBox(height: 15.h),
-                    // Options Buttons
-                    ...options.asMap().entries.map((entry) {
-                      final index = entry.key;
-                      final option = entry.value;
-                      final isSelected =
-                          widget.selectedOrderType.value == option;
-                      return Column(
-                        children: [
-                          Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 32.w),
-                            child: GestureDetector(
-                              onTap: () {
-                                // Update parent's ValueNotifier
-                                widget.selectedOrderType.value = option;
-                                // Update selectedPendingOrderType based on dropdown selection
-                                // 1 = Buy, 0 = Sell
-                                if (option.contains('Buy')) {
-                                  widget.selectedPendingOrderType.value = 1;
-                                } else if (option.contains('Sell')) {
-                                  widget.selectedPendingOrderType.value = 0;
-                                }
-                                Navigator.pop(context);
-                              },
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(12.r),
-                                ),
-                                width: double.infinity,
-                                padding: EdgeInsets.symmetric(vertical: 8.h),
-                                child: Center(
-                                  child: Text(
-                                    option,
-                                    style: TextStyle(
-                                      fontSize: 16.sp,
-                                      fontWeight: FontWeight.w500,
-                                      color:
-                                          isSelected
-                                              ? AppColors.primary
-                                              : AppColors.textPrimary,
-                                    ),
-                                  ),
+                SizedBox(height: 24.h),
+                // Title
+                Text(
+                  'Select Order Type',
+                  style: TextStyle(
+                    fontSize: 20.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                SizedBox(height: 15.h),
+                // Options Buttons
+                ...options.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final option = entry.value;
+                  final isSelected = widget.selectedOrderType.value == option;
+                  return Column(
+                    children: [
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 32.w),
+                        child: GestureDetector(
+                          onTap: () {
+                            // Update parent's ValueNotifier
+                            widget.selectedOrderType.value = option;
+                            // Update selectedPendingOrderType based on dropdown selection
+                            // 1 = Buy, 0 = Sell
+                            if (option.contains('Buy')) {
+                              widget.selectedPendingOrderType.value = 1;
+                            } else if (option.contains('Sell')) {
+                              widget.selectedPendingOrderType.value = 0;
+                            }
+                            Navigator.pop(context);
+                          },
+                          child: Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12.r),
+                            ),
+                            width: double.infinity,
+                            padding: EdgeInsets.symmetric(vertical: 8.h),
+                            child: Center(
+                              child: Text(
+                                option,
+                                style: TextStyle(
+                                  fontSize: 16.sp,
+                                  fontWeight: FontWeight.w500,
+                                  color: isSelected
+                                      ? AppColors.primary
+                                      : AppColors.textPrimary,
                                 ),
                               ),
                             ),
                           ),
-                          if (index < options.length - 1) SizedBox(height: 8.h),
-                        ],
-                      );
-                    }).toList(),
-                  ],
-                ),
-              ),
+                        ),
+                      ),
+                      if (index < options.length - 1) SizedBox(height: 8.h),
+                    ],
+                  );
+                }).toList(),
+              ],
             ),
           ),
+        ),
+      ),
     );
   }
 }

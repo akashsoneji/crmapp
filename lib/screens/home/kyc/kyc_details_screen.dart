@@ -81,7 +81,9 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
       if (country != null && _selectedCountryCode.isEmpty) {
         final countries = CountryService().getAll();
         final matchedCountry = countries.firstWhereOrNull(
-          (c) => c.name.toLowerCase() == country.name?.toLowerCase() || c.countryCode.toLowerCase() == country.iso2?.toLowerCase()
+          (c) =>
+              c.name.toLowerCase() == country.name?.toLowerCase() ||
+              c.countryCode.toLowerCase() == country.iso2?.toLowerCase(),
         );
         if (matchedCountry != null) {
           _applyCountry(
@@ -251,8 +253,10 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
     final digits = _phoneDigits;
     if (iso == null || digits.isEmpty) return;
     try {
-      final formatted =
-          PhoneNumber.parse(digits, destinationCountry: iso).formatNsn();
+      final formatted = PhoneNumber.parse(
+        digits,
+        destinationCountry: iso,
+      ).formatNsn();
       if (formatted.isNotEmpty && formatted != _phoneController.text) {
         _phoneController.value = TextEditingValue(
           text: formatted,
@@ -297,12 +301,10 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
         ),
         inputDecoration: InputDecoration(
           labelText: 'Search',
-          hintText: 'Start typing to search',          
+          hintText: 'Start typing to search',
           prefixIcon: Icon(Icons.search, color: AppColors.textPrimary),
           border: OutlineInputBorder(
-            borderSide: BorderSide(
-              color: AppColors.border,
-            ),
+            borderSide: BorderSide(color: AppColors.border),
           ),
         ),
       ),
@@ -349,7 +351,10 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
     if (phoneCode.isNotEmpty) {
       final countries = CountryService().getAll();
       final country = countries.firstWhereOrNull(
-        (c) => c.phoneCode == phoneCode && (countryIso.isEmpty || c.countryCode.toUpperCase() == countryIso.toUpperCase())
+        (c) =>
+            c.phoneCode == phoneCode &&
+            (countryIso.isEmpty ||
+                c.countryCode.toUpperCase() == countryIso.toUpperCase()),
       );
       if (country != null) {
         final iso = _isoFromCountryCode(country.countryCode);
@@ -365,7 +370,10 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
       if (selectedCountry != null) {
         final countries = CountryService().getAll();
         final country = countries.firstWhereOrNull(
-          (c) => c.name.toLowerCase() == selectedCountry.name?.toLowerCase() || c.countryCode.toLowerCase() == selectedCountry.iso2?.toLowerCase()
+          (c) =>
+              c.name.toLowerCase() == selectedCountry.name?.toLowerCase() ||
+              c.countryCode.toLowerCase() ==
+                  selectedCountry.iso2?.toLowerCase(),
         );
         if (country != null) {
           final iso = _isoFromCountryCode(country.countryCode);
@@ -388,7 +396,7 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
       return KycScaffold(
         body: Center(
           child: CommonLoadingWidget(
-            message: 'Loading profile data...',
+            message: languageService.tr('more_loading_profile'),
             size: 50.0,
             color: AppColors.primary,
           ),
@@ -479,14 +487,13 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
                   width: double.infinity,
                   height: 44.h,
                   child: ElevatedButton(
-                    onPressed:
-                        authController.isLoading
-                            ? null
-                            : () {
-                              // Dismiss keyboard when save button is tapped
-                              FocusScope.of(context).unfocus();
-                              _handleSave();
-                            },
+                    onPressed: authController.isLoading
+                        ? null
+                        : () {
+                            // Dismiss keyboard when save button is tapped
+                            FocusScope.of(context).unfocus();
+                            _handleSave();
+                          },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       foregroundColor: AppColors.whiteColor,
@@ -497,15 +504,18 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
                       elevation: 0,
                     ),
                     child: authController.isLoading
-                        ? ButtonLoadingWidget(size: 20.0, color: AppColors.whiteColor)
-                        : Text(
-                          'Save',
-                          style: TextStyle(
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.w600,
+                        ? ButtonLoadingWidget(
+                            size: 20.0,
                             color: AppColors.whiteColor,
+                          )
+                        : Text(
+                            'Save',
+                            style: TextStyle(
+                              fontSize: 16.sp,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.whiteColor,
+                            ),
                           ),
-                        ),
                   ),
                 ),
               ),
@@ -611,10 +621,7 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
           InkWell(
             onTap: null,
             child: Container(
-              padding: EdgeInsets.symmetric(
-                horizontal: 12.w,
-                vertical: 16.h,
-              ),
+              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 16.h),
               decoration: BoxDecoration(
                 border: Border.all(color: AppColors.border),
                 borderRadius: BorderRadius.circular(12),
@@ -623,10 +630,7 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
                 _selectedCountryFlag.isNotEmpty
                     ? _selectedCountryFlag
                     : "🌐 +--",
-                style: TextStyle(
-                  fontSize: 16.sp,
-                  color: AppColors.textPrimary,
-                ),
+                style: TextStyle(fontSize: 16.sp, color: AppColors.textPrimary),
               ),
             ),
           ),
@@ -718,28 +722,28 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
               borderSide: BorderSide(color: AppColors.error),
             ),
             suffixIcon:
-            // dropdownService.isLoadingCountries.value
-            //     ? Padding(
-            //       padding: EdgeInsets.symmetric(horizontal: 14.w),
-            //       child: SizedBox(
-            //         width: 20.w,
-            //         height: 20.h,
-            //         child: CircularProgressIndicator(
-            //           strokeWidth: 2,
-            //           valueColor: AlwaysStoppedAnimation<Color>(
-            //             AppColors.primary,
-            //           ),
-            //         ),
-            //       ),
-            //     )
-            //     :
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 14.w),
-              child: RTLHelper.rtlIcon(
-                Icons.keyboard_arrow_down,
-                color: AppColors.icongrey,
-              ),
-            ),
+                // dropdownService.isLoadingCountries.value
+                //     ? Padding(
+                //       padding: EdgeInsets.symmetric(horizontal: 14.w),
+                //       child: SizedBox(
+                //         width: 20.w,
+                //         height: 20.h,
+                //         child: CircularProgressIndicator(
+                //           strokeWidth: 2,
+                //           valueColor: AlwaysStoppedAnimation<Color>(
+                //             AppColors.primary,
+                //           ),
+                //         ),
+                //       ),
+                //     )
+                //     :
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 14.w),
+                  child: RTLHelper.rtlIcon(
+                    Icons.keyboard_arrow_down,
+                    color: AppColors.icongrey,
+                  ),
+                ),
           ),
         ),
       ),
@@ -751,73 +755,67 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
     return Padding(
       padding: EdgeInsets.only(bottom: 24.h),
       child: Obx(
-        () =>
-            (dropdownService.isLoadingStates.value)
-                ? ButtonLoadingWidget(size: 20.0, color: AppColors.primary)
-                : RTLHelper.rtlTextField(
-                  readOnly: true,
-                  controller: TextEditingController(
-                    text: dropdownService.selectedStateText,
-                  ),
-                  onTap:
-                      dropdownService.selectedCountry.value != null
-                          ? () => _showStateOptions()
-                          : null,
-                  decoration: InputDecoration(
-                    labelText: 'State',
-                    labelStyle: TextStyle(color: AppColors.textGrey),
-                    floatingLabelStyle: TextStyle(color: AppColors.primary),
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 16.w,
-                      vertical: 16.h,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: AppColors.border),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: AppColors.border),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(
-                        color: AppColors.primary,
-                        width: 2,
-                      ),
-                    ),
-                    errorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: AppColors.error),
-                    ),
-                    suffixIcon:
-                    // dropdownService.isLoadingStates.value
-                    // ? Padding(
-                    //   padding: EdgeInsets.symmetric(horizontal: 14.w),
-                    //   child: SizedBox(
-                    //     width: 20.w,
-                    //     height: 20.h,
-                    //     child: CircularProgressIndicator(
-                    //       strokeWidth: 2,
-                    //       valueColor: AlwaysStoppedAnimation<Color>(
-                    //         AppColors.primary,
-                    //       ),
-                    //     ),
-                    //   ),
-                    // )
-                    // :
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 14.w),
-                      child: RTLHelper.rtlIcon(
-                        Icons.keyboard_arrow_down,
-                        color:
-                            dropdownService.selectedCountry.value != null
-                                ? AppColors.icongrey
-                                : AppColors.icongrey.withOpacity(0.5),
-                      ),
-                    ),
-                  ),
+        () => (dropdownService.isLoadingStates.value)
+            ? ButtonLoadingWidget(size: 20.0, color: AppColors.primary)
+            : RTLHelper.rtlTextField(
+                readOnly: true,
+                controller: TextEditingController(
+                  text: dropdownService.selectedStateText,
                 ),
+                onTap: dropdownService.selectedCountry.value != null
+                    ? () => _showStateOptions()
+                    : null,
+                decoration: InputDecoration(
+                  labelText: 'State',
+                  labelStyle: TextStyle(color: AppColors.textGrey),
+                  floatingLabelStyle: TextStyle(color: AppColors.primary),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 16.h,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: AppColors.border),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: AppColors.border),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: AppColors.primary, width: 2),
+                  ),
+                  errorBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: AppColors.error),
+                  ),
+                  suffixIcon:
+                      // dropdownService.isLoadingStates.value
+                      // ? Padding(
+                      //   padding: EdgeInsets.symmetric(horizontal: 14.w),
+                      //   child: SizedBox(
+                      //     width: 20.w,
+                      //     height: 20.h,
+                      //     child: CircularProgressIndicator(
+                      //       strokeWidth: 2,
+                      //       valueColor: AlwaysStoppedAnimation<Color>(
+                      //         AppColors.primary,
+                      //       ),
+                      //     ),
+                      //   ),
+                      // )
+                      // :
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 14.w),
+                        child: RTLHelper.rtlIcon(
+                          Icons.keyboard_arrow_down,
+                          color: dropdownService.selectedCountry.value != null
+                              ? AppColors.icongrey
+                              : AppColors.icongrey.withOpacity(0.5),
+                        ),
+                      ),
+                ),
+              ),
       ),
     );
   }
@@ -882,88 +880,78 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder:
-          (context) => Container(
-            padding: EdgeInsets.all(24.w),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 40.w,
-                  height: 4.h,
-                  decoration: BoxDecoration(
-                    color: AppColors.border,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                SizedBox(height: 24.h),
-                Text(
-                  'Select Title',
-                  style: TextStyle(
-                    fontSize: 18.sp,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                SizedBox(height: 24.h),
-                ListView(
-                  shrinkWrap: true,
-                  children:
-                      ['Mr', 'Mrs', 'Ms', "Miss"].map((title) {
-                        final isSelected =
-                            _capitalizeFirst(_selectedTitle) == title;
-                        return InkWell(
-                          onTap: () {
-                            setState(() {
-                              _selectedTitle = title.toLowerCase();
-                            });
-                            Navigator.pop(context);
-                          },
-                          child: Container(
-                            padding: EdgeInsets.symmetric(
-                              vertical: 16.h,
-                              horizontal: 16.w,
-                            ),
-                            decoration: BoxDecoration(
-                              color:
-                                  isSelected
-                                      ? AppColors.primary.withOpacity(0.1)
-                                      : null,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    title,
-                                    style: TextStyle(
-                                      fontSize: 16.sp,
-                                      color:
-                                          isSelected
-                                              ? AppColors.primary
-                                              : AppColors.textPrimary,
-                                      fontWeight:
-                                          isSelected
-                                              ? FontWeight.w600
-                                              : FontWeight.w400,
-                                    ),
-                                  ),
-                                ),
-                                if (isSelected)
-                                  Icon(
-                                    Icons.check,
-                                    color: AppColors.primary,
-                                    size: 20,
-                                  ),
-                              ],
+      builder: (context) => Container(
+        padding: EdgeInsets.all(24.w),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40.w,
+              height: 4.h,
+              decoration: BoxDecoration(
+                color: AppColors.border,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            SizedBox(height: 24.h),
+            Text(
+              'Select Title',
+              style: TextStyle(
+                fontSize: 18.sp,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            SizedBox(height: 24.h),
+            ListView(
+              shrinkWrap: true,
+              children: ['Mr', 'Mrs', 'Ms', "Miss"].map((title) {
+                final isSelected = _capitalizeFirst(_selectedTitle) == title;
+                return InkWell(
+                  onTap: () {
+                    setState(() {
+                      _selectedTitle = title.toLowerCase();
+                    });
+                    Navigator.pop(context);
+                  },
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      vertical: 16.h,
+                      horizontal: 16.w,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? AppColors.primary.withOpacity(0.1)
+                          : null,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            title,
+                            style: TextStyle(
+                              fontSize: 16.sp,
+                              color: isSelected
+                                  ? AppColors.primary
+                                  : AppColors.textPrimary,
+                              fontWeight: isSelected
+                                  ? FontWeight.w600
+                                  : FontWeight.w400,
                             ),
                           ),
-                        );
-                      }).toList(),
-                ),
-              ],
+                        ),
+                        if (isSelected)
+                          Icon(Icons.check, color: AppColors.primary, size: 20),
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
             ),
-          ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -1021,88 +1009,78 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder:
-          (context) => Container(
-            padding: EdgeInsets.all(24.w),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 40.w,
-                  height: 4.h,
-                  decoration: BoxDecoration(
-                    color: AppColors.border,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                SizedBox(height: 24.h),
-                Text(
-                  'Select Gender',
-                  style: TextStyle(
-                    fontSize: 18.sp,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                SizedBox(height: 24.h),
-                ListView(
-                  shrinkWrap: true,
-                  children:
-                      ['Male', 'Female', 'Other'].map((gender) {
-                        final isSelected =
-                            _capitalizeFirst(_selectedGender) == gender;
-                        return InkWell(
-                          onTap: () {
-                            setState(() {
-                              _selectedGender = gender.toLowerCase();
-                            });
-                            Navigator.pop(context);
-                          },
-                          child: Container(
-                            padding: EdgeInsets.symmetric(
-                              vertical: 16.h,
-                              horizontal: 16.w,
-                            ),
-                            decoration: BoxDecoration(
-                              color:
-                                  isSelected
-                                      ? AppColors.primary.withOpacity(0.1)
-                                      : null,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    gender,
-                                    style: TextStyle(
-                                      fontSize: 16.sp,
-                                      color:
-                                          isSelected
-                                              ? AppColors.primary
-                                              : AppColors.textPrimary,
-                                      fontWeight:
-                                          isSelected
-                                              ? FontWeight.w600
-                                              : FontWeight.w400,
-                                    ),
-                                  ),
-                                ),
-                                if (isSelected)
-                                  Icon(
-                                    Icons.check,
-                                    color: AppColors.primary,
-                                    size: 20,
-                                  ),
-                              ],
+      builder: (context) => Container(
+        padding: EdgeInsets.all(24.w),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40.w,
+              height: 4.h,
+              decoration: BoxDecoration(
+                color: AppColors.border,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            SizedBox(height: 24.h),
+            Text(
+              'Select Gender',
+              style: TextStyle(
+                fontSize: 18.sp,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            SizedBox(height: 24.h),
+            ListView(
+              shrinkWrap: true,
+              children: ['Male', 'Female', 'Other'].map((gender) {
+                final isSelected = _capitalizeFirst(_selectedGender) == gender;
+                return InkWell(
+                  onTap: () {
+                    setState(() {
+                      _selectedGender = gender.toLowerCase();
+                    });
+                    Navigator.pop(context);
+                  },
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      vertical: 16.h,
+                      horizontal: 16.w,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? AppColors.primary.withOpacity(0.1)
+                          : null,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            gender,
+                            style: TextStyle(
+                              fontSize: 16.sp,
+                              color: isSelected
+                                  ? AppColors.primary
+                                  : AppColors.textPrimary,
+                              fontWeight: isSelected
+                                  ? FontWeight.w600
+                                  : FontWeight.w400,
                             ),
                           ),
-                        );
-                      }).toList(),
-                ),
-              ],
+                        ),
+                        if (isSelected)
+                          Icon(Icons.check, color: AppColors.primary, size: 20),
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
             ),
-          ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -1111,73 +1089,67 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
     return Padding(
       padding: EdgeInsets.only(bottom: 24.h),
       child: Obx(
-        () =>
-            (dropdownService.isLoadingCities.value)
-                ? ButtonLoadingWidget(size: 20.0, color: AppColors.primary)
-                : RTLHelper.rtlTextField(
-                  readOnly: true,
-                  controller: TextEditingController(
-                    text: dropdownService.selectedCityText,
-                  ),
-                  onTap:
-                      dropdownService.selectedState.value != null
-                          ? () => _showCityOptions()
-                          : null,
-                  decoration: InputDecoration(
-                    labelText: 'City',
-                    labelStyle: TextStyle(color: AppColors.textGrey),
-                    floatingLabelStyle: TextStyle(color: AppColors.primary),
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 16.w,
-                      vertical: 16.h,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: AppColors.border),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: AppColors.border),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(
-                        color: AppColors.primary,
-                        width: 2,
-                      ),
-                    ),
-                    errorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: AppColors.error),
-                    ),
-                    suffixIcon:
-                    // dropdownService.isLoadingCities.value
-                    //     ? Padding(
-                    //       padding: EdgeInsets.symmetric(horizontal: 14.w),
-                    //       child: SizedBox(
-                    //         width: 20.w,
-                    //         height: 20.h,
-                    //         child: CircularProgressIndicator(
-                    //           strokeWidth: 2,
-                    //           valueColor: AlwaysStoppedAnimation<Color>(
-                    //             AppColors.primary,
-                    //           ),
-                    //         ),
-                    //       ),
-                    //     )
-                    //     :
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 14.w),
-                      child: RTLHelper.rtlIcon(
-                        Icons.keyboard_arrow_down,
-                        color:
-                            dropdownService.selectedState.value != null
-                                ? AppColors.icongrey
-                                : AppColors.icongrey.withOpacity(0.5),
-                      ),
-                    ),
-                  ),
+        () => (dropdownService.isLoadingCities.value)
+            ? ButtonLoadingWidget(size: 20.0, color: AppColors.primary)
+            : RTLHelper.rtlTextField(
+                readOnly: true,
+                controller: TextEditingController(
+                  text: dropdownService.selectedCityText,
                 ),
+                onTap: dropdownService.selectedState.value != null
+                    ? () => _showCityOptions()
+                    : null,
+                decoration: InputDecoration(
+                  labelText: 'City',
+                  labelStyle: TextStyle(color: AppColors.textGrey),
+                  floatingLabelStyle: TextStyle(color: AppColors.primary),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 16.h,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: AppColors.border),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: AppColors.border),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: AppColors.primary, width: 2),
+                  ),
+                  errorBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: AppColors.error),
+                  ),
+                  suffixIcon:
+                      // dropdownService.isLoadingCities.value
+                      //     ? Padding(
+                      //       padding: EdgeInsets.symmetric(horizontal: 14.w),
+                      //       child: SizedBox(
+                      //         width: 20.w,
+                      //         height: 20.h,
+                      //         child: CircularProgressIndicator(
+                      //           strokeWidth: 2,
+                      //           valueColor: AlwaysStoppedAnimation<Color>(
+                      //             AppColors.primary,
+                      //           ),
+                      //         ),
+                      //       ),
+                      //     )
+                      //     :
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 14.w),
+                        child: RTLHelper.rtlIcon(
+                          Icons.keyboard_arrow_down,
+                          color: dropdownService.selectedState.value != null
+                              ? AppColors.icongrey
+                              : AppColors.icongrey.withOpacity(0.5),
+                        ),
+                      ),
+                ),
+              ),
       ),
     );
   }
@@ -1197,173 +1169,165 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       isScrollControlled: true,
-      builder:
-          (context) => Container(
-            height: MediaQuery.of(context).size.height * 0.9,
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom,
-            ),
-            child: Padding(
-              padding: EdgeInsets.all(24.w),
-              child: Column(
-                children: [
-                  Container(
-                    width: 40.w,
-                    height: 4.h,
-                    decoration: BoxDecoration(
-                      color: AppColors.border,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.9,
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: Padding(
+          padding: EdgeInsets.all(24.w),
+          child: Column(
+            children: [
+              Container(
+                width: 40.w,
+                height: 4.h,
+                decoration: BoxDecoration(
+                  color: AppColors.border,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              SizedBox(height: 10.h),
+              Text(
+                'Select Country / Region',
+                style: TextStyle(
+                  fontSize: 18.sp,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              SizedBox(height: 10.h),
+              // Search Field
+              TextField(
+                controller: searchController,
+                onChanged: (value) {
+                  if (value.isEmpty) {
+                    filteredCountries.value = List.from(
+                      dropdownService.countries,
+                    );
+                  } else {
+                    filteredCountries.value = dropdownService.countries
+                        .where(
+                          (country) => (country.name ?? '')
+                              .toLowerCase()
+                              .contains(value.toLowerCase()),
+                        )
+                        .toList();
+                  }
+                },
+                decoration: InputDecoration(
+                  hintText: 'Search',
+                  prefixIcon: Icon(Icons.search, color: AppColors.icongrey),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: AppColors.border),
                   ),
-                  SizedBox(height: 10.h),
-                  Text(
-                    'Select Country / Region',
-                    style: TextStyle(
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
-                    ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: AppColors.border),
                   ),
-                  SizedBox(height: 10.h),
-                  // Search Field
-                  TextField(
-                    controller: searchController,
-                    onChanged: (value) {
-                      if (value.isEmpty) {
-                        filteredCountries.value = List.from(
-                          dropdownService.countries,
-                        );
-                      } else {
-                        filteredCountries.value =
-                            dropdownService.countries
-                                .where(
-                                  (country) => (country.name ?? '')
-                                      .toLowerCase()
-                                      .contains(value.toLowerCase()),
-                                )
-                                .toList();
-                      }
-                    },
-                    decoration: InputDecoration(
-                      hintText: 'Search',
-                      prefixIcon: Icon(Icons.search, color: AppColors.icongrey),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: AppColors.border),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: AppColors.border),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                          color: AppColors.primary,
-                          width: 2,
-                        ),
-                      ),
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 16.w,
-                        vertical: 12.h,
-                      ),
-                    ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: AppColors.primary, width: 2),
                   ),
-                  SizedBox(height: 12.h),
-                  Expanded(
-                    child: Obx(() {
-                      if (dropdownService.isLoadingCountries.value) {
-                        return Center(
-                          child: CommonLoadingWidget(
-                            size: 40.0,
-                            color: AppColors.primary,
-                          ),
-                        );
-                      }
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 12.h,
+                  ),
+                ),
+              ),
+              SizedBox(height: 12.h),
+              Expanded(
+                child: Obx(() {
+                  if (dropdownService.isLoadingCountries.value) {
+                    return Center(
+                      child: CommonLoadingWidget(
+                        size: 40.0,
+                        color: AppColors.primary,
+                      ),
+                    );
+                  }
 
-                      if (filteredCountries.isEmpty) {
-                        return Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                  if (filteredCountries.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.search_off,
+                            size: 48.w,
+                            color: AppColors.icongrey,
+                          ),
+                          SizedBox(height: 16.h),
+                          Text(
+                            'No countries found',
+                            style: TextStyle(
+                              fontSize: 16.sp,
+                              color: AppColors.textGrey,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  return ListView.builder(
+                    itemCount: filteredCountries.length,
+                    itemBuilder: (context, index) {
+                      final country = filteredCountries[index];
+                      final isSelected =
+                          dropdownService.selectedCountry.value?.id ==
+                          country.id;
+
+                      return InkWell(
+                        onTap: () {
+                          dropdownService.selectCountry(country);
+                          Navigator.pop(context);
+                        },
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            vertical: 16.h,
+                            horizontal: 16.w,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? AppColors.primary.withOpacity(0.1)
+                                : null,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
                             children: [
-                              Icon(
-                                Icons.search_off,
-                                size: 48.w,
-                                color: AppColors.icongrey,
-                              ),
-                              SizedBox(height: 16.h),
-                              Text(
-                                'No countries found',
-                                style: TextStyle(
-                                  fontSize: 16.sp,
-                                  color: AppColors.textGrey,
+                              Expanded(
+                                child: Text(
+                                  country.name!,
+                                  style: TextStyle(
+                                    fontSize: 16.sp,
+                                    color: isSelected
+                                        ? AppColors.primary
+                                        : AppColors.textPrimary,
+                                    fontWeight: isSelected
+                                        ? FontWeight.w600
+                                        : FontWeight.w400,
+                                  ),
                                 ),
                               ),
+                              if (isSelected)
+                                Icon(
+                                  Icons.check,
+                                  color: AppColors.primary,
+                                  size: 20,
+                                ),
                             ],
                           ),
-                        );
-                      }
-
-                      return ListView.builder(
-                        itemCount: filteredCountries.length,
-                        itemBuilder: (context, index) {
-                          final country = filteredCountries[index];
-                          final isSelected =
-                              dropdownService.selectedCountry.value?.id ==
-                              country.id;
-
-                          return InkWell(
-                            onTap: () {
-                              dropdownService.selectCountry(country);
-                              Navigator.pop(context);
-                            },
-                            child: Container(
-                              padding: EdgeInsets.symmetric(
-                                vertical: 16.h,
-                                horizontal: 16.w,
-                              ),
-                              decoration: BoxDecoration(
-                                color:
-                                    isSelected
-                                        ? AppColors.primary.withOpacity(0.1)
-                                        : null,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      country.name!,
-                                      style: TextStyle(
-                                        fontSize: 16.sp,
-                                        color:
-                                            isSelected
-                                                ? AppColors.primary
-                                                : AppColors.textPrimary,
-                                        fontWeight:
-                                            isSelected
-                                                ? FontWeight.w600
-                                                : FontWeight.w400,
-                                      ),
-                                    ),
-                                  ),
-                                  if (isSelected)
-                                    Icon(
-                                      Icons.check,
-                                      color: AppColors.primary,
-                                      size: 20,
-                                    ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
+                        ),
                       );
-                    }),
-                  ),
-                ],
+                    },
+                  );
+                }),
               ),
-            ),
+            ],
           ),
+        ),
+      ),
     );
   }
 
@@ -1382,169 +1346,158 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       isScrollControlled: true,
-      builder:
-          (context) => Container(
-            height: MediaQuery.of(context).size.height * 0.9,
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom,
-            ),
-            child: Padding(
-              padding: EdgeInsets.all(24.w),
-              child: Column(
-                children: [
-                  Container(
-                    width: 40.w,
-                    height: 4.h,
-                    decoration: BoxDecoration(
-                      color: AppColors.border,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.9,
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: Padding(
+          padding: EdgeInsets.all(24.w),
+          child: Column(
+            children: [
+              Container(
+                width: 40.w,
+                height: 4.h,
+                decoration: BoxDecoration(
+                  color: AppColors.border,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              SizedBox(height: 24.h),
+              Text(
+                'Select State',
+                style: TextStyle(
+                  fontSize: 18.sp,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              SizedBox(height: 16.h),
+              // Search Field
+              TextField(
+                controller: searchController,
+                onChanged: (value) {
+                  if (value.isEmpty) {
+                    filteredStates.value = List.from(dropdownService.states);
+                  } else {
+                    filteredStates.value = dropdownService.states
+                        .where((state) => state.name.contains(value))
+                        .toList();
+                  }
+                },
+                decoration: InputDecoration(
+                  hintText: 'Search states...',
+                  prefixIcon: Icon(Icons.search, color: AppColors.icongrey),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: AppColors.border),
                   ),
-                  SizedBox(height: 24.h),
-                  Text(
-                    'Select State',
-                    style: TextStyle(
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
-                    ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: AppColors.border),
                   ),
-                  SizedBox(height: 16.h),
-                  // Search Field
-                  TextField(
-                    controller: searchController,
-                    onChanged: (value) {
-                      if (value.isEmpty) {
-                        filteredStates.value = List.from(
-                          dropdownService.states,
-                        );
-                      } else {
-                        filteredStates.value =
-                            dropdownService.states
-                                .where((state) => state.name.contains(value))
-                                .toList();
-                      }
-                    },
-                    decoration: InputDecoration(
-                      hintText: 'Search states...',
-                      prefixIcon: Icon(Icons.search, color: AppColors.icongrey),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: AppColors.border),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: AppColors.border),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                          color: AppColors.primary,
-                          width: 2,
-                        ),
-                      ),
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 16.w,
-                        vertical: 12.h,
-                      ),
-                    ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: AppColors.primary, width: 2),
                   ),
-                  SizedBox(height: 16.h),
-                  Expanded(
-                    child: Obx(() {
-                      if (dropdownService.isLoadingStates.value) {
-                        return Center(
-                          child: CommonLoadingWidget(
-                            size: 40.0,
-                            color: AppColors.primary,
-                          ),
-                        );
-                      }
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 12.h,
+                  ),
+                ),
+              ),
+              SizedBox(height: 16.h),
+              Expanded(
+                child: Obx(() {
+                  if (dropdownService.isLoadingStates.value) {
+                    return Center(
+                      child: CommonLoadingWidget(
+                        size: 40.0,
+                        color: AppColors.primary,
+                      ),
+                    );
+                  }
 
-                      if (filteredStates.isEmpty) {
-                        return Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                  if (filteredStates.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.search_off,
+                            size: 48.w,
+                            color: AppColors.icongrey,
+                          ),
+                          SizedBox(height: 16.h),
+                          Text(
+                            'No states found',
+                            style: TextStyle(
+                              fontSize: 16.sp,
+                              color: AppColors.textGrey,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  return ListView.builder(
+                    itemCount: filteredStates.length,
+                    itemBuilder: (context, index) {
+                      final state = filteredStates[index];
+                      final isSelected =
+                          dropdownService.selectedState.value?.id == state.id;
+
+                      return InkWell(
+                        onTap: () {
+                          dropdownService.selectState(state);
+                          Navigator.pop(context);
+                        },
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            vertical: 16.h,
+                            horizontal: 16.w,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? AppColors.primary.withOpacity(0.1)
+                                : null,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
                             children: [
-                              Icon(
-                                Icons.search_off,
-                                size: 48.w,
-                                color: AppColors.icongrey,
-                              ),
-                              SizedBox(height: 16.h),
-                              Text(
-                                'No states found',
-                                style: TextStyle(
-                                  fontSize: 16.sp,
-                                  color: AppColors.textGrey,
+                              Expanded(
+                                child: Text(
+                                  state.name,
+                                  style: TextStyle(
+                                    fontSize: 16.sp,
+                                    color: isSelected
+                                        ? AppColors.primary
+                                        : AppColors.textPrimary,
+                                    fontWeight: isSelected
+                                        ? FontWeight.w600
+                                        : FontWeight.w400,
+                                  ),
                                 ),
                               ),
+                              if (isSelected)
+                                Icon(
+                                  Icons.check,
+                                  color: AppColors.primary,
+                                  size: 20,
+                                ),
                             ],
                           ),
-                        );
-                      }
-
-                      return ListView.builder(
-                        itemCount: filteredStates.length,
-                        itemBuilder: (context, index) {
-                          final state = filteredStates[index];
-                          final isSelected =
-                              dropdownService.selectedState.value?.id ==
-                              state.id;
-
-                          return InkWell(
-                            onTap: () {
-                              dropdownService.selectState(state);
-                              Navigator.pop(context);
-                            },
-                            child: Container(
-                              padding: EdgeInsets.symmetric(
-                                vertical: 16.h,
-                                horizontal: 16.w,
-                              ),
-                              decoration: BoxDecoration(
-                                color:
-                                    isSelected
-                                        ? AppColors.primary.withOpacity(0.1)
-                                        : null,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      state.name,
-                                      style: TextStyle(
-                                        fontSize: 16.sp,
-                                        color:
-                                            isSelected
-                                                ? AppColors.primary
-                                                : AppColors.textPrimary,
-                                        fontWeight:
-                                            isSelected
-                                                ? FontWeight.w600
-                                                : FontWeight.w400,
-                                      ),
-                                    ),
-                                  ),
-                                  if (isSelected)
-                                    Icon(
-                                      Icons.check,
-                                      color: AppColors.primary,
-                                      size: 20,
-                                    ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
+                        ),
                       );
-                    }),
-                  ),
-                ],
+                    },
+                  );
+                }),
               ),
-            ),
+            ],
           ),
+        ),
+      ),
     );
   }
 
@@ -1563,178 +1516,167 @@ class _KycDetailsScreenState extends State<KycDetailsScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       isScrollControlled: true,
-      builder:
-          (context) => Container(
-            height: MediaQuery.of(context).size.height * 0.9,
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom,
-            ),
-            child: Padding(
-              padding: EdgeInsets.all(24.w),
-              child: Column(
-                children: [
-                  Container(
-                    width: 40.w,
-                    height: 4.h,
-                    decoration: BoxDecoration(
-                      color: AppColors.border,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.9,
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: Padding(
+          padding: EdgeInsets.all(24.w),
+          child: Column(
+            children: [
+              Container(
+                width: 40.w,
+                height: 4.h,
+                decoration: BoxDecoration(
+                  color: AppColors.border,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              SizedBox(height: 24.h),
+              Text(
+                'Select City',
+                style: TextStyle(
+                  fontSize: 18.sp,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              SizedBox(height: 16.h),
+              // Search Field
+              TextField(
+                controller: searchController,
+                onChanged: (value) {
+                  if (value.isEmpty) {
+                    filteredCities.value = List.from(dropdownService.cities);
+                  } else {
+                    filteredCities.value = dropdownService.cities
+                        .where((city) => city.name.contains(value))
+                        .toList();
+                  }
+                },
+                decoration: InputDecoration(
+                  hintText: 'Search cities...',
+                  prefixIcon: Icon(Icons.search, color: AppColors.icongrey),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: AppColors.border),
                   ),
-                  SizedBox(height: 24.h),
-                  Text(
-                    'Select City',
-                    style: TextStyle(
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
-                    ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: AppColors.border),
                   ),
-                  SizedBox(height: 16.h),
-                  // Search Field
-                  TextField(
-                    controller: searchController,
-                    onChanged: (value) {
-                      if (value.isEmpty) {
-                        filteredCities.value = List.from(
-                          dropdownService.cities,
-                        );
-                      } else {
-                        filteredCities.value =
-                            dropdownService.cities
-                                .where((city) => city.name.contains(value))
-                                .toList();
-                      }
-                    },
-                    decoration: InputDecoration(
-                      hintText: 'Search cities...',
-                      prefixIcon: Icon(Icons.search, color: AppColors.icongrey),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: AppColors.border),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: AppColors.border),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                          color: AppColors.primary,
-                          width: 2,
-                        ),
-                      ),
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 16.w,
-                        vertical: 12.h,
-                      ),
-                    ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: AppColors.primary, width: 2),
                   ),
-                  SizedBox(height: 16.h),
-                  Expanded(
-                    child: Obx(() {
-                      if (dropdownService.isLoadingCities.value) {
-                        return Center(
-                          child: CommonLoadingWidget(
-                            size: 40.0,
-                            color: AppColors.primary,
-                          ),
-                        );
-                      }
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 12.h,
+                  ),
+                ),
+              ),
+              SizedBox(height: 16.h),
+              Expanded(
+                child: Obx(() {
+                  if (dropdownService.isLoadingCities.value) {
+                    return Center(
+                      child: CommonLoadingWidget(
+                        size: 40.0,
+                        color: AppColors.primary,
+                      ),
+                    );
+                  }
 
-                      if (filteredCities.isEmpty) {
-                        return Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                  if (filteredCities.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.search_off,
+                            size: 48.w,
+                            color: AppColors.icongrey,
+                          ),
+                          SizedBox(height: 16.h),
+                          Text(
+                            'No cities found',
+                            style: TextStyle(
+                              fontSize: 16.sp,
+                              color: AppColors.textGrey,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  return ListView.builder(
+                    itemCount: filteredCities.length,
+                    itemBuilder: (context, index) {
+                      final city = filteredCities[index];
+                      final isSelected =
+                          dropdownService.selectedCity.value?.id == city.id;
+
+                      return InkWell(
+                        onTap: () {
+                          dropdownService.selectCity(city);
+                          Navigator.pop(context);
+                        },
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            vertical: 16.h,
+                            horizontal: 16.w,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? AppColors.primary.withOpacity(0.1)
+                                : null,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
                             children: [
-                              Icon(
-                                Icons.search_off,
-                                size: 48.w,
-                                color: AppColors.icongrey,
-                              ),
-                              SizedBox(height: 16.h),
-                              Text(
-                                'No cities found',
-                                style: TextStyle(
-                                  fontSize: 16.sp,
-                                  color: AppColors.textGrey,
+                              Expanded(
+                                child: Text(
+                                  city.name,
+                                  style: TextStyle(
+                                    fontSize: 16.sp,
+                                    color: isSelected
+                                        ? AppColors.primary
+                                        : AppColors.textPrimary,
+                                    fontWeight: isSelected
+                                        ? FontWeight.w600
+                                        : FontWeight.w400,
+                                  ),
                                 ),
                               ),
+                              if (isSelected)
+                                Icon(
+                                  Icons.check,
+                                  color: AppColors.primary,
+                                  size: 20,
+                                ),
                             ],
                           ),
-                        );
-                      }
-
-                      return ListView.builder(
-                        itemCount: filteredCities.length,
-                        itemBuilder: (context, index) {
-                          final city = filteredCities[index];
-                          final isSelected =
-                              dropdownService.selectedCity.value?.id == city.id;
-
-                          return InkWell(
-                            onTap: () {
-                              dropdownService.selectCity(city);
-                              Navigator.pop(context);
-                            },
-                            child: Container(
-                              padding: EdgeInsets.symmetric(
-                                vertical: 16.h,
-                                horizontal: 16.w,
-                              ),
-                              decoration: BoxDecoration(
-                                color:
-                                    isSelected
-                                        ? AppColors.primary.withOpacity(0.1)
-                                        : null,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      city.name,
-                                      style: TextStyle(
-                                        fontSize: 16.sp,
-                                        color:
-                                            isSelected
-                                                ? AppColors.primary
-                                                : AppColors.textPrimary,
-                                        fontWeight:
-                                            isSelected
-                                                ? FontWeight.w600
-                                                : FontWeight.w400,
-                                      ),
-                                    ),
-                                  ),
-                                  if (isSelected)
-                                    Icon(
-                                      Icons.check,
-                                      color: AppColors.primary,
-                                      size: 20,
-                                    ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
+                        ),
                       );
-                    }),
-                  ),
-                ],
+                    },
+                  );
+                }),
               ),
-            ),
+            ],
           ),
+        ),
+      ),
     );
   }
 
   void _selectDate() async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate:
-          _dobController.text.isNotEmpty
-              ? DateTime.tryParse(_dobController.text) ?? DateTime.now()
-              : DateTime.now(),
+      initialDate: _dobController.text.isNotEmpty
+          ? DateTime.tryParse(_dobController.text) ?? DateTime.now()
+          : DateTime.now(),
       firstDate: DateTime(1900),
       lastDate: DateTime.now(),
       builder: (context, child) {
