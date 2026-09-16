@@ -66,9 +66,9 @@ class _CommissionGroupsScreenState extends State<CommissionGroupsScreen> {
           ),
         ),
         content: Text(
-          TranslationUtils.tr(
+          TranslationUtils.trArgs(
             'ibm_delete_group_confirmation',
-            args: {'group': group.groupName},
+            {'group': group.groupName ?? ''},
           ),
           style: TextStyle(fontSize: 14.sp),
         ),

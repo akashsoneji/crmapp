@@ -6,7 +6,7 @@ import 'package:crm_app/controllers/ib_controller.dart';
 import 'package:crm_app/controllers/auth_controller.dart';
 import 'package:crm_app/models/ib_models.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
-import 'package:crm_app/utils/trl_helper.dart';
+import 'package:crm_app/services/language_service.dart';
 
 class IBClientsScreen extends StatefulWidget {
   const IBClientsScreen({super.key});
@@ -166,7 +166,7 @@ class _IBClientsScreenState extends State<IBClientsScreen> {
           if (ibController.isLoading.value) {
             return Center(
               child: CommonLoadingWidget(
-                message: tr('ib_loading_data'),
+                message: TranslationUtils.tr('ib_loading_data'),
                 size: 50.0,
                 color: AppColors.primary,
               ),

@@ -7,7 +7,7 @@ import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/controllers/ib_controller.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
 import 'package:crm_app/screens/home/more/ib_dashboard/my_structure_screen.dart';
-import 'package:crm_app/utils/trl_helper.dart';
+import 'package:crm_app/services/language_service.dart';
 
 class IBMoreScreen extends StatefulWidget {
   const IBMoreScreen({super.key});
@@ -84,7 +84,7 @@ class _IBMoreScreenState extends State<IBMoreScreen> {
                 controller.ibStructureData.value == null) {
               return Center(
                 child: CommonLoadingWidget(
-                  message: tr('ib_loading'),
+                  message: TranslationUtils.tr('ib_loading'),
                   size: 50.0,
                   color: AppColors.primary,
                 ),

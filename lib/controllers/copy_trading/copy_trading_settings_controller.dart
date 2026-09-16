@@ -1,3 +1,4 @@
+import 'package:crm_app/services/language_service.dart';
 import 'package:get/get.dart';
 
 class WalletTransaction {
@@ -50,7 +51,7 @@ class CopyTradingSettingsController extends GetxController {
   final RxList<WalletTransaction> transactions = <WalletTransaction>[
     WalletTransaction(
       type: 'Copytrading',
-      title: 'copy_trading_adding_investment'.translate,
+      title: TranslationUtils.tr('copy_trading_adding_investment'),
       date: '02 March, 2026, 9:53',
       status: 'Complete',
       requestId: 'CT4842146',

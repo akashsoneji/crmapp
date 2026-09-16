@@ -7,7 +7,7 @@ import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/controllers/ib_controller.dart';
 import 'package:crm_app/models/ib_models.dart';
-import 'package:crm_app/utils/trl_helper.dart';
+import 'package:crm_app/services/language_service.dart';
 
 class MyStructureScreen extends StatefulWidget {
   final bool isEmbedded;
@@ -86,7 +86,7 @@ class _MyStructureScreenState extends State<MyStructureScreen> {
         if (ibController.isLoading.value) {
           return Center(
             child: CommonLoadingWidget(
-              message: tr('ib_loading_structure'),
+              message: TranslationUtils.tr('ib_loading_structure'),
               size: 50.0,
               color: AppColors.primary,
             ),

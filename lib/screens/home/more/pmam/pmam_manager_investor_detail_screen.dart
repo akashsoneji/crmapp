@@ -2,6 +2,7 @@ import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/models/pmam_manager_investor_detail_model.dart';
 import 'package:crm_app/services/pmam_service.dart';
+import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -465,7 +466,7 @@ class _PmamManagerInvestorDetailScreenState
                         ),
                       ),
                       child: Text(
-                        Get.find<LanguageService>().tr('navigation_retry'),
+                        TranslationUtils.tr('navigation_retry'),
                       ),
                     ),
                   ],

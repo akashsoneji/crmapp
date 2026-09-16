@@ -1039,10 +1039,10 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
                                 )
                               : Text(
                                   isValid
-                                      ? languageService.tr(
+                                      ? TranslationUtils.tr(
                                           'pending_order_place',
                                         )
-                                      : languageService.tr(
+                                      : TranslationUtils.tr(
                                           'toast_validation_errors',
                                         ),
                                   style: AppTextStyles.label.copyWith(
