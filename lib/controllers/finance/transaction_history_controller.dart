@@ -64,6 +64,7 @@ class Data {
   String? createdAt;
   String? transactionType;
   String? type;
+  String? currencyAccount;
 
   Data({
     this.id,
@@ -80,6 +81,7 @@ class Data {
     this.createdAt,
     this.transactionType,
     this.type,
+    this.currencyAccount,
   });
 
   Data.fromJson(Map<String, dynamic> json) {
@@ -90,7 +92,8 @@ class Data {
             : int.tryParse(json['user_id']?.toString() ?? '');
     mt5AccountId = json['mt5_account_id']?.toString();
     referenceNumber = json['reference_number']?.toString();
-    amount = json['amount']?.toString();
+    currencyAccount = json['currency_account']?.toString();
+    amount = _normalizeAmount(json['amount']?.toString(), currencyAccount);
     transactionId = json['transaction_id']?.toString();
     status = json['status']?.toString();
     paymentMethod = json['paymentMethod']?.toString();
@@ -100,6 +103,25 @@ class Data {
     createdAt = json['created_at_iso']?.toString() ?? json['created_at']?.toString();
     transactionType = json['transaction_type']?.toString();
     type = json['type']?.toString();
+  }
+
+  // USC (US Cent) accounts report `amount` in cents (as a display string like
+  // "$10,000.00"). Divide by 100 so the UI shows the real USD value.
+  static String? _normalizeAmount(String? raw, String? currencyAccount) {
+    if (raw == null || raw.isEmpty) return raw;
+    if (currencyAccount?.toUpperCase() != 'USC') return raw;
+    final match = RegExp(r'-?[\d,]*\.?\d+').firstMatch(raw);
+    if (match == null) return raw;
+    final numeric = double.tryParse(match.group(0)!.replaceAll(',', ''));
+    if (numeric == null) return raw;
+    final converted = numeric / 100;
+    final whole = converted.truncate();
+    final formattedWhole = whole.toString().replaceAllMapped(
+      RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
+      (m) => '${m[1]},',
+    );
+    final fraction = (converted - whole).abs().toStringAsFixed(2).substring(2);
+    return raw.replaceRange(match.start, match.end, '$formattedWhole.$fraction');
   }
 
   Map<String, dynamic> toJson() {
@@ -113,6 +135,7 @@ class Data {
     data['status'] = this.status;
     data['paymentMethod'] = this.paymentMethod;
     data['proof'] = this.proof;
+    data['currency_account'] = this.currencyAccount;
     data['proof_url'] = this.proofUrl;
     data['payment_details'] = this.paymentDetails;
     data['created_at'] = this.createdAt;

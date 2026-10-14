@@ -9,6 +9,7 @@ import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/models/mt5_account.dart';
 import 'package:crm_app/models/websocket_trading_response.dart';
 import 'package:crm_app/routes/app_pages.dart';
+import 'package:crm_app/utils/currency_format.dart';
 import 'package:crm_app/utils/precision_helper.dart';
 import 'package:crm_app/services/language_service.dart';
 import '../../controllers/dashboard_controller.dart';
@@ -394,8 +395,14 @@ class DashboardScreen extends StatelessWidget {
                           ),
                           Text(
                             accountInfo != null
-                                ? '\$${accountInfo.equity.toStringAsFixed(2)}'
-                                : '\$${account.equity}',
+                                ? CurrencyFormat.amount(
+                                  accountInfo.equity,
+                                  account,
+                                )
+                                : CurrencyFormat.amount(
+                                  double.tryParse(account.equity) ?? 0.0,
+                                  account,
+                                ),
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
@@ -846,8 +853,8 @@ class AccountInfoBottomSheet extends StatelessWidget {
                       children: [
                         Text(
                           accountInfo != null
-                              ? '\$${accountInfo.equity.toStringAsFixed(2)} USD'
-                              : '\$${account.equity} USD',
+                              ? '${CurrencyFormat.symbol(account)}${accountInfo.equity.toStringAsFixed(2)} ${CurrencyFormat.code(account)}'
+                              : '${CurrencyFormat.symbol(account)}${account.equity} ${CurrencyFormat.code(account)}',
                           style: TextStyle(
                             fontSize: 14.sp,
                             fontWeight: FontWeight.w500,
@@ -873,37 +880,43 @@ class AccountInfoBottomSheet extends StatelessWidget {
                 _buildDetailRow(
                   languageService.tr('dashboard_balance'),
                   accountInfo != null
-                      ? PrecisionHelper.formatMoney(accountInfo.balance)
-                      : '\$${account.balance} USD',
+                      ? (account.isCentAccount
+                          ? CurrencyFormat.amountWithCode(accountInfo.balance, account)
+                          : PrecisionHelper.formatMoney(accountInfo.balance))
+                      : '${CurrencyFormat.symbol(account)}${account.balance} ${CurrencyFormat.code(account)}',
                 ),
                 if (accountInfo != null && accountInfo.credit > 0)
                   _buildDetailRow(
                     languageService.tr('Credit'),
-                    PrecisionHelper.formatMoney(accountInfo.credit),
+                    account.isCentAccount
+                        ? CurrencyFormat.amountWithCode(accountInfo.credit, account)
+                        : PrecisionHelper.formatMoney(accountInfo.credit),
                   ),
                 _buildDetailRow(
                   languageService.tr('dashboard_equity'),
                   accountInfo != null
-                      ? PrecisionHelper.formatMoney(accountInfo.equity)
-                      : '\$${account.equity} USD',
+                      ? (account.isCentAccount
+                          ? CurrencyFormat.amountWithCode(accountInfo.equity, account)
+                          : PrecisionHelper.formatMoney(accountInfo.equity))
+                      : '${CurrencyFormat.symbol(account)}${account.equity} ${CurrencyFormat.code(account)}',
                 ),
                 _buildDetailRow(
                   languageService.tr('dashboard_total_pl'),
                   accountInfo != null
-                      ? '\$${accountInfo.profit.toStringAsFixed(2)} USD'
-                      : '\$0.00 USD',
+                      ? '${CurrencyFormat.symbol(account)}${accountInfo.profit.toStringAsFixed(2)} ${CurrencyFormat.code(account)}'
+                      : '${CurrencyFormat.symbol(account)}0.00 ${CurrencyFormat.code(account)}',
                 ),
                 _buildDetailRow(
                   languageService.tr('trade_metric_margin'),
                   accountInfo != null
-                      ? '\$${accountInfo.margin.toStringAsFixed(2)} USD'
-                      : '\$${account.margin} USD',
+                      ? '${CurrencyFormat.symbol(account)}${accountInfo.margin.toStringAsFixed(2)} ${CurrencyFormat.code(account)}'
+                      : '${CurrencyFormat.symbol(account)}${account.margin} ${CurrencyFormat.code(account)}',
                 ),
                 _buildDetailRow(
                   languageService.tr('trade_metric_free_margin'),
                   accountInfo != null
-                      ? '\$${accountInfo.marginFree.toStringAsFixed(2)} USD'
-                      : '\$${account.freeMargin} USD',
+                      ? '${CurrencyFormat.symbol(account)}${accountInfo.marginFree.toStringAsFixed(2)} ${CurrencyFormat.code(account)}'
+                      : '${CurrencyFormat.symbol(account)}${account.freeMargin} ${CurrencyFormat.code(account)}',
                 ),
                 _buildDetailRow(
                   languageService.tr('trade_metric_margin_level'),
@@ -1075,7 +1088,9 @@ class AccountMenuBottomSheet extends StatelessWidget {
   const AccountMenuBottomSheet({Key? key, required this.account})
     : super(key: key);
 
-  void _showMT5ChangePasswordDialog() {
+  // isInvestor=true resets the investor (read-only) password via
+  // /mt5accounts/resetinvestorpassword instead of changing the master password.
+  void _showMT5ChangePasswordDialog({bool isInvestor = false}) {
     final passwordController = TextEditingController();
     final confirmPasswordController = TextEditingController();
     final formKey = GlobalKey<FormState>();
@@ -1104,7 +1119,11 @@ class AccountMenuBottomSheet extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      languageService.tr('change_master_password'),
+                      languageService.tr(
+                        isInvestor
+                            ? 'dashboard_reset_investor_password'
+                            : 'change_master_password',
+                      ),
                       style: TextStyle(
                         fontSize: 20.sp,
                         fontWeight: FontWeight.bold,
@@ -1240,14 +1259,22 @@ class AccountMenuBottomSheet extends StatelessWidget {
                                     if (formKey.currentState!.validate()) {
                                       isLoading.value = true;
                                       try {
-                                        final response = await authService
-                                            .changePassword(
-                                              mt5Account:
-                                                  account.metaAccountNumber,
-                                              newPassword:
-                                                  passwordController.text
-                                                      .trim(),
-                                            );
+                                        final mt5Account =
+                                            account.metaAccountNumber;
+                                        final newPassword =
+                                            passwordController.text.trim();
+                                        final response =
+                                            isInvestor
+                                                ? await authService
+                                                    .resetInvestorPassword(
+                                                      mt5Account: mt5Account,
+                                                      newPassword: newPassword,
+                                                    )
+                                                : await authService
+                                                    .changePassword(
+                                                      mt5Account: mt5Account,
+                                                      newPassword: newPassword,
+                                                    );
 
                                         if (response.success) {
                                           CustomToastService.showSuccess(
@@ -1401,7 +1428,18 @@ class AccountMenuBottomSheet extends StatelessWidget {
                     label: languageService.tr('change_password'),
                     onTap: () {
                       Get.back(closeOverlays: true);
-                      _showMT5ChangePasswordDialog();
+                                      _showMT5ChangePasswordDialog();
+                    },
+                  ),
+                  SizedBox(height: 8),
+                  _buildMenuItem(
+                    icon: Icons.vpn_key_outlined,
+                    label: languageService.tr(
+                      'dashboard_reset_investor_password',
+                    ),
+                    onTap: () {
+                      Get.back(closeOverlays: true);
+                      _showMT5ChangePasswordDialog(isInvestor: true);
                     },
                   ),
                 // ],

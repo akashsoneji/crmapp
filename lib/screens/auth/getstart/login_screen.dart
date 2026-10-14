@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/services.dart';
 import 'package:crm_app/flavor_config.dart';
 import 'package:crm_app/widgets/brand_logo.dart';
 import 'package:flutter/material.dart';
@@ -212,6 +213,9 @@ class _LoginScreenState extends State<LoginScreen> {
   void _handleLogin() {
     print("object is click on ${authController.isLoading}");
     if (_formKey.currentState!.validate()) {
+      // Commit autofill before login navigates away (Get.offAllNamed disposes
+      // this screen), otherwise the OS never offers "Save password?".
+      TextInput.finishAutofillContext();
       authController.login(
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
@@ -379,6 +383,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: IntrinsicHeight(
                             child: Form(
                               key: _formKey,
+                              child: AutofillGroup(
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -409,6 +414,11 @@ class _LoginScreenState extends State<LoginScreen> {
                                   SizedBox(height: 16.h),
                                   RTLHelper.rtlTextField(
                                     controller: emailController,
+                                    keyboardType: TextInputType.emailAddress,
+                                    autofillHints: const [
+                                      AutofillHints.username,
+                                      AutofillHints.email,
+                                    ],
                                     labelText: languageService.tr(
                                       "register_email",
                                     ),
@@ -437,6 +447,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                   SizedBox(height: 16.h),
                                   RTLHelper.rtlTextField(
                                     controller: passwordController,
+                                    keyboardType: TextInputType.visiblePassword,
+                                    autofillHints: const [
+                                      AutofillHints.password,
+                                    ],
                                     hintText: languageService.tr(
                                       "register_password",
                                     ),
@@ -517,6 +531,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   }),
                                   SizedBox(height: 16.h),
                                 ],
+                              ),
                               ),
                             ),
                           ),

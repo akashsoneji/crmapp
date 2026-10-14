@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/routes/app_pages.dart';
 import 'package:flutter/material.dart';
@@ -6,10 +8,15 @@ import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/screens/ibm/presentation/pages/create_edit_plan_screen.dart';
+import 'package:crm_app/screens/ibm/presentation/pages/ibm_commission_distribution_screen.dart';
+import 'package:crm_app/screens/ibm/presentation/pages/ibm_exports_screen.dart';
+import 'package:crm_app/screens/ibm/presentation/pages/ibm_reports_screen.dart';
+
 import 'package:crm_app/screens/ibm/presentation/widgets/assign_plan_bottom_sheet.dart';
 import 'package:crm_app/screens/ibm/data/ibm_api_provider.dart';
 import 'package:crm_app/screens/ibm/utils/ibm_currency.dart';
 import 'package:crm_app/screens/ibm/view_models/ibm_controller.dart';
+import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
 
 class IbmWalletScreen extends StatefulWidget {
@@ -64,7 +71,7 @@ class _IbmWalletScreenState extends State<IbmWalletScreen>
         ),
         titleSpacing: 0,
         title: Text(
-          'Commission',
+          TranslationUtils.tr('general_commission'),
           style: AppTextStyles.heading.copyWith(
             fontSize: 16.sp,
             fontWeight: FontWeight.w700,
@@ -72,10 +79,15 @@ class _IbmWalletScreenState extends State<IbmWalletScreen>
           ),
         ),
         actions: [
+          IconButton(
+            tooltip: TranslationUtils.tr('ibm_reports'),
+            icon: Icon(Icons.assessment_outlined, color: AppColors.textPrimary),
+            onPressed: () => Get.to(() => const IbmReportsScreen()),
+          ),
           Obx(() {
             final balanceStr = '\$${controller.walletBalance}';
             return Padding(
-              padding: EdgeInsets.only(right: 16.w),
+              padding: EdgeInsetsDirectional.only(end: 16.w),
               child: Container(
                 padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
                 decoration: BoxDecoration(
@@ -91,12 +103,15 @@ class _IbmWalletScreenState extends State<IbmWalletScreen>
                       color: AppColors.textPrimary,
                     ),
                     SizedBox(width: 4.w),
-                    Text(
-                      balanceStr,
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
+                    Directionality(
+                      textDirection: TextDirection.ltr,
+                      child: Text(
+                        balanceStr,
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                        ),
                       ),
                     ),
                   ],
@@ -136,9 +151,9 @@ class _IbmWalletScreenState extends State<IbmWalletScreen>
                   fontSize: 13.sp,
                   fontWeight: FontWeight.bold,
                 ),
-                tabs: const [
-                  Tab(text: 'My Commission'),
-                  Tab(text: 'Commission Plans'),
+                tabs: [
+                  Tab(text: TranslationUtils.tr('ibm_my_commission')),
+                  Tab(text: TranslationUtils.tr('ibm_commission_plans')),
                 ],
               ),
             ),
@@ -218,7 +233,34 @@ class _MyCommissionTabState extends State<MyCommissionTab> {
       IbmCurrency.format(_asNum(v), currencyCode: _currency());
 
   String _selectedSubTab = 'Earnings';
-  final List<String> _subTabs = ['Earnings', 'Payouts', 'My Commission Plan'];
+  final List<String> _subTabs = [
+    'Earnings',
+    'Payouts',
+    'Distribute to Client',
+    'My Commission Plan',
+  ];
+
+  static const Map<String, String> _subTabKeys = {
+    'Earnings': 'ibm_earnings',
+    'Payouts': 'ibm_payouts',
+    'Distribute to Client': 'ibm_distribute_to_client',
+    'My Commission Plan': 'ibm_my_commission_plan',
+  };
+
+  static const Map<String, String> _filterKeys = {
+    'Everything': 'ibm_everything',
+    'Commission earned': 'pmam_manager_dashboard_screen_commission_earned',
+    'Paid out': 'ibm_paid_out',
+    'Payouts returned': 'ibm_payouts_returned',
+    'Adjustments': 'ibm_adjustments',
+    'Clawbacks': 'ibm_clawbacks',
+  };
+
+  String _subTabLabel(String name) =>
+      TranslationUtils.tr(_subTabKeys[name] ?? name);
+
+  String _filterLabel(String name) =>
+      TranslationUtils.tr(_filterKeys[name] ?? name);
 
   String _selectedFilter = 'Everything';
   String _selectedFilterValue = '';
@@ -232,10 +274,52 @@ class _MyCommissionTabState extends State<MyCommissionTab> {
     'Clawbacks': 'clawback',
   };
 
+  final TextEditingController _searchController = TextEditingController();
+  Timer? _searchDebounce;
+  String _searchQuery = '';
+  bool _isExporting = false;
+
+  static final Color _exportColor = AppColors.successText;
+
   @override
   void initState() {
     super.initState();
     _fetchTransactions();
+  }
+
+  @override
+  void dispose() {
+    _searchDebounce?.cancel();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  /// Debounced so typing "NZDUSD" fires one request, not six. Clearing the
+  /// box reloads the unfiltered list.
+  void _onSearchChanged(String value) {
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 400), () {
+      final query = value.trim();
+      if (query == _searchQuery) return;
+      _searchQuery = query;
+      _fetchTransactions();
+    });
+  }
+
+  Future<void> _exportCommissionHistory() async {
+    if (_isExporting) return;
+    setState(() => _isExporting = true);
+    try {
+      await runIbmExport(
+        kind: 'commission_history',
+        filters: {
+          'type': _selectedFilterValue.isEmpty ? null : _selectedFilterValue,
+          'symbol': _searchQuery.isEmpty ? null : _searchQuery,
+        },
+      );
+    } finally {
+      if (mounted) setState(() => _isExporting = false);
+    }
   }
 
   Future<void> _fetchTransactions() async {
@@ -247,6 +331,7 @@ class _MyCommissionTabState extends State<MyCommissionTab> {
       final response = await _apiProvider.getPortalWalletTransactions(
         currency: _currency(),
         type: _selectedFilterValue.isEmpty ? null : _selectedFilterValue,
+        search: _searchQuery,
       );
       if (response.success) {
         final rawJson = response.data;
@@ -269,10 +354,12 @@ class _MyCommissionTabState extends State<MyCommissionTab> {
           _transactions = [];
         }
       } else {
-        _error = response.message ?? 'Failed to load transactions';
+        _error =
+            response.message ??
+            TranslationUtils.tr('ibm_failed_to_load_transactions');
       }
     } catch (e) {
-      _error = 'An error occurred while loading transactions.';
+      _error = TranslationUtils.tr('ibm_error_loading_transactions');
     } finally {
       if (mounted) {
         setState(() {
@@ -298,10 +385,11 @@ class _MyCommissionTabState extends State<MyCommissionTab> {
         }
         _myPlan = data;
       } else {
-        _planError = response.message ?? 'Failed to load plan';
+        _planError =
+            response.message ?? TranslationUtils.tr('ibm_failed_to_load_plan');
       }
     } catch (e) {
-      _planError = 'An error occurred while loading the plan.';
+      _planError = TranslationUtils.tr('ibm_error_loading_the_plan');
     } finally {
       if (mounted) setState(() => _planLoading = false);
     }
@@ -320,18 +408,18 @@ class _MyCommissionTabState extends State<MyCommissionTab> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Cancel payout'),
+        title: Text(TranslationUtils.tr('ibm_cancel_payout')),
         content: TextField(
           controller: reasonCtrl,
-          decoration: const InputDecoration(
-            labelText: 'Reason (optional)',
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            labelText: TranslationUtils.tr('ibm_reason_optional'),
+            border: const OutlineInputBorder(),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Keep'),
+            child: Text(TranslationUtils.tr('ibm_keep')),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
@@ -340,7 +428,7 @@ class _MyCommissionTabState extends State<MyCommissionTab> {
               foregroundColor: AppColors.whiteColor,
               elevation: 0,
             ),
-            child: const Text('Cancel payout'),
+            child: Text(TranslationUtils.tr('ibm_cancel_payout')),
           ),
         ],
       ),
@@ -357,11 +445,14 @@ class _MyCommissionTabState extends State<MyCommissionTab> {
       );
       if (!mounted) return;
       if (res.success) {
-        CustomToastService.showSuccess(message: 'Payout cancelled');
+        CustomToastService.showSuccess(
+          message: TranslationUtils.tr('ibm_payout_cancelled'),
+        );
         await _ibmController.fetchWallet();
       } else {
         CustomToastService.showError(
-          message: res.message ?? 'Could not cancel payout',
+          message:
+              res.message ?? TranslationUtils.tr('ibm_could_not_cancel_payout'),
         );
       }
     } catch (e) {
@@ -396,12 +487,12 @@ class _MyCommissionTabState extends State<MyCommissionTab> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'My Commission',
+              TranslationUtils.tr('ibm_my_commission'),
               style: AppTextStyles.heading.copyWith(fontSize: 18.sp),
             ),
             SizedBox(height: 4.h),
             Text(
-              'What you have earned, what you have been paid, and what you are paid on',
+              TranslationUtils.tr('ibm_what_you_have_earned'),
               style: TextStyle(color: AppColors.textSecondary, fontSize: 12.sp),
             ),
             SizedBox(height: 16.h),
@@ -410,30 +501,30 @@ class _MyCommissionTabState extends State<MyCommissionTab> {
               runSpacing: 8.h,
               children: [
                 _buildStatCard(
-                  'Available now',
+                  TranslationUtils.tr('ibm_available_now'),
                   availableStr,
-                  'ready to request',
+                  TranslationUtils.tr('ibm_ready_to_request'),
                   Icons.account_balance_wallet,
                   AppColors.primary,
                 ),
                 _buildStatCard(
-                  'Pending payout',
+                  TranslationUtils.tr('ibm_pending_payout'),
                   pendingStr,
-                  'locked in an open request',
+                  TranslationUtils.tr('ibm_locked_in_open_request'),
                   Icons.hourglass_empty,
                   Colors.orange,
                 ),
                 _buildStatCard(
-                  'Earned all time',
+                  TranslationUtils.tr('ibm_earned_all_time'),
                   earnedStr,
-                  'your share, since day one',
+                  TranslationUtils.tr('ibm_your_share_since_day_one'),
                   Icons.stacked_line_chart,
                   AppColors.primary,
                 ),
                 _buildStatCard(
-                  'Paid out',
+                  TranslationUtils.tr('ibm_paid_out'),
                   paidStr,
-                  'settled to you',
+                  TranslationUtils.tr('ibm_settled_to_you'),
                   Icons.check_circle,
                   Colors.green,
                 ),
@@ -455,7 +546,9 @@ class _MyCommissionTabState extends State<MyCommissionTab> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '$availableStr ready',
+                          TranslationUtils.trArgs('ibm_amount_ready', {
+                            'amount': availableStr,
+                          }),
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 14.sp,
@@ -463,7 +556,12 @@ class _MyCommissionTabState extends State<MyCommissionTab> {
                           ),
                         ),
                         Text(
-                          'The smallest payout is ${IbmCurrency.format(_minPayout(), currencyCode: _currency())}.',
+                          TranslationUtils.trArgs('ibm_smallest_payout_is', {
+                            'amount': IbmCurrency.format(
+                              _minPayout(),
+                              currencyCode: _currency(),
+                            ),
+                          }),
                           style: TextStyle(
                             color: AppColors.textSecondary,
                             fontSize: 12.sp,
@@ -517,7 +615,11 @@ class _MyCommissionTabState extends State<MyCommissionTab> {
                           borderRadius: BorderRadius.circular(8.r),
                         ),
                       ),
-                      child: const Text('Request payout'),
+                      child: Text(
+                        TranslationUtils.tr(
+                          'commission_history_screen_request_payout',
+                        ),
+                      ),
                     );
                   }),
                 ],
@@ -533,7 +635,7 @@ class _MyCommissionTabState extends State<MyCommissionTab> {
                     _subTabs.map((tabName) {
                       final isSelected = _selectedSubTab == tabName;
                       return Padding(
-                        padding: EdgeInsets.only(right: 8.w),
+                        padding: EdgeInsetsDirectional.only(end: 8.w),
                         child: InkWell(
                           onTap: () {
                             setState(() {
@@ -559,7 +661,7 @@ class _MyCommissionTabState extends State<MyCommissionTab> {
                               borderRadius: BorderRadius.circular(20.r),
                             ),
                             child: Text(
-                              tabName,
+                              _subTabLabel(tabName),
                               style: TextStyle(
                                 fontSize: 12.sp,
                                 fontWeight:
@@ -583,7 +685,6 @@ class _MyCommissionTabState extends State<MyCommissionTab> {
             Divider(color: AppColors.divider),
             SizedBox(height: 10.h),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 PopupMenuButton<String>(
                   onSelected: _onFilterSelected,
@@ -608,7 +709,7 @@ class _MyCommissionTabState extends State<MyCommissionTab> {
                               SizedBox(width: 16.w),
                             SizedBox(width: 8.w),
                             Text(
-                              choice,
+                              _filterLabel(choice),
                               style: TextStyle(
                                 fontSize: 12.sp,
                                 color: AppColors.textPrimary,
@@ -620,16 +721,15 @@ class _MyCommissionTabState extends State<MyCommissionTab> {
                     }).toList();
                   },
                   child: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 12.w,
-                      vertical: 6.h,
-                    ),
+                    height: 36.h,
+                    alignment: Alignment.center,
+                    padding: EdgeInsets.symmetric(horizontal: 12.w),
                     decoration: BoxDecoration(
                       border: Border.all(color: AppColors.divider),
-                      borderRadius: BorderRadius.circular(4.r),
+                      borderRadius: BorderRadius.circular(6.r),
                     ),
                     child: Text(
-                      _selectedFilter,
+                      _filterLabel(_selectedFilter),
                       style: TextStyle(
                         fontSize: 12.sp,
                         color: AppColors.textPrimary,
@@ -637,11 +737,117 @@ class _MyCommissionTabState extends State<MyCommissionTab> {
                     ),
                   ),
                 ),
-                Text(
-                  'Every line is one movement of this wallet.',
-                  style: TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 10.sp,
+                SizedBox(width: 8.w),
+                Expanded(
+                  child: SizedBox(
+                    height: 36.h,
+                    child: TextField(
+                      controller: _searchController,
+                      onChanged: (value) {
+                        setState(() {});
+                        _onSearchChanged(value);
+                      },
+                      textInputAction: TextInputAction.search,
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        color: AppColors.textPrimary,
+                      ),
+                      decoration: InputDecoration(
+                        isDense: true,
+                        hintText: TranslationUtils.tr(
+                          'ibm_search_symbol_or_account',
+                        ),
+                        hintStyle: TextStyle(
+                          fontSize: 12.sp,
+                          color: AppColors.textGrey,
+                        ),
+                        prefixIcon: Icon(
+                          Icons.search,
+                          size: 16.w,
+                          color: AppColors.textGrey,
+                        ),
+                        prefixIconConstraints: BoxConstraints(minWidth: 32.w),
+                        suffixIcon: _searchController.text.isEmpty
+                            ? null
+                            : GestureDetector(
+                                onTap: () {
+                                  _searchController.clear();
+                                  setState(() {});
+                                  _onSearchChanged('');
+                                },
+                                child: Icon(
+                                  Icons.close,
+                                  size: 16.w,
+                                  color: AppColors.textGrey,
+                                ),
+                              ),
+                        suffixIconConstraints: BoxConstraints(minWidth: 32.w),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 8.w,
+                          vertical: 8.h,
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(6.r),
+                          borderSide: BorderSide(color: AppColors.divider),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(6.r),
+                          borderSide: BorderSide(color: AppColors.primary),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 10.h),
+            Row(
+              children: [
+                OutlinedButton.icon(
+                  onPressed: _isExporting ? null : _exportCommissionHistory,
+                  icon: _isExporting
+                      ? SizedBox(
+                          width: 14.w,
+                          height: 14.w,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: _exportColor,
+                          ),
+                        )
+                      : Icon(
+                          Icons.description_rounded,
+                          size: 16.w,
+                          color: _exportColor,
+                        ),
+                  label: Text(
+                    TranslationUtils.tr('ibm_commission_history'),
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w600,
+                      color: _exportColor,
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: Size(0, 36.h),
+                    padding: EdgeInsets.symmetric(horizontal: 12.w),
+                    backgroundColor: _exportColor.withValues(alpha: 0.1),
+                    side: BorderSide(
+                      color: _exportColor.withValues(alpha: 0.35),
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(6.r),
+                    ),
+                  ),
+                ),
+                SizedBox(width: 10.w),
+                Expanded(
+                  child: Text(
+                    TranslationUtils.tr('ibm_every_line_is_one_movement'),
+                    textAlign: TextAlign.end,
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 10.sp,
+                    ),
                   ),
                 ),
               ],
@@ -671,7 +877,7 @@ class _MyCommissionTabState extends State<MyCommissionTab> {
                 padding: EdgeInsets.symmetric(vertical: 24.h),
                 child: Center(
                   child: Text(
-                    'No transactions found',
+                    TranslationUtils.tr('transaction_history_no_transactions'),
                     style: TextStyle(
                       color: AppColors.textSecondary,
                       fontSize: 14.sp,
@@ -688,14 +894,20 @@ class _MyCommissionTabState extends State<MyCommissionTab> {
                     tx['type']?.toString().toUpperCase() ??
                     'UNKNOWN';
 
-                String details = tx['description'] ?? 'Transaction details';
+                String details =
+                    tx['description'] ??
+                    TranslationUtils.tr('ibm_transaction_details_fallback');
                 if (trade != null) {
                   final account = trade['account'] ?? '';
                   final lots = trade['lots']?.toString() ?? '';
                   final entryPrice = trade['entry_price']?.toString() ?? '';
                   final exitPrice = trade['exit_price']?.toString() ?? '';
-                  details =
-                      'TA#$account - $lots lots - $entryPrice -> $exitPrice';
+                  details = TranslationUtils.trArgs('ibm_trade_detail_row', {
+                    'account': '$account',
+                    'lots': lots,
+                    'entry': entryPrice,
+                    'exit': exitPrice,
+                  });
                 }
 
                 // Handle positive/negative amounts
@@ -722,6 +934,10 @@ class _MyCommissionTabState extends State<MyCommissionTab> {
               }).toList(),
             ] else if (_selectedSubTab == 'Payouts')
               _buildPayoutsBody()
+            else if (_selectedSubTab == 'Distribute to Client')
+              IbmDistributeToClientSection(
+                onChanged: _ibmController.fetchWallet,
+              )
             else
               _buildMyPlanBody(),
           ],
@@ -738,7 +954,7 @@ class _MyCommissionTabState extends State<MyCommissionTab> {
         padding: EdgeInsets.symmetric(vertical: 24.h),
         child: Center(
           child: Text(
-            'No payouts yet',
+            TranslationUtils.tr('ibm_no_payouts_yet'),
             style: TextStyle(color: AppColors.textSecondary, fontSize: 14.sp),
           ),
         ),
@@ -816,7 +1032,7 @@ class _MyCommissionTabState extends State<MyCommissionTab> {
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
                       child: Text(
-                        'Cancel',
+                        TranslationUtils.tr('account_management_cancel'),
                         style: TextStyle(color: Colors.red, fontSize: 12.sp),
                       ),
                     ),
@@ -855,7 +1071,7 @@ class _MyCommissionTabState extends State<MyCommissionTab> {
         padding: EdgeInsets.symmetric(vertical: 24.h),
         child: Center(
           child: Text(
-            'No plan assigned',
+            TranslationUtils.tr('ibm_no_plan_assigned'),
             style: TextStyle(color: AppColors.textSecondary, fontSize: 14.sp),
           ),
         ),
@@ -880,7 +1096,7 @@ class _MyCommissionTabState extends State<MyCommissionTab> {
         SizedBox(height: 12.h),
         if (groups.isEmpty)
           Text(
-            'No commission groups on this plan.',
+            TranslationUtils.tr('ibm_no_commission_groups_on_plan'),
             style: TextStyle(color: AppColors.textSecondary, fontSize: 12.sp),
           )
         else
@@ -923,7 +1139,9 @@ class _MyCommissionTabState extends State<MyCommissionTab> {
                           borderRadius: BorderRadius.circular(20.r),
                         ),
                         child: Text(
-                          '${rates.length} rates',
+                          TranslationUtils.trArgs('ibm_rates_count', {
+                            'count': '${rates.length}',
+                          }),
                           style: TextStyle(
                             color: Colors.green,
                             fontSize: 11.sp,
@@ -946,7 +1164,7 @@ class _MyCommissionTabState extends State<MyCommissionTab> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'REBATE BY INSTRUMENT TYPE',
+                            TranslationUtils.tr('ibm_rebate_by_instrument_type'),
                             style: TextStyle(
                               fontSize: 10.sp,
                               color: AppColors.textSecondary,
@@ -957,7 +1175,7 @@ class _MyCommissionTabState extends State<MyCommissionTab> {
                           SizedBox(height: 10.h),
                           if (rates.isEmpty)
                             Text(
-                              'No rates set for this group.',
+                              TranslationUtils.tr('ibm_no_rates_set_for_group'),
                               style: TextStyle(
                                 fontSize: 12.sp,
                                 color: AppColors.textSecondary,
@@ -1010,7 +1228,9 @@ class _MyCommissionTabState extends State<MyCommissionTab> {
                                 if (overrides.isNotEmpty) ...[
                                   SizedBox(height: 12.h),
                                   Text(
-                                    'SYMBOL-SPECIFIC RATES',
+                                    TranslationUtils.tr(
+                                      'ibm_symbol_specific_rates',
+                                    ),
                                     style: TextStyle(
                                       fontSize: 10.sp,
                                       color: AppColors.textSecondary,
@@ -1058,8 +1278,13 @@ class _MyCommissionTabState extends State<MyCommissionTab> {
                                 SizedBox(height: 10.h),
                                 Text(
                                   blocked.isEmpty
-                                      ? 'All symbols allowed on this group.'
-                                      : '${blocked.length} symbol(s) blocked on this group.',
+                                      ? TranslationUtils.tr(
+                                        'ibm_all_symbols_allowed_on_group',
+                                      )
+                                      : TranslationUtils.trArgs(
+                                        'ibm_symbols_blocked_on_group',
+                                        {'count': '${blocked.length}'},
+                                      ),
                                   style: TextStyle(
                                     fontSize: 12.sp,
                                     color: AppColors.textSecondary,
@@ -1285,7 +1510,8 @@ class _CommissionPlansTabState extends State<CommissionPlansTab> {
           _plans = [];
         }
       } else {
-        _error = response.message ?? 'Failed to load plans';
+        _error =
+            response.message ?? TranslationUtils.tr('ibm_failed_to_load_plans');
       }
     } catch (e) {
       _error = 'Error loading plans: $e';
@@ -1303,18 +1529,24 @@ class _CommissionPlansTabState extends State<CommissionPlansTab> {
       context: context,
       builder:
           (ctx) => AlertDialog(
-            title: const Text('Delete Plan'),
-            content: Text('Are you sure you want to delete "$planName"?'),
+            title: Text(TranslationUtils.tr('ibm_delete_plan')),
+            content: Text(
+              TranslationUtils.trArgs('ibm_confirm_delete_plan', {
+                'name': planName,
+              }),
+            ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx, false),
-                child: const Text('Cancel'),
+                child: Text(
+                  TranslationUtils.tr('account_management_cancel'),
+                ),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(ctx, true),
-                child: const Text(
-                  'Delete',
-                  style: TextStyle(color: Colors.red),
+                child: Text(
+                  TranslationUtils.tr('account_management_delete'),
+                  style: const TextStyle(color: Colors.red),
                 ),
               ),
             ],
@@ -1326,11 +1558,49 @@ class _CommissionPlansTabState extends State<CommissionPlansTab> {
     setState(() => _isLoading = true);
     final res = await IbmApiProvider().deletePartnerPlan(planId);
     if (res.success) {
-      CustomToastService.show(message: 'Plan deleted successfully');
+      CustomToastService.show(
+        message: TranslationUtils.tr('ibm_plan_deleted_successfully'),
+      );
       _fetchPlans();
     } else {
       if (mounted) setState(() => _isLoading = false);
-      CustomToastService.show(message: res.message ?? 'Failed to delete plan');
+      CustomToastService.show(
+        message:
+            res.message ?? TranslationUtils.tr('ibm_failed_to_delete_plan'),
+      );
+    }
+  }
+
+  Future<void> _renamePlan(
+    int planId,
+    String currentName,
+    String currentDescription,
+  ) async {
+    final result = await showDialog<_RenamePlanResult>(
+      context: context,
+      builder: (_) => _RenamePlanDialog(
+        initialName: currentName,
+        initialDescription: currentDescription,
+      ),
+    );
+    if (result == null) return;
+
+    setState(() => _isLoading = true);
+    final res = await IbmApiProvider().renamePartnerPlan(
+      planId,
+      planName: result.name,
+      description: result.description,
+    );
+    if (res.success) {
+      CustomToastService.showSuccess(
+        message: res.message ?? TranslationUtils.tr('ibm_plan_renamed'),
+      );
+      _fetchPlans();
+    } else {
+      if (mounted) setState(() => _isLoading = false);
+      CustomToastService.showError(
+        message: res.message ?? TranslationUtils.tr('ibm_failed_to_rename_plan'),
+      );
     }
   }
 
@@ -1364,7 +1634,7 @@ class _CommissionPlansTabState extends State<CommissionPlansTab> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'My Commission Plans',
+                TranslationUtils.tr('ibm_my_commission_plans'),
                 style: AppTextStyles.heading.copyWith(fontSize: 18.sp),
               ),
               ElevatedButton.icon(
@@ -1377,7 +1647,7 @@ class _CommissionPlansTabState extends State<CommissionPlansTab> {
                   }
                 },
                 icon: const Icon(Icons.add, size: 16),
-                label: const Text('New Plan'),
+                label: Text(TranslationUtils.tr('ibm_new_plan')),
                 style: ElevatedButton.styleFrom(
                   minimumSize: Size.zero,
                   backgroundColor: AppColors.primary,
@@ -1412,7 +1682,7 @@ class _CommissionPlansTabState extends State<CommissionPlansTab> {
               child: Padding(
                 padding: EdgeInsets.all(40.w),
                 child: Text(
-                  'No commission plans found',
+                  TranslationUtils.tr('ibm_no_commission_plans_found'),
                   style: TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 14.sp,
@@ -1480,7 +1750,7 @@ class _CommissionPlansTabState extends State<CommissionPlansTab> {
                                 borderRadius: BorderRadius.circular(12.r),
                               ),
                               child: Text(
-                                'Active',
+                                TranslationUtils.tr('chart_active'),
                                 style: TextStyle(
                                   color: Colors.green,
                                   fontSize: 10.sp,
@@ -1501,7 +1771,9 @@ class _CommissionPlansTabState extends State<CommissionPlansTab> {
                           ),
                           SizedBox(width: 6.w),
                           Text(
-                            '$partnersUsing sub-IB using',
+                            TranslationUtils.trArgs('ibm_sub_ib_using', {
+                              'count': '$partnersUsing',
+                            }),
                             style: TextStyle(
                               fontSize: 12.sp,
                               color: AppColors.textSecondary,
@@ -1516,7 +1788,7 @@ class _CommissionPlansTabState extends State<CommissionPlansTab> {
                             ),
                             SizedBox(width: 4.w),
                             Text(
-                              'Locked once assigned',
+                              TranslationUtils.tr('ibm_locked_once_assigned'),
                               style: TextStyle(
                                 fontSize: 12.sp,
                                 color: AppColors.textSecondary,
@@ -1557,7 +1829,28 @@ class _CommissionPlansTabState extends State<CommissionPlansTab> {
                               },
                               child: _buildActionIcon(
                                 isLocked ? Icons.visibility : Icons.edit,
-                                isLocked ? 'View' : 'Edit',
+                                isLocked
+                                    ? TranslationUtils.tr('ibm_view')
+                                    : TranslationUtils.tr('general_edit'),
+                                AppColors.textPrimary,
+                              ),
+                            ),
+                          ),
+                          Container(
+                            width: 1,
+                            height: 18.h,
+                            color: AppColors.divider,
+                          ),
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () => _renamePlan(
+                                plan['plan_id'] ?? 0,
+                                name,
+                                description,
+                              ),
+                              child: _buildActionIcon(
+                                Icons.drive_file_rename_outline,
+                                TranslationUtils.tr('ibm_rename'),
                                 AppColors.textPrimary,
                               ),
                             ),
@@ -1575,7 +1868,7 @@ class _CommissionPlansTabState extends State<CommissionPlansTab> {
                               ),
                               child: _buildActionIcon(
                                 Icons.person_add,
-                                'Assign',
+                                TranslationUtils.tr('ibm_assign'),
                                 AppColors.textPrimary,
                               ),
                             ),
@@ -1591,7 +1884,7 @@ class _CommissionPlansTabState extends State<CommissionPlansTab> {
                                   _deletePlan(plan['plan_id'] ?? 0, name),
                               child: _buildActionIcon(
                                 Icons.delete_outline,
-                                'Delete',
+                                TranslationUtils.tr('account_management_delete'),
                                 Colors.red,
                               ),
                             ),
@@ -1621,6 +1914,96 @@ class _CommissionPlansTabState extends State<CommissionPlansTab> {
             color: color,
             fontWeight: FontWeight.w500,
           ),
+        ),
+      ],
+    );
+  }
+}
+
+class _RenamePlanResult {
+  final String name;
+  final String description;
+  const _RenamePlanResult(this.name, this.description);
+}
+
+class _RenamePlanDialog extends StatefulWidget {
+  final String initialName;
+  final String initialDescription;
+
+  const _RenamePlanDialog({
+    required this.initialName,
+    required this.initialDescription,
+  });
+
+  @override
+  State<_RenamePlanDialog> createState() => _RenamePlanDialogState();
+}
+
+class _RenamePlanDialogState extends State<_RenamePlanDialog> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _nameController =
+      TextEditingController(text: widget.initialName);
+  late final TextEditingController _descriptionController =
+      TextEditingController(text: widget.initialDescription);
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _descriptionController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    Navigator.pop(
+      context,
+      _RenamePlanResult(
+        _nameController.text.trim(),
+        _descriptionController.text.trim(),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(TranslationUtils.tr('ibm_rename_plan')),
+      content: Form(
+        key: _formKey,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: _nameController,
+                maxLength: 150,
+                decoration: InputDecoration(
+                  labelText: TranslationUtils.tr('ibm_plan_name'),
+                ),
+                validator: (value) => (value == null || value.trim().isEmpty)
+                    ? TranslationUtils.tr('ibm_plan_name_required')
+                    : null,
+              ),
+              TextFormField(
+                controller: _descriptionController,
+                maxLength: 1000,
+                maxLines: 3,
+                decoration: InputDecoration(
+                  labelText: TranslationUtils.tr('ibm_description'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(TranslationUtils.tr('account_management_cancel')),
+        ),
+        TextButton(
+          onPressed: _submit,
+          child: Text(TranslationUtils.tr('ibm_save')),
         ),
       ],
     );

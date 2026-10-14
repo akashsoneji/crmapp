@@ -22,9 +22,12 @@ class Tenax3Config extends BaseClientConfig {
         logoSvgPath: 'logo.svg',
         splashLogoPath: 'splash_logo.svg',
         appIconPath: 'app_icon.png',
-        apiBaseUrl: 'https://demo3.tenaxcode.com/api/',
-        websocketUrl: 'wss://demo3.tenaxcode.com/trade-engine',
-        chartBaseUrl: 'https://demo3.tenaxcode.com',
+        apiBaseUrl: 'https://dev.tenaxcodecrm.com/api/',
+        websocketUrl: 'wss://dev.tenaxcodecrm.com/trade-engine',
+        chartBaseUrl: 'https://dev.tenaxcodecrm.com',
+        // apiBaseUrl: 'https://demo3.tenaxcode.com/api/',
+        // websocketUrl: 'wss://demo3.tenaxcode.com/trade-engine',
+        // chartBaseUrl: 'https://demo3.tenaxcode.com',
       );
 }
 

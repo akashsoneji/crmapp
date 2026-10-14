@@ -14,6 +14,8 @@ import 'package:crm_app/services/api_service.dart';
 import 'package:crm_app/services/favorites_storage_service.dart';
 import 'package:crm_app/controllers/account_controller.dart';
 import 'package:crm_app/controllers/trading_controller.dart';
+import 'package:crm_app/controllers/chart_socket_controller.dart';
+import 'package:crm_app/services/stream_websocket_service.dart';
 import 'package:crm_app/models/mt5_account.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -21,6 +23,10 @@ import 'package:crm_app/utils/message_pack_decoder.dart';
 import 'package:crm_app/services/websocket_endpoint_helper.dart';
 import 'package:crm_app/services/unified_websocket_service.dart';
 import 'package:crm_app/services/market_watch_v2_service.dart';
+import 'package:crm_app/services/symbol_details_cache_service.dart';
+import 'package:crm_app/flavor_config.dart';
+import 'package:crm_app/utils/android_style_extensions.dart';
+import 'package:crm_app/widgets/custom_toast.dart';
 
 
 class InstrumentsController extends GetxController with WidgetsBindingObserver {
@@ -36,10 +42,76 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
   Timer? _scrollIdleTimer;
 
   Rx<InstrumentPrice> priceRx(String symbol) {
+    // Stream ticks arrive as `XAUUSD` while cent accounts render
+    // `XAUUSD.cent`; both must share one Rx or the row stays at 0.
+    final normalized = MarketWatchV2Service.normalizeSymbol(symbol);
     return _priceBySymbol.putIfAbsent(
-      symbol,
+      normalized,
       () => InstrumentPrice.empty().obs,
     );
+  }
+
+  /// Latest live quote for [symbol] (pending batch first, then flushed Rx),
+  /// tolerant of broker suffix / case differences. Null when no tick yet.
+  InstrumentPrice? getLivePrice(String symbol) {
+    if (symbol.isEmpty) return null;
+    final normalized = MarketWatchV2Service.normalizeSymbol(symbol);
+    final p1 = _pendingPriceUpdates[normalized] ?? _pendingPriceUpdates[symbol];
+    if (p1 != null && p1.bid > 0) return p1;
+    final p2 = _priceBySymbol[normalized]?.value ?? _priceBySymbol[symbol]?.value;
+    if (p2 != null && p2.bid > 0) return p2;
+    for (final entry in _priceBySymbol.entries) {
+      if (entry.key.toUpperCase() == normalized ||
+          MarketWatchV2Service.normalizeSymbol(entry.key) == normalized) {
+        if (entry.value.value.bid > 0) return entry.value.value;
+      }
+    }
+    return null;
+  }
+
+  /// Instrument row for [symbol] (watchlist first, then all instruments),
+  /// matched suffix-agnostically and overlaid with the latest live quote.
+  ListElement? findInstrument(String symbol) {
+    if (symbol.isEmpty) return null;
+    final cleanSym = symbol.trim().toUpperCase();
+    final cleanWithoutDot = cleanSym.contains('.')
+        ? cleanSym.substring(0, cleanSym.indexOf('.'))
+        : cleanSym;
+
+    bool matches(ListElement e) {
+      final eUpper = e.symbol.toUpperCase();
+      return eUpper == cleanSym ||
+          eUpper == cleanWithoutDot ||
+          (eUpper.contains('.') &&
+              eUpper.substring(0, eUpper.indexOf('.')) == cleanWithoutDot);
+    }
+
+    ListElement? match = instruments.firstWhereOrNull(matches) ??
+        allInstruments.firstWhereOrNull(matches);
+
+    final live = getLivePrice(symbol);
+    if (live != null && live.bid > 0) {
+      if (match != null) {
+        return match.copyWith(
+          bid: live.bid,
+          ask: live.ask,
+          spreadDiff: live.spreadDiff,
+          digits: live.digits,
+        );
+      }
+      return ListElement(
+        symbol: symbol,
+        bid: live.bid,
+        ask: live.ask,
+        spreadDiff: live.spreadDiff,
+        digits: live.digits,
+        last: 0,
+        volume: 0,
+        volumeReal: 0,
+        logo: '',
+      );
+    }
+    return match;
   }
 
   double _preserveNonZero(double incoming, double current) {
@@ -57,7 +129,7 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
     // During reconnect/REST hydrate the backend can send placeholder zero values.
     // Preserve the last non-zero price until a valid new value arrives.
     final current = priceRx(item.symbol).value;
-    _pendingPriceUpdates[item.symbol] = current.copyWith(
+    final newPrice = current.copyWith(
       bid: _preserveNonZero(item.bid, current.bid),
       ask: _preserveNonZero(item.ask, current.ask),
       digits: item.digits,
@@ -65,6 +137,10 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
       dayLow: _preserveOptionalNonZero(item.dayLow, current.dayLow),
       dayHigh: _preserveOptionalNonZero(item.dayHigh, current.dayHigh),
     );
+    _pendingPriceUpdates[item.symbol] = newPrice;
+    // Also key by normalized symbol so suffixed/case-variant lookups hit.
+    final normalized = MarketWatchV2Service.normalizeSymbol(item.symbol);
+    _pendingPriceUpdates[normalized] = newPrice;
     _schedulePriceFlush();
   }
 
@@ -179,11 +255,14 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
     // Add lifecycle observer to handle app state changes
     WidgetsBinding.instance.addObserver(this);
 
-    // Load favorites from storage
+    // Load favorites from storage (cache shown until the server GET returns)
     _loadFavorites();
 
     // Force reinitialize with new defaults if needed (for existing users)
     _checkAndUpdateDefaults();
+
+    // Server watchlist is the source of truth; replaces the cached list.
+    unawaited(_initialMarketWatchLoad());
 
     // ✅ FIX: Listen to account changes and update instruments data
     try {
@@ -220,6 +299,13 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
           // Update last account
           _lastAccount = account;
 
+          // On /ws/stream the switch auth frame carries no favorites (old
+          // account's symbols must not leak), so subscribe the new account's
+          // favorites once the REST catalogue confirms which ones it offers.
+          if (FlavorConfig.usesSingleStreamSocket) {
+            unawaited(_hydrateAndSubscribeForAccount(account));
+          }
+
           // DO NOT call startWebSocket() here
           // WebSocket reconnection is handled centrally by AccountController.setActiveMT5Account()
           // This listener only tracks _lastAccount for change detection
@@ -233,6 +319,10 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
     }
 
     _bindMarketWatchV2DecodedListener();
+    if (FlavorConfig.usesSingleStreamSocket) {
+      _bindTradeSymbolSubscriptions();
+      _bindSymbolUnavailableListener();
+    }
 
     // ✅ FIX: DON'T initialize WebSocket automatically - let screen decide when to start
     // WebSocket will only start when:
@@ -386,6 +476,144 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
   }
 
   /// Load favorite rows from same REST API as search; bid/ask filled by v2 ticks.
+  /// Account switch on /ws/stream: subscribe only the favorites the new
+  /// account actually offers (favorites ∩ its REST catalogue).
+  Future<void> _hydrateAndSubscribeForAccount(MT5Account account) async {
+    _currentAccountNumber = account.metaAccountNumber;
+    await hydrateFavoritesFromRest();
+
+    // A newer switch superseded this one while REST was in flight.
+    final active =
+        Get.find<AccountController>().activeMT5Account?.metaAccountNumber;
+    if (active != account.metaAccountNumber) return;
+    if (!Get.isRegistered<MarketWatchV2Service>()) return;
+
+    await _subscribeFavoritesForActiveAccount();
+  }
+
+  Set<String> _normalizedFavorites() =>
+      favoriteInstruments
+          .map(MarketWatchV2Service.normalizeSymbol)
+          .where((s) => s.isNotEmpty)
+          .toSet();
+
+  /// Symbols that must stay on the stream even outside the watchlist: open
+  /// positions + pending orders (Position tab P&L) and the chart's selected
+  /// symbol (chart / order screen prices).
+  Set<String> _symbolsNeededByTrades() {
+    final needed = <String>{};
+    if (Get.isRegistered<TradingController>()) {
+      final trading = Get.find<TradingController>();
+      needed.addAll(
+        [...trading.marketPositions, ...trading.pendingPositions].map(
+          (p) => MarketWatchV2Service.normalizeSymbol(p.symbol),
+        ),
+      );
+    }
+    if (Get.isRegistered<ChartSocketController>()) {
+      needed.add(
+        MarketWatchV2Service.normalizeSymbol(
+          Get.find<ChartSocketController>().currentSymbol.value,
+        ),
+      );
+    }
+    needed.remove('');
+    return needed;
+  }
+
+  final List<Worker> _tradeSymbolWorkers = <Worker>[];
+
+  /// Subscribes symbols of newly opened positions / placed pending orders
+  /// that are not in the watchlist, so the Position tab gets live prices.
+  void _bindTradeSymbolSubscriptions() {
+    if (_tradeSymbolWorkers.isNotEmpty) return;
+    if (!Get.isRegistered<TradingController>()) return;
+    final trading = Get.find<TradingController>();
+    final subscribed = <String>{};
+
+    void onTradesChanged(List<TradePosition> _) {
+      if (!Get.isRegistered<MarketWatchV2Service>()) return;
+      final current = _symbolsNeededByTrades();
+      final added = current.difference(subscribed).toList();
+      subscribed
+        ..clear()
+        ..addAll(current);
+      if (added.isEmpty) return;
+      Get.find<MarketWatchV2Service>().subscribeSymbols(added);
+    }
+
+    _tradeSymbolWorkers.addAll([
+      ever<List<TradePosition>>(trading.marketPositionsRx, onTradesChanged),
+      ever<List<TradePosition>>(trading.pendingPositionsRx, onTradesChanged),
+    ]);
+  }
+
+  /// Per-account cache of symbols the engine rejected with
+  /// `SYMBOL_NOT_AVAILABLE` (ws-stream-reference §6). Those rows are hidden
+  /// for that account only; the server watchlist itself is not changed.
+  final Map<String, Set<String>> _unavailableSymbolsByAccount =
+      <String, Set<String>>{};
+  StreamSubscription<Map<String, dynamic>>? _streamControlSub;
+
+  bool _isUnavailableForActiveAccount(String symbol) {
+    final account = _currentAccountNumber;
+    if (account == null) return false;
+    final unavailable = _unavailableSymbolsByAccount[account];
+    if (unavailable == null) return false;
+    return unavailable.contains(MarketWatchV2Service.normalizeSymbol(symbol));
+  }
+
+  void _bindSymbolUnavailableListener() {
+    if (_streamControlSub != null) return;
+    if (!Get.isRegistered<StreamWebSocketService>()) return;
+    _streamControlSub = Get.find<StreamWebSocketService>().control.listen((
+      frame,
+    ) {
+      if (frame['type'] != 'error' ||
+          frame['code'] != 'SYMBOL_NOT_AVAILABLE') {
+        return;
+      }
+      final account = _currentAccountNumber;
+      final symbol = MarketWatchV2Service.normalizeSymbol(
+        frame['symbol']?.toString() ?? '',
+      );
+      if (account == null || symbol.isEmpty) return;
+      final added = _unavailableSymbolsByAccount
+          .putIfAbsent(account, () => <String>{})
+          .add(symbol);
+      if (added) _updateFilteredInstruments();
+    });
+  }
+
+  /// Subscribes `favorites ∪ trade symbols` and unsubscribes [staleSymbols]
+  /// that nothing on screen needs any more.
+  Future<void> _subscribeFavoritesForActiveAccount({
+    Set<String> staleSymbols = const <String>{},
+  }) async {
+    if (!Get.isRegistered<MarketWatchV2Service>()) return;
+    final v2 = Get.find<MarketWatchV2Service>();
+
+    // Subscribe the whole server watchlist. The engine itself rejects what
+    // this account can't trade (SYMBOL_NOT_AVAILABLE), and those rows are
+    // then hidden. Filtering against the local catalogue skipped symbols
+    // that were not hydrated yet, so their prices stayed at 0.
+    final favorites = _normalizedFavorites();
+    final visibleFavorites =
+        favorites.where((s) => !_isUnavailableForActiveAccount(s)).toSet();
+    final tradeSymbols = _symbolsNeededByTrades();
+
+    final toDrop =
+        staleSymbols.difference(favorites).difference(tradeSymbols).toList();
+    if (toDrop.isNotEmpty) {
+      await v2.unsubscribeSymbols(toDrop);
+    }
+
+    final toSubscribe = {...visibleFavorites, ...tradeSymbols}.toList();
+    if (toSubscribe.isNotEmpty) {
+      await v2.subscribeSymbols(toSubscribe);
+    }
+  }
+
   Future<void> hydrateFavoritesFromRest() async {
     try {
       final token = await SecureStorageService.getAuthToken();
@@ -423,6 +651,9 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
 
       final incoming = <ListElement>[];
       for (final s in symbols) {
+        if (s.datafeedSymbol.isNotEmpty) {
+          SymbolDetailsCacheService.registerDatafeedSymbol(s.displaySymbol, s.datafeedSymbol);
+        }
         if (!isFavorite(s.displaySymbol)) continue;
         final current = priceRx(s.displaySymbol).value;
         incoming.add(
@@ -622,6 +853,7 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
   }
 
   void _initializeWebSocket() async {
+    if (FlavorConfig.usesSingleStreamSocket) return;
     if (_isConnecting) {
       print('Instruments: Connection already in progress, skipping');
       return;
@@ -1214,9 +1446,7 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
 
   bool _isCurrencyPair(String symbol) {
     final majorPairs = ['EUR', 'GBP', 'AUD', 'NZD', 'USD', 'CAD', 'CHF', 'JPY'];
-    final symbolWithoutSuffix = symbol
-        .replaceAll('.c', '')
-        .replaceAll('.r', '');
+    final symbolWithoutSuffix = symbol.removeSuffix();
 
     int matchCount = 0;
     for (final pair in majorPairs) {
@@ -1284,6 +1514,12 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
     _marketWatchV2Sub?.cancel();
     _marketWatchV2Sub = null;
     _marketWatchV2ListenerBound = false;
+    _streamControlSub?.cancel();
+    _streamControlSub = null;
+    for (final worker in _tradeSymbolWorkers) {
+      worker.dispose();
+    }
+    _tradeSymbolWorkers.clear();
     _priceFlushTimer?.cancel();
     _scrollIdleTimer?.cancel();
 
@@ -1334,6 +1570,10 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
 
   void _reconnectWebSocket() {
     if (isConnected.value) return;
+    if (FlavorConfig.usesSingleStreamSocket) {
+      unawaited(resumePriceStreamOnly());
+      return;
+    }
 
     print('🔄 Attempting to reconnect WebSocket...');
     isReconnecting.value = true;
@@ -1351,6 +1591,12 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
   }
 
   void disconnectWebSocket() {
+    // Guard the `late` field — on pippro/pipze (single stream socket) the
+    // legacy channel is never initialised, so touching it throws
+    // LateInitializationError on every lifecycle pause.
+    if (!isConnected.value && _currentWsUrl == null) {
+      return;
+    }
     try {
       channel.sink.close();
       isConnected.value = false;
@@ -1455,8 +1701,15 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
               ? instrumentSymbol
               : instrumentSymbol + '.c';
 
-      final success = await FavoritesStorageService.instance.toggleFavorite(
-        normalizedSymbol,
+      final adding = !isFavorite(instrumentSymbol);
+      final success = await _updateWatchlistOnServer(
+        (current) => adding
+            ? (current.contains(normalizedSymbol)
+                ? current
+                : [...current, normalizedSymbol])
+            : current
+                .where((s) => !_sameSymbol(s, normalizedSymbol))
+                .toList(),
       );
       if (success) {
         await _loadFavorites();
@@ -1527,8 +1780,10 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
   // Add instrument to favorites
   Future<void> addToFavorites(String instrumentSymbol) async {
     try {
-      final success = await FavoritesStorageService.instance.addToFavorites(
-        instrumentSymbol,
+      final success = await _updateWatchlistOnServer(
+        (current) => current.any((s) => _sameSymbol(s, instrumentSymbol))
+            ? current
+            : [...current, instrumentSymbol],
       );
       if (success) {
         await _loadFavorites();
@@ -1553,13 +1808,23 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
           ? instrumentSymbol.substring(0, instrumentSymbol.lastIndexOf('.'))
           : instrumentSymbol;
       
-      final storage = FavoritesStorageService.instance;
-      
-      // Remove all possible variations from storage
-      await storage.removeFromFavorites(cleanSymbol);
-      await storage.removeFromFavorites('$cleanSymbol.c');
-      await storage.removeFromFavorites('$cleanSymbol.r');
-      
+      // Drop locally first so a swiped Dismissible leaves the tree this frame.
+      favoriteInstruments.removeWhere((s) => _sameSymbol(s, cleanSymbol));
+      _updateFilteredInstruments();
+
+      // Remove all suffix variations (.c / .r) in the full list POSTed.
+      final success = await _updateWatchlistOnServer(
+        (current) =>
+            current.where((s) => !_sameSymbol(s, cleanSymbol)).toList(),
+      );
+      if (!success) {
+        if (!isClosed) {
+          await _loadFavorites();
+          _updateFilteredInstruments();
+        }
+        return;
+      }
+
       await _loadFavorites();
       _updateFilteredInstruments();
       await hydrateFavoritesFromRest();
@@ -1571,6 +1836,184 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
     } catch (e) {
       print('Error removing $instrumentSymbol from favorites: $e');
     }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Server watchlist (`user/trade/marketwatch`)
+  // GET  -> `{data: [symbols]}`            (current list)
+  // POST -> `{symbols: [...]}` full list    (server replaces the whole list)
+  // DELETE -> resets to the server default list
+  // The local FavoritesStorageService copy is only a cache of the server list.
+  // ---------------------------------------------------------------------------
+
+  /// True once the server list was loaded. Until then POSTs are held back,
+  /// because a POST replaces the whole server list.
+  bool _marketWatchLoaded = false;
+
+  /// Bumped per GET so only the newest GET's result is applied.
+  int _marketWatchLoadSeq = 0;
+
+  /// Serializes POSTs so each full list is built from the previous reply.
+  Future<void> _watchlistWriteChain = Future<void>.value();
+
+  bool _sameSymbol(String a, String b) =>
+      MarketWatchV2Service.normalizeSymbol(a) ==
+      MarketWatchV2Service.normalizeSymbol(b);
+
+  /// Startup: GET the server list, then refresh symbols for it. Runs
+  /// unawaited from onInit, so it must never throw.
+  Future<void> _initialMarketWatchLoad() async {
+    try {
+      final loaded = await _loadMarketWatchFromServer();
+      if (!loaded || isClosed) return;
+      _updateFilteredInstruments();
+      await hydrateFavoritesFromRest();
+    } catch (e) {
+      print('Initial marketwatch load failed: $e');
+    }
+  }
+
+  /// Returns true only when the server list replaced the local favorites.
+  Future<bool> _loadMarketWatchFromServer() async {
+    final loadSeq = ++_marketWatchLoadSeq;
+    final token = await SecureStorageService.getAuthToken();
+    if (token == null || token.isEmpty) return false;
+
+    // 3 tries, 300 ms apart, for a flaky network / 429 right after login.
+    for (var attempt = 0; attempt < 3; attempt++) {
+      if (attempt > 0) {
+        await Future.delayed(const Duration(milliseconds: 300));
+      }
+      if (isClosed || loadSeq != _marketWatchLoadSeq) return false;
+      try {
+        final response = await ApiService.get(
+          endpoint: ApiConstants.marketWatch,
+          token: token,
+        );
+        if (isClosed || loadSeq != _marketWatchLoadSeq) return false;
+        final body = response.data;
+        final serverSymbols = body is Map ? body['data'] : null;
+        if (!response.success || serverSymbols is! List) continue;
+
+        await _applyServerWatchlist(serverSymbols);
+        return true;
+      } catch (e) {
+        print('Error loading marketwatch from server (try ${attempt + 1}): $e');
+      }
+    }
+    return false;
+  }
+
+  /// Queues a full-list POST built by [buildNext] from the last
+  /// server-confirmed list. Never throws; completes with true on success.
+  Future<bool> _updateWatchlistOnServer(
+    List<String> Function(List<String> current) buildNext,
+  ) {
+    final completer = Completer<bool>();
+    _watchlistWriteChain = _watchlistWriteChain.then((_) async {
+      var saved = false;
+      try {
+        if (!isClosed) saved = await _postWatchlist(buildNext);
+      } catch (e) {
+        print('Marketwatch update error: $e');
+      } finally {
+        completer.complete(saved);
+      }
+    });
+    return completer.future;
+  }
+
+  Future<bool> _postWatchlist(
+    List<String> Function(List<String> current) buildNext,
+  ) async {
+    if (!_marketWatchLoaded) {
+      final loaded = await _loadMarketWatchFromServer();
+      if (!loaded) {
+        CustomToastService.showError(
+          message: 'Unable to load watchlist. Please try again.',
+        );
+        return false;
+      }
+    }
+
+    final current =
+        await FavoritesStorageService.instance.getFavoriteInstruments();
+    final next = <String>[];
+    for (final s in buildNext(current)) {
+      if (s.isNotEmpty && !next.any((e) => _sameSymbol(e, s))) next.add(s);
+    }
+
+    final unchanged = next.length == current.length &&
+        Iterable<int>.generate(next.length).every((i) => next[i] == current[i]);
+    if (unchanged) return true;
+
+    // Always send the complete final list (server replaces it). An empty
+    // list is valid — DELETE would instead restore the server default.
+    String? errorMessage;
+    for (var attempt = 0; attempt < 2; attempt++) {
+      if (attempt > 0) await Future.delayed(const Duration(seconds: 1));
+      try {
+        final response = await ApiService.post(
+          endpoint: ApiConstants.marketWatch,
+          data: {'symbols': next},
+        );
+        final body = response.data;
+        final data = body is Map ? body['data'] : null;
+        final serverSymbols = data is Map ? data['symbols'] : null;
+
+        if (response.success && serverSymbols is List) {
+          await _applyServerWatchlist(serverSymbols);
+          return true;
+        }
+        errorMessage = response.message;
+      } catch (e) {
+        print('Marketwatch update failed (try ${attempt + 1}): $e');
+      }
+    }
+
+    final message = errorMessage ?? '';
+    CustomToastService.showError(
+      message: message.isNotEmpty
+          ? message
+          : 'Unable to update watchlist. Please try again.',
+    );
+    return false;
+  }
+
+  /// DELETE wipes the saved list; GET then returns the server default.
+  Future<bool> resetMarketWatch() async {
+    final response =
+        await ApiService.delete(endpoint: ApiConstants.marketWatch);
+    if (!response.success) {
+      final message = response.message ?? '';
+      CustomToastService.showError(
+        message: message.isNotEmpty
+            ? message
+            : 'Unable to reset watchlist. Please try again.',
+      );
+      return false;
+    }
+    final loaded = await _loadMarketWatchFromServer();
+    if (!loaded) return false;
+    _updateFilteredInstruments();
+    await hydrateFavoritesFromRest();
+    return true;
+  }
+
+  /// Caches the server list locally and refreshes the in-memory favorites.
+  /// No-op once closed, so a late reply can't overwrite a new user's list.
+  Future<void> _applyServerWatchlist(List<dynamic> serverSymbols) async {
+    if (isClosed) return;
+    final symbols = <String>[];
+    for (final e in serverSymbols) {
+      final s = e.toString().trim();
+      if (s.isNotEmpty && !symbols.any((x) => _sameSymbol(x, s))) {
+        symbols.add(s);
+      }
+    }
+    await FavoritesStorageService.instance.saveFavoriteInstruments(symbols);
+    _marketWatchLoaded = true;
+    await _loadFavorites();
   }
 
   // Get favorites count

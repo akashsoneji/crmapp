@@ -14,6 +14,22 @@ import '../../../../controllers/finance/withdrawal_controller.dart';
 import '../../../../widgets/common_loading_widget.dart';
 import '../../../../widgets/custom_toast.dart';
 import '../../../../routes/app_pages.dart';
+import 'package:crm_app/utils/currency_format.dart';
+import 'package:crm_app/models/mt5_account.dart' as mt5m;
+import 'package:crm_app/controllers/account_controller.dart';
+
+/// Withdrawal API accounts may omit `currency`; prefer the globally loaded
+/// account (which carries it) so cent accounts render with `¢`.
+mt5m.MT5Account _resolveMt5Account(mt5m.MT5Account account) {
+  if (!Get.isRegistered<AccountController>()) return account;
+  for (final acc in Get.find<AccountController>().mt5Accounts) {
+    if (acc.metaAccountNumber == account.metaAccountNumber) return acc;
+  }
+  return account;
+}
+
+double _freeMarginOf(mt5m.MT5Account account) =>
+    double.tryParse('${account.freeMargin}') ?? 0;
 
 class WithdrawalScreen extends StatefulWidget {
   final String? accountNumber;
@@ -399,13 +415,18 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
       return '${wallet.walletId ?? ''} - \$ ${wallet.walletBalance ?? '0.00'}';
     }
 
+    final ibmWallet = controller.ibmWallet.value;
+    if (ibmWallet != null && ibmWallet.referenceLinkId == selectedAccountId) {
+      return '${ibmWallet.referenceLinkId ?? ''} - \$ ${ibmWallet.balance ?? '0.00'}';
+    }
+
     // Check if it's an MT5 account
     final accounts = controller.userMT5Accounts;
     try {
       final selectedAccount = accounts.firstWhere(
         (account) => account.metaAccountNumber == selectedAccountId,
       );
-      return '${selectedAccount.metaAccountNumber ?? ''} - \$ ${selectedAccount.freeMargin ?? '0.00'}';
+      return '${selectedAccount.metaAccountNumber ?? ''} - ${CurrencyFormat.amount(_freeMarginOf(selectedAccount), _resolveMt5Account(selectedAccount))}';
     } catch (e) {
       // Account not found, return just the ID
       return selectedAccountId;
@@ -1281,6 +1302,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
         return Obx(() {
           final accounts = controller.userMT5Accounts;
           final wallet = controller.wallet.value;
+          final ibmWallet = controller.ibmWallet.value;
 
           // Check if we have any accounts (MT5 or Wallet)
           final bool hasMT5Accounts = accounts.isNotEmpty;
@@ -1289,8 +1311,12 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
               wallet.walletId != null &&
               wallet.walletId!.isNotEmpty &&
               wallet.walletStatus?.toLowerCase() == 'active';
+          final bool hasIbmWallet =
+              ibmWallet != null &&
+              ibmWallet.referenceLinkId != null &&
+              ibmWallet.referenceLinkId!.isNotEmpty;
 
-          if (!hasMT5Accounts && !hasWallet) {
+          if (!hasMT5Accounts && !hasWallet && !hasIbmWallet) {
             return Padding(
               padding: const EdgeInsets.all(24.0),
               child: Center(
@@ -1305,8 +1331,9 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
             );
           }
 
-          // Calculate total items (MT5 accounts + wallet if exists)
-          final int totalItems = accounts.length + (hasWallet ? 1 : 0);
+          // Calculate total items (MT5 accounts + wallet + IB wallet)
+          final int totalItems =
+              accounts.length + (hasWallet ? 1 : 0) + (hasIbmWallet ? 1 : 0);
 
           return ListView.separated(
             shrinkWrap: true,
@@ -1314,7 +1341,13 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
             separatorBuilder:
                 (_, __) => Divider(height: 1, color: AppColors.border),
             itemBuilder: (context, index) {
-              // Check if this is the wallet item (last item if wallet exists)
+              // IB wallet is the very last item when present.
+              final int ibmWalletIndex = accounts.length + (hasWallet ? 1 : 0);
+              if (hasIbmWallet && index == ibmWalletIndex) {
+                return _buildIbmWalletItem(context, ibmWallet);
+              }
+
+              // Check if this is the wallet item (after MT5 accounts)
               final bool isWalletItem = hasWallet && index == accounts.length;
 
               if (isWalletItem && wallet != null) {
@@ -1459,7 +1492,10 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
 
                         // Balance
                         Text(
-                          "\$ ${account.freeMargin ?? '0.00'}",
+                          CurrencyFormat.amount(
+                            _freeMarginOf(account),
+                            _resolveMt5Account(account),
+                          ),
                           style: TextStyle(
                             fontSize: 14.sp,
                             fontWeight: FontWeight.w500,
@@ -1483,6 +1519,66 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
           );
         });
       },
+    );
+  }
+
+  Widget _buildIbmWalletItem(BuildContext context, IbmWallet ibmWallet) {
+    final isSelected =
+        ibmWallet.referenceLinkId == controller.selectedAccount.value;
+
+    return InkWell(
+      onTap: () {
+        controller.selectedAccount.value = ibmWallet.referenceLinkId;
+        Navigator.pop(context);
+      },
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.primary.withOpacity(0.1) : null,
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withAlpha(40),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                'IB Wallet',
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.primary,
+                ),
+              ),
+            ),
+            SizedBox(width: 12.w),
+            Expanded(
+              child: Text(
+                ibmWallet.referenceLinkId ?? "-",
+                style: TextStyle(
+                  fontSize: 15.sp,
+                  fontWeight: FontWeight.w600,
+                  color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                ),
+              ),
+            ),
+            Text(
+              "\$ ${ibmWallet.balance ?? '0.00'}",
+              style: TextStyle(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w500,
+                color: isSelected ? AppColors.primary : AppColors.textGrey,
+              ),
+            ),
+            if (isSelected) ...[
+              SizedBox(width: 8.w),
+              Icon(Icons.check, color: AppColors.primary, size: 20),
+            ],
+          ],
+        ),
+      ),
     );
   }
 

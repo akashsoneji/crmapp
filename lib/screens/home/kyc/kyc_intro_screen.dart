@@ -243,8 +243,8 @@ class KycIntroScreen extends StatelessWidget {
                 padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 24.h),
                 child: ElevatedButton(
                   onPressed: () {
-                    if (stageCompletion?.mobileVerified == null ||
-                        stageCompletion?.emailVerified == null ||
+                    if (stageCompletion?.mobileVerified != true ||
+                        stageCompletion?.emailVerified != true ||
                         stageCompletion?.personalDetails == false) {
                       Get.toNamed(AppPages.KYC_DETAILS);
                     } else if (stageCompletion?.identityVerified == false ||

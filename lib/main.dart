@@ -16,6 +16,7 @@ import 'package:crm_app/services/price_alert_service.dart';
 import 'package:crm_app/services/loading_service.dart';
 import 'package:crm_app/services/notification_service.dart';
 import 'package:crm_app/services/secure_storage_service.dart';
+import 'package:crm_app/services/stream_websocket_service.dart';
 import 'constants/color.dart';
 
 import 'flavor_config.dart';
@@ -33,6 +34,7 @@ import 'services/api_service.dart';
 import 'services/websocket_endpoint_helper.dart';
 import 'services/market_watch_v2_service.dart';
 import 'services/symbol_selection_service.dart';
+import 'services/symbol_details_cache_service.dart';
 import 'routes/app_pages.dart';
 import 'widgets/exit_confirmation_wrapper.dart';
 import 'widgets/keyboard_dismiss_wrapper.dart';
@@ -189,7 +191,17 @@ Future<void> initServices() async {
   Get.put<InstrumentsController>(InstrumentsController(), permanent: true);
   Get.put<ChartSocketController>(ChartSocketController(), permanent: true);
   Get.put<TradingController>(TradingController(), permanent: true);
+  // Pippro / pipze: single multiplexed `/ws/stream` socket. The service
+  // self-binds to the active MT5 account and (re)connects on account switch.
+  // All other flavors still rely on the legacy per-channel sockets.
+  if (FlavorConfig.usesSingleStreamSocket) {
+    Get.put<StreamWebSocketService>(
+      StreamWebSocketService(),
+      permanent: true,
+    );
+  }
   await PriceAlertService().initialize();
+  await SymbolDetailsCacheService.initFromStorage();
 
   // Initialize app notification controller for global notifications
   Get.put<AppNotificationController>(

@@ -6,6 +6,10 @@ class ApiConstants {
 
   static const String ajax = 'user/';
 
+  /// Watchlist: GET current list, POST `{symbols: [...]}` (full list, server
+  /// replaces it), DELETE resets to the server default.
+  static const String marketWatch = '${ajax}trade/marketwatch';
+
   static const String login = '${ajax}login';
   static const String forgotPassword = '${ajax}password/email';
   static const String sendOTP = '${ajax}send-otp';
@@ -18,6 +22,8 @@ class ApiConstants {
   static const String resetPasswordWithOTP = '${ajax}password/reset';
   static const String deleteAccount = '${ajax}settings/delete-account';
   static const String changePassword = '${ajax}mt5accounts/changepassword';
+  static const String resetInvestorPassword =
+      '${ajax}mt5accounts/resetinvestorpassword';
   static const String changeLeverage = '${ajax}mt5accounts/changeleverage';
   static const String changeUserPassword = '${ajax}settings/change-password';
   static const String googleOtpGenerate = '${ajax}settings/google-otp/generate';
@@ -42,6 +48,8 @@ class ApiConstants {
   static const String modifyPendingOrder = '${ajax}trade/modify-pending-order';
   static const String closePositions = '${ajax}trade/closePositions';
   static const String updateTPSL = '${ajax}trade/update-tp-sl';
+  static const String updatePendingOrderTPSL =
+      '${ajax}trade/update-pending-order-tp-sl';
   static const String tradeHistory = '${ajax}trade/tradehistory';
   static const String getInstruments = '${ajax}instruments';
   static const String logout = '${ajax}logout';
@@ -71,6 +79,10 @@ class ApiConstants {
   // KYC APIs
   static const String kycUpload = '${ajax}kyc/documents/upload';
   static const String kycStatus = '${ajax}kyc';
+  static const String regulation = '${ajax}regulation';
+  static const String kycProfileUpdate = '${ajax}kyc/profile';
+  static const String submitUnifiedKyc = '${ajax}kyc/submit-unified';
+  static const String checkMobile = '${ajax}auth/google/check-mobile';
   static const String getWalletData = '${ajax}internaltransfer';
   static const String getWalletDetailsNew = '${ajax}wallet';
   static const String currencyList = '${ajax}utility/currency-list';
@@ -173,10 +185,18 @@ class ApiConstants {
   static const String copyTradingMasterPlans = '${ajax}copytrading/master/plans';
   static String copyTradingMasterOpenPositions(int planId) =>
       '$copyTradingMasterPlans/$planId/open-positions';
+  static String copyTradingMasterPlanPause(int planId) =>
+      '$copyTradingMasterPlans/$planId/pause';
+  static String copyTradingMasterPlanResume(int planId) =>
+      '$copyTradingMasterPlans/$planId/resume';
+  static String copyTradingMasterPlanUpdate(int planId) =>
+      '$copyTradingMasterPlans/$planId';
   static const String copyTradingCopierEligibleAccounts =
       '${ajax}copytrading/copier/eligible-accounts';
   static const String copyTradingCopierSubscribe =
       '${ajax}copytrading/copier/subscribe';
+  static const String copyTradingCopierSubscriptions =
+      '${ajax}copytrading/copier/subscriptions';
   static String copyTradingCopierSubscriptionsList({int page = 1, int perPage = 20}) =>
       '${ajax}copytrading/copier/subscriptions?page=$page&per_page=$perPage';
   static String copyTradingMasterCopiers({int page = 1, int perPage = 20}) =>
@@ -235,6 +255,25 @@ class ApiConstants {
   // ── Demo Contest ──
   static const String demoContestContests = '${ajax}demo-contest/contests';
   static const String demoContestMyStats = '${ajax}demo-contest/my-stats';
+  static String demoContestEnrollPreview(String contestId) =>
+      '${ajax}demo-contest/$contestId/enroll-preview';
+  static String demoContestSteps(String contestId) =>
+      '${ajax}demo-contest/$contestId/steps';
+  static String demoContestStepClick(String stepId) =>
+      '${ajax}demo-contest/step/$stepId/click';
+  static String demoContestTerms(String contestId) =>
+      '${ajax}demo-contest/$contestId/terms';
+  static String demoContestEnroll(String contestId) =>
+      '${ajax}demo-contest/$contestId/enroll';
+  static const String demoContestMyEnrollments =
+      '${ajax}demo-contest/my-enrollments';
+  static String demoContestLeaderboard(String id) =>
+      '${ajax}demo-contest/$id/leaderboard';
+  static String demoContestTradingHistory(String contestId) =>
+      '${ajax}demo-contest/$contestId/trading-history';
+  static String demoContestRuleViolations(String contestId) =>
+      '${ajax}demo-contest/$contestId/rule-violations';
+  static const String demoContestClaim = '${ajax}demo-contest/claim';
 }
 
 // struct APIConstant {

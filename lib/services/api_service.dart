@@ -490,6 +490,56 @@ class ApiService {
     }
   }
 
+  /// PATCH: JSON body
+  static Future<ApiResponse> patch({
+    required String endpoint,
+    Map<String, dynamic>? data,
+    String? token,
+  }) async {
+    try {
+      final authToken = token ?? await SecureStorageService.getAuthToken();
+
+      final httpClient = HttpClientService.instance;
+      final headers = {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        ...httpClient.keepAliveHeaders,
+        if (authToken != null && authToken.isNotEmpty)
+          'Authorization': 'Bearer $authToken',
+      };
+
+      _logRequest('PATCH', endpoint, data: data, extraHeaders: headers);
+
+      final uri = Uri.parse('${ApiConstants.baseUrl}$endpoint');
+      final response = await httpClient.client
+          .patch(
+            uri,
+            headers: headers,
+            body: data != null ? jsonEncode(data) : null,
+          )
+          .timeout(_timeout);
+
+      _logResponse(response);
+
+      if (response.statusCode == 401) {
+        final errorResponse = _handleError(response);
+        if (errorResponse.message == 'RETRY_REQUEST' &&
+            errorResponse.data != null &&
+            errorResponse.data['shouldRetry'] == true) {
+          return patch(endpoint: endpoint, data: data, token: token);
+        }
+        return errorResponse;
+      }
+
+      _retryCount = 0;
+
+      return _parseApiResponse(response.body);
+    } catch (e, t) {
+      _logError('PATCH', endpoint, e, t);
+      return _handleError(e);
+    }
+  }
+
   /// DELETE: Delete resource
   static Future<ApiResponse> delete({
     required String endpoint,
@@ -1351,6 +1401,119 @@ class ApiService {
       );
     } catch (e, t) {
       _logError('UPLOAD_FILES', endpoint, e, t);
+      return ApiResponse(
+        success: false,
+        message: 'Upload failed: $e',
+        data: null,
+      );
+    }
+  }
+
+  /// Multipart POST of plain form fields plus an optional single file.
+  static Future<ApiResponse> postFormWithFile({
+    required String endpoint,
+    required Map<String, dynamic> formData,
+    File? file,
+    String fileField = 'attachment',
+    String? token,
+  }) async {
+    try {
+      final authToken = token ?? await SecureStorageService.getAuthToken();
+      final headers = {
+        'Accept': 'application/json',
+        if (authToken != null && authToken.isNotEmpty)
+          'Authorization': 'Bearer $authToken',
+      };
+
+      _logRequest(
+        'POST_FORM_FILE',
+        endpoint,
+        data: formData,
+        extraHeaders: headers,
+      );
+
+      final uri = Uri.parse('${ApiConstants.baseUrl}$endpoint');
+      final request = http.MultipartRequest('POST', uri)
+        ..headers.addAll(headers)
+        ..fields.addAll(
+          formData.map((key, value) => MapEntry(key, value.toString())),
+        );
+
+      if (file != null && await file.exists()) {
+        request.files.add(
+          await http.MultipartFile.fromPath(fileField, file.path),
+        );
+      }
+
+      final streamedResponse = await request.send().timeout(_timeout);
+      final response = await http.Response.fromStream(streamedResponse);
+      _logResponse(response);
+
+      if (response.statusCode == 401) {
+        return _handleError(response);
+      }
+      return _parseApiResponse(response.body);
+    } catch (e, t) {
+      _logError('POST_FORM_FILE', endpoint, e, t);
+      return _handleError(e);
+    }
+  }
+
+  /// Multipart POST where each file is sent under its own field name
+  /// (e.g. `{'front_image': f1, 'back_image': f2}`).
+  static Future<ApiResponse> uploadMultipleNamedFiles({
+    required String endpoint,
+    required Map<String, File> files,
+    required Map<String, dynamic> formData,
+    String? token,
+  }) async {
+    try {
+      final authToken = token ?? await SecureStorageService.getAuthToken();
+      final headers = {
+        'Accept': 'application/json',
+        if (authToken != null && authToken.isNotEmpty)
+          'Authorization': 'Bearer $authToken',
+      };
+
+      _logRequest(
+        'UPLOAD_NAMED_FILES',
+        endpoint,
+        queryParameters: formData,
+        extraHeaders: headers,
+      );
+
+      final uri = Uri.parse('${ApiConstants.baseUrl}$endpoint');
+      final request = http.MultipartRequest('POST', uri)
+        ..headers.addAll(headers);
+      formData.forEach((key, value) {
+        request.fields[key] = value.toString();
+      });
+
+      for (final entry in files.entries) {
+        final file = entry.value;
+        if (await file.exists() && await file.length() > 0) {
+          request.files.add(
+            await http.MultipartFile.fromPath(entry.key, file.path),
+          );
+        }
+      }
+
+      final streamedResponse = await request.send().timeout(_timeout);
+      final response = await http.Response.fromStream(streamedResponse);
+      _logResponse(response);
+
+      if (response.statusCode == 401) {
+        return _handleError(response);
+      }
+
+      final responseData = json.decode(response.body);
+      return ApiResponse(
+        success: response.statusCode >= 200 && response.statusCode < 300,
+        message: responseData['message'] ?? 'Upload completed',
+        data: responseData,
+      );
+    } catch (e, t) {
+      _logError('UPLOAD_NAMED_FILES', endpoint, e, t);
       return ApiResponse(
         success: false,
         message: 'Upload failed: $e',

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:get/get.dart';
 import 'package:crm_app/models/login_response_model.dart';
 import 'package:crm_app/models/user_model.dart';
@@ -30,8 +31,27 @@ import 'package:crm_app/services/app_lock_service.dart';
 import 'package:crm_app/services/enabled_modules_service.dart';
 import 'package:crm_app/services/google_otp_service.dart';
 import 'package:crm_app/controllers/tenax_broker_selection_controller.dart';
+import 'package:crm_app/services/stream_websocket_service.dart';
 
 class AuthController extends GetxController {
+  // Re-attach the single-stream websocket (pippro/pipze) to the CURRENT
+  // AccountController after it has been (re-)registered. No-op for flavors
+  // that use the legacy multi-socket stack.
+  void _rebindStreamSocketIfNeeded() {
+    if (!FlavorConfig.usesSingleStreamSocket) return;
+    try {
+      if (Get.isRegistered<StreamWebSocketService>()) {
+        // subscribeForLogin re-arms the account watcher AND (when an active
+        // account is already known) opens the socket + queues a snapshot
+        // resync. Fire-and-forget — errors are logged inside the service.
+        unawaited(Get.find<StreamWebSocketService>().subscribeForLogin());
+        print('AuthController: StreamWebSocketService subscribed for login');
+      }
+    } catch (e) {
+      print('AuthController: Error subscribing StreamWebSocketService: $e');
+    }
+  }
+
   final AuthService _authService = Get.find<AuthService>();
   GoogleOtpService get _googleOtpService => Get.find<GoogleOtpService>();
 
@@ -333,6 +353,7 @@ class AuthController extends GetxController {
             print('AuthController: Failed to enable biometrics after login: $e');
           }
         }
+        _rebindStreamSocketIfNeeded();
 
         // Enable one-click trading by default after login
         OneClickTradingService.instance.setOneClickTradingEnabled(true);
@@ -409,6 +430,7 @@ class AuthController extends GetxController {
         } catch (e) {
           print('AuthController: Error re-initializing AccountController: $e');
         }
+        _rebindStreamSocketIfNeeded();
 
         // 3. Re-initialize InstrumentsController (has WebSocket)
         try {
@@ -658,6 +680,7 @@ class AuthController extends GetxController {
               'AuthController: Error re-initializing AccountController: $e',
             );
           }
+          _rebindStreamSocketIfNeeded();
 
           // 3. InstrumentsController
           try {
@@ -1060,6 +1083,22 @@ class AuthController extends GetxController {
       }
     } catch (e) {
       print('AuthController: Error clearing AccountController: $e');
+    }
+
+    // Tear down the single stream socket on logout so the next login rebinds
+    // to the brand new AccountController rather than the disposed one.
+    if (FlavorConfig.usesSingleStreamSocket) {
+      try {
+        if (Get.isRegistered<StreamWebSocketService>()) {
+          // Sends an explicit `unsubscribe` control frame before closing,
+          // so the engine drops the subscription immediately instead of
+          // waiting for the TCP close to be observed.
+          await Get.find<StreamWebSocketService>().unsubscribeForLogout();
+          print('AuthController: StreamWebSocketService unsubscribed for logout');
+        }
+      } catch (e) {
+        print('AuthController: Error unsubscribing StreamWebSocketService: $e');
+      }
     }
 
     // Clear TradingController

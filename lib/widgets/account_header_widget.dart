@@ -11,7 +11,8 @@ import 'package:crm_app/controllers/account_controller.dart';
 import 'package:crm_app/controllers/dashboard_controller.dart';
 import 'package:crm_app/models/mt5_account.dart';
 import 'package:crm_app/models/websocket_trading_response.dart';
-import 'package:crm_app/utils/precision_helper.dart';
+import 'package:crm_app/utils/currency_format.dart';
+
 
 class AccountHeaderWidget extends StatelessWidget {
   final VoidCallback? onMenuTap;
@@ -181,8 +182,14 @@ class AccountHeaderWidget extends StatelessWidget {
                             ],
                             Text(
                               useFloatingProfit
-                                  ? '\$${PrecisionHelper.formatPnL(displayValue)}'
-                                  : '\$${displayEquity.toStringAsFixed(2)}',
+                                  ? CurrencyFormat.signedAmount(
+                                    displayValue,
+                                    primaryAccount,
+                                  )
+                                  : CurrencyFormat.amount(
+                                    displayEquity,
+                                    primaryAccount,
+                                  ),
                               style: AppTextStyles.heading.copyWith(
                                 fontSize: 18.sp,
                                 fontWeight: FontWeight.w700,
@@ -549,7 +556,7 @@ class AccountHeaderWidget extends StatelessWidget {
                                       ),
                                     ),
                                     Text(
-                                      '\$${account.balance}',
+                                      '${CurrencyFormat.symbol(account)}${account.balance}',
                                       style: AppTextStyles.label.copyWith(
                                         fontSize: 14.sp,
                                         fontWeight: FontWeight.w600,

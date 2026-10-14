@@ -1,3 +1,19 @@
+bool _parseCentFlag(Map<String, dynamic> json) {
+  final raw = json['is_cent_account'];
+  if (raw is bool) return raw;
+  if (raw is num) return raw != 0;
+  if (raw is String) {
+    final v = raw.toLowerCase().trim();
+    if (v == 'true' || v == '1' || v == 'yes') return true;
+  }
+  final currency = (json['currency'] ?? '').toString().toUpperCase();
+  if (currency == 'USC' || currency == 'CENT') return true;
+  final group = (json['mt5_group_name'] ?? json['masterGroupId'] ?? '')
+      .toString()
+      .toLowerCase();
+  return group.contains('cent') || group.contains('usc');
+}
+
 class MT5Account {
   final int userId;
   final String metaAccountNumber;
@@ -19,6 +35,9 @@ class MT5Account {
   final int commission;
   final int swap;
   final String tradingServer;
+  final String currency;
+  final bool isActive;
+  final bool isCentAccount;
   final String? tradingPlatform;
   final double minimumTradeSize;
   final double maxLotSize;
@@ -48,6 +67,9 @@ class MT5Account {
     required this.commission,
     required this.swap,
     required this.tradingServer,
+    this.currency = 'USD',
+    this.isActive = false,
+    this.isCentAccount = false,
     this.tradingPlatform,
     this.minimumTradeSize = 0.01,
     this.maxLotSize = 100.0,
@@ -79,6 +101,9 @@ class MT5Account {
       commission: _parseInt(json['commission']) ?? 0,
       swap: _parseInt(json['swap']) ?? 0,
       tradingServer: json['trading_server']?.toString() ?? '',
+      currency: json['currency']?.toString() ?? 'USD',
+      isActive: json['is_active'] ?? false,
+      isCentAccount: _parseCentFlag(json),
       tradingPlatform: json['trading_platform']?.toString(),
       minimumTradeSize: _parseDouble(json['minimum_trade_size']) ?? 0.01,
       maxLotSize: _parseDouble(json['max_lot_size']) ?? 100.0,
@@ -134,6 +159,9 @@ class MT5Account {
       'commission': commission,
       'swap': swap,
       'trading_server': tradingServer,
+      'currency': currency,
+      'is_active': isActive,
+      'is_cent_account': isCentAccount,
       'trading_platform': tradingPlatform,
       'minimum_trade_size': minimumTradeSize,
       'max_lot_size': maxLotSize,
@@ -155,4 +183,110 @@ class MT5Account {
 
   // Helper method to check if this is a scratchcard account
   bool get isScratchCardAccount => masterGroupId.toLowerCase() == 'scratchcard';
+
+  /// Display name of the account's trading platform (MT5, MT4, Vertex, …).
+  /// Falls back to server/group heuristics, then MT5.
+  String get platformDisplayName {
+    final raw = tradingPlatform?.trim();
+    if (raw != null && raw.isNotEmpty) {
+      final upper = raw.toUpperCase();
+      if (upper == 'MT5' || upper == 'MT4') return upper;
+      if (upper == 'WEB_TRADER' || upper == 'WEBTRADER') return 'WebTrader';
+      if (upper == 'ACT_TRADER' || upper == 'ACTTRADER') return 'ActTrader';
+      if (upper == 'VERTEX') return 'Vertex';
+      if (upper == 'CTRADER') return 'cTrader';
+      return raw;
+    }
+
+    final lowerServer = tradingServer.toLowerCase();
+    final lowerGroup = mt5GroupName.toLowerCase();
+    final lowerMaster = masterGroupId.toLowerCase();
+    final lowerNick = mt5NickName.toLowerCase();
+
+    if (lowerServer.contains('mt4') ||
+        lowerGroup.contains('mt4') ||
+        lowerMaster.contains('mt4') ||
+        lowerNick.contains('mt4')) {
+      return 'MT4';
+    }
+    if (lowerServer.contains('vertex') || lowerGroup.contains('vertex')) {
+      return 'Vertex';
+    }
+    if (lowerServer.contains('acttrader') || lowerGroup.contains('acttrader')) {
+      return 'ActTrader';
+    }
+    if (lowerServer.contains('ctrader') || lowerGroup.contains('ctrader')) {
+      return 'cTrader';
+    }
+    return 'MT5';
+  }
+
+  bool get isMT5 => platformDisplayName.toUpperCase() == 'MT5';
+
+  MT5Account copyWith({
+    int? userId,
+    String? metaAccountNumber,
+    String? mt5NickName,
+    String? masterGroupId,
+    String? mt5GroupName,
+    int? leverageId,
+    int? primaryAccount,
+    String? accountType,
+    String? balance,
+    String? credit,
+    String? equity,
+    String? margin,
+    String? freeMargin,
+    String? marginLevel,
+    String? profit,
+    int? totalDeposit,
+    int? totalWithdrawal,
+    int? commission,
+    int? swap,
+    String? tradingServer,
+    String? currency,
+    bool? isActive,
+    bool? isCentAccount,
+    String? tradingPlatform,
+    double? minimumTradeSize,
+    double? maxLotSize,
+    bool? leverageChangeAllowed,
+    int? leverageMin,
+    int? leverageMax,
+    List<int>? leverageOptions,
+  }) {
+    return MT5Account(
+      userId: userId ?? this.userId,
+      metaAccountNumber: metaAccountNumber ?? this.metaAccountNumber,
+      mt5NickName: mt5NickName ?? this.mt5NickName,
+      masterGroupId: masterGroupId ?? this.masterGroupId,
+      mt5GroupName: mt5GroupName ?? this.mt5GroupName,
+      leverageId: leverageId ?? this.leverageId,
+      primaryAccount: primaryAccount ?? this.primaryAccount,
+      accountType: accountType ?? this.accountType,
+      balance: balance ?? this.balance,
+      credit: credit ?? this.credit,
+      equity: equity ?? this.equity,
+      margin: margin ?? this.margin,
+      freeMargin: freeMargin ?? this.freeMargin,
+      marginLevel: marginLevel ?? this.marginLevel,
+      profit: profit ?? this.profit,
+      totalDeposit: totalDeposit ?? this.totalDeposit,
+      totalWithdrawal: totalWithdrawal ?? this.totalWithdrawal,
+      commission: commission ?? this.commission,
+      swap: swap ?? this.swap,
+      tradingServer: tradingServer ?? this.tradingServer,
+      currency: currency ?? this.currency,
+      isActive: isActive ?? this.isActive,
+      isCentAccount: isCentAccount ?? this.isCentAccount,
+      tradingPlatform: tradingPlatform ?? this.tradingPlatform,
+      minimumTradeSize: minimumTradeSize ?? this.minimumTradeSize,
+      maxLotSize: maxLotSize ?? this.maxLotSize,
+      leverageChangeAllowed:
+          leverageChangeAllowed ?? this.leverageChangeAllowed,
+      leverageMin: leverageMin ?? this.leverageMin,
+      leverageMax: leverageMax ?? this.leverageMax,
+      leverageOptions: leverageOptions ?? this.leverageOptions,
+    );
+  }
 }

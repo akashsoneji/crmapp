@@ -15,6 +15,7 @@ class WalletResponse {
   final List<UserMT5Account> userMT5Accounts;
   final Wallet wallet;
   final IbAccount ibAccount;
+  final IbmWallet? ibmWallet;
 
   WalletResponse({
     required this.status,
@@ -22,19 +23,27 @@ class WalletResponse {
     required this.userMT5Accounts,
     required this.wallet,
     required this.ibAccount,
+    this.ibmWallet,
   });
 
   factory WalletResponse.fromJson(Map<String, dynamic> json) {
-    final ibaccountData = json['data']?['ibaccount'];
+    // `data` can come back as a non-map (e.g. empty list) on error responses.
+    final rawData = json['data'];
+    final Map<String, dynamic> data =
+        rawData is Map<String, dynamic> ? rawData : {};
+    final ibaccountData = data['ibaccount'];
+    final ibmWalletData = data['ibmWallet'];
 
     return WalletResponse(
       status: json['status'] ?? false,
       message: json['message'] ?? "",
       userMT5Accounts:
-          (json['data']?['userMT5Accounts'] as List? ?? [])
+          (data['userMT5Accounts'] as List? ?? [])
               .map((e) => UserMT5Account.fromJson(e))
               .toList(),
-      wallet: Wallet.fromJson(json['data']?['wallet'] ?? {}),
+      wallet: Wallet.fromJson(
+        data['wallet'] is Map<String, dynamic> ? data['wallet'] : {},
+      ),
       ibAccount:
           ibaccountData is Map<String, dynamic>
               ? IbAccount.fromJson(ibaccountData)
@@ -44,6 +53,32 @@ class WalletResponse {
                 status: "",
                 referenceLinkId: "",
               ),
+      ibmWallet: ibmWalletData is Map<String, dynamic>
+          ? IbmWallet.fromJson(ibmWalletData)
+          : null,
+    );
+  }
+}
+
+class IbmWallet {
+  final int id;
+  final String referenceLinkId;
+  final String balance;
+  final String currency;
+
+  IbmWallet({
+    required this.id,
+    required this.referenceLinkId,
+    required this.balance,
+    required this.currency,
+  });
+
+  factory IbmWallet.fromJson(Map<String, dynamic> json) {
+    return IbmWallet(
+      id: json['id'] ?? 0,
+      referenceLinkId: json['reference_link_id']?.toString() ?? '',
+      balance: json['balance']?.toString() ?? '0.0',
+      currency: json['currency']?.toString() ?? 'USD',
     );
   }
 }
@@ -224,6 +259,7 @@ class WalletController extends GetxController {
   var mt5Accounts = <UserMT5Account>[].obs;
   var wallet = Rxn<Wallet>();
   var ibAccount = Rxn<IbAccount>();
+  var ibmWallet = Rxn<IbmWallet>();
 
   // History & pagination state
   var isLoadingMore = false.obs;
@@ -551,6 +587,7 @@ class WalletController extends GetxController {
         final parsed = WalletResponse.fromJson(legacyResponse.data);
         mt5Accounts.assignAll(parsed.userMT5Accounts);
         ibAccount.value = parsed.ibAccount;
+        ibmWallet.value = parsed.ibmWallet;
         // Fallback wallet & balance
         wallet.value = parsed.wallet;
         balance.value = parsed.wallet.walletBalance;
@@ -698,6 +735,7 @@ class WalletController extends GetxController {
     mt5Accounts.clear();
     wallet.value = null;
     ibAccount.value = null;
+    ibmWallet.value = null;
     balance.value = '';
 
     selectedFromAccount.value = null;

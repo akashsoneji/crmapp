@@ -21,6 +21,8 @@ import '../services/trading_websocket_service.dart';
 import '../services/account_websocket_service.dart';
 import '../services/unified_websocket_service.dart';
 import '../services/market_watch_v2_service.dart';
+import '../services/stream_websocket_service.dart';
+import '../flavor_config.dart';
 
 class AccountController extends GetxController with WidgetsBindingObserver {
   DateTime? _lastBackgroundAt;
@@ -117,7 +119,12 @@ class AccountController extends GetxController with WidgetsBindingObserver {
       // ✅ Delay check slightly to let AppLockLifecycle evaluate lock status first.
       // Normal foreground return should restore socket subscriptions only. A full
       // account refresh/reconnect clears screen data and causes visible reloads.
-      Future.delayed(const Duration(milliseconds: 100), () {
+      // Stream flavors reconnect on the next microtask; legacy flavors keep
+      // the 100ms grace so AppLockLifecycle can evaluate lock status first.
+      final resumeDelay = FlavorConfig.usesSingleStreamSocket
+          ? Duration.zero
+          : const Duration(milliseconds: 100);
+      Future.delayed(resumeDelay, () {
         final isLocked = Get.find<AppLockService>().isLocked.value;
         if (!isLocked) {
           final wasBackgroundedFor = _lastBackgroundAt == null
@@ -195,6 +202,20 @@ class AccountController extends GetxController with WidgetsBindingObserver {
       }
     } catch (e) {
       print('Error disconnecting Unified WS: $e');
+    }
+
+    // Single multiplexed stream socket (pippro / pipze).
+    // Legacy services above short-circuit on these flavors, so the stream
+    // socket is the only live connection — it MUST be paused here or the
+    // OS kills it silently in the background.
+    if (FlavorConfig.usesSingleStreamSocket) {
+      try {
+        if (Get.isRegistered<StreamWebSocketService>()) {
+          Get.find<StreamWebSocketService>().pause();
+        }
+      } catch (e) {
+        print('Error pausing Stream WS: $e');
+      }
     }
   }
 
@@ -552,6 +573,10 @@ class AccountController extends GetxController with WidgetsBindingObserver {
           (acc) => acc.metaAccountNumber == currentActive.metaAccountNumber,
         );
         _activeMT5Account.value = freshAccount;
+        final activeAcc = freshAccount.metaAccountNumber;
+        if (activeAcc.isNotEmpty) {
+          SymbolDetailsCacheService.ensureCached(activeAcc);
+        }
         return; // Don't reset to primary!
       }
     }
@@ -565,6 +590,11 @@ class AccountController extends GetxController with WidgetsBindingObserver {
       _activeMT5Account.value = _mt5Accounts.first;
     } else {
       _activeMT5Account.value = null;
+    }
+
+    final activeAcc = _activeMT5Account.value?.metaAccountNumber;
+    if (activeAcc != null && activeAcc.isNotEmpty) {
+      SymbolDetailsCacheService.ensureCached(activeAcc);
     }
   }
 
@@ -846,6 +876,16 @@ class AccountController extends GetxController with WidgetsBindingObserver {
           Get.find<DashboardController>().markLifecycleResumePriceOnly();
         }
       } catch (_) {}
+
+      // Single /ws/stream socket carries prices, positions, orders and
+      // accounts, and _disconnectAllSocketsCentral paused it — reopen it.
+      // Legacy sockets are never opened in this mode.
+      if (FlavorConfig.usesSingleStreamSocket) {
+        if (Get.isRegistered<StreamWebSocketService>()) {
+          await Get.find<StreamWebSocketService>().resume();
+        }
+        return;
+      }
 
       // Keep the unified service bound to the same active account, but do not
       // clear controller data. This restores shared sockets after backgrounding.

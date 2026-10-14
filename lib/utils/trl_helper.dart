@@ -190,9 +190,11 @@ class RTLHelper {
     int? maxLines,
     FocusNode? focusNode, // ✅ Optional FocusNode
     List<TextInputFormatter>? inputFormatters,
+    Iterable<String>? autofillHints,
   }) {
     return TextFormField(
       controller: controller,
+      autofillHints: autofillHints,
       focusNode: focusNode, // ✅ Uses focusNode only if provided
       onTap: onTap,
       keyboardType: keyboardType,

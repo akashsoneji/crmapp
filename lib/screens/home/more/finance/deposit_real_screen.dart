@@ -10,10 +10,27 @@ import 'package:crm_app/controllers/finance/deposit_controller.dart';
 import 'package:crm_app/screens/home/more/finance/deposit_instruction_screen.dart';
 import 'package:crm_app/utils/trl_helper.dart';
 import 'package:crm_app/utils/navigation_helper.dart';
-
+import 'package:crm_app/utils/currency_format.dart';
+import 'package:crm_app/models/mt5_account.dart' as mt5m;
+import 'package:crm_app/controllers/account_controller.dart';
 import '../../../../services/api_service.dart';
 import '../../../../services/language_service.dart';
 import '../../../../widgets/custom_toast.dart';
+
+mt5m.MT5Account? _resolveMt5Account(String? metaAccountNumber) {
+  if (metaAccountNumber == null || metaAccountNumber.isEmpty) return null;
+  if (!Get.isRegistered<AccountController>()) return null;
+  for (final acc in Get.find<AccountController>().mt5Accounts) {
+    if (acc.metaAccountNumber == metaAccountNumber) return acc;
+  }
+  return null;
+}
+
+/// Formats an MT5 balance with `¢` for cent accounts and `$` otherwise.
+String _fmtMt5(dynamic balanceLike, String? metaAccountNumber) {
+  final n = double.tryParse(balanceLike?.toString() ?? '') ?? 0;
+  return CurrencyFormat.amount(n, _resolveMt5Account(metaAccountNumber));
+}
 
 class DepositRealScreen extends StatefulWidget {
   final Map<String, dynamic> object;
@@ -158,7 +175,7 @@ class _DepositRealScreenState extends State<DepositRealScreen> {
           'DepositRealScreen: selectedTransferAccount changed to: $accountNumber',
         );
         transferToController.text =
-            "${account['meta_account_number']} - \$ ${account['balance'] ?? '0.00'}";
+            "${account['meta_account_number']} - ${_fmtMt5(account['balance'], account['meta_account_number']?.toString())}";
         selectedAccount = account['meta_account_number'].toString();
         print(
           'DepositRealScreen: Updated transferToController.text to: ${transferToController.text}',
@@ -345,9 +362,10 @@ class _DepositRealScreenState extends State<DepositRealScreen> {
       if (raw.isNotEmpty && raw != '0.00') {
         final entered = double.tryParse(raw);
         if (entered != null) {
-          if (minLimit != null && entered < minLimit) {
+          final converted = _convertedAmount(entered);
+          if (minLimit != null && converted < minLimit) {
             error = 'Minimum deposit is \$${minLimit.toStringAsFixed(2)}';
-          } else if (maxLimit != null && entered > maxLimit) {
+          } else if (maxLimit != null && converted > maxLimit) {
             error = 'Maximum deposit is \$${maxLimit.toStringAsFixed(2)}';
           }
         }
@@ -422,6 +440,15 @@ class _DepositRealScreenState extends State<DepositRealScreen> {
       return 'Amount (${_sourceCurrency})';
     }
     return 'Amount';
+  }
+
+  /// Converts the entered source-currency amount into the target (USD)
+  /// value, which is what min/max limits are expressed in.
+  double _convertedAmount(double entered) {
+    if (_hasConversion && _conversionRate > 0) {
+      return entered / _conversionRate;
+    }
+    return entered;
   }
 
   String _convertedDepositText() {
@@ -533,13 +560,14 @@ class _DepositRealScreenState extends State<DepositRealScreen> {
     if (m != null) {
       final minLimit = double.tryParse(m['min_limit']?.toString() ?? '');
       final maxLimit = double.tryParse(m['max_limit']?.toString() ?? '');
-      if (minLimit != null && entered < minLimit) {
+      final converted = _convertedAmount(entered);
+      if (minLimit != null && converted < minLimit) {
         CustomToastService.showError(
           message: 'Amount cannot be less than minimum limit of \$${minLimit.toStringAsFixed(2)}',
         );
         return;
       }
-      if (maxLimit != null && entered > maxLimit) {
+      if (maxLimit != null && converted > maxLimit) {
         CustomToastService.showError(
           message: 'Amount cannot be more than maximum limit of \$${maxLimit.toStringAsFixed(2)}',
         );
@@ -608,7 +636,7 @@ class _DepositRealScreenState extends State<DepositRealScreen> {
                 onTap: () {
                   controller.selectedTransferAccount.value = account;
                   transferToController.text =
-                      "${account['meta_account_number']} - \$ ${account['balance'] ?? '0.00'}";
+                      "${account['meta_account_number']} - ${_fmtMt5(account['balance'], account['meta_account_number']?.toString())}";
                   Navigator.pop(context);
                 },
                 child: Container(
@@ -654,7 +682,7 @@ class _DepositRealScreenState extends State<DepositRealScreen> {
 
                       // Balance
                       Text(
-                        "\$ ${account['balance'] ?? '0.00'}",
+                        _fmtMt5(account['balance'], account['meta_account_number']?.toString()),
                         style: TextStyle(
                           fontSize: 14.sp,
                           fontWeight: FontWeight.w500,

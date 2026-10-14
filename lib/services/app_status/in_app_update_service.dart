@@ -21,9 +21,19 @@ class InAppUpdateService {
 
   InAppUpdateService._();
 
-  /// Check if the given URL is a direct APK file URL.
+  /// Check if the given URL references an APK, including URLs with query
+  /// parameters like https://example.com/download.php?filename=app.apk&t=123
   bool _isApkUrl(String url) {
-    return url.toLowerCase().endsWith('.apk');
+    final lower = url.toLowerCase();
+    if (lower.endsWith('.apk')) return true;
+    try {
+      final uri = Uri.parse(lower);
+      if (uri.path.endsWith('.apk')) return true;
+      for (final value in uri.queryParameters.values) {
+        if (value.endsWith('.apk')) return true;
+      }
+    } catch (_) {}
+    return lower.contains('.apk');
   }
 
   /// Check if the given URL is a Play Store URL.

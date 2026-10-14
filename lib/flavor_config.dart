@@ -155,6 +155,13 @@ class FlavorConfig {
       isTenax() && TenaxConfig.enableMultiBroker;
   static bool get isTenaxBrokerDemoEnabled =>
       isTenax() && TenaxConfig.enableBrokerDemoMode;
+
+  /// All flavors use the single multiplexed Trade Engine socket (`/ws/stream`).
+  /// The legacy 5-socket layout (`/ws/op`, `/ws/po`, `/ws/symbol`,
+  /// `/ws/marketwatch`, `/ws/account`) is disabled for now; build with
+  /// `--dart-define=USE_STREAM_SOCKET=false` to switch back to it.
+  static bool get usesSingleStreamSocket =>
+      const bool.fromEnvironment('USE_STREAM_SOCKET', defaultValue: true);
   static bool isONSA() => _instance?.flavor == Flavor.onsa;
   static bool isProfx() => _instance?.flavor == Flavor.profx;
   static bool isAFX() => _instance?.flavor == Flavor.afx;

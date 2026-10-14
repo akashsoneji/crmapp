@@ -2674,7 +2674,12 @@ class _TradeScreenState extends State<TradeScreen> {
                             'Change order price, stop loss or take profit',
                         onTap: () {
                           Get.back(closeOverlays: true);
-                          Get.to(() => EditOrderScreen(position: position));
+                          Get.to(
+                            () => EditOrderScreen(
+                              position: position,
+                              isPendingOrder: true,
+                            ),
+                          );
                         },
                         color: AppColors.primary,
                       ),

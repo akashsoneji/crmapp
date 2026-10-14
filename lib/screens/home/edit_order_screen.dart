@@ -23,7 +23,13 @@ import 'package:crm_app/flavor_config.dart';
 class EditOrderScreen extends StatefulWidget {
   final TradePosition position;
 
-  const EditOrderScreen({super.key, required this.position});
+  final bool isPendingOrder;
+
+  const EditOrderScreen({
+    super.key,
+    required this.position,
+    this.isPendingOrder = false,
+  });
 
   @override
   State<EditOrderScreen> createState() => _EditOrderScreenState();
@@ -85,9 +91,31 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
   String? stopLossError;
   String? takeProfitError;
 
-  // Helper method to get symbol without .c suffix
-  String _getDisplaySymbol(String symbol) {
-    return symbol.replaceFirst('.c', '');
+  // Display symbol from the instruments API (broker suffix stripped)
+  String _getDisplaySymbol(String symbol) =>
+      SymbolDetailsCacheService.displaySymbolOf(symbol);
+
+  double? get _editedOrderPrice =>
+      double.tryParse(limitPriceController.text.replaceAll(',', ''));
+
+  /// Pending orders: the (possibly edited) order price; positions: entry.
+  double get _orderEntryPrice {
+    if (widget.isPendingOrder) {
+      final edited = _editedOrderPrice;
+      if (edited != null && edited > 0) return edited;
+    }
+    return double.tryParse(widget.position.entryPrice.replaceAll(',', '')) ??
+        0.0;
+  }
+
+  /// SL/TP of a pending order are validated against its order price, not
+  /// the live market price.
+  double _slTpReferencePrice() {
+    if (widget.isPendingOrder) {
+      final orderPrice = _orderEntryPrice;
+      if (orderPrice > 0) return orderPrice;
+    }
+    return _getCurrentRealTimePriceAsDouble();
   }
 
   // Chart toggle
@@ -146,6 +174,15 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
         widget.position.digits > 0
             ? widget.position.digits
             : _getDecimalDigitsForSymbol(widget.position.symbol);
+
+    if (widget.isPendingOrder) {
+      final orderPrice = double.tryParse(
+        widget.position.entryPrice.replaceAll(',', ''),
+      );
+      if (orderPrice != null && orderPrice > 0) {
+        limitPriceController.text = _formatPrice(orderPrice);
+      }
+    }
 
     // Initialize controllers
     _initializeControllers();
@@ -362,8 +399,8 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
       return false;
     }
 
-    final isBuy = widget.position.action.toLowerCase() == 'buy';
-    final currentPrice = _getCurrentRealTimePriceAsDouble();
+    final isBuy = widget.position.action.toLowerCase().startsWith('buy');
+    final currentPrice = _slTpReferencePrice();
 
     if (currentPrice <= 0) {
       return true; // Can't validate without current price
@@ -397,8 +434,8 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
       return false;
     }
 
-    final isBuy = widget.position.action.toLowerCase() == 'buy';
-    final currentPrice = _getCurrentRealTimePriceAsDouble();
+    final isBuy = widget.position.action.toLowerCase().startsWith('buy');
+    final currentPrice = _slTpReferencePrice();
 
     if (currentPrice <= 0) {
       return true; // Can't validate without current price
@@ -416,10 +453,13 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
     }
   }
 
-  // Modify order method - using update-tp-sl API
+  // Modify order method - update-tp-sl API for positions,
+  // update-pending-order-tp-sl API for pending orders (price/TP/SL).
   Future<void> _modifyOrder() async {
     // Check if both take profit and stop loss are empty
-    if (takeProfitController.text.isEmpty && stopLossController.text.isEmpty) {
+    if (!widget.isPendingOrder &&
+        takeProfitController.text.isEmpty &&
+        stopLossController.text.isEmpty) {
       return;
     }
 
@@ -455,14 +495,25 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
       // Get trading controller
       final tradingController = Get.find<TradingController>();
 
-      // Call the updateTPSL method from trading controller
-      final success = await tradingController.updateTPSL(
-        mt5Account: activeAccount.metaAccountNumber,
-        positionId: positionId,
-        stopLoss: stopLoss,
-        takeProfit: takeProfit,
-        digits: _positionDigits,
-      );
+      final bool success;
+      if (widget.isPendingOrder) {
+        success = await tradingController.updatePendingOrderTPSL(
+          mt5Account: activeAccount.metaAccountNumber,
+          orderId: positionId,
+          price: _editedOrderPrice,
+          stopLoss: stopLossEnabled ? stopLoss : null,
+          takeProfit: takeProfitEnabled ? takeProfit : null,
+          digits: _positionDigits,
+        );
+      } else {
+        success = await tradingController.updateTPSL(
+          mt5Account: activeAccount.metaAccountNumber,
+          positionId: positionId,
+          stopLoss: stopLoss,
+          takeProfit: takeProfit,
+          digits: _positionDigits,
+        );
+      }
 
       // Navigate back on success (no toast)
       if (success) {
@@ -709,6 +760,11 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                         _buildOrderDetails(),
 
                         SizedBox(height: 12.h),
+
+                        if (widget.isPendingOrder) ...[
+                          _buildOrderPriceSection(),
+                          SizedBox(height: 12.h),
+                        ],
 
                         // Stop Loss and Take Profit with Switches
                         _buildEditContent(),
@@ -1187,6 +1243,36 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                 ),
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOrderPriceSection() {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+      decoration: BoxDecoration(
+        color: AppColors.whiteColor,
+        borderRadius: BorderRadius.circular(8.r),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Order Price',
+            style: AppTextStyles.label.copyWith(
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          SizedBox(height: 8.h),
+          _buildPriceInputCompact(
+            'Price',
+            limitPriceController,
+            _orderEntryPrice,
           ),
         ],
       ),

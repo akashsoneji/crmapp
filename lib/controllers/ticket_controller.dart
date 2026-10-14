@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:crm_app/constants/api_const.dart';
@@ -185,7 +184,7 @@ class TicketController extends GetxController {
   }) async {
     isSubmitting.value = true;
     try {
-      final res = await _postMultipart(
+      final res = await ApiService.postFormWithFile(
         endpoint: ApiConstants.tickets,
         formData: {
           'department_id': departmentId,
@@ -300,50 +299,6 @@ class TicketController extends GetxController {
       return false;
     } finally {
       isSubmitting.value = false;
-    }
-  }
-
-  Future<ApiResponse> _postMultipart({
-    required String endpoint,
-    required Map<String, dynamic> formData,
-    File? file,
-    required String fileField,
-  }) async {
-    try {
-      final token = await SecureStorageService.getAuthToken();
-      final request = http.MultipartRequest(
-        'POST',
-        Uri.parse('${ApiConstants.baseUrl}$endpoint'),
-      );
-      request.headers.addAll({
-        'Accept': 'application/json',
-        if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
-      });
-      formData.forEach((key, value) => request.fields[key] = value.toString());
-      if (file != null) {
-        request.files.add(await http.MultipartFile.fromPath(fileField, file.path));
-      }
-
-      final streamed = await request.send().timeout(const Duration(seconds: 60));
-      final response = await http.Response.fromStream(streamed);
-      if (response.statusCode == 401) {
-        return ApiResponse.error('Authentication failed. Please login again.');
-      }
-      if (response.statusCode < 200 || response.statusCode >= 300) {
-        return ApiResponse.error('Request failed (${response.statusCode})');
-      }
-      final decoded = response.body.isEmpty ? <String, dynamic>{} : jsonDecode(response.body);
-      if (decoded is Map<String, dynamic>) {
-        final isError = decoded['status'] == false || decoded['success'] == false;
-        final message = decoded['message']?.toString();
-        if (isError) {
-          return ApiResponse.error(message ?? 'Request failed', data: decoded['data']);
-        }
-        return ApiResponse.success(decoded);
-      }
-      return ApiResponse.success(decoded);
-    } catch (e) {
-      return ApiResponse.error('Upload failed: $e');
     }
   }
 

@@ -24,6 +24,8 @@ import 'package:crm_app/widgets/custom_toast.dart';
 import 'package:crm_app/controllers/auth_controller.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:crm_app/services/unified_websocket_service.dart';
+import 'package:crm_app/services/stream_websocket_service.dart';
+import 'package:crm_app/flavor_config.dart';
 
 import '../screens/home/dashboard_screen.dart';
 
@@ -104,7 +106,37 @@ class DashboardController extends GetxController {
     _bindUnifiedAccountStream();
   }
 
+  /// Account rows on /ws/stream are normalised to `['ac', acct, ...]` so
+  /// [_parseAccountArray] can read them unchanged.
+  void _bindStreamAccountChannel() {
+    if (!Get.isRegistered<StreamWebSocketService>()) return;
+    _unifiedAccountSub?.cancel();
+    _unifiedAccountSub =
+        Get.find<StreamWebSocketService>().accounts.listen(_onStreamAccounts);
+    _isWebSocketConnected.value = true;
+  }
+
+  void _onStreamAccounts(dynamic raw) {
+    if (_isDisposed || raw is! List || raw.isEmpty) return;
+    // Demuxer may hand `[<payload>]` for `['ac', <payload>]` frames.
+    final payload = raw.length == 1 && raw.first is List ? raw.first : raw;
+    if (payload is! List || payload.isEmpty) return;
+    if (payload.first is List) {
+      for (final row in payload) {
+        if (row is List && row.isNotEmpty) {
+          _parseAccountArray(StreamWebSocketService.tagAccountRow(row));
+        }
+      }
+      return;
+    }
+    _parseAccountArray(StreamWebSocketService.tagAccountRow(payload));
+  }
+
   void _bindUnifiedAccountStream() {
+    if (FlavorConfig.usesSingleStreamSocket) {
+      _bindStreamAccountChannel();
+      return;
+    }
     try {
       final unified = Get.find<UnifiedWebSocketService>();
       unified.ensureConnected(WebSocketChannelType.account, primaryMT5Account);
@@ -381,6 +413,16 @@ class DashboardController extends GetxController {
         print('MT5 Accounts Response: $data');
 
         CustomToastService.showSuccess(message: data['message']);
+
+        // Reflect the new primary locally right away; checkMT5Accounts()
+        // below refreshes from the server in the background.
+        for (var i = 0; i < mt5Accounts.length; i++) {
+          final acc = mt5Accounts[i];
+          final isNewPrimary = acc.metaAccountNumber == accountNumber;
+          if ((acc.primaryAccount == 1) != isNewPrimary) {
+            mt5Accounts[i] = acc.copyWith(primaryAccount: isNewPrimary ? 1 : 0);
+          }
+        }
 
         // Close loading indicator first
         isLoadingMT5Accounts.value = false;
@@ -752,6 +794,7 @@ class DashboardController extends GetxController {
     // Use unified WebSocket service instead of direct channel
     _bindUnifiedAccountStream();
     if (_isWebSocketConnected.value) return;
+    if (FlavorConfig.usesSingleStreamSocket) return;
 
     // ✅ FIX: Check authentication before initializing WebSocket
     final isLoggedIn = await SecureStorageService.isUserLoggedIn();

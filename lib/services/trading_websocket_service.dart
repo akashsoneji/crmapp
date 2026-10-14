@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:crm_app/flavor_config.dart';
+import 'package:crm_app/services/stream_websocket_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -69,6 +71,10 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
   DateTime? _lastDataReceived;
   // Track account used for last subscription to drop stale frames
   String? _lastSubscribedAccount;
+
+  /// Debug only: last logged `SL|TP` per pending order id, so the raw 'po'
+  /// row is printed again whenever the server changes an order's SL/TP.
+  final Map<int, String> _loggedPendingRowIds = <int, String>{};
   // Session gating to ignore late frames from previous connections
   int _sessionId = 0;
   int _activeSessionId = 0;
@@ -123,6 +129,38 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
     // ✅ FIX: Check authentication before initializing WebSocket
     // Don't start WebSocket connections until user is logged in
     _checkAuthAndConnect();
+
+    // Pippro / pipze: forward decoded positions + orders frames from the
+    // single `/ws/stream` socket into `handleStreamFrame` so this service's
+    // existing parsing + UI updates run exactly as they do for the legacy
+    // `/ws/op` socket. Without this bridge the stream socket data arrives
+    // on the service but no one listens — P&L, positions, orders freeze.
+    _bindStreamSocketBridgeIfNeeded();
+  }
+
+  StreamSubscription<dynamic>? _streamPositionsSub;
+  StreamSubscription<dynamic>? _streamOrdersSub;
+
+  void _bindStreamSocketBridgeIfNeeded() {
+    if (!FlavorConfig.usesSingleStreamSocket) return;
+    void attach() {
+      if (!Get.isRegistered<StreamWebSocketService>()) {
+        Future.delayed(const Duration(seconds: 1), attach);
+        return;
+      }
+      final svc = Get.find<StreamWebSocketService>();
+      _streamPositionsSub?.cancel();
+      _streamPositionsSub = svc.positions.listen((payload) {
+        if (_isDisposed) return;
+        handleStreamFrame(payload, isOpenPositionChannel: true);
+      });
+      _streamOrdersSub?.cancel();
+      _streamOrdersSub = svc.orders.listen((payload) {
+        if (_isDisposed) return;
+        handleStreamFrame(payload, isPendingOrderChannel: true);
+      });
+    }
+    attach();
   }
 
   /// Check authentication status before connecting WebSocket
@@ -246,6 +284,10 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
   /// Initialize all WebSocket connections simultaneously for fast data loading
   /// Connect main channel and marketwatch - main channel handles both positions and orders
   void _initializeAllConnections() {
+    // Pippro / pipze: a single multiplexed `/ws/stream` socket
+    // (StreamWebSocketService) delivers prices + positions + orders. Skip the
+    // legacy per-channel sockets for these flavors.
+    if (FlavorConfig.usesSingleStreamSocket) return;
     // Connect main channel (handles both positions and orders) and marketwatch
     _connectToMarketWatch();
     _connectToOpenPositions();
@@ -280,6 +322,9 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
   // Initialize WebSocket connection - always use unified /ws/op endpoint
   // Main channel handles both positions and orders (batched)
   void _initializeWebSocket() {
+    // Pippro / pipze: positions + orders are multiplexed on `/ws/stream`
+    // (StreamWebSocketService). Skip opening `/ws/op` for these flavors.
+    if (FlavorConfig.usesSingleStreamSocket) return;
     // ✅ Always use unified endpoint - account type detection happens on Trade Engine side
     final endpoint = WebSocketEndpointHelper.getOpenPositionsEndpoint(null);
 
@@ -1443,6 +1488,30 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         decoded = jsonDecode(messageStr);
       }
 
+      handleStreamFrame(
+        decoded,
+        isPendingOrderChannel: isPendingOrderChannel,
+        isOpenPositionChannel: isOpenPositionChannel,
+      );
+    } catch (e, stackTrace) {
+      AppLogger.error(
+        'Trading WS: Error handling message',
+        error: e,
+        stackTrace: stackTrace,
+      );
+    }
+  }
+
+  /// Public entry for already-decoded msgpack/JSON frames arriving via
+  /// `/ws/stream` (pippro / pipze). Mirrors `_handleSocketMessage` but skips
+  /// the decode step — the stream service has already decoded the frame.
+  void handleStreamFrame(
+    dynamic decoded, {
+    bool isPendingOrderChannel = false,
+    bool isOpenPositionChannel = false,
+  }) {
+    if (_isDisposed) return;
+    try {
       // ✅ FIX: Update timestamp first to prevent false reconnections
       // Always update timestamp even if we block the message (connection is alive)
       _lastDataReceived = DateHelper.nowUtc();
@@ -2600,6 +2669,16 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
   // Add: ["a", "po", ...] (self-hosted) or ["add", "po", ...] (MT5)
   // Update: ["u", "po", ...] (full array updates)
   // Remove: ["r", orderId]
+  /// Index of the server_type column (e.g. "mt5") in a 'po' row: the first
+  /// non-numeric string after the price columns. Null if not present.
+  static int? _findServerTypeIndex(List<dynamic> row) {
+    for (var i = 9; i < row.length; i++) {
+      final value = row[i];
+      if (value is String && double.tryParse(value) == null) return i;
+    }
+    return null;
+  }
+
   void _handlePendingOrderMessage(List<dynamic> message) {
     try {
       if (message.isEmpty) return;
@@ -2723,11 +2802,23 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         final volume = double.tryParse(message[6].toString()) ?? 0.0;
         final priceOrder = double.tryParse(message[7].toString()) ?? 0.0;
         final priceCurrent = double.tryParse(message[8].toString()) ?? 0.0;
-        // Parse price_sl and price_tp - handle empty strings, null, or "0" values
-        final priceSLStr =
-            message.length > 9 ? message[9].toString().trim() : '0';
-        final priceTPStr =
-            message.length > 10 ? message[10].toString().trim() : '0';
+        // Parse price_sl and price_tp - handle empty strings, null, or "0" values.
+        // /ws/stream sends 16+ field rows laid out like 'op' rows:
+        //   [9]=profit, [10]=swap, [11]=SL, [12]=TP, [13]=server, [14]=opened_at, [15]=digits
+        // Legacy /ws/po rows (<16 fields) keep SL at [9] and TP at [10].
+        // In every layout SL/TP sit right before server_type ("mt5"), so
+        // anchor on that string; fall back to the row length if it's absent.
+        final serverIndex = _findServerTypeIndex(message);
+        final slIndex = serverIndex != null
+            ? serverIndex - 2
+            : (message.length >= 16 ? 11 : 9);
+        final tpIndex = slIndex + 1;
+        final priceSLStr = message.length > slIndex
+            ? message[slIndex].toString().trim()
+            : '0';
+        final priceTPStr = message.length > tpIndex
+            ? message[tpIndex].toString().trim()
+            : '0';
         final priceSL =
             (priceSLStr.isEmpty ||
                     priceSLStr == '0' ||
@@ -2829,10 +2920,13 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
           digits: digits > 0 ? digits : 0, // Parse digits from message array
         );
 
-        if (kDebugMode) {
-          // dev.log(
-          //   'Trading WS: /ws/po ${firstElement == 'a' ? 'Add' : 'Update'} pending order: $symbol $action $volume @ $priceOrder (ID: $orderId, SL: $priceSL, TP: $priceTP, timeCreate: $timeCreate)',
-          // );
+        final slTpKey = '$priceSL|$priceTP';
+        if (kDebugMode && _loggedPendingRowIds[orderId] != slTpKey) {
+          _loggedPendingRowIds[orderId] = slTpKey;
+          debugPrint(
+            'Trading WS: po row (len=${message.length}) $message → '
+            'SL[$slIndex]=$priceSL TP[$tpIndex]=$priceTP',
+          );
         }
 
         // Add or update pending order incrementally

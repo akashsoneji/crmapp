@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:developer' as dev;
 import 'dart:typed_data'; // ✅ ADD: For binary message handling
+import 'package:crm_app/flavor_config.dart';
+import 'package:crm_app/services/stream_websocket_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -66,6 +68,31 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
     // ✅ FIX: Check authentication before setting up listeners
     // Don't initialize WebSocket until user is logged in
     _checkAuthAndSetup();
+
+    // Pippro / pipze: forward decoded account-stream frames from the single
+    // `/ws/stream` socket into `handleStreamFrame`. Without this bridge the
+    // engine delivers account snapshots on resume but nothing updates the UI
+    // — balance / equity / cent value freeze.
+    _bindStreamSocketBridgeIfNeeded();
+  }
+
+  StreamSubscription<dynamic>? _streamAccountsSub;
+
+  void _bindStreamSocketBridgeIfNeeded() {
+    if (!FlavorConfig.usesSingleStreamSocket) return;
+    void attach() {
+      if (!Get.isRegistered<StreamWebSocketService>()) {
+        Future.delayed(const Duration(seconds: 1), attach);
+        return;
+      }
+      final svc = Get.find<StreamWebSocketService>();
+      _streamAccountsSub?.cancel();
+      _streamAccountsSub = svc.accounts.listen((payload) {
+        if (_isDisposed) return;
+        handleStreamFrame(payload);
+      });
+    }
+    attach();
   }
 
   /// Check authentication status before setting up WebSocket
@@ -306,6 +333,10 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
 
   // Initialize WebSocket connection
   void _initializeWebSocket() {
+    // Pippro / pipze: account data arrives on the single multiplexed
+    // `/ws/stream` socket (StreamWebSocketService.accounts). Skip opening
+    // the dedicated `/ws/account` socket for these flavors.
+    if (FlavorConfig.usesSingleStreamSocket) return;
     if (isConnected.value || _isConnecting) return;
 
     _isConnecting = true;
@@ -545,6 +576,20 @@ class AccountWebSocketService extends GetxService with WidgetsBindingObserver {
         decodedData = jsonDecode(messageStr);
       }
 
+      handleStreamFrame(decodedData);
+    } catch (e, stackTrace) {
+      if (kDebugMode) {
+        dev.log('Account WS: Error handling message: $e\n$stackTrace');
+      }
+    }
+  }
+
+  /// Public entry for already-decoded frames (used by `/ws/stream` bridge for
+  /// pippro / pipze). The decode step is skipped — payload has already been
+  /// decoded by `StreamWebSocketService`.
+  void handleStreamFrame(dynamic decodedData) {
+    if (_isDisposed) return;
+    try {
       // Handle array responses (account data)
       // Format: [["ac","1000003",7164.04,7163.87,1.3,7162.57,551066.92,-0.17,0]]
       if (decodedData is List && decodedData.isNotEmpty) {

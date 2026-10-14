@@ -444,10 +444,14 @@
 //   }
 // }
 import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:camera/camera.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:crm_app/constants/color.dart';
+import 'package:crm_app/services/language_service.dart';
+import 'package:crm_app/utils/camera_permission_helper.dart';
 import 'package:crm_app/constants/api_const.dart';
 import 'package:crm_app/services/api_service.dart';
 import 'package:crm_app/services/secure_storage_service.dart';
@@ -506,12 +510,88 @@ class KycDocsController extends GetxController {
     }
   }
 
-  // Request camera permission
-  Future<void> _requestCameraPermission() async {
-    var status = await Permission.camera.status;
-    if (!status.isGranted) {
-      await Permission.camera.request();
-    }
+  Future<bool> _requestCameraPermission() async {
+    return await CameraPermissionHelper.checkAndRequestCameraPermission();
+  }
+
+  bool _isCameraPermissionError(Object e) {
+    return e is CameraException &&
+        (e.code == 'cameraPermission' ||
+            e.code == 'CameraAccessDenied' ||
+            (e.description?.toLowerCase().contains('permission') ?? false));
+  }
+
+  /// Lets the user choose front/back lens when both exist; null if dismissed.
+  Future<CameraDescription?> _selectCamera() async {
+    final cameras = _cameras!;
+    final front = cameras.firstWhereOrNull(
+      (c) => c.lensDirection == CameraLensDirection.front,
+    );
+    final back = cameras.firstWhereOrNull(
+      (c) => c.lensDirection == CameraLensDirection.back,
+    );
+    if (front == null || back == null) return back ?? front ?? cameras.first;
+
+    return Get.bottomSheet<CameraDescription>(
+      Container(
+        decoration: BoxDecoration(
+          color: AppColors.card,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: EdgeInsets.symmetric(vertical: 24.h, horizontal: 24.w),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40.w,
+                  height: 4.h,
+                  decoration: BoxDecoration(
+                    color: AppColors.border,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                SizedBox(height: 24.h),
+                Text(
+                  TranslationUtils.trf(
+                    'kyc_docs_controller_select_camera',
+                    'Select Camera',
+                  ),
+                  style: TextStyle(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                SizedBox(height: 24.h),
+                ListTile(
+                  leading: const Icon(Icons.camera_front),
+                  title: Text(
+                    TranslationUtils.trf(
+                      'kyc_docs_controller_front_camera',
+                      'Front Camera',
+                    ),
+                  ),
+                  onTap: () => Get.back(result: front),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.camera_rear),
+                  title: Text(
+                    TranslationUtils.trf(
+                      'kyc_docs_controller_back_camera',
+                      'Back Camera',
+                    ),
+                  ),
+                  onTap: () => Get.back(result: back),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+      isScrollControlled: true,
+    );
   }
 
   // Observable variables
@@ -549,7 +629,8 @@ class KycDocsController extends GetxController {
         return;
       }
 
-      await _requestCameraPermission();
+      final hasPermission = await _requestCameraPermission();
+      if (!hasPermission) return;
 
       if (_cameras == null || _cameras!.isEmpty) {
         await _initializeCamera();
@@ -570,10 +651,14 @@ class KycDocsController extends GetxController {
         cameraController = null;
       }
 
+      final selectedCamera = await _selectCamera();
+      if (selectedCamera == null) return;
+
       cameraController = CameraController(
-        _cameras![0],
+        selectedCamera,
         ResolutionPreset
             .medium, // Use medium instead of high for better memory management
+        enableAudio: false,
       );
 
       try {
@@ -584,9 +669,13 @@ class KycDocsController extends GetxController {
         Get.to(() => KycCameraScreen());
       } catch (e) {
         print('Error starting camera: $e');
-        CustomToastService.showError(
-          message: 'Failed to start camera: ${e.toString()}',
-        );
+        if (_isCameraPermissionError(e)) {
+          await CameraPermissionHelper.showPermissionSettingsDialog();
+        } else {
+          CustomToastService.showError(
+            message: 'Failed to start camera: ${e.toString()}',
+          );
+        }
         await cameraController?.dispose();
         cameraController = null;
         // Try to navigate back if camera failed
@@ -596,7 +685,11 @@ class KycDocsController extends GetxController {
       }
     } catch (e) {
       print('❌ Error starting camera: $e');
-      CustomToastService.showError(message: 'Error starting camera: $e');
+      if (_isCameraPermissionError(e)) {
+        await CameraPermissionHelper.showPermissionSettingsDialog();
+      } else {
+        CustomToastService.showError(message: 'Error starting camera: $e');
+      }
       await cameraController?.dispose();
       cameraController = null;
     }

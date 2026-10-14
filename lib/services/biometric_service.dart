@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+
 import 'package:app_settings/app_settings.dart';
 import 'package:local_auth/local_auth.dart';
 
@@ -53,11 +55,16 @@ class BiometricService {
 
   Future<void> openDeviceSecuritySettings() async {
     try {
-      await AppSettings.openAppSettings(type: AppSettingsType.security);
+      if (Platform.isAndroid) {
+        await AppSettings.openAppSettings(type: AppSettingsType.security);
+        return;
+      }
     } catch (_) {
-      try {
-        await AppSettings.openAppSettings();
-      } catch (_) {}
+      // Fallback below.
     }
+
+    try {
+      await AppSettings.openAppSettings();
+    } catch (_) {}
   }
 }

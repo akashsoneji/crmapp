@@ -473,14 +473,14 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
       final orderType = widget.selectedOrderType.value;
       if (orderType.contains('Sell')) {
         // Sell orders - use bid price
-        widget.limitPrice.value = currentBidPrice ?? 3673.90;
+        widget.limitPrice.value = currentBidPrice ?? 0.0;
         widget.limitPriceController.text = PrecisionHelper.formatPrice(
           widget.limitPrice.value,
           decimals: currentDigits,
         );
       } else {
         // Buy orders - use ask price
-        widget.limitPrice.value = currentAskPrice ?? 3674.16;
+        widget.limitPrice.value = currentAskPrice ?? 0.0;
         widget.limitPriceController.text = PrecisionHelper.formatPrice(
           widget.limitPrice.value,
           decimals: currentDigits,

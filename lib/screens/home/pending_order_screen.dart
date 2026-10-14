@@ -241,7 +241,12 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
               : 5;
 
       // Format values properly
-      final volumeStr = volume.toString();
+      final rawVolumeStr = volume.toString(); // e.g. "0.1", "0.001", "1.0"
+      final dotIndex = rawVolumeStr.indexOf('.');
+      final actualDecimals =
+          dotIndex == -1 ? 0 : rawVolumeStr.length - dotIndex - 1;
+      final volumeDecimals = actualDecimals < 2 ? 2 : actualDecimals;
+      final volumeStr = volume.toStringAsFixed(volumeDecimals);
 
       final limitPriceControllerValue = _limitPriceController.text.trim();
       final limitPriceFromController =

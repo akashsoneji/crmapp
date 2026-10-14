@@ -3,6 +3,7 @@ import 'dart:convert';
 
 class FavoritesStorageService {
   static const String _favoritesKey = 'favorite_instruments';
+  static const String _favoritesNamesKey = 'favorite_instruments_names';
   static FavoritesStorageService? _instance;
 
   // Default favorite instruments - only include instruments that exist in API
@@ -55,6 +56,31 @@ class FavoritesStorageService {
     }
   }
 
+  // Get favorite names map
+  Future<Map<String, String>> getFavoriteNames() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final jsonStr = prefs.getString(_favoritesNamesKey);
+      if (jsonStr != null && jsonStr.isNotEmpty) {
+        final Map<String, dynamic> decoded = jsonDecode(jsonStr);
+        return decoded.map((key, value) => MapEntry(key, value.toString()));
+      }
+    } catch (e) {
+      print('Error getting favorite names: $e');
+    }
+    return {};
+  }
+
+  // Save favorite names map
+  Future<void> saveFavoriteNames(Map<String, String> names) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_favoritesNamesKey, jsonEncode(names));
+    } catch (e) {
+      print('Error saving favorite names: $e');
+    }
+  }
+
   // Save favorites list
   Future<void> saveFavoriteInstruments(List<String> favorites) async {
     try {
@@ -67,12 +93,18 @@ class FavoritesStorageService {
   }
 
   // Add single instrument to favorites
-  Future<bool> addToFavorites(String symbol) async {
+  Future<bool> addToFavorites(String symbol, {String? name}) async {
     try {
       final favorites = await getFavoriteInstruments();
       if (!favorites.contains(symbol)) {
         favorites.add(symbol);
         await saveFavoriteInstruments(favorites);
+
+        if (name != null) {
+          final names = await getFavoriteNames();
+          names[symbol] = name;
+          await saveFavoriteNames(names);
+        }
         return true;
       }
       return false; // Already exists
@@ -88,6 +120,12 @@ class FavoritesStorageService {
       final favorites = await getFavoriteInstruments();
       if (favorites.remove(symbol)) {
         await saveFavoriteInstruments(favorites);
+
+        final names = await getFavoriteNames();
+        if (names.containsKey(symbol)) {
+          names.remove(symbol);
+          await saveFavoriteNames(names);
+        }
         return true;
       }
       return false; // Not found
@@ -109,13 +147,13 @@ class FavoritesStorageService {
   }
 
   // Toggle favorite status
-  Future<bool> toggleFavorite(String symbol) async {
+  Future<bool> toggleFavorite(String symbol, {String? name}) async {
     try {
       final isFav = await isFavorite(symbol);
       if (isFav) {
         return await removeFromFavorites(symbol);
       } else {
-        return await addToFavorites(symbol);
+        return await addToFavorites(symbol, name: name);
       }
     } catch (e) {
       print('Error toggling favorite: $e');

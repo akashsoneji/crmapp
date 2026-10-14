@@ -1,7 +1,9 @@
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/demo_contest_controller.dart';
+import 'package:crm_app/models/demo_contest/demo_contest_model.dart';
 import 'package:crm_app/models/demo_contest/demo_contest_my_stats_model.dart';
+import 'package:crm_app/services/demo_contest_service.dart';
 import 'package:crm_app/routes/app_pages.dart';
 import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/widgets/app_svg_back_button.dart';
@@ -22,9 +24,8 @@ import 'package:intl/intl.dart';
 ///   • Contest Rules card
 ///   • CTA: "View Full Leaderboard"
 ///
-/// Reads `participant` from the local DemoContestService mock today —
-/// once the backend endpoint is wired it can be swapped for the same
-/// shape via `fetchMyStats(contestId)`.
+/// Contest comes from the controller cache or the contests API; stats
+/// come from `DemoContestService.fetchMyStats(contestId)`.
 class DemoContestMyStatsScreen extends StatefulWidget {
   final String contestId;
   const DemoContestMyStatsScreen({super.key, required this.contestId});
@@ -36,6 +37,7 @@ class DemoContestMyStatsScreen extends StatefulWidget {
 
 class _DemoContestMyStatsScreenState extends State<DemoContestMyStatsScreen> {
   DemoContestMyStats? _stats;
+  DemoContest? _contest;
   bool _loading = true;
   String? _error;
 
@@ -51,30 +53,33 @@ class _DemoContestMyStatsScreenState extends State<DemoContestMyStatsScreen> {
       _error = null;
     });
     try {
+      final service = DemoContestService.instance;
       final controller =
           Get.isRegistered<DemoContestController>()
               ? Get.find<DemoContestController>()
               : null;
-      final contest = controller?.contestById(widget.contestId);
 
+      // Deep links / cold opens arrive without the contest list cached.
+      DemoContest? contest = controller?.contestById(widget.contestId);
       if (contest == null) {
-        setState(() {
-          _loading = false;
-          _error = 'Contest not found';
-        });
-        return;
+        final all = await service.fetchContests();
+        controller?.contests.assignAll(all);
+        contest = all.firstWhereOrNull((c) => c.id == widget.contestId);
       }
 
-      final c =
-          Get.isRegistered<DemoContestController>()
-              ? Get.find<DemoContestController>()
-              : null;
-      final fetched = c != null ? await c.fetchMyStats(widget.contestId) : null;
+      final stats = await service.fetchMyStats(widget.contestId);
+      if (!mounted) return;
+
       setState(() {
-        _stats = fetched;
+        _contest = contest;
+        _stats = stats;
+        if (_stats == null) {
+          _error = 'Could not load your contest stats';
+        }
         _loading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _error = e.toString();
         _loading = false;
@@ -87,8 +92,7 @@ class _DemoContestMyStatsScreenState extends State<DemoContestMyStatsScreen> {
     final languageService = Get.find<LanguageService>();
     final isDark = AppColors.isDarkMode;
     final cardBg = isDark ? AppColors.card : Colors.white;
-    final controller = Get.find<DemoContestController>();
-    final contest = controller.contestById(widget.contestId);
+    final contest = _contest;
 
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
@@ -147,12 +151,14 @@ class _DemoContestMyStatsScreenState extends State<DemoContestMyStatsScreen> {
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             _PrizeStructureCard(
+                              contest: contest,
                               languageService: languageService,
                               cardBg: cardBg,
                               isDark: isDark,
                             ),
                             SizedBox(height: 16.h),
                             _ContestRulesCard(
+                              contest: contest,
                               languageService: languageService,
                               cardBg: cardBg,
                               isDark: isDark,
@@ -574,11 +580,13 @@ class _Divider extends StatelessWidget {
 // ────────────────────────── Prize Structure Card ──────────────────────────
 
 class _PrizeStructureCard extends StatelessWidget {
+  final DemoContest? contest;
   final LanguageService languageService;
   final Color cardBg;
   final bool isDark;
 
   const _PrizeStructureCard({
+    required this.contest,
     required this.languageService,
     required this.cardBg,
     required this.isDark,
@@ -586,9 +594,7 @@ class _PrizeStructureCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final contestObj = Get.find<DemoContestController>().contestById(
-      Get.arguments?.toString() ?? '',
-    );
+    final contestObj = contest;
 
     return _PanelCard(
       cardBg: cardBg,
@@ -663,11 +669,13 @@ class _PrizeRow extends StatelessWidget {
 // ────────────────────────── Contest Rules Card ──────────────────────────
 
 class _ContestRulesCard extends StatelessWidget {
+  final DemoContest? contest;
   final LanguageService languageService;
   final Color cardBg;
   final bool isDark;
 
   const _ContestRulesCard({
+    required this.contest,
     required this.languageService,
     required this.cardBg,
     required this.isDark,
@@ -675,24 +683,10 @@ class _ContestRulesCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final contestObj = Get.find<DemoContestController>().contestById(
-      Get.arguments?.toString() ?? '',
-    );
-
     final rules = [
-      if (contestObj != null)
-        ...contestObj.rules.map((r) => (r.title, r.description)),
+      if (contest != null)
+        ...contest!.rules.map((r) => (r.title, r.description)),
     ];
-
-    if (rules.isEmpty) {
-      rules.addAll([
-        ('Min Trade Duration', '3 minutes — scalping not allowed'),
-        ('Max Leverage', '1:200 capped'),
-        ('Max Concurrent Positions', 'Capped at 5 positions'),
-        ('Max Lots Per Trade', 'Capped at 10 lots'),
-        ('Allowed Instruments', 'All Instruments'),
-      ]);
-    }
 
     return _PanelCard(
       cardBg: cardBg,

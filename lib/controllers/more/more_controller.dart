@@ -109,8 +109,8 @@ class Data {
 }
 
 class StageCompletion {
-  DateTime? mobileVerified;
-  DateTime? emailVerified;
+  bool? mobileVerified;
+  bool? emailVerified;
   bool? personalDetails;
   bool? identityVerified;
   bool? addressProofVerified;
@@ -124,8 +124,8 @@ class StageCompletion {
   });
 
   StageCompletion copyWith({
-    DateTime? mobileVerified,
-    DateTime? emailVerified,
+    bool? mobileVerified,
+    bool? emailVerified,
     bool? personalDetails,
     bool? identityVerified,
     bool? addressProofVerified,
@@ -138,75 +138,38 @@ class StageCompletion {
   );
 
   factory StageCompletion.fromJson(Map<String, dynamic> json) {
-    print('StageCompletion.fromJson - Raw JSON: $json');
-    print(
-      'StageCompletion.fromJson - mobile_verified: ${json["mobile_verified"]}',
-    );
-    print(
-      'StageCompletion.fromJson - email_verified: ${json["email_verified"]}',
-    );
-    print(
-      'StageCompletion.fromJson - personal_details: ${json["personal_details"]}',
-    );
-    print(
-      'StageCompletion.fromJson - identity_verified: ${json["identity_verified"]}',
-    );
-    print(
-      'StageCompletion.fromJson - address_proof_verified: ${json["address_proof_verified"]}',
-    );
-
     return StageCompletion(
-      mobileVerified: _parseDateTime(json["mobile_verified"]),
-      emailVerified: _parseDateTime(json["email_verified"]),
+      // Server may send a verification timestamp, a bool or 0/1; any
+      // non-empty, non-false value means verified.
+      mobileVerified: _parseBool(json["mobile_verified"]),
+      emailVerified: _parseBool(json["email_verified"]),
       personalDetails: _parseBool(json["personal_details"]),
       identityVerified: _parseBool(json["identity_verified"]),
       addressProofVerified: _parseBool(json["address_proof_verified"]),
     );
   }
 
-  static DateTime? _parseDateTime(dynamic value) {
-    if (value == null || value == '' || value == 'null') return null;
-
-    try {
-      // Handle different DateTime formats
-      String dateString = value.toString();
-
-      // If it's already in ISO format, parse directly
-      if (dateString.contains('T') && dateString.contains('Z')) {
-        return DateTime.parse(dateString);
-      }
-
-      // If it's in custom format like "2025-09-10 16:34:49", convert to ISO
-      if (dateString.contains(' ') && !dateString.contains('T')) {
-        // Replace space with T and add Z for ISO format
-        String isoString = dateString.replaceFirst(' ', 'T') + 'Z';
-        return DateTime.parse(isoString);
-      }
-
-      // Try parsing as is
-      return DateTime.parse(dateString);
-    } catch (e) {
-      print('Error parsing DateTime: $value, Error: $e');
-      return null;
-    }
-  }
-
-  static bool? _parseBool(dynamic value) {
-    if (value == null) return null;
+  static bool _parseBool(dynamic value) {
+    if (value == null) return false;
     if (value is bool) return value;
+    if (value is int) return value > 0;
     if (value is String) {
-      if (value.toLowerCase() == 'true') return true;
-      if (value.toLowerCase() == 'false') return false;
+      final lower = value.toLowerCase().trim();
+      if (lower == 'false' ||
+          lower == '0' ||
+          lower == 'no' ||
+          lower == '' ||
+          lower == 'null') {
+        return false;
+      }
+      return true;
     }
-    if (value is int) {
-      return value == 1;
-    }
-    return null;
+    return false;
   }
 
   Map<String, dynamic> toJson() => {
-    "mobile_verified": mobileVerified?.toIso8601String(),
-    "email_verified": emailVerified?.toIso8601String(),
+    "mobile_verified": mobileVerified,
+    "email_verified": emailVerified,
     "personal_details": personalDetails,
     "identity_verified": identityVerified,
     "address_proof_verified": addressProofVerified,

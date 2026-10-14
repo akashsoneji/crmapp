@@ -4,6 +4,8 @@ import 'dart:ui';
 
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/controllers/app_notification_controller.dart';
+import 'package:crm_app/controllers/auth_controller.dart';
+import 'package:crm_app/screens/home/kyc/unified_compliance_wizard_screen.dart';
 
 // Document Type Model
 class DocumentType {
@@ -47,7 +49,17 @@ class KYCController extends GetxController {
     ),
   ];
 
+  bool get _mustSubmitRegulation {
+    if (!Get.isRegistered<AuthController>()) return false;
+    final user = Get.find<AuthController>().profileData?.data.user;
+    return user?.mustSubmitRegulation ?? false;
+  }
+
   void showDocumentSelection() {
+    if (_mustSubmitRegulation) {
+      Get.to(() => const UnifiedComplianceWizardScreen());
+      return;
+    }
     showBottomSheet.value = true;
   }
 

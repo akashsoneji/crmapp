@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/models/websocket_trading_response.dart';
+import 'package:crm_app/utils/android_style_extensions.dart';
 import 'package:crm_app/models/trade_history_model.dart';
 import 'package:crm_app/models/order_types.dart';
 import 'package:crm_app/services/api_service.dart';
@@ -10,6 +11,7 @@ import 'package:crm_app/widgets/custom_toast.dart';
 import 'package:crm_app/utils/precision_helper.dart';
 import 'package:crm_app/utils/app_logger.dart';
 import 'account_controller.dart';
+import 'package:crm_app/controllers/instruments_controller.dart';
 import 'package:crm_app/services/trading_websocket_service.dart';
 import 'package:crm_app/services/audio_service.dart';
 import 'package:crm_app/constants/color.dart';
@@ -437,6 +439,7 @@ class TradingController extends GetxController {
   RxList<TradePosition> get marketPositionsRx =>
       _marketPositions; // Expose observable for listeners
   List<TradePosition> get pendingPositions => _pendingPositions;
+  RxList<TradePosition> get pendingPositionsRx => _pendingPositions;
   List<TradePosition> get closedPositions => _closedPositions;
   List<HistoryEntry> get historyEntries => _historyEntries;
   WebSocketTradingResponse? get websocketData => _websocketData.value;
@@ -1091,10 +1094,10 @@ class TradingController extends GetxController {
                 return true;
               }
               // Check if base symbol (without .c suffix) matches
-              final baseSymbol = p.symbol.replaceFirst('.c', '');
+              final baseSymbol = p.symbol.removeSuffix();
               return _selectedInstruments.contains(baseSymbol) ||
                   _selectedInstruments.any(
-                    (selected) => selected.replaceFirst('.c', '') == baseSymbol,
+                    (selected) => selected.removeSuffix() == baseSymbol,
                   );
             }).toList();
       }
@@ -1164,11 +1167,17 @@ class TradingController extends GetxController {
         orElse: () => throw Exception('Position not found'),
       );
 
+      // Get correct mt5Account
+      String accountToUse = position.accountId.isEmpty ? position.mt5Account : position.accountId;
+      if (accountToUse.isEmpty && Get.isRegistered<AccountController>()) {
+        accountToUse = Get.find<AccountController>().activeMT5Account?.metaAccountNumber ?? '';
+      }
+
       // Call the API to close position
       final response = await ApiService.post(
         endpoint: ApiConstants.closePositionByPositionId,
         data: {
-          'mt5_account': position.accountId,
+          'mt5_account': accountToUse,
           'position_id': int.parse(position.orderId),
           if (volume != null) 'volume': volume, // For partial close
         },
@@ -1292,11 +1301,17 @@ class TradingController extends GetxController {
       _setLoading(true);
       _clearError();
 
+      // Get correct mt5Account
+      String accountToUse = mt5Account;
+      if (accountToUse.isEmpty && Get.isRegistered<AccountController>()) {
+        accountToUse = Get.find<AccountController>().activeMT5Account?.metaAccountNumber ?? '';
+      }
+
       // Call the API to close position
       final response = await ApiService.post(
         endpoint: ApiConstants.closePositionByPositionId,
         data: {
-          'mt5_account': mt5Account,
+          'mt5_account': accountToUse,
           'position_id': positionId,
           if (volume != null) 'volume': volume, // For partial close
         },
@@ -1374,18 +1389,20 @@ class TradingController extends GetxController {
       // Prepare payload
       final payload = {'mt5_account': mt5Account, 'position_id': positionId};
 
-      // Add optional TP/SL values
-      if (stopLoss != null && stopLoss > 0) {
-        payload['stop_loss'] =
-            digits != null
+      // Add optional TP/SL values. 0 is sent as-is so the server clears it.
+      if (stopLoss != null) {
+        payload['stop_loss'] = stopLoss == 0
+            ? 0
+            : (digits != null
                 ? PrecisionHelper.round(stopLoss, decimals: digits)
-                : stopLoss;
+                : stopLoss);
       }
-      if (takeProfit != null && takeProfit > 0) {
-        payload['take_profit'] =
-            digits != null
+      if (takeProfit != null) {
+        payload['take_profit'] = takeProfit == 0
+            ? 0
+            : (digits != null
                 ? PrecisionHelper.round(takeProfit, decimals: digits)
-                : takeProfit;
+                : takeProfit);
       }
 
       // Call the API to update TP/SL
@@ -1405,6 +1422,109 @@ class TradingController extends GetxController {
       }
     } catch (e) {
       _setError('Failed to update Take Profit and Stop Loss: $e');
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  /// Mirrors a successful pending-order edit into [_pendingPositions] so the
+  /// card and bottom sheet show the new TP/SL right away; the next /ws/stream
+  /// 'po' update overwrites it with the server's values.
+  void _applyPendingOrderEdit({
+    required int orderId,
+    double? price,
+    double? stopLoss,
+    double? takeProfit,
+    int? digits,
+  }) {
+    final index = _pendingPositions.indexWhere(
+      (p) => p.orderId == orderId.toString(),
+    );
+    if (index == -1) return;
+    final current = _pendingPositions[index];
+    final decimals = digits ?? current.digits;
+    String format(double? value) => (value == null || value == 0)
+        ? ''
+        : PrecisionHelper.formatPrice(value, decimals: decimals);
+
+    final updated = current.copyWith(
+      entryPrice: (price != null && price > 0)
+          ? PrecisionHelper.formatPrice(price, decimals: decimals)
+          : null,
+      stopLoss: format(stopLoss),
+      takeProfit: format(takeProfit),
+    );
+    _pendingPositions[index] = updated;
+    _pendingPositionsById[updated.orderId] = updated;
+  }
+
+  /// Update Take Profit, Stop Loss, and Price for a Pending Order
+  Future<bool> updatePendingOrderTPSL({
+    required String mt5Account,
+    required int orderId,
+    double? price,
+    double? stopLoss,
+    double? takeProfit,
+    int? digits,
+  }) async {
+    try {
+      _setLoading(true);
+      _clearError();
+
+      if (mt5Account.isEmpty) {
+        _setError('MT5 account is required');
+        return false;
+      }
+      if (orderId <= 0) {
+        _setError('Invalid order ID');
+        return false;
+      }
+
+      final payload = {'mt5_account': mt5Account, 'order_id': orderId};
+
+      if (price != null) {
+        payload['price'] = price == 0
+            ? 0
+            : (digits != null
+                ? PrecisionHelper.round(price, decimals: digits)
+                : price);
+      }
+      if (stopLoss != null) {
+        payload['stop_loss'] = stopLoss == 0
+            ? 0
+            : (digits != null
+                ? PrecisionHelper.round(stopLoss, decimals: digits)
+                : stopLoss);
+      }
+      if (takeProfit != null) {
+        payload['take_profit'] = takeProfit == 0
+            ? 0
+            : (digits != null
+                ? PrecisionHelper.round(takeProfit, decimals: digits)
+                : takeProfit);
+      }
+
+      final response = await ApiService.post(
+        endpoint: ApiConstants.updatePendingOrderTPSL,
+        data: payload,
+      );
+
+      if (response.success) {
+        _applyPendingOrderEdit(
+          orderId: orderId,
+          price: price,
+          stopLoss: stopLoss,
+          takeProfit: takeProfit,
+          digits: digits,
+        );
+        return true;
+      } else {
+        _setError(response.message ?? 'Failed to update pending order');
+        return false;
+      }
+    } catch (e) {
+      _setError('Failed to update pending order: $e');
       return false;
     } finally {
       _setLoading(false);
@@ -2654,11 +2774,22 @@ class TradingController extends GetxController {
       }
 
       // Validate SL/TP
-      final entryPrice =
-          price ??
-          (orderType.isBuyOrder
-              ? currentAskPrice.toString()
-              : currentBidPrice.toString());
+      // Fall back to the live quote when the screen's bid/ask is still 0
+      // (e.g. order placed before the first tick reached this controller).
+      double actualBid = currentBidPrice;
+      double actualAsk = currentAskPrice;
+      if ((actualBid == 0.0 || actualAsk == 0.0) &&
+          Get.isRegistered<InstrumentsController>()) {
+        final quote = Get.find<InstrumentsController>().priceRx(symbol).value;
+        actualBid = quote.bid;
+        actualAsk = quote.ask;
+      }
+
+      final entryPrice = (price != null && price.isNotEmpty)
+          ? price
+          : (orderType.isBuyOrder
+              ? actualAsk.toString()
+              : actualBid.toString());
 
       final sltpValidation = validateSLTP(
         stopLoss ?? '',
@@ -2671,12 +2802,18 @@ class TradingController extends GetxController {
         return false;
       }
 
+      String accountToUse = mt5Account ?? '';
+      if (accountToUse.isEmpty && Get.isRegistered<AccountController>()) {
+        accountToUse =
+            Get.find<AccountController>().activeMT5Account?.metaAccountNumber ?? '';
+      }
+
       // Prepare payload
       final payload = {
         'symbol': symbol,
         'volume': volume,
         'type': orderType.value,
-        'mt5_account': mt5Account ?? '',
+        'mt5_account': accountToUse,
       };
 
       // Add optional parameters

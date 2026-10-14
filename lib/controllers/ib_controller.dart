@@ -1128,6 +1128,18 @@ class IBController extends GetxController {
     ibApprovalRequests.clear();
     commissionGroups.clear();
     errorMessage.value = '';
+
+    tradeHistoryPage = 1;
+    tradeHistoryTotalPages = 1;
+    isLoadingMoreTrades = false;
+    clientSearchQuery = '';
+    clientsPage = 1;
+    clientsTotalPages = 1;
+    isLoadingMoreClients = false;
+    isSearchingClients = false;
+    _clientSearchResults.clear();
+    selectedClientId.value = null;
+    selectedClientName.value = null;
   }
 
   /// Update IB Request Status (Approve/Reject/etc)

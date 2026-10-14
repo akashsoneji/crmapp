@@ -13,11 +13,11 @@ class PipzeConfig extends BaseClientConfig {
         logoSvgPath: 'logo.svg',
         splashLogoPath: 'splash_logo.svg',
         appIconPath: 'app_icon.png',
-        apiBaseUrl: 'https://dev.tenaxcodecrm.com/api/',
-        websocketUrl: 'wss://dev.tenaxcodecrm.com/trade-engine',
-        chartBaseUrl: 'https://dev.tenaxcodecrm.com',
-        // apiBaseUrl: 'https://my.pipze.com/api/',
-        // websocketUrl: 'wss://my.pipze.com/trade-engine',
-        // chartBaseUrl: 'https://my.pipze.com',
+        // apiBaseUrl: 'https://dev.tenaxcodecrm.com/api/',
+        // websocketUrl: 'wss://dev.tenaxcodecrm.com/trade-engine',
+        // chartBaseUrl: 'https://dev.tenaxcodecrm.com',
+        apiBaseUrl: 'https://my.pipze.com/api/',
+        websocketUrl: 'wss://my.pipze.com/trade-engine',
+        chartBaseUrl: 'https://my.pipze.com',
       );
 }
