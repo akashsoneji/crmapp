@@ -178,6 +178,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
         } catch (_) {}
       }
       await SecureStorageService.saveLoginStatus(true);
+      Get.find<AuthController>().markSessionRestored();
 
       // 3) Clear the staged broker.
       try {

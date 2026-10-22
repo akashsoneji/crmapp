@@ -85,6 +85,7 @@ class ApiConstants {
   static const String checkMobile = '${ajax}auth/google/check-mobile';
   static const String getWalletData = '${ajax}internaltransfer';
   static const String getWalletDetailsNew = '${ajax}wallet';
+  static const String getFinanceActivity = '${ajax}finance-activity';
   static const String currencyList = '${ajax}utility/currency-list';
   static const String withdrawalRequest = '${ajax}withdrawal';
   static const String withdrawalSendOTPRequest = '${ajax}withdrawal/sendOTP';

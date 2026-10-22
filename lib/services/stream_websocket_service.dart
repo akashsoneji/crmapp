@@ -407,8 +407,10 @@ class StreamWebSocketService extends GetxService with WidgetsBindingObserver {
     final sameAccount =
         _currentAccount?.metaAccountNumber == account.metaAccountNumber;
     if (_channel != null && sameAccount && isAuthenticated.value) {
-      // Already connected AND authenticated — just reconcile symbols.
-      await setSymbols(symbols);
+      // Already connected AND authenticated — only add new symbols. Callers
+      // (login, account bind) pass an empty list; replacing via setSymbols
+      // here unsubscribed every queued favorite and prices never arrived.
+      await addSymbols(symbols);
       return;
     }
 
@@ -457,7 +459,11 @@ class StreamWebSocketService extends GetxService with WidgetsBindingObserver {
 
     final token = await SecureStorageService.getAuthToken();
     if (token == null || token.isEmpty) {
-      if (kDebugMode) debugPrint('StreamWS: no auth token, aborting handshake');
+      // Right after a fresh login the token may not be persisted yet. Leaving
+      // this socket open unauthenticated kept every symbol queued forever, so
+      // close it and retry with backoff (ws-stream-reference §7).
+      print('StreamWS: no auth token, retrying handshake');
+      _retryUnauthenticatedSocket(channel);
       return;
     }
 
@@ -556,7 +562,18 @@ class StreamWebSocketService extends GetxService with WidgetsBindingObserver {
     // reconnect with new account.
     final seq = ++_switchSeq;
     final old = _currentAccount;
-    if (_channel != null && old != null) {
+    final isRealSwitch =
+        old != null && old.metaAccountNumber != newAccount.metaAccountNumber;
+
+    if (!isRealSwitch) {
+      // First bind after login (or same account): keep the symbols queued by
+      // addSymbols() so they ride in the authenticate frame. Clearing them
+      // here left a fresh login with no subscriptions and no prices.
+      await connect(account: newAccount, channels: _channels);
+      return;
+    }
+
+    if (_channel != null) {
       try {
         _channel!.sink.add(jsonEncode(<String, dynamic>{
           'type': 'unsubscribe',
@@ -655,6 +672,17 @@ class StreamWebSocketService extends GetxService with WidgetsBindingObserver {
     isAuthenticated.value = false;
   }
 
+  /// Closes a socket that never authenticated and schedules a fresh connect,
+  /// which re-sends the full auth with the current symbols.
+  void _retryUnauthenticatedSocket(WebSocketChannel channel) {
+    if (!identical(channel, _channel)) return;
+    try {
+      channel.sink.close();
+    } catch (_) {}
+    _teardown();
+    _scheduleReconnect();
+  }
+
   // ─── Heartbeat ─────────────────────────────────────────────────────────
   void _startHeartbeat() {
     _stopHeartbeat();
@@ -716,6 +744,9 @@ class StreamWebSocketService extends GetxService with WidgetsBindingObserver {
   int _frameOrders = 0;
   int _frameAccounts = 0;
   int _frameOther = 0;
+
+  // Consecutive rejected authenticate frames; drives the retry backoff.
+  int _authFailureCount = 0;
 
   void _onMessage(dynamic message) {
     _lastFrameAt = DateTime.now();
@@ -788,6 +819,15 @@ class StreamWebSocketService extends GetxService with WidgetsBindingObserver {
         print(
           'StreamWS: authenticated=$ok symbols=${_symbols.length} resync=$_pendingResumeResync',
         );
+        if (!ok) {
+          // _onMessage reset the backoff on this frame; restore it so a
+          // rejected token does not retry at the minimum delay forever.
+          _reconnectAttempt = ++_authFailureCount;
+          final channel = _channel;
+          if (channel != null) _retryUnauthenticatedSocket(channel);
+          break;
+        }
+        _authFailureCount = 0;
         if (ok && _channel != null && _symbols.isNotEmpty) {
           _channel!.sink.add(jsonEncode(<String, dynamic>{
             'action': 'subscribe',
