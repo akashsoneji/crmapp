@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:crm_app/constants/text_styles.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/routes/app_pages.dart';
+import 'package:crm_app/services/language_service.dart';
 
 class TraderCard extends StatelessWidget {
   final String name;
@@ -31,13 +33,13 @@ class TraderCard extends StatelessWidget {
       },
       child: Card(
         elevation: 0.5,
-        margin: const EdgeInsets.only(bottom: 12.0),
+        margin: EdgeInsets.only(bottom: 12.0),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
           side: BorderSide(color: AppColors.surface),
         ),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+          padding: EdgeInsets.symmetric(horizontal: 14, vertical: 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -51,21 +53,21 @@ class TraderCard extends StatelessWidget {
                       SvgPicture.asset(
                         'assets/svg/copy_trading/person_svg.svg',
                       ),
-                      const SizedBox(width: 12),
+                      SizedBox(width: 12),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             name,
-                            style: const TextStyle(
+                            style: AppTextStyles.bodyText.copyWith(
                               fontWeight: FontWeight.w600,
                               height: 1.4,
                               fontSize: 16,
                             ),
                           ),
                           Text(
-                            'High Achiever',
-                            style: TextStyle(
+                            TranslationUtils.tr('trader_card_high_achiever'),
+                            style: AppTextStyles.bodyText.copyWith(
                               color: AppColors.textGrey,
                               fontWeight: FontWeight.w400,
                               fontSize: 10,
@@ -76,7 +78,7 @@ class TraderCard extends StatelessWidget {
                     ],
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(
+                    padding: EdgeInsets.symmetric(
                       horizontal: 8,
                       vertical: 4,
                     ),
@@ -86,7 +88,7 @@ class TraderCard extends StatelessWidget {
                     ),
                     child: Text(
                       badge,
-                      style: TextStyle(
+                      style: AppTextStyles.bodyText.copyWith(
                         color: AppColors.textPrimary,
                         fontWeight: FontWeight.w600,
                         fontSize: 10,
@@ -96,34 +98,46 @@ class TraderCard extends StatelessWidget {
                 ],
               ),
 
-              const SizedBox(height: 4),
+              SizedBox(height: 4),
                 Divider(color: AppColors.dashLineColor),
-              const SizedBox(height: 4),
+              SizedBox(height: 4),
 
               // 3-Column Metrics Row
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _buildMetric('Gain', gain, AppColors.primary),
-                  _buildMetric('Copier', copier, AppColors.primary),
-                  _buildMetric('Commission', commission, AppColors.primary),
+                  _buildMetric(
+                    TranslationUtils.tr('trader_card_gain'),
+                    gain,
+                    AppColors.primary,
+                  ),
+                  _buildMetric(
+                    TranslationUtils.tr('trader_card_copier'),
+                    copier,
+                    AppColors.primary,
+                  ),
+                  _buildMetric(
+                    TranslationUtils.tr('general_commission'),
+                    commission,
+                    AppColors.primary,
+                  ),
                 ],
               ),
 
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
 
               // Profit and Loss Row
               Text(
-                'Profit and Loss',
-                style: TextStyle(color: AppColors.textGrey, fontSize: 12),
+                TranslationUtils.tr('trader_card_profit_and_loss'),
+                style: AppTextStyles.bodyText.copyWith(color: AppColors.textGrey, fontSize: 12),
               ),
-              const SizedBox(height: 4),
+              SizedBox(height: 4),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
                     profitAndLoss,
-                    style: TextStyle(
+                    style: AppTextStyles.bodyText.copyWith(
                       color: AppColors.primary,
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
@@ -131,7 +145,7 @@ class TraderCard extends StatelessWidget {
                   ),
                   Text(
                     r'$0.00',
-                    style: TextStyle(
+                    style: AppTextStyles.bodyText.copyWith(
                       color: AppColors.primary,
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
@@ -140,7 +154,7 @@ class TraderCard extends StatelessWidget {
                 ],
               ),
               Padding(
-                padding: const EdgeInsets.only(top: 4.0),
+                padding: EdgeInsets.only(top: 4.0),
                 child: SizedBox(
                   height: 3, // very thin
                   child: LinearProgressIndicator(
@@ -167,11 +181,11 @@ class TraderCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(color: AppColors.textGrey, fontSize: 12)),
-        const SizedBox(height: 4),
+        Text(label, style: AppTextStyles.bodyText.copyWith(color: AppColors.textGrey, fontSize: 12)),
+        SizedBox(height: 4),
         Text(
           value,
-          style: TextStyle(
+          style: AppTextStyles.bodyText.copyWith(
             color: valueColor,
             fontWeight: FontWeight.bold,
             fontSize: 16,

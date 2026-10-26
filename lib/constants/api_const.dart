@@ -183,6 +183,8 @@ class ApiConstants {
       '${ajax}copytrading/master/dashboard-overview';
 
   static const String copyTradingMasterPlans = '${ajax}copytrading/master/plans';
+  static String copyTradingMasterPlanOpenPositions(int planId) =>
+      '$copyTradingMasterPlans/$planId/open-positions';
   static String copyTradingMasterOpenPositions(int planId) =>
       '$copyTradingMasterPlans/$planId/open-positions';
   static String copyTradingMasterPlanPause(int planId) =>
@@ -207,6 +209,8 @@ class ApiConstants {
   /// "subscription history" drill-down from the master copiers list.
   static String copyTradingMasterCopierSubscriptionHistory(int copierId) =>
       '${ajax}copytrading/master/copiers/$copierId/subscription-history';
+  static const String copyTradingMasterSettlements =
+      '${ajax}copytrading/master/settlements';
 
   static String copyTradingCopierSubscriptionDetail(int id) =>
       '${ajax}copytrading/copier/subscriptions/$id/detail';
@@ -227,6 +231,8 @@ class ApiConstants {
 
   // Public endpoints
   static const String copyTradingMasters = 'copytrading/masters';
+  static const String copyTradingPlans = 'copytrading/plans';
+  static const String copyTradingMastersSearch = 'copytrading/masters/search';
   static String copyTradingMasterProfile(String masterCode, {String? timeframe, String? selectedPlanId}) {
     final base = 'copytrading/masters/$masterCode';
     final params = <String>[];

@@ -5,6 +5,7 @@ import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
+import 'package:crm_app/services/language_service.dart';
 import '../investment_detail_screen.dart';
 
 // ─── Mock data model ───────────────────────────────────────────────
@@ -81,7 +82,10 @@ class _InvestmentTabState extends State<InvestmentTab> {
                   },
                   icon: SvgPicture.asset('assets/svg/ib_dashboard/home.svg'),
                 ),
-                Text('Your Investment', style: AppTextStyles.screenTitle),
+                Text(
+                  TranslationUtils.tr('investment_detail_screen_your_investment'),
+                  style: AppTextStyles.screenTitle,
+                ),
                 SizedBox(width: 13.w), // balance spacer
               ],
             ),
@@ -102,8 +106,8 @@ class _InvestmentTabState extends State<InvestmentTab> {
 
                   // ── Masters you copy ──
                   Text(
-                    'Masters you copy (${_mockMasters.length})',
-                    style: TextStyle(
+                    '${TranslationUtils.tr('investment_tab_masters_you_copy')} (${_mockMasters.length})',
+                    style: AppTextStyles.bodyText.copyWith(
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w600,
                       color: AppColors.textPrimary,
@@ -118,8 +122,8 @@ class _InvestmentTabState extends State<InvestmentTab> {
 
                   // ── History ──
                   Text(
-                    'History (0)',
-                    style: TextStyle(
+                    '${TranslationUtils.tr('general_history')} (0)',
+                    style: AppTextStyles.bodyText.copyWith(
                       fontSize: 15.sp,
                       fontWeight: FontWeight.w600,
                       color: AppColors.textPrimary,
@@ -167,20 +171,23 @@ class _InvestmentTabState extends State<InvestmentTab> {
             iconColor: AppColors.textPrimary,
             collapsedIconColor: AppColors.textGrey,
             tilePadding: EdgeInsets.symmetric(horizontal: 10),
-            childrenPadding: EdgeInsets.only(left: 10, right: 16, bottom: 12),
+            childrenPadding: EdgeInsetsDirectional.only(start: 10, end: 16, bottom: 12),
             title: Text(
-              'Your Stats',
-              style: TextStyle(
+              TranslationUtils.tr('investment_tab_your_stats'),
+              style: AppTextStyles.bodyText.copyWith(
                 fontSize: 14.sp,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary,
               ),
             ),
             children: [
-              _buildStatRow('Profit', r'$0.00'),
-              _buildStatRow('Float profit', r'$0.00'),
-              _buildStatRow('Equity', r'$70.50'),
-              _buildStatRow('Gain', r'$0.00'),
+              _buildStatRow(TranslationUtils.tr('general_profit'), r'$0.00'),
+              _buildStatRow(
+                TranslationUtils.tr('investment_tab_float_profit'),
+                r'$0.00',
+              ),
+              _buildStatRow(TranslationUtils.tr('general_equity'), r'$70.50'),
+              _buildStatRow(TranslationUtils.tr('trader_card_gain'), r'$0.00'),
             ],
           ),
         ),
@@ -197,7 +204,7 @@ class _InvestmentTabState extends State<InvestmentTab> {
         children: [
           Text(
             label,
-            style: TextStyle(fontSize: 13.sp, color: AppColors.textGrey),
+            style: AppTextStyles.bodyText.copyWith(fontSize: 13.sp, color: AppColors.textGrey),
           ),
           Flexible(
             child: DashedUnderline(
@@ -208,7 +215,7 @@ class _InvestmentTabState extends State<InvestmentTab> {
           ),
           Text(
             value,
-            style: TextStyle(
+            style: AppTextStyles.bodyText.copyWith(
               fontSize: 13.sp,
               fontWeight: FontWeight.w500,
               color: AppColors.textPrimary,
@@ -264,7 +271,7 @@ class _MasterCardState extends State<_MasterCard> {
           children: [
             // ── Header: Avatar + Name/Badge ──
             Padding(
-              padding: EdgeInsets.fromLTRB(14.w, 14.h, 14.w, 10.h),
+              padding: EdgeInsetsDirectional.fromSTEB(14.w, 14.h, 14.w, 10.h),
               child: Row(
                 children: [
                   _TraderAvatar(),
@@ -274,7 +281,7 @@ class _MasterCardState extends State<_MasterCard> {
                     children: [
                       Text(
                         widget.master.name,
-                        style: TextStyle(
+                        style: AppTextStyles.bodyText.copyWith(
                           fontSize: 16.sp,
                           fontWeight: FontWeight.w600,
                           color: AppColors.textPrimary,
@@ -282,7 +289,7 @@ class _MasterCardState extends State<_MasterCard> {
                       ),
                       Text(
                         widget.master.badge,
-                        style: TextStyle(
+                        style: AppTextStyles.bodyText.copyWith(
                           fontSize: 10.sp,
                           fontWeight: FontWeight.w400,
                           color: AppColors.icongrey,
@@ -305,14 +312,14 @@ class _MasterCardState extends State<_MasterCard> {
                     children: [
                       Expanded(
                         child: _StatCell(
-                          label: 'Profit',
+                          label: TranslationUtils.tr('general_profit'),
                           value: widget.master.profit,
                           valueColor: AppColors.green,
                         ),
                       ),
                       Expanded(
                         child: _StatCell(
-                          label: 'Float profit',
+                          label: TranslationUtils.tr('investment_tab_float_profit'),
                           value: widget.master.floatProfit,
                           valueColor: AppColors.primary,
                         ),
@@ -324,14 +331,14 @@ class _MasterCardState extends State<_MasterCard> {
                     children: [
                       Expanded(
                         child: _StatCell(
-                          label: 'Equity',
+                          label: TranslationUtils.tr('general_equity'),
                           value: widget.master.equity,
                           valueColor: AppColors.primary,
                         ),
                       ),
                       Expanded(
                         child: _StatCell(
-                          label: 'Gain',
+                          label: TranslationUtils.tr('trader_card_gain'),
                           value: widget.master.gain,
                           valueColor: AppColors.primary,
                         ),
@@ -376,7 +383,7 @@ class _StatCell extends StatelessWidget {
       children: [
         Text(
           label,
-          style: TextStyle(
+          style: AppTextStyles.bodyText.copyWith(
             fontSize: 12.sp,
             color: AppColors.textGrey,
             fontWeight: FontWeight.w400,
@@ -385,7 +392,7 @@ class _StatCell extends StatelessWidget {
         SizedBox(height: 5.h),
         Text(
           value,
-          style: TextStyle(
+          style: AppTextStyles.bodyText.copyWith(
             fontSize: 16.sp,
             fontWeight: FontWeight.w600,
             color: valueColor,

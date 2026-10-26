@@ -1,13 +1,16 @@
+import 'package:crm_app/routes/app_pages.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/copy_trading/copy_trading_master_dashboard_controller.dart';
 import 'package:crm_app/screens/home/trading_main_screen.dart';
+import 'package:crm_app/services/language_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 
 import 'master_dashboard_overview_tab.dart';
+import 'master_settlements_screen.dart';
 
 /// Master Dashboard screen.
 ///
@@ -34,7 +37,7 @@ class MasterDashboardScreen extends StatelessWidget {
         elevation: 0,
         centerTitle: true,
         title: Text(
-          'Master Dashboard',
+          TranslationUtils.tr('master_dashboard_screen_master_dashboard'),
           style: AppTextStyles.heading.copyWith(
             color: AppColors.textPrimary,
             fontWeight: FontWeight.w600,
@@ -48,9 +51,18 @@ class MasterDashboardScreen extends StatelessWidget {
               BlendMode.srcIn,
             ),
           ),
-          onPressed: () => Get.offAll(() => const TradingMainScreen()),
+          onPressed: () => Get.offAllNamed(AppPages.TRADING),
         ),
         actions: [
+          IconButton(
+            tooltip: TranslationUtils.tr('settlements_screen_title'),
+            onPressed: () => Get.to(() => const MasterSettlementsScreen()),
+            icon: Icon(
+              Icons.account_balance_wallet_outlined,
+              size: 20.r,
+              color: AppColors.textPrimary,
+            ),
+          ),
           IconButton(
             onPressed: () => controller.refreshAll(showLoading: true),
             icon: Icon(Icons.refresh, size: 20.r, color: AppColors.textPrimary),
@@ -62,7 +74,7 @@ class MasterDashboardScreen extends StatelessWidget {
             controller.stats.value == null &&
             controller.profile.value == null &&
             controller.plans.isEmpty) {
-          return const Center(child: CircularProgressIndicator());
+          return Center(child: CircularProgressIndicator());
         }
 
         // MasterDashboardOverviewTab renders a non-scrolling Column, so

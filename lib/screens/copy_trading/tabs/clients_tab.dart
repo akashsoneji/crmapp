@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:crm_app/services/language_service.dart';
 import '../../../constants/text_styles.dart';
 
 class ClientsTab extends StatefulWidget {
@@ -55,7 +56,7 @@ class _ClientsTabState extends State<ClientsTab> {
         elevation: 0,
         centerTitle: true,
         title: Text(
-          'Trades',
+          TranslationUtils.tr('tw_trades'),
           style: AppTextStyles.heading.copyWith(
             color: AppColors.textPrimary,
             fontWeight: FontWeight.w600,
@@ -76,7 +77,7 @@ class _ClientsTabState extends State<ClientsTab> {
           _tradeHistory.isEmpty
               ? _buildEmptyState()
               : ListView.builder(
-                padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 80.h),
+                padding: EdgeInsetsDirectional.fromSTEB(16.w, 16.h, 16.w, 80.h),
                 itemCount: _tradeHistory.length,
                 itemBuilder: (context, index) {
                   return _TradeHistoryCard(data: _tradeHistory[index]);
@@ -107,7 +108,7 @@ class _ClientsTabState extends State<ClientsTab> {
           ),
           SizedBox(height: 16.h),
           Text(
-            'No transaction yet',
+            TranslationUtils.tr('clients_tab_no_transaction_yet'),
             style: AppTextStyles.subheading.copyWith(
               color: AppColors.textGrey,
               fontSize: 16.sp,
@@ -150,7 +151,7 @@ class _TradeHistoryCardState extends State<_TradeHistoryCard> {
         },
         borderRadius: BorderRadius.circular(12.r),
         child: Padding(
-          padding: const EdgeInsets.all(14.0),
+          padding: EdgeInsets.all(14.0),
           child: Column(
             children: [
               Row(
@@ -162,7 +163,7 @@ class _TradeHistoryCardState extends State<_TradeHistoryCard> {
                       Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(
+                            padding: EdgeInsets.symmetric(
                               horizontal: 6,
                               vertical: 2,
                             ),
@@ -175,17 +176,17 @@ class _TradeHistoryCardState extends State<_TradeHistoryCard> {
                             ),
                             child: Text(
                               data.type,
-                              style:   TextStyle(
+                              style:   AppTextStyles.bodyText.copyWith(
                                 color: AppColors.whiteColor,
                                 fontSize: 10,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          SizedBox(width: 8),
                           Text(
                             data.volume,
-                            style: TextStyle(
+                            style: AppTextStyles.bodyText.copyWith(
                               color: AppColors.icongrey,
                               fontSize: 10,
                               fontWeight: FontWeight.w400,
@@ -193,10 +194,10 @@ class _TradeHistoryCardState extends State<_TradeHistoryCard> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
+                      SizedBox(height: 8),
                       Text(
                         data.symbol,
-                        style: const TextStyle(
+                        style: AppTextStyles.bodyText.copyWith(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                         ),
@@ -212,20 +213,20 @@ class _TradeHistoryCardState extends State<_TradeHistoryCard> {
                           SvgPicture.asset(
                             'assets/svg/copy_trading/calendar.svg',
                           ),
-                          const SizedBox(width: 4),
+                          SizedBox(width: 4),
                           Text(
                             data.status,
-                            style: TextStyle(
+                            style: AppTextStyles.bodyText.copyWith(
                               color: AppColors.icongrey,
                               fontSize: 12,
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
+                      SizedBox(height: 8),
                       Text(
                         data.profit,
-                        style: TextStyle(
+                        style: AppTextStyles.bodyText.copyWith(
                           color: AppColors.primary,
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -233,7 +234,7 @@ class _TradeHistoryCardState extends State<_TradeHistoryCard> {
                       ),
                     ],
                   ),
-                  const SizedBox(width: 16),
+                  SizedBox(width: 16),
                   Icon(
                     _isExpanded
                         ? Icons.keyboard_arrow_up
@@ -251,13 +252,34 @@ class _TradeHistoryCardState extends State<_TradeHistoryCard> {
                   height: 1,
                 ),
                 SizedBox(height: 12.h),
-                _buildDetailRow('Master name', data.masterName),
-                _buildDetailRow('Open time', data.openTime),
-                _buildDetailRow('Close time', data.closeTime),
-                _buildDetailRow('Open Price', data.openPrice),
-                _buildDetailRow('Close Price', data.closePrice),
-                _buildDetailRow('Order ID', data.orderId),
-                _buildDetailRow('Commission you paid', '\$${data.commission}'),
+                _buildDetailRow(
+                  TranslationUtils.tr('clients_tab_master_name'),
+                  data.masterName,
+                ),
+                _buildDetailRow(
+                  TranslationUtils.tr('open_time'),
+                  data.openTime,
+                ),
+                _buildDetailRow(
+                  TranslationUtils.tr('pmam_investor_portal_screen_close_time'),
+                  data.closeTime,
+                ),
+                _buildDetailRow(
+                  TranslationUtils.tr('trading_order_open_price'),
+                  data.openPrice,
+                ),
+                _buildDetailRow(
+                  TranslationUtils.tr('pmam_investor_portal_screen_close_price'),
+                  data.closePrice,
+                ),
+                _buildDetailRow(
+                  TranslationUtils.tr('clients_tab_order_id'),
+                  data.orderId,
+                ),
+                _buildDetailRow(
+                  TranslationUtils.tr('clients_tab_commission_you_paid'),
+                  '\$${data.commission}',
+                ),
               ],
             ],
           ),
@@ -279,7 +301,7 @@ class _TradeHistoryCardState extends State<_TradeHistoryCard> {
             ),
           ),
           Align(
-            alignment: Alignment.bottomRight,
+            alignment: AlignmentDirectional.bottomEnd,
             child: DashedUnderline(
               color: AppColors.dashLineColor,
               dashSpace: 3,

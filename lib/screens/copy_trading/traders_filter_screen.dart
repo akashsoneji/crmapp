@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/constants/color.dart';
+import 'package:crm_app/services/language_service.dart';
 import 'package:flutter_svg/svg.dart';
 
 class TradersFilterScreen extends StatefulWidget {
@@ -27,7 +29,7 @@ class _TradersFilterScreenState extends State<TradersFilterScreen> {
       child: SafeArea(
         child: Column(
           children: [
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Container(
               width: 28,
               height: 4,
@@ -38,7 +40,7 @@ class _TradersFilterScreenState extends State<TradersFilterScreen> {
             ),
             // Header
             Padding(
-              padding: const EdgeInsets.symmetric(
+              padding: EdgeInsets.symmetric(
                 horizontal: 16.0,
                 vertical: 16.0,
               ),
@@ -48,7 +50,7 @@ class _TradersFilterScreenState extends State<TradersFilterScreen> {
                   GestureDetector(
                     onTap: () => Navigator.pop(context),
                     child: Container(
-                      padding: const EdgeInsets.all(4),
+                      padding: EdgeInsets.all(4),
                       decoration: BoxDecoration(
                         color: AppColors.icongrey,
                         shape: BoxShape.circle,
@@ -65,8 +67,8 @@ class _TradersFilterScreenState extends State<TradersFilterScreen> {
                       left: MediaQuery.of(context).size.width * 0.1,
                     ),
                     child:   Text(
-                      'Filters',
-                      style: TextStyle(
+                      TranslationUtils.tr('traders_filter_screen_filters'),
+                      style: AppTextStyles.bodyText.copyWith(
                         fontSize: 20,
                         fontWeight: FontWeight.w600,
                         color: AppColors.textPrimary,
@@ -81,8 +83,8 @@ class _TradersFilterScreenState extends State<TradersFilterScreen> {
                       });
                     },
                     child:   Text(
-                      'Reset all',
-                      style: TextStyle(
+                      TranslationUtils.tr('trade_screen_reset_all'),
+                      style: AppTextStyles.bodyText.copyWith(
                         fontSize: 14,
                         color: AppColors.textPrimary,
                         fontWeight: FontWeight.w400,
@@ -93,13 +95,13 @@ class _TradersFilterScreenState extends State<TradersFilterScreen> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: EdgeInsets.symmetric(horizontal: 16),
               child: Divider(height: 1, color: AppColors.border),
             ),
 
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(
+                padding: EdgeInsets.symmetric(
                   horizontal: 20,
                   vertical: 24,
                 ),
@@ -112,7 +114,7 @@ class _TradersFilterScreenState extends State<TradersFilterScreen> {
                       children: [
                         Container(
                           width: double.infinity,
-                          padding: const EdgeInsets.symmetric(
+                          padding: EdgeInsets.symmetric(
                             horizontal: 10,
                             vertical: 10,
                           ),
@@ -123,8 +125,10 @@ class _TradersFilterScreenState extends State<TradersFilterScreen> {
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
-                            '\$25.00 or more',
-                            style: TextStyle(
+                            TranslationUtils.tr(
+                              'traders_filter_screen_25_or_more',
+                            ),
+                            style: AppTextStyles.bodyText.copyWith(
                               fontSize: 16,
                               color: AppColors.textPrimary,
                             ),
@@ -135,10 +139,12 @@ class _TradersFilterScreenState extends State<TradersFilterScreen> {
                           left: 12,
                           child: Container(
                             color: AppColors.whiteColor,
-                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            padding: EdgeInsets.symmetric(horizontal: 4),
                             child: Text(
-                              'Minimum Investment',
-                              style: TextStyle(
+                              TranslationUtils.tr(
+                                'trader_details_screen_minimum_investment',
+                              ),
+                              style: AppTextStyles.bodyText.copyWith(
                                 fontSize: 12,
                                 color: AppColors.textGrey,
                               ),
@@ -147,7 +153,7 @@ class _TradersFilterScreenState extends State<TradersFilterScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 10),
+                    SizedBox(height: 10),
 
                     // Free 7-day trial
                     GestureDetector(
@@ -157,7 +163,7 @@ class _TradersFilterScreenState extends State<TradersFilterScreen> {
                         });
                       },
                       child: Container(
-                        padding: const EdgeInsets.symmetric(
+                        padding: EdgeInsets.symmetric(
                           horizontal: 10,
                           vertical: 10,
                         ),
@@ -171,8 +177,10 @@ class _TradersFilterScreenState extends State<TradersFilterScreen> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              'Free 7-day trial',
-                              style: TextStyle(
+                              TranslationUtils.tr(
+                                'traders_filter_screen_free_day_trial',
+                              ),
+                              style: AppTextStyles.bodyText.copyWith(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
                                 color: AppColors.textPrimary,
@@ -208,7 +216,7 @@ class _TradersFilterScreenState extends State<TradersFilterScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    SizedBox(height: 10),
 
                     // Minimum Expertise
                     Card(
@@ -221,10 +229,12 @@ class _TradersFilterScreenState extends State<TradersFilterScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Padding(
-                            padding: const EdgeInsets.all(10),
+                            padding: EdgeInsets.all(10),
                             child: Text(
-                              'Minimum Expertise',
-                              style: TextStyle(
+                              TranslationUtils.tr(
+                                'traders_filter_screen_minimum_expertise',
+                              ),
+                              style: AppTextStyles.bodyText.copyWith(
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
                                 color: AppColors.textPrimary,
@@ -232,11 +242,12 @@ class _TradersFilterScreenState extends State<TradersFilterScreen> {
                             ),
                           ),
                           Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            padding: EdgeInsets.symmetric(horizontal: 16),
                             child: Divider(height: 1, color: AppColors.border),
                           ),
                           _buildExpertiseRadioItem(
                             'Legend',
+                            'traders_filter_screen_legend',
                             SvgPicture.asset(
                               "assets/svg/copy_trading/filters/gold_legend.svg",
                               width: 20,
@@ -246,11 +257,12 @@ class _TradersFilterScreenState extends State<TradersFilterScreen> {
                             (val) => setState(() => minExpertise = val!),
                           ),
                           Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            padding: EdgeInsets.symmetric(horizontal: 16),
                             child: Divider(height: 1, color: AppColors.border),
                           ),
                           _buildExpertiseRadioItem(
                             'Expert',
+                            'traders_filter_screen_expert',
                             SvgPicture.asset(
                               "assets/svg/copy_trading/filters/blue_expert.svg",
                               width: 20,
@@ -261,11 +273,12 @@ class _TradersFilterScreenState extends State<TradersFilterScreen> {
                             (val) => setState(() => minExpertise = val!),
                           ),
                           Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            padding: EdgeInsets.symmetric(horizontal: 16),
                             child: Divider(height: 1, color: AppColors.border),
                           ),
                           _buildExpertiseRadioItem(
                             'High Achiever',
+                            'trader_card_high_achiever',
                             SvgPicture.asset(
                               "assets/svg/copy_trading/filters/green_highachiever.svg",
                               width: 20,
@@ -276,11 +289,12 @@ class _TradersFilterScreenState extends State<TradersFilterScreen> {
                             (val) => setState(() => minExpertise = val!),
                           ),
                           Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            padding: EdgeInsets.symmetric(horizontal: 16),
                             child: Divider(height: 1, color: AppColors.border),
                           ),
                           _buildExpertiseRadioItem(
                             'Growing Talent',
+                            'traders_filter_screen_growing_talent',
                             SvgPicture.asset(
                               "assets/svg/copy_trading/filters/grey_growing_talent.svg",
                               width: 14,
@@ -291,11 +305,12 @@ class _TradersFilterScreenState extends State<TradersFilterScreen> {
                             (val) => setState(() => minExpertise = val!),
                           ),
                           Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            padding: EdgeInsets.symmetric(horizontal: 16),
                             child: Divider(height: 1, color: AppColors.border),
                           ),
                           _buildExpertiseRadioItem(
                             'All',
+                            'common_all',
                             SvgPicture.asset(
                               "assets/svg/menu.svg",
                               width: 20,
@@ -307,7 +322,7 @@ class _TradersFilterScreenState extends State<TradersFilterScreen> {
                         ],
                       ),
                     ),
-                    const SizedBox(
+                    SizedBox(
                       height: 100,
                     ), // padding for the bottom button
                   ],
@@ -316,7 +331,7 @@ class _TradersFilterScreenState extends State<TradersFilterScreen> {
             ),
             Container(
               color: AppColors.whiteColor,
-              padding: const EdgeInsets.only(
+              padding: EdgeInsets.only(
                 left: 20,
                 right: 20,
                 top: 16,
@@ -340,8 +355,10 @@ class _TradersFilterScreenState extends State<TradersFilterScreen> {
                       Navigator.pop(context);
                     },
                     child:   Text(
-                      'Show 108 Master Traders',
-                      style: TextStyle(
+                      TranslationUtils.tr(
+                        'traders_filter_screen_show_108_master_traders',
+                      ),
+                      style: AppTextStyles.bodyText.copyWith(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                         color: AppColors.whiteColor,
@@ -359,6 +376,7 @@ class _TradersFilterScreenState extends State<TradersFilterScreen> {
 
   Widget _buildExpertiseRadioItem(
     String title,
+    String labelKey,
     Widget icon,
     String groupValue,
     ValueChanged<String?> onChanged,
@@ -366,15 +384,15 @@ class _TradersFilterScreenState extends State<TradersFilterScreen> {
     return InkWell(
       onTap: () => onChanged(title),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           children: [
             icon,
-            const SizedBox(width: 12),
+            SizedBox(width: 12),
             Expanded(
               child: Text(
-                title,
-                style: const TextStyle(
+                TranslationUtils.tr(labelKey),
+                style: AppTextStyles.bodyText.copyWith(
                   fontSize: 14,
                   fontWeight: FontWeight.w400,
                   color: AppColors.icongrey,

@@ -1,8 +1,10 @@
 import 'package:crm_app/widgets/dashBorder.dart';
+import 'package:crm_app/constants/text_styles.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
+import 'package:crm_app/services/language_service.dart';
 
 class SubscriptionSetupScreen extends StatefulWidget {
   const SubscriptionSetupScreen({super.key});
@@ -29,9 +31,21 @@ class _SubscriptionSetupScreenState extends State<SubscriptionSetupScreen> {
 
   // Preset data
   final List<Map<String, String>> _presets = [
-    {'label': 'Equal x1', 'required': r'$47', 'volume': 'x1 trade volume'},
-    {'label': 'Equal x2', 'required': r'$94', 'volume': 'x2 trade volume'},
-    {'label': 'Triple x3', 'required': r'$141', 'volume': 'x3 trade volume'},
+    {
+      'labelKey': 'subscription_setup_screen_equal_x1',
+      'required': r'$47',
+      'volumeKey': 'subscription_setup_screen_x1_trade_volume',
+    },
+    {
+      'labelKey': 'subscription_setup_screen_equal_x2',
+      'required': r'$94',
+      'volumeKey': 'subscription_setup_screen_x2_trade_volume',
+    },
+    {
+      'labelKey': 'subscription_setup_screen_triple_x3',
+      'required': r'$141',
+      'volumeKey': 'subscription_setup_screen_x3_trade_volume',
+    },
   ];
 
   @override
@@ -44,7 +58,10 @@ class _SubscriptionSetupScreenState extends State<SubscriptionSetupScreen> {
   // Computed summary values
   String get _summaryProportion {
     if (_isCustomMode) return _customValueCtrl.text.trim();
-    return _presets[_selectedProportion ?? 0]['label'] ?? 'Equal x1';
+    return TranslationUtils.tr(
+      _presets[_selectedProportion ?? 0]['labelKey'] ??
+          'subscription_setup_screen_equal_x1',
+    );
   }
 
   String get _summaryRequired {
@@ -88,8 +105,8 @@ class _SubscriptionSetupScreenState extends State<SubscriptionSetupScreen> {
           onPressed: () => Get.back(),
         ),
         title: Text(
-          'Subscription Setup',
-          style: TextStyle(
+          TranslationUtils.tr('subscription_setup_screen_subscription_setup'),
+          style: AppTextStyles.bodyText.copyWith(
             fontSize: 18,
             fontWeight: FontWeight.w600,
             color: AppColors.primary,
@@ -97,7 +114,7 @@ class _SubscriptionSetupScreenState extends State<SubscriptionSetupScreen> {
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Column(
           children: [
             // ── Trader header card ────────────────────────────────────────
@@ -105,24 +122,26 @@ class _SubscriptionSetupScreenState extends State<SubscriptionSetupScreen> {
               child: Row(
                 children: [
                   SvgPicture.asset('assets/svg/copy_trading/person_svg.svg'),
-                  const SizedBox(width: 12),
-                  const Text(
+                  SizedBox(width: 12),
+                  Text(
                     'Prime_traders',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                    style: AppTextStyles.bodyText.copyWith(fontSize: 15, fontWeight: FontWeight.w600),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
 
             // ── Funds in wallet ───────────────────────────────────────────
             _buildSectionCard(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'Funds In Wallet',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  Text(
+                    TranslationUtils.tr(
+                      'subscription_setup_screen_funds_in_wallet',
+                    ),
+                    style: AppTextStyles.bodyText.copyWith(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                   Row(
                     children: [
@@ -130,10 +149,10 @@ class _SubscriptionSetupScreenState extends State<SubscriptionSetupScreen> {
                         "assets/svg/copy_trading/investment/wallet.svg",
                         height: 20,
                       ),
-                      const SizedBox(width: 8),
-                      const Text(
-                        '50.01 USD',
-                        style: TextStyle(
+                      SizedBox(width: 8),
+                      Text(
+                        TranslationUtils.tr('change_proportion_screen_50_01_usd'),
+                        style: AppTextStyles.bodyText.copyWith(
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
                           color: AppColors.icongrey,
@@ -144,7 +163,7 @@ class _SubscriptionSetupScreenState extends State<SubscriptionSetupScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
 
             // ── Copy Proportion card ──────────────────────────────────────
             _buildSectionCard(
@@ -154,9 +173,11 @@ class _SubscriptionSetupScreenState extends State<SubscriptionSetupScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        'Copy Proportion',
-                        style: TextStyle(
+                      Text(
+                        TranslationUtils.tr(
+                          'change_proportion_screen_copy_proportion',
+                        ),
+                        style: AppTextStyles.bodyText.copyWith(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                         ),
@@ -169,8 +190,14 @@ class _SubscriptionSetupScreenState extends State<SubscriptionSetupScreen> {
                           });
                         },
                         child: Text(
-                          _isCustomMode ? '< Default' : 'Custom >',
-                          style: TextStyle(
+                          _isCustomMode
+                              ? TranslationUtils.tr(
+                                'subscription_setup_screen_default',
+                              )
+                              : TranslationUtils.tr(
+                                'subscription_setup_screen_custom',
+                              ),
+                          style: AppTextStyles.bodyText.copyWith(
                             fontSize: 13,
                             color: AppColors.primary,
                             fontWeight: FontWeight.w500,
@@ -179,7 +206,7 @@ class _SubscriptionSetupScreenState extends State<SubscriptionSetupScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 14),
+                  SizedBox(height: 14),
 
                   // Default mode: 3 proportion cards
                   if (!_isCustomMode) ...[
@@ -192,8 +219,8 @@ class _SubscriptionSetupScreenState extends State<SubscriptionSetupScreen> {
                                 () => setState(() => _selectedProportion = i),
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 200),
-                              margin: EdgeInsets.only(right: i < 2 ? 8 : 0),
-                              padding: const EdgeInsets.symmetric(
+                              margin: EdgeInsetsDirectional.only(end: i < 2 ? 8 : 0),
+                              padding: EdgeInsets.symmetric(
                                 horizontal: 8,
                                 vertical: 12,
                               ),
@@ -211,8 +238,10 @@ class _SubscriptionSetupScreenState extends State<SubscriptionSetupScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
                                   Text(
-                                    _presets[i]['label']!,
-                                    style: TextStyle(
+                                    TranslationUtils.tr(
+                                      _presets[i]['labelKey']!,
+                                    ),
+                                    style: AppTextStyles.bodyText.copyWith(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w700,
                                       color:
@@ -221,10 +250,10 @@ class _SubscriptionSetupScreenState extends State<SubscriptionSetupScreen> {
                                               : AppColors.textPrimary,
                                     ),
                                   ),
-                                  const SizedBox(height: 4),
+                                  SizedBox(height: 4),
                                   Text(
-                                    '${_presets[i]['required']!} required',
-                                    style: TextStyle(
+                                    '${_presets[i]['required']!} ${TranslationUtils.tr('subscription_setup_screen_required')}',
+                                    style: AppTextStyles.bodyText.copyWith(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w400,
                                       color:
@@ -233,10 +262,12 @@ class _SubscriptionSetupScreenState extends State<SubscriptionSetupScreen> {
                                               : AppColors.textPrimary,
                                     ),
                                   ),
-                                  const SizedBox(height: 8),
+                                  SizedBox(height: 8),
                                   Text(
-                                    _presets[i]['volume']!,
-                                    style: TextStyle(
+                                    TranslationUtils.tr(
+                                      _presets[i]['volumeKey']!,
+                                    ),
+                                    style: AppTextStyles.bodyText.copyWith(
                                       fontSize: 10,
                                       fontWeight: FontWeight.w400,
                                       color:
@@ -252,29 +283,33 @@ class _SubscriptionSetupScreenState extends State<SubscriptionSetupScreen> {
                         );
                       }),
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16),
                   ],
 
                   // Custom mode: text field
                   if (_isCustomMode) ...[
                     _buildLabeledField(
-                      label: 'Enter Value',
+                      label: TranslationUtils.tr(
+                        'change_proportion_screen_enter_value',
+                      ),
                       controller: _customValueCtrl,
                       keyboardType: TextInputType.text,
                     ),
-                    const SizedBox(height: 6),
-                    const Padding(
-                      padding: EdgeInsets.only(left: 2),
+                    SizedBox(height: 6),
+                    Padding(
+                      padding: EdgeInsetsDirectional.only(start: 2),
                       child: Text(
-                        'Required investment : \$188',
-                        style: TextStyle(
+                        TranslationUtils.tr(
+                          'subscription_setup_screen_required_investment_188',
+                        ),
+                        style: AppTextStyles.bodyText.copyWith(
                           fontSize: 12,
                           color: AppColors.icongrey,
                           fontWeight: FontWeight.w400,
                         ),
                       ),
                     ),
-                    const SizedBox(height: 14),
+                    SizedBox(height: 14),
                   ],
 
                   // Support Funds toggle row
@@ -321,23 +356,28 @@ class _SubscriptionSetupScreenState extends State<SubscriptionSetupScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 5),
+                      SizedBox(width: 5),
                       Expanded(
                         child: RichText(
                           text: TextSpan(
-                            style: const TextStyle(
+                            style: AppTextStyles.bodyText.copyWith(
                               fontSize: 12,
                               color: AppColors.icongrey,
                             ),
-                            children: const [
-                              TextSpan(text: 'Add '),
+                            children: [
                               TextSpan(
-                                text: 'Support Funds',
-                                style: TextStyle(fontWeight: FontWeight.bold),
+                                text:
+                                    '${TranslationUtils.tr('subscription_setup_screen_add')} ',
+                              ),
+                              TextSpan(
+                                text: TranslationUtils.tr(
+                                  'subscription_setup_screen_support_funds',
+                                ),
+                                style: AppTextStyles.bodyText.copyWith(fontWeight: FontWeight.bold),
                               ),
                               TextSpan(
                                 text:
-                                    ' to protect your investment from unexpected market movements.',
+                                    ' ${TranslationUtils.tr('subscription_setup_screen_to_protect_your_investment')}',
                               ),
                             ],
                           ),
@@ -348,20 +388,24 @@ class _SubscriptionSetupScreenState extends State<SubscriptionSetupScreen> {
 
                   // Support amount field (only in custom + toggled mode)
                   if (_isCustomMode && _supportFundsEnabled) ...[
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
                     _buildLabeledField(
-                      label: 'Support Amount',
+                      label: TranslationUtils.tr(
+                        'subscription_setup_screen_support_amount',
+                      ),
                       controller: _supportAmountCtrl,
                       keyboardType: const TextInputType.numberWithOptions(
                         decimal: true,
                       ),
                     ),
-                    const SizedBox(height: 6),
-                    const Padding(
-                      padding: EdgeInsets.only(left: 2),
+                    SizedBox(height: 6),
+                    Padding(
+                      padding: EdgeInsetsDirectional.only(start: 2),
                       child: Text(
-                        '39% of the required investment.',
-                        style: TextStyle(
+                        TranslationUtils.tr(
+                          'subscription_setup_screen_39_percent_of_required',
+                        ),
+                        style: AppTextStyles.bodyText.copyWith(
                           fontSize: 12,
                           color: AppColors.green,
                           fontWeight: FontWeight.w500,
@@ -372,26 +416,43 @@ class _SubscriptionSetupScreenState extends State<SubscriptionSetupScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
 
             // ── Summary card ──────────────────────────────────────────────
             _buildSectionCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Summary',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  Text(
+                    TranslationUtils.tr('common_summary'),
+                    style: AppTextStyles.bodyText.copyWith(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
-                  const SizedBox(height: 14),
-                  _summaryRow('Copy proportion', _summaryProportion),
-                  _summaryRow('Required Investment', _summaryRequired),
-                  _summaryRow('Support Funds', _summarySupportFunds),
-                  _summaryRow('Total', _summaryTotal, isBold: true),
+                  SizedBox(height: 14),
+                  _summaryRow(
+                    TranslationUtils.tr('change_proportion_screen_copy_proportion'),
+                    _summaryProportion,
+                  ),
+                  _summaryRow(
+                    TranslationUtils.tr(
+                      'subscription_setup_screen_required_investment',
+                    ),
+                    _summaryRequired,
+                  ),
+                  _summaryRow(
+                    TranslationUtils.tr(
+                      'subscription_setup_screen_support_funds',
+                    ),
+                    _summarySupportFunds,
+                  ),
+                  _summaryRow(
+                    TranslationUtils.tr('common_total'),
+                    _summaryTotal,
+                    isBold: true,
+                  ),
                 ],
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
           ],
         ),
       ),
@@ -409,15 +470,15 @@ class _SubscriptionSetupScreenState extends State<SubscriptionSetupScreen> {
           },
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,
-            padding: const EdgeInsets.symmetric(vertical: 10),
+            padding: EdgeInsets.symmetric(vertical: 10),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10),
             ),
             elevation: 0,
           ),
           child:   Text(
-            'Start Copying',
-            style: TextStyle(
+            TranslationUtils.tr('subscription_setup_screen_start_copying'),
+            style: AppTextStyles.bodyText.copyWith(
               fontSize: 16,
               fontWeight: FontWeight.w600,
               color: AppColors.whiteColor,
@@ -444,7 +505,7 @@ class _SubscriptionSetupScreenState extends State<SubscriptionSetupScreen> {
           ),
         ],
       ),
-      padding: const EdgeInsets.all(10),
+      padding: EdgeInsets.all(10),
       child: child,
     );
   }
@@ -460,9 +521,9 @@ class _SubscriptionSetupScreenState extends State<SubscriptionSetupScreen> {
         TextField(
           controller: controller,
           keyboardType: keyboardType,
-          style: const TextStyle(fontSize: 15),
+          style: AppTextStyles.bodyText.copyWith(fontSize: 15),
           decoration: InputDecoration(
-            contentPadding: const EdgeInsets.symmetric(
+            contentPadding: EdgeInsets.symmetric(
               horizontal: 14,
               vertical: 14,
             ),
@@ -480,15 +541,15 @@ class _SubscriptionSetupScreenState extends State<SubscriptionSetupScreen> {
             ),
           ),
         ),
-        Positioned(
+        PositionedDirectional(
           top: -10,
-          left: 12,
+          start: 12,
           child: Container(
             color: AppColors.whiteColor,
-            padding: const EdgeInsets.symmetric(horizontal: 4),
+            padding: EdgeInsets.symmetric(horizontal: 4),
             child: Text(
               label,
-              style: TextStyle(fontSize: 12, color: AppColors.primary),
+              style: AppTextStyles.bodyText.copyWith(fontSize: 12, color: AppColors.primary),
             ),
           ),
         ),
@@ -498,13 +559,13 @@ class _SubscriptionSetupScreenState extends State<SubscriptionSetupScreen> {
 
   Widget _summaryRow(String label, String value, {bool isBold = false}) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 7),
+      padding: EdgeInsets.symmetric(vertical: 7),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           Text(
             label,
-            style: TextStyle(
+            style: AppTextStyles.bodyText.copyWith(
               fontSize: 14,
               color: isBold ? AppColors.textPrimary : AppColors.textGrey,
               fontWeight: isBold ? FontWeight.w600 : FontWeight.w400,
@@ -519,7 +580,7 @@ class _SubscriptionSetupScreenState extends State<SubscriptionSetupScreen> {
           ),
           Text(
             value,
-            style: TextStyle(
+            style: AppTextStyles.bodyText.copyWith(
               fontSize: 13.5,
               color: isBold ? AppColors.textPrimary : AppColors.icongrey,
               fontWeight: isBold ? FontWeight.w600 : FontWeight.normal,

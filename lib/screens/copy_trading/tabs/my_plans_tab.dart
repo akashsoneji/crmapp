@@ -1,3 +1,4 @@
+import 'package:crm_app/routes/app_pages.dart';
 import 'package:crm_app/screens/home/trading_main_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -11,6 +12,7 @@ import 'package:crm_app/widgets/custom_toast.dart';
 import 'package:crm_app/screens/home/more/copytrading/copy_trading_create_plan_screen.dart';
 import 'package:crm_app/screens/home/more/copytrading/master_plan_detail_screen.dart';
 import 'package:crm_app/screens/home/more/copytrading/copy_trading_edit_plan_screen.dart';
+import 'package:crm_app/services/language_service.dart';
 
 class MyPlansTab extends StatefulWidget {
   const MyPlansTab({super.key});
@@ -38,6 +40,17 @@ class _MyPlansTabState extends State<MyPlansTab> {
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  String _sortLabelKey(String value) {
+    switch (value) {
+      case 'Name A-Z':
+        return 'my_plans_tab_sort_name_a_z';
+      case 'Highest AUM':
+        return 'my_plans_tab_sort_highest_aum';
+      default:
+        return 'my_plans_tab_sort_newest_first';
+    }
   }
 
   void _openCreatePlanScreen(CopyTradingMasterDashboardController controller) {
@@ -106,19 +119,19 @@ class _MyPlansTabState extends State<MyPlansTab> {
               BlendMode.srcIn,
             ),
           ),
-          onPressed: () => Get.offAll(() => const TradingMainScreen()),
+          onPressed: () => Get.offAllNamed(AppPages.TRADING),
         ),
         backgroundColor: AppColors.tradeBackgroundCenterColor,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: true,
         title: Text(
-          'My Copy Plans',
+          TranslationUtils.tr('my_plans_tab_my_copy_plans'),
           style: AppTextStyles.screenTitle.copyWith(fontSize: 16.sp),
         ),
         actions: [
           Padding(
-            padding: EdgeInsets.only(right: 14.w),
+            padding: EdgeInsetsDirectional.only(end: 14.w),
             child: GestureDetector(
               onTap: () => _openCreatePlanScreen(controller),
               child: Container(
@@ -144,8 +157,8 @@ class _MyPlansTabState extends State<MyPlansTab> {
                     ),
                     SizedBox(width: 4.w),
                     Text(
-                      'Create Plan',
-                      style: TextStyle(
+                      TranslationUtils.tr('my_plans_tab_create_plan'),
+                      style: AppTextStyles.bodyText.copyWith(
                         color: AppColors.isDarkMode ? AppColors.whiteColorDark : AppColors.whiteColorLight ,
                         fontSize: 12.sp,
                         fontWeight: FontWeight.w700,
@@ -187,13 +200,15 @@ class _MyPlansTabState extends State<MyPlansTab> {
                       ),
                       child: TextField(
                         controller: _searchController,
-                        style: TextStyle(
+                        style: AppTextStyles.bodyText.copyWith(
                           fontSize: 13.sp,
                           color: AppColors.textPrimary,
                         ),
                         decoration: InputDecoration(
-                          hintText: 'Search plan name, ID...',
-                          hintStyle: TextStyle(
+                          hintText: TranslationUtils.tr(
+                            'my_plans_tab_search_plan_name_id',
+                          ),
+                          hintStyle: AppTextStyles.bodyText.copyWith(
                             fontSize: 13.sp,
                             color: AppColors.textGrey,
                           ),
@@ -234,7 +249,7 @@ class _MyPlansTabState extends State<MyPlansTab> {
                           size: 18.r,
                           color: AppColors.textGrey,
                         ),
-                        style: TextStyle(
+                        style: AppTextStyles.bodyText.copyWith(
                           fontSize: 12.sp,
                           fontWeight: FontWeight.w600,
                           color: AppColors.textPrimary,
@@ -254,7 +269,9 @@ class _MyPlansTabState extends State<MyPlansTab> {
                             ].map<DropdownMenuItem<String>>((String value) {
                               return DropdownMenuItem<String>(
                                 value: value,
-                                child: Text(value),
+                                child: Text(
+                                  TranslationUtils.tr(_sortLabelKey(value)),
+                                ),
                               );
                             }).toList(),
                       ),
@@ -280,8 +297,8 @@ class _MyPlansTabState extends State<MyPlansTab> {
                         ),
                         SizedBox(height: 14.h),
                         Text(
-                          'Loading plans...',
-                          style: TextStyle(
+                          TranslationUtils.tr('my_plans_tab_loading_plans'),
+                          style: AppTextStyles.bodyText.copyWith(
                             fontSize: 13.sp,
                             color: AppColors.textGrey,
                           ),
@@ -325,7 +342,7 @@ class _MyPlansTabState extends State<MyPlansTab> {
                                 Text(
                                   err,
                                   textAlign: TextAlign.center,
-                                  style: TextStyle(
+                                  style: AppTextStyles.bodyText.copyWith(
                                     fontSize: 14.sp,
                                     color: AppColors.error,
                                     fontWeight: FontWeight.w600,
@@ -338,11 +355,13 @@ class _MyPlansTabState extends State<MyPlansTab> {
                                       () => controller.refreshAll(
                                         showLoading: true,
                                       ),
-                                  icon: const Icon(
+                                  icon: Icon(
                                     Icons.refresh_rounded,
                                     size: 16,
                                   ),
-                                  label: const Text('Try Again'),
+                                  label: Text(
+                                    TranslationUtils.tr('my_plans_tab_try_again'),
+                                  ),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: AppColors.primary,
                                     foregroundColor:
@@ -394,8 +413,10 @@ class _MyPlansTabState extends State<MyPlansTab> {
                               ),
                               SizedBox(height: 12.h),
                               Text(
-                                'No plans match your search',
-                                style: TextStyle(
+                                TranslationUtils.tr(
+                                  'my_plans_tab_no_plans_match_your_search',
+                                ),
+                                style: AppTextStyles.bodyText.copyWith(
                                   fontSize: 14.sp,
                                   color: AppColors.textGrey,
                                   fontWeight: FontWeight.w500,
@@ -409,7 +430,7 @@ class _MyPlansTabState extends State<MyPlansTab> {
                   } else {
                     listChild = ListView.separated(
                       physics: const AlwaysScrollableScrollPhysics(),
-                      padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 100.h),
+                      padding: EdgeInsetsDirectional.fromSTEB(16.w, 4.h, 16.w, 100.h),
                       itemCount: filteredSortedPlans.length,
                       separatorBuilder: (_, index) => SizedBox(height: 14.h),
                       itemBuilder: (context, index) {
@@ -458,8 +479,8 @@ class _MyPlansTabState extends State<MyPlansTab> {
             ),
             SizedBox(height: 18.h),
             Text(
-              'No Copy Plans Yet',
-              style: TextStyle(
+              TranslationUtils.tr('my_plans_tab_no_copy_plans_yet'),
+              style: AppTextStyles.bodyText.copyWith(
                 fontSize: 17.sp,
                 fontWeight: FontWeight.w700,
                 color: AppColors.textPrimary,
@@ -467,9 +488,9 @@ class _MyPlansTabState extends State<MyPlansTab> {
             ),
             SizedBox(height: 8.h),
             Text(
-              'Create a copying plan to start sharing\nyour trades with investors.',
+              TranslationUtils.tr('my_plans_tab_create_a_copying_plan'),
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: AppTextStyles.bodyText.copyWith(
                 fontSize: 13.sp,
                 color: AppColors.textGrey,
                 height: 1.5,
@@ -478,8 +499,10 @@ class _MyPlansTabState extends State<MyPlansTab> {
             SizedBox(height: 24.h),
             ElevatedButton.icon(
               onPressed: () => _openCreatePlanScreen(controller),
-              icon: const Icon(Icons.add_rounded, size: 18),
-              label: const Text('Create First Plan'),
+              icon: Icon(Icons.add_rounded, size: 18),
+              label: Text(
+                TranslationUtils.tr('my_plans_tab_create_first_plan'),
+              ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: AppColors.onColoredBackground,
@@ -488,7 +511,7 @@ class _MyPlansTabState extends State<MyPlansTab> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10.r),
                 ),
-                textStyle: TextStyle(
+                textStyle: AppTextStyles.bodyText.copyWith(
                   fontSize: 14.sp,
                   fontWeight: FontWeight.w700,
                 ),
@@ -517,16 +540,16 @@ class _PlanCardItem extends StatelessWidget {
     switch (s.toLowerCase()) {
       case 'approved':
       case 'active':
-        return 'Approved';
+        return TranslationUtils.tr('kyc_verification_approved');
       case 'pending':
-        return 'Pending';
+        return TranslationUtils.tr('kyc_verification_pending');
       case 'pending_admin':
       case 'pending_review':
-        return 'Pending Review';
+        return TranslationUtils.tr('copy_trading_hub_screen_pending_review');
       case 'inactive':
-        return 'Inactive';
+        return TranslationUtils.tr('wallet_inactive');
       case 'rejected':
-        return 'Rejected';
+        return TranslationUtils.tr('kyc_verification_rejected');
       default:
         return s.toUpperCase();
     }
@@ -620,8 +643,8 @@ class _PlanCardItem extends StatelessWidget {
                   AppColors.primary,
                   AppColors.primary.withValues(alpha: 0.80),
                 ],
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
+                begin: AlignmentDirectional.centerStart,
+                end: AlignmentDirectional.centerEnd,
               ),
             ),
             child: Row(
@@ -632,8 +655,10 @@ class _PlanCardItem extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        plan.planName.isEmpty ? 'Unnamed Plan' : plan.planName,
-                        style: TextStyle(
+                        plan.planName.isEmpty
+                            ? TranslationUtils.tr('my_plans_tab_unnamed_plan')
+                            : plan.planName,
+                        style: AppTextStyles.bodyText.copyWith(
                           fontSize: 14.sp,
                           fontWeight: FontWeight.w700,
                           color: AppColors.whiteColor,
@@ -647,7 +672,7 @@ class _PlanCardItem extends StatelessWidget {
                         children: [
                           Text(
                             plan.tradingAccountNumber,
-                            style: TextStyle(
+                            style: AppTextStyles.bodyText.copyWith(
                               fontSize: 14.sp,
                               fontWeight: FontWeight.w500,
                               color: AppColors.whiteColor,
@@ -668,7 +693,7 @@ class _PlanCardItem extends StatelessWidget {
                   ),
                   child: Text(
                     '#${plan.id}',
-                    style: TextStyle(
+                    style: AppTextStyles.bodyText.copyWith(
                       fontSize: 11.sp,
                       fontWeight: FontWeight.w800,
                       color: AppColors.whiteColor,
@@ -702,7 +727,7 @@ class _PlanCardItem extends StatelessWidget {
                       SizedBox(width: 4.w),
                       Text(
                         _statusLabel(status),
-                        style: TextStyle(
+                        style: AppTextStyles.bodyText.copyWith(
                           fontSize: 10.5.sp,
                           fontWeight: FontWeight.w700,
                           color: _statusFg(status),
@@ -744,9 +769,13 @@ class _PlanCardItem extends StatelessWidget {
                         SizedBox(width: 4.w),
                         Text(
                           plan.copyingPaused
-                              ? 'Copying Paused'
-                              : 'Copying Active',
-                          style: TextStyle(
+                              ? TranslationUtils.tr(
+                                'my_plans_tab_copying_paused',
+                              )
+                              : TranslationUtils.tr(
+                                'my_plans_tab_copying_active',
+                              ),
+                          style: AppTextStyles.bodyText.copyWith(
                             fontSize: 10.5.sp,
                             fontWeight: FontWeight.w600,
                             color:
@@ -772,8 +801,8 @@ class _PlanCardItem extends StatelessWidget {
                       borderRadius: BorderRadius.circular(6.r),
                     ),
                     child: Text(
-                      'FULL',
-                      style: TextStyle(
+                      TranslationUtils.tr('my_plans_tab_full'),
+                      style: AppTextStyles.bodyText.copyWith(
                         fontSize: 9.sp,
                         fontWeight: FontWeight.w800,
                         color: AppColors.warning,
@@ -804,7 +833,7 @@ class _PlanCardItem extends StatelessWidget {
                     Expanded(
                       child: _MetricTile(
                         icon: Icons.people_alt_outlined,
-                        label: 'Copiers',
+                        label: TranslationUtils.tr('my_plans_tab_copiers'),
                         value:
                             plan.maxCopiers != null
                                 ? '${plan.activeCopiersCount} / ${plan.maxCopiers}'
@@ -816,7 +845,9 @@ class _PlanCardItem extends StatelessWidget {
                     Expanded(
                       child: _MetricTile(
                         icon: Icons.account_balance_outlined,
-                        label: 'Total AUM',
+                        label: TranslationUtils.tr(
+                          'pmam_manager_dashboard_screen_total_aum',
+                        ),
                         value: '\$${plan.totalCapital.toStringAsFixed(2)}',
                         iconColor: AppColors.success,
                       ),
@@ -829,7 +860,7 @@ class _PlanCardItem extends StatelessWidget {
                     Expanded(
                       child: _MetricTile(
                         icon: Icons.payments_outlined,
-                        label: 'Commission',
+                        label: TranslationUtils.tr('general_commission'),
                         value:
                             plan.commissionLabel.isNotEmpty
                                 ? plan.commissionLabel
@@ -841,7 +872,7 @@ class _PlanCardItem extends StatelessWidget {
                     Expanded(
                       child: _MetricTile(
                         icon: Icons.savings_outlined,
-                        label: 'Min. Capital',
+                        label: TranslationUtils.tr('my_plans_tab_min_capital'),
                         value: '\$${plan.minimumCapital.toStringAsFixed(2)}',
                         iconColor: AppColors.blue,
                       ),
@@ -869,8 +900,8 @@ class _PlanCardItem extends StatelessWidget {
                       color: AppColors.primary,
                     ),
                     label: Text(
-                      'View Details',
-                      style: TextStyle(
+                      TranslationUtils.tr('my_clients_screen_view_details'),
+                      style: AppTextStyles.bodyText.copyWith(
                         fontSize: 12.sp,
                         fontWeight: FontWeight.w600,
                         color: AppColors.primary,
@@ -904,8 +935,8 @@ class _PlanCardItem extends StatelessWidget {
                       color: AppColors.primary,
                     ),
                     label: Text(
-                      'Edit Plan',
-                      style: TextStyle(
+                      TranslationUtils.tr('edit_plan_bottom_sheet_edit_plan'),
+                      style: AppTextStyles.bodyText.copyWith(
                         fontSize: 12.sp,
                         fontWeight: FontWeight.w600,
                         color: AppColors.primary,
@@ -959,8 +990,10 @@ class _PlanCardItem extends StatelessWidget {
                             ),
                             SizedBox(width: 4.w),
                             Text(
-                              plan.copyingPaused ? 'Resume' : 'Pause',
-                              style: TextStyle(
+                              plan.copyingPaused
+                                  ? TranslationUtils.tr('my_plans_tab_resume')
+                                  : TranslationUtils.tr('my_plans_tab_pause'),
+                              style: AppTextStyles.bodyText.copyWith(
                                 fontSize: 12.sp,
                                 fontWeight: FontWeight.w700,
                                 color:
@@ -983,11 +1016,18 @@ class _PlanCardItem extends StatelessWidget {
   }
 
   void _togglePauseCopying(BuildContext context) async {
-    final actionText = plan.copyingPaused ? 'Resume Copying' : 'Pause Copying';
+    final actionText =
+        plan.copyingPaused
+            ? TranslationUtils.tr('my_plans_tab_resume_copying')
+            : TranslationUtils.tr('my_plans_tab_pause_copying');
     final confirmationMessage =
         plan.copyingPaused
-            ? 'Are you sure you want to resume copying for "${plan.planName}"?'
-            : 'Are you sure you want to pause copying for "${plan.planName}"? Copying will be suspended until you resume.';
+            ? TranslationUtils.trArgs('my_plans_tab_confirm_resume_copying', {
+              'plan': plan.planName,
+            })
+            : TranslationUtils.trArgs('my_plans_tab_confirm_pause_copying', {
+              'plan': plan.planName,
+            });
 
     showDialog(
       context: context,
@@ -998,18 +1038,18 @@ class _PlanCardItem extends StatelessWidget {
             ),
             title: Text(
               actionText,
-              style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w700),
+              style: AppTextStyles.bodyText.copyWith(fontSize: 16.sp, fontWeight: FontWeight.w700),
             ),
             content: Text(
               confirmationMessage,
-              style: TextStyle(fontSize: 13.sp, height: 1.5),
+              style: AppTextStyles.bodyText.copyWith(fontSize: 13.sp, height: 1.5),
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(),
                 child: Text(
-                  'Cancel',
-                  style: TextStyle(color: AppColors.textGrey),
+                  TranslationUtils.tr('account_management_cancel'),
+                  style: AppTextStyles.bodyText.copyWith(color: AppColors.textGrey),
                 ),
               ),
               TextButton(
@@ -1021,20 +1061,29 @@ class _PlanCardItem extends StatelessWidget {
                           : await controller.pausePlan(planId: plan.id);
                   if (res.success) {
                     CustomToastService.showSuccess(
-                      title: 'Success',
-                      message: res.message ?? 'State updated successfully',
+                      title: TranslationUtils.tr('create_account_success'),
+                      message:
+                          res.message ??
+                          TranslationUtils.tr(
+                            'my_plans_tab_state_updated_successfully',
+                          ),
                     );
                   } else {
                     CustomToastService.showError(
-                      title: 'Failed',
+                      title: TranslationUtils.tr('transaction_history_failed'),
                       message:
-                          res.message ?? 'Failed to update plan copying state',
+                          res.message ??
+                          TranslationUtils.tr(
+                            'my_plans_tab_failed_to_update_copying_state',
+                          ),
                     );
                   }
                 },
                 child: Text(
-                  plan.copyingPaused ? 'Resume' : 'Pause',
-                  style: TextStyle(
+                  plan.copyingPaused
+                      ? TranslationUtils.tr('my_plans_tab_resume')
+                      : TranslationUtils.tr('my_plans_tab_pause'),
+                  style: AppTextStyles.bodyText.copyWith(
                     fontWeight: FontWeight.w700,
                     color:
                         plan.copyingPaused
@@ -1093,7 +1142,7 @@ class _MetricTile extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: TextStyle(
+                  style: AppTextStyles.bodyText.copyWith(
                     fontSize: 9.sp,
                     fontWeight: FontWeight.w600,
                     color: AppColors.textGrey,
@@ -1103,7 +1152,7 @@ class _MetricTile extends StatelessWidget {
                 SizedBox(height: 2.h),
                 Text(
                   value,
-                  style: TextStyle(
+                  style: AppTextStyles.bodyText.copyWith(
                     fontSize: 12.sp,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textPrimary,

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:crm_app/constants/text_styles.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:crm_app/services/language_service.dart';
 import 'subscription_setup_screen.dart';
 
 class TraderDetailsScreen extends StatefulWidget {
@@ -84,8 +86,8 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
       backgroundColor: AppColors.whiteColor, // theme-aware
       appBar: AppBar(
         title: Text(
-          "Master's Performance",
-          style: TextStyle(
+          TranslationUtils.tr('trader_details_screen_master_performance'),
+          style: AppTextStyles.bodyText.copyWith(
             color: AppColors.textPrimary,
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -104,7 +106,7 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.only(
+        padding: EdgeInsets.only(
           left: 16.0,
           right: 16.0,
           top: 0.0,
@@ -114,18 +116,18 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _buildHeaderCard(),
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
             _buildTabs(),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             if (_tabIndex == 0) ...[
               _buildMinimumInvestmentCard(),
-              const SizedBox(height: 10),
+              SizedBox(height: 10),
               _buildPerformanceCard(),
-              const SizedBox(height: 10),
+              SizedBox(height: 10),
               _buildAccountDetailsCard(),
-              const SizedBox(height: 10),
+              SizedBox(height: 10),
               _buildRiskManagementCard(),
-              const SizedBox(height: 10),
+              SizedBox(height: 10),
               _buildActivityCard(),
             ] else ...[
               _buildTradesList(),
@@ -147,15 +149,15 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
           },
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,
-            padding: const EdgeInsets.symmetric(vertical: 12),
+            padding: EdgeInsets.symmetric(vertical: 12),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
             ),
             elevation: 0,
           ),
           child:   Text(
-            'Set Up Copying',
-            style: TextStyle(
+            TranslationUtils.tr('trader_details_screen_set_up_copying'),
+            style: AppTextStyles.bodyText.copyWith(
               fontSize: 14,
               fontWeight: FontWeight.w600,
               color: AppColors.whiteColor,
@@ -181,7 +183,7 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
             SizedBox(width: 12),
             Text(
               'Prime_traders',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+              style: AppTextStyles.bodyText.copyWith(fontSize: 15, fontWeight: FontWeight.w600),
             ),
           ],
         ),
@@ -200,7 +202,7 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
               });
             },
             child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 8),
+              padding: EdgeInsets.symmetric(vertical: 8),
               decoration: BoxDecoration(
                 color: _tabIndex == 0 ? AppColors.primary : AppColors.whiteColor,
                 borderRadius: BorderRadius.circular(8),
@@ -208,8 +210,8 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
               ),
               child: Center(
                 child: Text(
-                  'Summary',
-                  style: TextStyle(
+                  TranslationUtils.tr('common_summary'),
+                  style: AppTextStyles.bodyText.copyWith(
                     color: _tabIndex == 0 ? AppColors.whiteColor : AppColors.primary,
                     fontWeight: FontWeight.bold,
                   ),
@@ -218,7 +220,7 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
             ),
           ),
         ),
-        const SizedBox(width: 8),
+        SizedBox(width: 8),
         Expanded(
           child: GestureDetector(
             onTap: () {
@@ -227,7 +229,7 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
               });
             },
             child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 8),
+              padding: EdgeInsets.symmetric(vertical: 8),
               decoration: BoxDecoration(
                 color: _tabIndex == 1 ? AppColors.primary : AppColors.whiteColor,
                 borderRadius: BorderRadius.circular(8),
@@ -235,8 +237,8 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
               ),
               child: Center(
                 child: Text(
-                  'Trades',
-                  style: TextStyle(
+                  TranslationUtils.tr('tw_trades'),
+                  style: AppTextStyles.bodyText.copyWith(
                     color: _tabIndex == 1 ? AppColors.whiteColor : AppColors.primary,
                     fontWeight: FontWeight.bold,
                   ),
@@ -256,7 +258,7 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
         bool isExpanded = _expandedTradeIndex == index;
         return Card(
           elevation: 0.5,
-          margin: const EdgeInsets.only(bottom: 10),
+          margin: EdgeInsets.only(bottom: 10),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
             side: BorderSide(color: AppColors.border),
@@ -272,7 +274,7 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
               });
             },
             child: Padding(
-              padding: const EdgeInsets.all(14.0),
+              padding: EdgeInsets.all(14.0),
               child: Column(
                 children: [
                   Row(
@@ -284,7 +286,7 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
                           Row(
                             children: [
                               Container(
-                                padding: const EdgeInsets.symmetric(
+                                padding: EdgeInsets.symmetric(
                                   horizontal: 6,
                                   vertical: 2,
                                 ),
@@ -297,17 +299,17 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
                                 ),
                                 child: Text(
                                   trade.type,
-                                  style:   TextStyle(
+                                  style:   AppTextStyles.bodyText.copyWith(
                                     color: AppColors.whiteColor,
                                     fontSize: 10,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 8),
+                              SizedBox(width: 8),
                               Text(
                                 trade.volume,
-                                style: TextStyle(
+                                style: AppTextStyles.bodyText.copyWith(
                                   color: AppColors.icongrey,
                                   fontSize: 10,
                                   fontWeight: FontWeight.w400,
@@ -315,10 +317,10 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 8),
+                          SizedBox(height: 8),
                           Text(
                             trade.symbol,
-                            style: const TextStyle(
+                            style: AppTextStyles.bodyText.copyWith(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
                             ),
@@ -334,20 +336,20 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
                               SvgPicture.asset(
                                 'assets/svg/copy_trading/calendar.svg',
                               ),
-                              const SizedBox(width: 4),
+                              SizedBox(width: 4),
                               Text(
                                 trade.status,
-                                style: TextStyle(
+                                style: AppTextStyles.bodyText.copyWith(
                                   color: AppColors.icongrey,
                                   fontSize: 12,
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 8),
+                          SizedBox(height: 8),
                           Text(
                             trade.profit,
-                            style: TextStyle(
+                            style: AppTextStyles.bodyText.copyWith(
                               color: AppColors.primary,
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
@@ -355,7 +357,7 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
                           ),
                         ],
                       ),
-                      const SizedBox(width: 16),
+                      SizedBox(width: 16),
                       Icon(
                         isExpanded
                             ? Icons.keyboard_arrow_up
@@ -367,16 +369,41 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
                   ),
                   // Expanded Details
                   if (isExpanded) ...[
-                    const SizedBox(height: 14),
+                    SizedBox(height: 14),
                     Divider(height: 1, thickness: 1, color: AppColors.border),
-                    const SizedBox(height: 10),
-                    _buildDetailRow('Master name', trade.masterName),
-                    _buildDetailRow('Open time', trade.openTime),
-                    _buildDetailRow('Close time', trade.closeTime),
-                    _buildDetailRow('Open Price', trade.openPrice),
-                    _buildDetailRow('Close Price', trade.closePrice),
-                    _buildDetailRow('Order ID', trade.orderId),
-                    _buildDetailRow('Commission you paid', trade.commission),
+                    SizedBox(height: 10),
+                    _buildDetailRow(
+                      TranslationUtils.tr('clients_tab_master_name'),
+                      trade.masterName,
+                    ),
+                    _buildDetailRow(
+                      TranslationUtils.tr('open_time'),
+                      trade.openTime,
+                    ),
+                    _buildDetailRow(
+                      TranslationUtils.tr(
+                        'pmam_investor_portal_screen_close_time',
+                      ),
+                      trade.closeTime,
+                    ),
+                    _buildDetailRow(
+                      TranslationUtils.tr('trading_order_open_price'),
+                      trade.openPrice,
+                    ),
+                    _buildDetailRow(
+                      TranslationUtils.tr(
+                        'pmam_investor_portal_screen_close_price',
+                      ),
+                      trade.closePrice,
+                    ),
+                    _buildDetailRow(
+                      TranslationUtils.tr('clients_tab_order_id'),
+                      trade.orderId,
+                    ),
+                    _buildDetailRow(
+                      TranslationUtils.tr('clients_tab_commission_you_paid'),
+                      trade.commission,
+                    ),
                   ],
                 ],
               ),
@@ -390,22 +417,22 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
   // Detail row with dotted line (exactly as in your image)
   Widget _buildDetailRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 7),
+      padding: EdgeInsets.symmetric(vertical: 7),
       child: Row(
         children: [
           Text(
             label,
-            style: TextStyle(fontSize: 13.5, color: AppColors.textGrey),
+            style: AppTextStyles.bodyText.copyWith(fontSize: 13.5, color: AppColors.textGrey),
           ),
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10),
+              padding: EdgeInsets.symmetric(horizontal: 10),
               child: Divider(height: 1, thickness: 1, color: AppColors.border),
             ),
           ),
           Text(
             value,
-            style: TextStyle(
+            style: AppTextStyles.bodyText.copyWith(
               fontSize: 13.5,
               fontWeight: FontWeight.w500,
               color: AppColors.textPrimary,
@@ -419,35 +446,41 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
   Widget _buildTradeDetailRow(String label, String value) {
     return Row(
       children: [
-        Text(label, style: TextStyle(color: AppColors.textGrey, fontSize: 12)),
-        const SizedBox(width: 4),
+        Text(label, style: AppTextStyles.bodyText.copyWith(color: AppColors.textGrey, fontSize: 12)),
+        SizedBox(width: 4),
         Expanded(
           child: Text(
             ' . ' * 20,
             maxLines: 1,
             overflow: TextOverflow.clip,
-            style: TextStyle(color: AppColors.border, fontSize: 13),
+            style: AppTextStyles.bodyText.copyWith(color: AppColors.border, fontSize: 13),
             textAlign: TextAlign.center,
           ),
         ),
-        const SizedBox(width: 4),
-        Text(value, style: TextStyle(color: AppColors.textGrey, fontSize: 13)),
+        SizedBox(width: 4),
+        Text(value, style: AppTextStyles.bodyText.copyWith(color: AppColors.textGrey, fontSize: 13)),
       ],
     );
   }
 
   Widget _buildAccountDetailsCard() {
     return _buildBaseCard(
-      title: 'Account Details',
+      title: TranslationUtils.tr('trader_details_screen_account_details'),
       child: Column(
         children: [
-          _buildInfoRow('Floating Profit', r'$0.00'),
-          const SizedBox(height: 16),
-          _buildInfoRow('Balance', r'$510.01'),
-          const SizedBox(height: 16),
-          _buildInfoRow("Master Trader's Bonus", r'$0.00'),
-          const SizedBox(height: 16),
-          _buildInfoRow('Leverage', '1:500'),
+          _buildInfoRow(
+            TranslationUtils.tr('trader_details_screen_floating_profit'),
+            r'$0.00',
+          ),
+          SizedBox(height: 16),
+          _buildInfoRow(TranslationUtils.tr('general_balance'), r'$510.01'),
+          SizedBox(height: 16),
+          _buildInfoRow(
+            TranslationUtils.tr('trader_details_screen_master_traders_bonus'),
+            r'$0.00',
+          ),
+          SizedBox(height: 16),
+          _buildInfoRow(TranslationUtils.tr('common_leverage'), '1:500'),
         ],
       ),
     );
@@ -455,12 +488,18 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
 
   Widget _buildRiskManagementCard() {
     return _buildBaseCard(
-      title: 'Risk Management',
+      title: TranslationUtils.tr('pending_order_risk_management_label'),
       child: Column(
         children: [
-          _buildInfoRow('Maximum Unrealised Loss', r'-$20 555.00'),
-          const SizedBox(height: 16),
-          _buildInfoRow('Maximum Drawdown Duration', '21d'),
+          _buildInfoRow(
+            TranslationUtils.tr('trader_details_screen_maximum_unrealised_loss'),
+            r'-$20 555.00',
+          ),
+          SizedBox(height: 16),
+          _buildInfoRow(
+            TranslationUtils.tr('trader_details_screen_maximum_drawdown_duration'),
+            '21d',
+          ),
         ],
       ),
     );
@@ -468,9 +507,9 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
 
   Widget _buildActivityCard() {
     return _buildBaseCard(
-      title: 'Activity',
+      title: TranslationUtils.tr('trader_details_screen_activity'),
       child: Column(
-        children: [const SizedBox(height: 8), SteppedActivityChart()],
+        children: [SizedBox(height: 8), SteppedActivityChart()],
       ),
     );
   }
@@ -478,8 +517,8 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
   Widget _buildChartYAxisRow(String label) {
     return Row(
       children: [
-        Text(label, style: TextStyle(color: AppColors.textGrey, fontSize: 12)),
-        const SizedBox(width: 8),
+        Text(label, style: AppTextStyles.bodyText.copyWith(color: AppColors.textGrey, fontSize: 12)),
+        SizedBox(width: 8),
         Expanded(child: Container(height: 1, color: AppColors.border)),
       ],
     );
@@ -487,10 +526,10 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
 
   Widget _buildMinimumInvestmentCard() {
     return _buildBaseCard(
-      title: 'Minimum Investment',
-      titleTrailing: const Text(
+      title: TranslationUtils.tr('trader_details_screen_minimum_investment'),
+      titleTrailing: Text(
         r'$25',
-        style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+        style: AppTextStyles.bodyText.copyWith(fontSize: 15, fontWeight: FontWeight.bold),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -499,32 +538,32 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: AppColors.accentStatic,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Text(
-                  '1 RISK',
-                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+                child: Text(
+                  TranslationUtils.tr('trader_details_screen_risk'),
+                  style: AppTextStyles.bodyText.copyWith(fontSize: 10, fontWeight: FontWeight.bold),
                 ),
               ),
               Icon(Icons.info_outline, color: AppColors.textGrey, size: 16),
             ],
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
             Divider(color: AppColors.dashLineColor),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Row(
                 children: [
                   Icon(Icons.star, color: AppColors.primary, size: 18),
-                  const SizedBox(width: 8),
-                  const Text(
-                    'High Achiever',
-                    style: TextStyle(
+                  SizedBox(width: 8),
+                  Text(
+                    TranslationUtils.tr('trader_card_high_achiever'),
+                    style: AppTextStyles.bodyText.copyWith(
                       color: AppColors.icongrey,
                       fontSize: 14,
                       fontWeight: FontWeight.w400,
@@ -539,28 +578,40 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildMetricColumn('Equity', r'$567.89', isPrimaryValue: true),
-              _buildMetricColumn('Commission', '40%', isPrimaryValue: true),
-              _buildMetricColumn('With Us', '645D', isPrimaryValue: true),
+              _buildMetricColumn(
+                TranslationUtils.tr('general_equity'),
+                r'$567.89',
+                isPrimaryValue: true,
+              ),
+              _buildMetricColumn(
+                TranslationUtils.tr('general_commission'),
+                '40%',
+                isPrimaryValue: true,
+              ),
+              _buildMetricColumn(
+                TranslationUtils.tr('trader_details_screen_with_us'),
+                '645D',
+                isPrimaryValue: true,
+              ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Text(
-            'Strategy Description',
-            style: TextStyle(
+            TranslationUtils.tr('master_plan_detail_screen_strategy_description'),
+            style: AppTextStyles.bodyText.copyWith(
               color: AppColors.textPrimary,
               fontSize: 14,
               fontWeight: FontWeight.w400,
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Text(
-            'welcome to Pipze (A group expert traders.) We are providing safe and secure trading strategies to make profit for our copiers, stay with us and make safe profit.',
-            style: TextStyle(color: AppColors.textGrey, fontSize: 12, height: 1.4),
+            TranslationUtils.tr('trader_details_screen_welcome_strategy_desc'),
+            style: AppTextStyles.bodyText.copyWith(color: AppColors.textGrey, fontSize: 12, height: 1.4),
           ),
         ],
       ),
@@ -569,38 +620,42 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
 
   Widget _buildPerformanceCard() {
     return _buildBaseCard(
-      title: 'Performance',
+      title: TranslationUtils.tr('portfolio_performance'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildMetricColumn('Gain', '33.71%', isPrimaryValue: true),
+              _buildMetricColumn(
+                TranslationUtils.tr('trader_card_gain'),
+                '33.71%',
+                isPrimaryValue: true,
+              ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Copiers',
-                    style: TextStyle(
+                  Text(
+                    TranslationUtils.tr('my_plans_tab_copiers'),
+                    style: AppTextStyles.bodyText.copyWith(
                       color: AppColors.icongrey,
                       fontSize: 12,
                       fontWeight: FontWeight.w400,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4),
                   Row(
                     children: [
                       Text(
                         '138',
-                        style: TextStyle(
+                        style: AppTextStyles.bodyText.copyWith(
                           color: AppColors.primary,
                           fontWeight: FontWeight.w600,
                           fontSize: 16,
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      const Row(
+                      SizedBox(width: 8),
+                      Row(
                         children: [
                           Icon(
                             Icons.arrow_upward,
@@ -609,7 +664,7 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
                           ),
                           Text(
                             '35',
-                            style: TextStyle(
+                            style: AppTextStyles.bodyText.copyWith(
                               color: AppColors.green,
                               fontWeight: FontWeight.w600,
                               fontSize: 16,
@@ -623,18 +678,18 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          const Text(
-            'Profit and Loss',
-            style: TextStyle(color: AppColors.icongrey, fontSize: 10),
+          SizedBox(height: 16),
+          Text(
+            TranslationUtils.tr('trader_card_profit_and_loss'),
+            style: AppTextStyles.bodyText.copyWith(color: AppColors.icongrey, fontSize: 10),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 r'$123.45',
-                style: TextStyle(
+                style: AppTextStyles.bodyText.copyWith(
                   color: AppColors.primary,
                   fontWeight: FontWeight.w600,
                   fontSize: 16,
@@ -642,7 +697,7 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
               ),
               Text(
                 r'$0.00',
-                style: TextStyle(
+                style: AppTextStyles.bodyText.copyWith(
                   color: AppColors.primary,
                   fontWeight: FontWeight.w600,
                   fontSize: 16,
@@ -650,15 +705,15 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Container(
             height: 2,
             width: double.infinity,
             color: AppColors.border,
-            alignment: Alignment.centerLeft,
+            alignment: AlignmentDirectional.centerStart,
             child: Container(width: 80, height: 2, color: AppColors.primary),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -666,7 +721,7 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
               _buildTimeChip('1M', false),
               _buildTimeChip('3M', true),
               _buildTimeChip('6M', false),
-              _buildTimeChip('All', false),
+              _buildTimeChip(TranslationUtils.tr('common_all'), false),
             ],
           ),
         ],
@@ -676,7 +731,7 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
 
   Widget _buildTimeChip(String label, bool isSelected) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         color:
             isSelected
@@ -686,7 +741,7 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
       ),
       child: Text(
         label,
-        style: TextStyle(
+        style: AppTextStyles.bodyText.copyWith(
           color: isSelected ? AppColors.whiteColor : AppColors.textPrimary,
           fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
           fontSize: 12,
@@ -705,16 +760,16 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: AppTextStyles.bodyText.copyWith(
             color: AppColors.icongrey,
             fontSize: 12,
             fontWeight: FontWeight.w400,
           ),
         ),
-        const SizedBox(height: 4),
+        SizedBox(height: 4),
         Text(
           value,
-          style: TextStyle(
+          style: AppTextStyles.bodyText.copyWith(
             color: isPrimaryValue ? AppColors.primary : AppColors.textPrimary,
             fontWeight: FontWeight.w600,
             fontSize: 16,
@@ -736,7 +791,7 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
         side: BorderSide(color: AppColors.border),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -745,7 +800,7 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: AppTextStyles.bodyText.copyWith(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                   ),
@@ -753,9 +808,9 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
                 if (titleTrailing != null) titleTrailing,
               ],
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
               Divider(color: AppColors.dashLineColor),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             child,
           ],
         ),
@@ -772,7 +827,7 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
           children: [
             Text(
               title,
-              style: const TextStyle(
+              style: AppTextStyles.bodyText.copyWith(
                 color: AppColors.icongrey,
                 fontSize: 14,
                 fontWeight: FontWeight.w400,
@@ -781,10 +836,10 @@ class _TraderDetailsScreenState extends State<TraderDetailsScreen> {
             Icon(Icons.info_outline, color: AppColors.icongrey, size: 16),
           ],
         ),
-        const SizedBox(height: 4),
+        SizedBox(height: 4),
         Text(
           value,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+          style: AppTextStyles.bodyText.copyWith(fontSize: 16, fontWeight: FontWeight.w500),
         ),
       ],
     );
@@ -816,10 +871,10 @@ class SteppedActivityChart extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Padding(
-          padding: EdgeInsets.only(left: 16, top: 16, bottom: 8),
+          padding: EdgeInsetsDirectional.only(start: 16, top: 16, bottom: 8),
           child: Text(
-            'Activity',
-            style: TextStyle(
+            TranslationUtils.tr('trader_details_screen_activity'),
+            style: AppTextStyles.bodyText.copyWith(
               fontSize: 20,
               fontWeight: FontWeight.bold,
               color: AppColors.textPrimary,
@@ -860,17 +915,17 @@ class SteppedActivityChart extends StatelessWidget {
                   sideTitles: SideTitles(showTitles: false),
                 ),
                 leftTitles: AxisTitles(
-                  axisNameWidget: const SizedBox.shrink(),
+                  axisNameWidget: SizedBox.shrink(),
                   sideTitles: SideTitles(
                     showTitles: true,
                     reservedSize: 60,
                     interval: 4000,
                     getTitlesWidget: (value, meta) {
                       return Padding(
-                        padding: const EdgeInsets.only(right: 8),
+                        padding: EdgeInsets.only(right: 8),
                         child: Text(
                           '\$${value.toStringAsFixed(0)}',
-                          style: TextStyle(
+                          style: AppTextStyles.bodyText.copyWith(
                             fontSize: 13,
                             color: AppColors.textGrey,
                           ),

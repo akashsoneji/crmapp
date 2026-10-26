@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/widgets/labeled_app_text_field.dart';
+import 'package:crm_app/services/language_service.dart';
 
 class ChangeProportionScreen extends StatefulWidget {
   final String traderName;
@@ -34,7 +35,10 @@ class _ChangeProportionScreenState extends State<ChangeProportionScreen> {
           ),
           onPressed: () => Get.back(),
         ),
-        title: Text('Change Copy Proportion', style: AppTextStyles.heading),
+        title: Text(
+          TranslationUtils.tr('change_proportion_screen_change_copy_proportion'),
+          style: AppTextStyles.heading,
+        ),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -46,8 +50,8 @@ class _ChangeProportionScreenState extends State<ChangeProportionScreen> {
             _buildBalanceCard(),
             SizedBox(height: 16.h),
             Text(
-              'Copy Proportion',
-              style: TextStyle(
+              TranslationUtils.tr('change_proportion_screen_copy_proportion'),
+              style: AppTextStyles.bodyText.copyWith(
                 fontSize: 16.sp,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary,
@@ -55,9 +59,11 @@ class _ChangeProportionScreenState extends State<ChangeProportionScreen> {
             ),
             SizedBox(height: 16.h),
             LabeledAppTextField(
-              label: 'Enter value',
+              label: TranslationUtils.tr('change_proportion_screen_enter_value'),
               controller: _proportionController,
-              hintText: 'Enter value',
+              hintText: TranslationUtils.tr(
+                'change_proportion_screen_enter_value',
+              ),
             ),
             SizedBox(height: 100.h), // Spacing as per image
           ],
@@ -73,8 +79,8 @@ class _ChangeProportionScreenState extends State<ChangeProportionScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'New copy proportion : ${_proportionController.text}',
-              style: TextStyle(
+              '${TranslationUtils.tr('change_proportion_screen_new_copy_proportion')} : ${_proportionController.text}',
+              style: AppTextStyles.bodyText.copyWith(
                 fontSize: 14.sp,
                 color: AppColors.textPrimary,
                 fontWeight: FontWeight.w400,
@@ -94,8 +100,10 @@ class _ChangeProportionScreenState extends State<ChangeProportionScreen> {
                   elevation: 0,
                 ),
                 child: Text(
-                  'Apply new Proportion',
-                  style: TextStyle(
+                  TranslationUtils.tr(
+                    'change_proportion_screen_apply_new_proportion',
+                  ),
+                  style: AppTextStyles.bodyText.copyWith(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w600,
                     color: AppColors.whiteColor,
@@ -124,7 +132,7 @@ class _ChangeProportionScreenState extends State<ChangeProportionScreen> {
             SizedBox(width: 12),
             Text(
               'Prime_traders',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+              style: AppTextStyles.bodyText.copyWith(fontSize: 15, fontWeight: FontWeight.w600),
             ),
           ],
         ),
@@ -144,8 +152,8 @@ class _ChangeProportionScreenState extends State<ChangeProportionScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            'Balance',
-            style: TextStyle(
+            TranslationUtils.tr('general_balance'),
+            style: AppTextStyles.bodyText.copyWith(
               fontSize: 16.sp,
               fontWeight: FontWeight.w600,
               color: AppColors.textPrimary,
@@ -160,8 +168,8 @@ class _ChangeProportionScreenState extends State<ChangeProportionScreen> {
               ),
               SizedBox(width: 8.w),
               Text(
-                '50.01 USD',
-                style: TextStyle(
+                TranslationUtils.tr('change_proportion_screen_50_01_usd'),
+                style: AppTextStyles.bodyText.copyWith(
                   fontSize: 14.sp,
                   color: AppColors.textGrey,
                   fontWeight: FontWeight.w500,

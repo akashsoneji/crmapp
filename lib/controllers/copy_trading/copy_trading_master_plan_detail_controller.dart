@@ -1,5 +1,6 @@
 import 'package:crm_app/constants/api_const.dart';
 import 'package:crm_app/services/api_service.dart';
+import 'package:crm_app/services/language_service.dart';
 import 'package:get/get.dart';
 
 class CopyTradingMasterPlanDetail {
@@ -40,7 +41,7 @@ class CopyTradingMasterPlanDetail {
   final bool copyingPaused;
   final String copyingPausedAt;
 
-  final num initialEquitySnapshot;
+  final String initialEquitySnapshot;
   final String initialEquityCapturedAt;
   final String approvedAt;
   final String approvedBy;
@@ -170,7 +171,7 @@ class CopyTradingMasterPlanDetail {
       equityCurve: toMapList(json['equity_curve']).map(CopyTradingPlanEquityCurvePoint.fromJson).toList(),
       activityFeed: toMapList(json['activity_feed']).map(CopyTradingPlanActivityFeedItem.fromJson).toList(),
       timeline: toMapList(json['timeline']).map(CopyTradingPlanTimelineItem.fromJson).toList(),
-      initialEquitySnapshot: toNum(json['initial_equity_snapshot']),
+      initialEquitySnapshot: (json['initial_equity_snapshot'] ?? '').toString(),
       initialEquityCapturedAt: (json['initial_equity_captured_at'] ?? '').toString(),
       approvedAt: (json['approved_at'] ?? '').toString(),
       approvedBy: (json['approved_by'] ?? '').toString(),
@@ -654,7 +655,8 @@ class CopyTradingMasterPlanDetailController extends GetxController {
       final res = await ApiService.get(endpoint: endpoint, queryParameters: {'_t': DateTime.now().millisecondsSinceEpoch.toString()});
       if (!res.success || res.data == null) {
         detail.value = null;
-        errorMessage.value = res.message ?? 'Failed to load plan detail';
+      errorMessage.value = res.message ??
+          TranslationUtils.tr('copy_trading_failed_to_load_plan_detail');
         update();
         return;
       }
@@ -662,7 +664,7 @@ class CopyTradingMasterPlanDetailController extends GetxController {
       final data = res.data?['data'];
       if (data is! Map) {
         detail.value = null;
-        errorMessage.value = 'Invalid response';
+      errorMessage.value = TranslationUtils.tr('copy_trading_invalid_response');
         update();
         return;
       }
@@ -671,7 +673,8 @@ class CopyTradingMasterPlanDetailController extends GetxController {
       update();
     } catch (e) {
       detail.value = null;
-      errorMessage.value = 'Load error: $e';
+      errorMessage.value =
+          '${TranslationUtils.tr('copy_trading_load_error')}: $e';
       update();
     } finally {
       if (showLoading) isLoading.value = false;
@@ -690,11 +693,14 @@ class CopyTradingMasterPlanDetailController extends GetxController {
       if (res.success) {
         await loadPlanDetail(showLoading: false);
       } else {
-        errorMessage.value = res.message ?? 'Failed to pause plan';
+        errorMessage.value =
+            res.message ??
+            TranslationUtils.tr('copy_trading_failed_to_pause_plan');
       }
       return res;
     } catch (e) {
-      errorMessage.value = 'Pause plan error: $e';
+      errorMessage.value =
+          '${TranslationUtils.tr('copy_trading_pause_plan_error')}: $e';
       return ApiResponse.error(errorMessage.value);
     } finally {
       isLoading.value = false;
@@ -713,11 +719,14 @@ class CopyTradingMasterPlanDetailController extends GetxController {
       if (res.success) {
         await loadPlanDetail(showLoading: false);
       } else {
-        errorMessage.value = res.message ?? 'Failed to resume plan';
+        errorMessage.value =
+            res.message ??
+            TranslationUtils.tr('copy_trading_failed_to_resume_plan');
       }
       return res;
     } catch (e) {
-      errorMessage.value = 'Resume plan error: $e';
+      errorMessage.value =
+          '${TranslationUtils.tr('copy_trading_resume_plan_error')}: $e';
       return ApiResponse.error(errorMessage.value);
     } finally {
       isLoading.value = false;
@@ -732,15 +741,18 @@ class CopyTradingMasterPlanDetailController extends GetxController {
     errorMessage.value = '';
     try {
       final endpoint = '${ApiConstants.copyTradingMasterPlans}/$planId';
-      final res = await ApiService.post(endpoint: endpoint, data: body);
+      final res = await ApiService.put(endpoint: endpoint, data: body);
       if (res.success) {
         await loadPlanDetail(showLoading: false);
       } else {
-        errorMessage.value = res.message ?? 'Failed to update plan';
+        errorMessage.value =
+            res.message ??
+            TranslationUtils.tr('copy_trading_failed_to_update_plan');
       }
       return res;
     } catch (e) {
-      errorMessage.value = 'Update plan error: $e';
+      errorMessage.value =
+          '${TranslationUtils.tr('copy_trading_update_plan_error')}: $e';
       return ApiResponse.error(errorMessage.value);
     } finally {
       isLoading.value = false;
@@ -759,11 +771,14 @@ class CopyTradingMasterPlanDetailController extends GetxController {
       if (res.success) {
         await loadPlanDetail(showLoading: false);
       } else {
-        errorMessage.value = res.message ?? 'Failed to inactivate plan';
+        errorMessage.value =
+            res.message ??
+            TranslationUtils.tr('copy_trading_failed_to_inactivate_plan');
       }
       return res;
     } catch (e) {
-      errorMessage.value = 'Inactivate plan error: $e';
+      errorMessage.value =
+          '${TranslationUtils.tr('copy_trading_inactivate_plan_error')}: $e';
       return ApiResponse.error(errorMessage.value);
     } finally {
       isLoading.value = false;

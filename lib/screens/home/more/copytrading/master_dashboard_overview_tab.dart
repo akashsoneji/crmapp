@@ -1,6 +1,10 @@
+import 'dart:ui' as ui show TextDirection;
+
 import 'package:crm_app/constants/color.dart';
+import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/copy_trading/copy_trading_master_dashboard_controller.dart';
 import 'package:crm_app/models/copy_trading_dashboard_overview.dart';
+import 'package:crm_app/services/language_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -51,11 +55,13 @@ class MasterDashboardOverviewTab extends StatelessWidget {
       // ValueKey on the data column forces Flutter to discard the old
       // sub-tree (including any CustomPainter state that holds a cached
       // points list) and build a brand-new one when the range changes.
-      final dataKey = ValueKey('overview-${overview.range.preset}-'
-          '${overview.range.from}-${overview.range.to}');
+      final dataKey = ValueKey(
+        'overview-${overview.range.preset}-'
+        '${overview.range.from}-${overview.range.to}',
+      );
 
       return Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+        padding: EdgeInsets.fromLTRB(16, 12, 16, 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -76,33 +82,34 @@ class MasterDashboardOverviewTab extends StatelessWidget {
                 ),
                 AnimatedSwitcher(
                   duration: const Duration(milliseconds: 200),
-                  child: isLoading
-                      ? Row(
-                          key: const ValueKey('loading'),
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const SizedBox(
-                              width: 12,
-                              height: 12,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 1.6,
+                  child:
+                      isLoading
+                          ? Row(
+                            key: const ValueKey('loading'),
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              SizedBox(
+                                width: 12,
+                                height: 12,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 1.6,
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              'Updating…',
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                color: theme.textTheme.bodySmall?.color
-                                    ?.withValues(alpha: 0.6),
+                              SizedBox(width: 6),
+                              Text(
+                                TranslationUtils.tr('master_dashboard_overview_tab_updating'),
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  color: theme.textTheme.bodySmall?.color
+                                      ?.withValues(alpha: 0.6),
+                                ),
                               ),
-                            ),
-                          ],
-                        )
-                      : const SizedBox.shrink(key: ValueKey('idle')),
+                            ],
+                          )
+                          : const SizedBox.shrink(key: ValueKey('idle')),
                 ),
               ],
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
 
             // Range pills — disable taps + dim while a fetch is in flight
             // so users can't queue overlapping requests and get clear
@@ -119,7 +126,7 @@ class MasterDashboardOverviewTab extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
 
             // Dim all data sections while a range-change fetch is in
             // flight, so the user sees every chart/card visibly refresh
@@ -133,19 +140,19 @@ class MasterDashboardOverviewTab extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   _KpiGrid(overview: overview),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   _PerformanceChartCard(overview: overview),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   _CopierHealthCard(health: overview.copierHealth),
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
                   _PlanPerformanceCard(plans: overview.plans),
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
                   _PayoutsCard(payouts: overview.payouts),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   _RecentTradesCard(trades: overview.recentTrades),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   _RiskAlertsCard(alerts: overview.alerts),
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24),
                 ],
               ),
             ),
@@ -188,6 +195,14 @@ String _fmtDateOrLabel(String? iso, String? label) {
 // Range pills
 // ===========================================================================
 
+/// Maps a raw range preset (kept untranslated because it is sent to the API
+/// and compared against `overviewRange`) onto its localized display label.
+String _rangeChipLabel(String raw) => switch (raw) {
+  'Today' => TranslationUtils.tr('dc_range_today'),
+  'All' => TranslationUtils.tr('common_all'),
+  _ => raw,
+};
+
 class _RangePills extends StatelessWidget {
   const _RangePills({
     required this.chips,
@@ -198,8 +213,7 @@ class _RangePills extends StatelessWidget {
   final String current;
   final ValueChanged<String> onChanged;
 
-  bool _isSelected(String chip) =>
-      chip.toLowerCase() == current.toLowerCase();
+  bool _isSelected(String chip) => chip.toLowerCase() == current.toLowerCase();
 
   @override
   Widget build(BuildContext context) {
@@ -214,32 +228,36 @@ class _RangePills extends StatelessWidget {
               onTap: () => onChanged(chip),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 150),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                padding: EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: _isSelected(chip) ? brand : theme.cardColor,
                   borderRadius: BorderRadius.circular(999),
                   border: Border.all(
-                    color: _isSelected(chip)
-                        ? brand
-                        : theme.dividerColor.withValues(alpha: 0.6),
+                    color:
+                        _isSelected(chip)
+                            ? brand
+                            : theme.dividerColor.withValues(alpha: 0.6),
                   ),
                 ),
                 alignment: Alignment.center,
                 child: Text(
-                  chip,
+                  _rangeChipLabel(chip),
                   style: theme.textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.w600,
-                    color: _isSelected(chip)
-                        ? Colors.white
-                        : theme.textTheme.bodyMedium?.color?.withValues(
-                            alpha: 0.7,
-                          ),
+                    color:
+                        _isSelected(chip)
+                            ? Colors.white
+                            : theme.textTheme.bodyMedium?.color?.withValues(
+                              alpha: 0.7,
+                            ),
                   ),
                 ),
               ),
             ),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
           ],
         ],
       ),
@@ -264,44 +282,48 @@ class _KpiGrid extends StatelessWidget {
 
     final cards = <Widget>[
       _KpiCard(
-        label: 'TOTAL AUM',
+        label: TranslationUtils.tr('pmam_manager_dashboard_screen_total_aum'),
         accent: const Color(0xFF2C5FFB),
         accentSoft: const Color(0xFFE8EEFF),
         value: _fmtMoney(aum.current),
         pill: _TrendPill(value: aum.deltaPct),
-        sub: 'Assets under management',
+        sub: TranslationUtils.tr('copy_trading_assets_under_management'),
         spark: aum.series.values,
       ),
       _KpiCard(
-        label: 'ACTIVE COPIERS',
+        label: TranslationUtils.tr('copy_trading_active_copiers_upper'),
         accent: const Color(0xFF00BFA6),
         accentSoft: const Color(0xFFD7F6F0),
         value: '${copiers.current}',
-        pill: _TrendPill(
-          value: copiers.delta,
-          signed: true,
-          isInt: true,
-        ),
-        sub: 'Net new in window: ${copiers.delta > 0 ? '+' : ''}${copiers.delta}',
+        pill: _TrendPill(value: copiers.delta, signed: true, isInt: true),
+        sub: TranslationUtils.trArgs('copy_trading_net_new_in_window', {
+          'value': '${copiers.delta > 0 ? '+' : ''}${copiers.delta}',
+        }),
         spark: copiers.series.values,
       ),
       _KpiCard(
-        label: 'MY EARNINGS',
+        label: TranslationUtils.tr('copy_trading_my_earnings_upper'),
         accent: const Color(0xFF1DB954),
         accentSoft: const Color(0xFFE6F8EE),
         value: _fmtMoney(earnings.current),
-        sub: earnings.nextPayoutDate.isEmpty
-            ? 'Lifetime total credited'
-            : 'Next payout: ${_fmtMoney(earnings.nextPayoutAmount)} on ${_fmtDate(earnings.nextPayoutDate)}',
+        sub:
+            earnings.nextPayoutDate.isEmpty
+                ? TranslationUtils.tr('copy_trading_lifetime_total_credited')
+                : TranslationUtils.trArgs('copy_trading_next_payout_on', {
+                  'amount': _fmtMoney(earnings.nextPayoutAmount),
+                  'date': _fmtDate(earnings.nextPayoutDate),
+                }),
         spark: earnings.series.values,
       ),
       _KpiCard(
-        label: 'MASTER ROI',
+        label: TranslationUtils.tr('copy_trading_master_roi_upper'),
         accent: const Color(0xFFF79009),
         accentSoft: const Color(0xFFFFF1E0),
         value: '${roi.currentPct.toStringAsFixed(2)}%',
         pill: _TrendPill(value: roi.currentPct, suffix: '%'),
-        sub: 'Benchmark: ${roi.benchmarkPct.isEmpty ? '—' : roi.benchmarkPct}',
+        sub: TranslationUtils.trArgs('copy_trading_benchmark_value', {
+          'value': roi.benchmarkPct.isEmpty ? '—' : roi.benchmarkPct,
+        }),
         spark: roi.series.values,
       ),
     ];
@@ -368,7 +390,7 @@ class _KpiCard extends StatelessWidget {
             // Top accent stripe — pure color, full width.
             Container(height: 3, color: accent),
             Padding(
-              padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
+              padding: EdgeInsets.fromLTRB(12, 10, 12, 8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -391,10 +413,10 @@ class _KpiCard extends StatelessWidget {
                           ),
                         ),
                       ),
-                      ?pill,
+                      if (pill != null) pill!,
                     ],
                   ),
-                  const SizedBox(height: 6),
+                  SizedBox(height: 6),
                   // Big value.
                   Text(
                     value,
@@ -405,9 +427,10 @@ class _KpiCard extends StatelessWidget {
                       fontSize: 20,
                       height: 1.1,
                       letterSpacing: -0.3,
+                      color: AppColors.textGrey,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  SizedBox(height: 2),
                   // Sub.
                   Text(
                     sub,
@@ -428,16 +451,17 @@ class _KpiCard extends StatelessWidget {
             // Sparkline strip at the bottom — flush to card edge.
             SizedBox(
               height: 28,
-              child: pts.length < 2
-                  ? const SizedBox.shrink()
-                  : CustomPaint(
-                      size: Size.infinite,
-                      painter: _SparklinePainter(
-                        points: pts,
-                        color: accent,
-                        fillColor: accentSoft,
+              child:
+                  pts.length < 2
+                      ? const SizedBox.shrink()
+                      : CustomPaint(
+                        size: Size.infinite,
+                        painter: _SparklinePainter(
+                          points: pts,
+                          color: accent,
+                          fillColor: accentSoft,
+                        ),
                       ),
-                    ),
             ),
           ],
         ),
@@ -470,19 +494,20 @@ class _TrendPill extends StatelessWidget {
       text = '${value >= 0 ? '+' : ''}${value.toInt()}';
     } else {
       final absVal = value.abs().toDouble();
-      text = '${positive ? '↗' : '↘'} '
+      text =
+          '${positive ? '↗' : '↘'} '
           '${absVal.toStringAsFixed(2)}$suffix';
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
         color: soft,
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
         text,
-        style: TextStyle(
+        style: AppTextStyles.bodyText.copyWith(
           color: color,
           fontSize: 10,
           fontWeight: FontWeight.w700,
@@ -570,7 +595,7 @@ class _PerformanceChartCardState extends State<_PerformanceChartCard> {
   String _series = 'equity'; // equity | aum | pnl
 
   List<double> _parseSeries(List<dynamic>? raw) {
-    if (raw == null) return const [];
+    if (raw == null) return [];
     return raw
         .where((e) => e != null)
         .map((e) => (e is num) ? e.toDouble() : double.tryParse('$e') ?? 0)
@@ -610,38 +635,39 @@ class _PerformanceChartCardState extends State<_PerformanceChartCard> {
     final labels = widget.overview.mainChart.labels;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+      padding: EdgeInsets.fromLTRB(14, 14, 14, 14),
       decoration: _cardDecoration(context),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Performance overview',
+            TranslationUtils.tr('master_dashboard_overview_tab_performance_overview'),
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.w700,
+              color: AppColors.textGrey,
             ),
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
               children: [
                 _ChartToggle(
-                  label: 'Equity',
+                  label: TranslationUtils.tr('general_equity'),
                   selected: _series == 'equity',
                   color: const Color(0xFF2C5FFB),
                   onTap: () => setState(() => _series = 'equity'),
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 _ChartToggle(
-                  label: 'AUM',
+                  label: TranslationUtils.tr('pmam_aum'),
                   selected: _series == 'aum',
                   color: const Color(0xFF00BFA6),
                   onTap: () => setState(() => _series = 'aum'),
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 _ChartToggle(
-                  label: 'Net P/L',
+                  label: TranslationUtils.tr('meta_trade_net_pl'),
                   selected: _series == 'pnl',
                   color: const Color(0xFF1DB954),
                   onTap: () => setState(() => _series = 'pnl'),
@@ -649,29 +675,30 @@ class _PerformanceChartCardState extends State<_PerformanceChartCard> {
               ],
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           SizedBox(
             height: 200,
-            child: hasData
-                ? CustomPaint(
-                    size: Size.infinite,
-                    painter: _AreaChartPainter(
-                      points: points,
-                      color: _seriesColor,
-                    ),
-                  )
-                : Center(
-                    child: Text(
-                      'No performance data for this range',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.textTheme.bodySmall?.color?.withValues(
-                          alpha: 0.6,
+            child:
+                hasData
+                    ? CustomPaint(
+                      size: Size.infinite,
+                      painter: _AreaChartPainter(
+                        points: points,
+                        color: _seriesColor,
+                      ),
+                    )
+                    : Center(
+                      child: Text(
+                        TranslationUtils.tr('master_dashboard_overview_tab_no_performance_data_for_this_range'),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.textTheme.bodySmall?.color?.withValues(
+                            alpha: 0.6,
+                          ),
                         ),
                       ),
                     ),
-                  ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           if (labels.length >= 2) _ChartXAxis(labels: labels),
         ],
       ),
@@ -698,11 +725,9 @@ class _ChartToggle extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: selected
-              ? color.withValues(alpha: 0.12)
-              : Colors.transparent,
+          color: selected ? color.withValues(alpha: 0.12) : Colors.transparent,
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
             color: selected ? color : theme.dividerColor.withValues(alpha: 0.6),
@@ -715,17 +740,14 @@ class _ChartToggle extends StatelessWidget {
             Container(
               width: 6,
               height: 6,
-              decoration: BoxDecoration(
-                color: color,
-                shape: BoxShape.circle,
-              ),
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
             ),
-            const SizedBox(width: 6),
+            SizedBox(width: 6),
             Text(
               label,
               style: theme.textTheme.labelMedium?.copyWith(
                 fontWeight: FontWeight.w600,
-                color: selected ? color : null,
+                color: selected ? color : AppColors.textGreyDark,
               ),
             ),
           ],
@@ -748,9 +770,10 @@ class _AreaChartPainter extends CustomPainter {
     final range = (maxV - minV).abs() < 1e-9 ? 1.0 : (maxV - minV);
     final dx = size.width / (points.length - 1);
 
-    final gridPaint = Paint()
-      ..color = const Color(0xFF000000).withValues(alpha: 0.05)
-      ..strokeWidth = 1;
+    final gridPaint =
+        Paint()
+          ..color = const Color(0xFF000000).withValues(alpha: 0.05)
+          ..strokeWidth = 1;
     for (var i = 0; i <= 3; i++) {
       final y = size.height * i / 3;
       canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
@@ -758,9 +781,10 @@ class _AreaChartPainter extends CustomPainter {
 
     if (minV < 0 && maxV > 0) {
       final y0 = size.height - ((0 - minV) / range) * size.height;
-      final zeroPaint = Paint()
-        ..color = const Color(0xFF000000).withValues(alpha: 0.15)
-        ..strokeWidth = 1;
+      final zeroPaint =
+          Paint()
+            ..color = const Color(0xFF000000).withValues(alpha: 0.15)
+            ..strokeWidth = 1;
       canvas.drawLine(Offset(0, y0), Offset(size.width, y0), zeroPaint);
     }
 
@@ -822,11 +846,21 @@ class _ChartXAxis extends StatelessWidget {
   String _short(String raw) {
     final dt = DateTime.tryParse(raw);
     if (dt == null) return raw;
-    const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    const monthKeys = [
+      'month_short_jan',
+      'month_short_feb',
+      'month_short_mar',
+      'month_short_apr',
+      'month_short_may',
+      'month_short_jun',
+      'month_short_jul',
+      'month_short_aug',
+      'month_short_sep',
+      'month_short_oct',
+      'month_short_nov',
+      'month_short_dec',
     ];
-    final mm = months[dt.month - 1];
+    final mm = TranslationUtils.tr(monthKeys[dt.month - 1]);
     final dd = dt.day.toString().padLeft(2, '0');
     return '$mm $dd';
   }
@@ -853,16 +887,15 @@ class _ChartXAxis extends StatelessWidget {
               _short(labels[indices[n]]),
               maxLines: 1,
               overflow: TextOverflow.clip,
-              textAlign: n == 0
-                  ? TextAlign.start
-                  : (n == indices.length - 1
-                        ? TextAlign.end
-                        : TextAlign.center),
+              textAlign:
+                  n == 0
+                      ? TextAlign.start
+                      : (n == indices.length - 1
+                          ? TextAlign.end
+                          : TextAlign.center),
               style: theme.textTheme.labelSmall?.copyWith(
                 fontSize: 10,
-                color: theme.textTheme.labelSmall?.color?.withValues(
-                  alpha: 0.5,
-                ),
+                color: AppColors.textGreyDark,
               ),
             ),
           ),
@@ -899,18 +932,19 @@ class _CopierHealthCard extends StatelessWidget {
     final theme = Theme.of(context);
     final total = health.active + health.paused + health.stopped;
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: EdgeInsets.all(14),
       decoration: _cardDecoration(context),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Copier health',
+            TranslationUtils.tr('master_dashboard_overview_tab_copier_health'),
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
             ),
           ),
-          const SizedBox(height: 14),
+          SizedBox(height: 14),
           Row(
             children: [
               SizedBox(
@@ -919,18 +953,9 @@ class _CopierHealthCard extends StatelessWidget {
                 child: CustomPaint(
                   painter: _DonutPainter(
                     segments: [
-                      _DonutSegment(
-                        health.active,
-                        const Color(0xFF1DB954),
-                      ),
-                      _DonutSegment(
-                        health.paused,
-                        const Color(0xFFF79009),
-                      ),
-                      _DonutSegment(
-                        health.stopped,
-                        const Color(0xFFE5484D),
-                      ),
+                      _DonutSegment(health.active, const Color(0xFF1DB954)),
+                      _DonutSegment(health.paused, const Color(0xFFF79009)),
+                      _DonutSegment(health.stopped, const Color(0xFFE5484D)),
                     ],
                   ),
                   child: Center(
@@ -938,31 +963,32 @@ class _CopierHealthCard extends StatelessWidget {
                       '$total',
                       style: theme.textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
                       ),
                     ),
                   ),
                 ),
               ),
-              const SizedBox(width: 16),
+              SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _LegendDot(
                       color: const Color(0xFF1DB954),
-                      label: 'Active',
+                      label: TranslationUtils.tr('wallet_active'),
                       value: health.active,
                     ),
-                    const SizedBox(height: 6),
+                    SizedBox(height: 6),
                     _LegendDot(
                       color: const Color(0xFFF79009),
-                      label: 'Paused',
+                      label: TranslationUtils.tr('copy_trading_paused'),
                       value: health.paused,
                     ),
-                    const SizedBox(height: 6),
+                    SizedBox(height: 6),
                     _LegendDot(
                       color: const Color(0xFFE5484D),
-                      label: 'Stopped',
+                      label: TranslationUtils.tr('copy_trading_stopped'),
                       value: health.stopped,
                     ),
                   ],
@@ -970,30 +996,30 @@ class _CopierHealthCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          SizedBox(height: 14),
           Row(
             children: [
               Expanded(
                 child: _CopierStat(
-                  label: 'NEW (WINDOW)',
+                  label: TranslationUtils.tr('copy_trading_new_window_upper'),
                   value: '${health.newInWindow}',
                 ),
               ),
               Expanded(
                 child: _CopierStat(
-                  label: 'CHURNED',
+                  label: TranslationUtils.tr('copy_trading_churned_upper'),
                   value: '${health.churnedInWindow}',
                 ),
               ),
               Expanded(
                 child: _CopierStat(
-                  label: 'AVG AGE',
+                  label: TranslationUtils.tr('copy_trading_avg_age_upper'),
                   value: _avgAgeLabel(health.avgAgeDays),
                 ),
               ),
               Expanded(
                 child: _CopierStat(
-                  label: 'RETENTION',
+                  label: TranslationUtils.tr('copy_trading_retention_upper'),
                   value: '${health.retentionPct.toStringAsFixed(0)}%',
                 ),
               ),
@@ -1019,10 +1045,11 @@ class _DonutPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final total = segments.fold<int>(0, (s, e) => s + e.value);
     if (total == 0) {
-      final paint = Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 12
-        ..color = AppColors.border;
+      final paint =
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 12
+            ..color = AppColors.border;
       final rect = Offset.zero & size;
       canvas.drawArc(rect.deflate(6), 0, 6.283, false, paint);
       return;
@@ -1034,11 +1061,12 @@ class _DonutPainter extends CustomPainter {
     for (final seg in segments) {
       if (seg.value == 0) continue;
       final sweep = (seg.value / total) * 6.2831853;
-      final paint = Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = stroke
-        ..strokeCap = StrokeCap.butt
-        ..color = seg.color;
+      final paint =
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = stroke
+            ..strokeCap = StrokeCap.butt
+            ..color = seg.color;
       canvas.drawArc(rect.deflate(stroke / 2), start, sweep, false, paint);
       start += sweep;
     }
@@ -1068,13 +1096,8 @@ class _LegendDot extends StatelessWidget {
           height: 8,
           decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            label,
-            style: theme.textTheme.bodyMedium,
-          ),
-        ),
+        SizedBox(width: 8),
+        Expanded(child: Text(label, style: theme.textTheme.bodyMedium)),
         Text(
           '$value',
           style: theme.textTheme.bodyMedium?.copyWith(
@@ -1102,14 +1125,15 @@ class _CopierStat extends StatelessWidget {
           style: theme.textTheme.labelSmall?.copyWith(
             fontWeight: FontWeight.w700,
             letterSpacing: 0.6,
-            color: theme.textTheme.labelSmall?.color?.withValues(alpha: 0.6),
+            color: AppColors.textPrimary,
           ),
         ),
-        const SizedBox(height: 4),
+        SizedBox(height: 4),
         Text(
           value,
           style: theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w800,
+            color: AppColors.textPrimary,
           ),
         ),
       ],
@@ -1129,23 +1153,24 @@ class _PlanPerformanceCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: EdgeInsets.all(14),
       decoration: _cardDecoration(context),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Plan performance',
+            TranslationUtils.tr('master_dashboard_overview_tab_plan_performance'),
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
             ),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4),
           if (plans.isEmpty)
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16),
+              padding: EdgeInsets.symmetric(vertical: 16),
               child: Text(
-                'No plans yet',
+                TranslationUtils.tr('master_dashboard_overview_tab_no_plans_yet'),
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.textTheme.bodyMedium?.color?.withValues(
                     alpha: 0.6,
@@ -1176,7 +1201,7 @@ class _PlanRow extends StatelessWidget {
     final theme = Theme.of(context);
     final positive = plan.roiPct >= 0;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: EdgeInsets.symmetric(vertical: 8),
       child: Row(
         children: [
           Expanded(
@@ -1192,13 +1217,11 @@ class _PlanRow extends StatelessWidget {
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: 2),
+                SizedBox(height: 2),
                 Text(
                   plan.status,
                   style: theme.textTheme.labelSmall?.copyWith(
-                    color: theme.textTheme.labelSmall?.color?.withValues(
-                      alpha: 0.6,
-                    ),
+                    color: AppColors.textGreyDark,
                   ),
                 ),
               ],
@@ -1209,7 +1232,7 @@ class _PlanRow extends StatelessWidget {
             child: Text(
               _fmtMoney(plan.totalCapital),
               style: theme.textTheme.bodyMedium?.copyWith(
-                fontFeatures: const [FontFeature.tabularFigures()],
+                fontFeatures: [FontFeature.tabularFigures()],
               ),
             ),
           ),
@@ -1220,14 +1243,16 @@ class _PlanRow extends StatelessWidget {
             ),
           ),
           Expanded(
-            flex: 2,
-            child: Text(
-              '${positive ? '+' : ''}${plan.roiPct.toStringAsFixed(2)}%',
-              textAlign: TextAlign.right,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-                color: _roiColor,
-                fontFeatures: const [FontFeature.tabularFigures()],
+            child: Directionality(
+              textDirection: ui.TextDirection.ltr,
+              child: Text(
+                '${positive ? '+' : ''}${plan.roiPct.toStringAsFixed(2)}%',
+                textAlign: TextAlign.end,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: _roiColor,
+                  fontFeatures: [FontFeature.tabularFigures()],
+                ),
               ),
             ),
           ),
@@ -1249,74 +1274,73 @@ class _PayoutsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: EdgeInsets.all(14),
       decoration: _cardDecoration(context),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Payouts',
+            TranslationUtils.tr('ibm_payouts'),
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Row(
             children: [
               Expanded(
                 child: _PayoutStat(
-                  label: 'EARNED (WINDOW)',
+                  label: TranslationUtils.tr('copy_trading_earned_window_upper'),
                   value: _fmtMoney(payouts.earnedInWindow),
                 ),
               ),
-              const SizedBox(width: 10),
+              SizedBox(width: 10),
               Expanded(
                 child: _PayoutStat(
-                  label: 'PENDING',
+                  label: TranslationUtils.tr('copy_trading_pending_upper'),
                   value: _fmtMoney(payouts.pending),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          SizedBox(height: 14),
           Text(
-            'UPCOMING',
+            TranslationUtils.tr('copy_trading_upcoming_upper'),
             style: theme.textTheme.labelSmall?.copyWith(
               fontWeight: FontWeight.w700,
               letterSpacing: 0.6,
-              color: theme.textTheme.labelSmall?.color?.withValues(alpha: 0.6),
+              color: AppColors.textPrimary,
             ),
           ),
-          const SizedBox(height: 6),
+          SizedBox(height: 6),
           if (payouts.upcoming.isEmpty)
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 6),
+              padding: EdgeInsets.symmetric(vertical: 6),
               child: Text(
-                'No upcoming payouts.',
+                TranslationUtils.tr('master_dashboard_overview_tab_no_upcoming_payouts'),
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.textTheme.bodySmall?.color?.withValues(
-                    alpha: 0.6,
-                  ),
+                  color: AppColors.textPrimary,
                 ),
               ),
             )
           else
             ...payouts.upcoming.map((u) => _PayoutRow(item: u)),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           Text(
-            'RECENT',
+            TranslationUtils.tr('copy_trading_recent_upper'),
             style: theme.textTheme.labelSmall?.copyWith(
               fontWeight: FontWeight.w700,
               letterSpacing: 0.6,
-              color: theme.textTheme.labelSmall?.color?.withValues(alpha: 0.6),
+              color: AppColors.textPrimary,
             ),
           ),
-          const SizedBox(height: 6),
+          SizedBox(height: 6),
           if (payouts.recent.isEmpty)
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 6),
+              padding: EdgeInsets.symmetric(vertical: 6),
               child: Text(
-                'No recent payouts.',
+                TranslationUtils.tr('master_dashboard_overview_tab_no_recent_payouts'),
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.textTheme.bodySmall?.color?.withValues(
                     alpha: 0.6,
@@ -1340,7 +1364,7 @@ class _PayoutStat extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.all(10),
+      padding: EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: theme.dividerColor.withValues(alpha: 0.18),
         borderRadius: BorderRadius.circular(10),
@@ -1353,14 +1377,15 @@ class _PayoutStat extends StatelessWidget {
             style: theme.textTheme.labelSmall?.copyWith(
               fontWeight: FontWeight.w700,
               letterSpacing: 0.6,
-              color: theme.textTheme.labelSmall?.color?.withValues(alpha: 0.6),
+              color: AppColors.textPrimary,
             ),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4),
           Text(
             value,
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w800,
+              color: AppColors.textGrey,
             ),
           ),
         ],
@@ -1378,7 +1403,7 @@ class _PayoutRow extends StatelessWidget {
     final isPaid = item.status.toLowerCase() == 'paid';
     final accent = isPaid ? AppColors.successText : AppColors.warningText;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: EdgeInsets.symmetric(vertical: 6),
       child: Row(
         children: [
           Container(
@@ -1386,17 +1411,17 @@ class _PayoutRow extends StatelessWidget {
             height: 6,
             decoration: BoxDecoration(color: accent, shape: BoxShape.circle),
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
           Text(
             item.status.toUpperCase(),
-            style: TextStyle(
+            style: AppTextStyles.bodyText.copyWith(
               fontWeight: FontWeight.w700,
               color: accent,
               fontSize: 11,
               letterSpacing: 0.6,
             ),
           ),
-          const SizedBox(width: 10),
+          SizedBox(width: 10),
           Expanded(
             child: Text(
               _fmtDate(item.date),
@@ -1431,7 +1456,7 @@ class _RecentTradesCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: EdgeInsets.all(14),
       decoration: _cardDecoration(context),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1440,15 +1465,16 @@ class _RecentTradesCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  'Recent trades',
+                  TranslationUtils.tr('master_dashboard_overview_tab_recent_trades'),
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
                   ),
                 ),
               ),
-              const Text(
-                'Auto-refresh 15s',
-                style: TextStyle(
+              Text(
+                TranslationUtils.tr('master_dashboard_overview_tab_auto_refresh_15s'),
+                style: AppTextStyles.bodyText.copyWith(
                   color: Color(0xFF2C5FFB),
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -1456,12 +1482,12 @@ class _RecentTradesCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           if (trades.isEmpty)
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16),
+              padding: EdgeInsets.symmetric(vertical: 16),
               child: Text(
-                'No trades yet',
+                TranslationUtils.tr('master_dashboard_overview_tab_no_trades_yet'),
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.textTheme.bodyMedium?.color?.withValues(
                     alpha: 0.6,
@@ -1510,7 +1536,7 @@ class _TradeRow extends StatelessWidget {
     final isProfit = trade.pnl > 0;
     final isLoss = trade.pnl < 0;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: EdgeInsets.symmetric(vertical: 6),
       child: Row(
         children: [
           SizedBox(
@@ -1518,9 +1544,7 @@ class _TradeRow extends StatelessWidget {
             child: Text(
               _timeLabel(),
               style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.textTheme.bodySmall?.color?.withValues(
-                  alpha: 0.7,
-                ),
+                color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
               ),
             ),
           ),
@@ -1528,7 +1552,7 @@ class _TradeRow extends StatelessWidget {
             flex: 3,
             child: Text(
               trade.symbol,
-              style: theme.textTheme.bodyMedium?.copyWith(
+              style: theme.textTheme.bodySmall?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -1537,13 +1561,12 @@ class _TradeRow extends StatelessWidget {
             width: 50,
             child: Text(
               isBuy ? 'BUY' : 'SELL',
-              style: TextStyle(
+              style: AppTextStyles.bodyText.copyWith(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.6,
-                color: isBuy
-                    ? const Color(0xFF1DB954)
-                    : const Color(0xFFE5484D),
+                color:
+                    isBuy ? const Color(0xFF1DB954) : const Color(0xFFE5484D),
               ),
             ),
           ),
@@ -1562,12 +1585,13 @@ class _TradeRow extends StatelessWidget {
               textAlign: TextAlign.right,
               style: theme.textTheme.bodyMedium?.copyWith(
                 fontWeight: FontWeight.w700,
-                color: isProfit
-                    ? const Color(0xFF1DB954)
-                    : isLoss
+                color:
+                    isProfit
+                        ? const Color(0xFF1DB954)
+                        : isLoss
                         ? const Color(0xFFE5484D)
                         : theme.textTheme.bodyMedium?.color,
-                fontFeatures: const [FontFeature.tabularFigures()],
+                fontFeatures: [FontFeature.tabularFigures()],
               ),
             ),
           ),
@@ -1589,21 +1613,22 @@ class _RiskAlertsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: EdgeInsets.all(14),
       decoration: _cardDecoration(context),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Risk alerts',
+            TranslationUtils.tr('master_dashboard_overview_tab_risk_alerts'),
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
             ),
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           if (alerts.isEmpty)
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: AppColors.successBg,
                 borderRadius: BorderRadius.circular(10),
@@ -1615,10 +1640,10 @@ class _RiskAlertsCard extends StatelessWidget {
                     color: AppColors.successText,
                     size: 18,
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'All clear. No risk alerts in this range.',
+                      TranslationUtils.tr('master_dashboard_overview_tab_all_clear_no_risk_alerts_in'),
                       style: theme.textTheme.bodyMedium,
                     ),
                   ),
@@ -1678,8 +1703,8 @@ class _AlertRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 4),
-      padding: const EdgeInsets.all(12),
+      margin: EdgeInsets.symmetric(vertical: 4),
+      padding: EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: _soft,
         borderRadius: BorderRadius.circular(10),
@@ -1688,7 +1713,7 @@ class _AlertRow extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(_icon, color: _accent, size: 18),
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
           Expanded(
             child: Text(
               alert.message,
@@ -1737,7 +1762,7 @@ class _LoadingState extends StatelessWidget {
   const _LoadingState();
   @override
   Widget build(BuildContext context) {
-    return const Padding(
+    return Padding(
       padding: EdgeInsets.symmetric(vertical: 80),
       child: Center(child: CircularProgressIndicator()),
     );
@@ -1750,19 +1775,23 @@ class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 80),
+      padding: EdgeInsets.symmetric(vertical: 80),
       child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.bar_chart_rounded, size: 48),
-            const SizedBox(height: 8),
-            const Text('No overview data available'),
-            const SizedBox(height: 12),
+            Icon(Icons.bar_chart_rounded, size: 48),
+            SizedBox(height: 8),
+            Text(
+              TranslationUtils.tr(
+                'master_dashboard_overview_tab_no_overview_data_available',
+              ),
+            ),
+            SizedBox(height: 12),
             OutlinedButton.icon(
               onPressed: onRetry,
-              icon: const Icon(Icons.refresh_rounded),
-              label: const Text('Retry'),
+              icon: Icon(Icons.refresh_rounded),
+              label: Text(TranslationUtils.tr('common_retry')),
             ),
           ],
         ),

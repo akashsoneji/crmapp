@@ -1,5 +1,6 @@
 import 'package:crm_app/constants/api_const.dart';
 import 'package:crm_app/services/api_service.dart';
+import 'package:crm_app/services/language_service.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/controllers/copy_trading/copy_trading_master_dashboard_controller.dart';
 
@@ -157,7 +158,9 @@ class MasterCopierItem {
 
   String get commissionDisplay {
     if (commissionType == 'per_trade') {
-      return '${commissionPercentage.toStringAsFixed(0)}% per trade';
+      return TranslationUtils.trArgs('copy_trading_percent_per_trade', {
+        'percent': commissionPercentage.toStringAsFixed(0),
+      });
     } else if (commissionType == 'subscription') {
       return '\$$subscriptionFee / period';
     }
@@ -207,6 +210,16 @@ class CopyTradingMasterCopiersController extends GetxController {
 
   final RxList<CopyTradingMasterPlanItem> masterPlans = <CopyTradingMasterPlanItem>[].obs;
 
+  /// `active_copiers_count` per plan id, from the master plans API.
+  final RxMap<int, int> activeCopiersByPlan = <int, int>{}.obs;
+
+  /// Active copiers for the selected plan, or across all plans when no plan filter is set.
+  int get activeCopiersCount {
+    final selectedPlanId = planFilter.value;
+    if (selectedPlanId != null) return activeCopiersByPlan[selectedPlanId] ?? 0;
+    return activeCopiersByPlan.values.fold(0, (sum, count) => sum + count);
+  }
+
   // Filter & Pagination States
   final RxString searchQuery = ''.obs;
   final RxString statusFilter = 'all'.obs; // 'all', 'active', 'pending', 'paused', 'stopped'
@@ -226,7 +239,6 @@ class CopyTradingMasterCopiersController extends GetxController {
   }
 
   Future<void> _loadInitialData() async {
-    await fetchPlans();
     await load(showLoading: true);
   }
 
@@ -242,6 +254,13 @@ class CopyTradingMasterCopiersController extends GetxController {
           masterPlans.assignAll(
             data.whereType<Map>().map((e) => CopyTradingMasterPlanItem.fromJson(e.cast<String, dynamic>())),
           );
+          final counts = <int, int>{};
+          for (final plan in data.whereType<Map>()) {
+            final planId = int.tryParse(plan['id']?.toString() ?? '');
+            if (planId == null) continue;
+            counts[planId] = num.tryParse(plan['active_copiers_count']?.toString() ?? '')?.toInt() ?? 0;
+          }
+          activeCopiersByPlan.assignAll(counts);
         }
       }
     } catch (_) {}
@@ -268,21 +287,26 @@ class CopyTradingMasterCopiersController extends GetxController {
         params['plan_id'] = planFilter.value.toString();
       }
 
+      // Refresh plans alongside copiers so active_copiers_count stays current after pull-to-refresh / actions.
+      final plansRefresh = fetchPlans();
       final res = await ApiService.get(
         endpoint: '${ApiConstants.ajax}copytrading/master/copiers',
         queryParameters: params,
       );
+      await plansRefresh;
 
       if (!res.success || res.data == null) {
         copiers.clear();
-        errorMessage.value = res.message ?? 'Failed to load copiers';
+      errorMessage.value =
+          res.message ?? TranslationUtils.tr('copy_trading_failed_to_load_copiers');
         return;
       }
 
       final body = res.data?['data'];
       if (body is! Map) {
         copiers.clear();
-        errorMessage.value = 'Invalid response format';
+      errorMessage.value =
+          TranslationUtils.tr('copy_trading_invalid_response_format');
         return;
       }
 
@@ -307,7 +331,8 @@ class CopyTradingMasterCopiersController extends GetxController {
       }
     } catch (e) {
       copiers.clear();
-      errorMessage.value = 'Load error: $e';
+      errorMessage.value =
+          '${TranslationUtils.tr('copy_trading_load_error')}: $e';
     } finally {
       if (showLoading) isLoading.value = false;
     }
@@ -406,7 +431,9 @@ class CopyTradingMasterCopiersController extends GetxController {
       if (res.success) await load(showLoading: false);
       return res;
     } catch (e) {
-      return ApiResponse.error('Pause error: $e');
+      return ApiResponse.error(
+        '${TranslationUtils.tr('copy_trading_pause_error')}: $e',
+      );
     } finally {
       actionLoading.value = false;
     }
@@ -422,7 +449,9 @@ class CopyTradingMasterCopiersController extends GetxController {
       if (res.success) await load(showLoading: false);
       return res;
     } catch (e) {
-      return ApiResponse.error('Resume error: $e');
+      return ApiResponse.error(
+        '${TranslationUtils.tr('copy_trading_resume_error')}: $e',
+      );
     } finally {
       actionLoading.value = false;
     }
@@ -438,7 +467,9 @@ class CopyTradingMasterCopiersController extends GetxController {
       if (res.success) await load(showLoading: false);
       return res;
     } catch (e) {
-      return ApiResponse.error('Stop error: $e');
+      return ApiResponse.error(
+        '${TranslationUtils.tr('copy_trading_stop_error')}: $e',
+      );
     } finally {
       actionLoading.value = false;
     }
@@ -454,7 +485,9 @@ class CopyTradingMasterCopiersController extends GetxController {
       if (res.success) await load(showLoading: false);
       return res;
     } catch (e) {
-      return ApiResponse.error('Add capital error: $e');
+      return ApiResponse.error(
+        '${TranslationUtils.tr('copy_trading_add_capital_error')}: $e',
+      );
     } finally {
       actionLoading.value = false;
     }

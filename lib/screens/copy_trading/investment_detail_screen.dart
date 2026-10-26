@@ -15,6 +15,7 @@ import 'package:crm_app/controllers/copy_trading/copy_trading_copier_subscriptio
         CopyTradingCopierSubscriptionsController;
 import 'package:crm_app/widgets/custom_toast.dart';
 import 'package:crm_app/screens/copy_trading/components/edit_subscription_sheet.dart';
+import 'package:crm_app/services/language_service.dart';
 
 // ─── Screen ───────────────────────────────────────────────────────
 class InvestmentDetailScreen extends StatefulWidget {
@@ -90,7 +91,8 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
         });
       } else {
         setState(() {
-          _detailError = response.message ?? 'Failed to load details';
+          _detailError = response.message ??
+              TranslationUtils.tr('investment_detail_failed_to_load_details');
         });
       }
     } catch (e) {
@@ -136,7 +138,8 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
         }
       } else {
         setState(() {
-          _tradesError = response.message ?? 'Failed to load trades';
+          _tradesError = response.message ??
+              TranslationUtils.tr('investment_detail_failed_to_load_trades');
         });
       }
     } catch (e) {
@@ -157,14 +160,15 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
     final res = await _subscriptionsCtrl.pause(widget.subscriptionId ?? 0);
     if (res.success) {
       CustomToastService.showSuccess(
-        title: 'Success',
-        message: 'Subscription paused',
+        title: TranslationUtils.tr('create_account_success'),
+        message: TranslationUtils.tr('investment_detail_subscription_paused'),
       );
       _fetchDetail();
     } else {
       CustomToastService.showError(
-        title: 'Error',
-        message: res.message ?? 'Failed to pause',
+        title: TranslationUtils.tr('close_position_error'),
+        message: res.message ??
+            TranslationUtils.tr('investment_detail_failed_to_pause'),
       );
     }
   }
@@ -173,14 +177,15 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
     final res = await _subscriptionsCtrl.resume(widget.subscriptionId ?? 0);
     if (res.success) {
       CustomToastService.showSuccess(
-        title: 'Success',
-        message: 'Subscription resumed',
+        title: TranslationUtils.tr('create_account_success'),
+        message: TranslationUtils.tr('investment_detail_subscription_resumed'),
       );
       _fetchDetail();
     } else {
       CustomToastService.showError(
-        title: 'Error',
-        message: res.message ?? 'Failed to resume',
+        title: TranslationUtils.tr('close_position_error'),
+        message: res.message ??
+            TranslationUtils.tr('investment_detail_failed_to_resume'),
       );
     }
   }
@@ -190,19 +195,23 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
       context: context,
       builder:
           (ctx) => AlertDialog(
-            title: const Text('Stop investment?'),
-            content: const Text(
-              'This is permanent. You\'ll need to re-subscribe.',
+            title: Text(
+              TranslationUtils.tr('investment_detail_stop_investment'),
+            ),
+            content: Text(
+              TranslationUtils.tr('investment_detail_this_is_permanent'),
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(false),
-                child: const Text('Cancel'),
+                child: Text(
+                  TranslationUtils.tr('account_management_cancel'),
+                ),
               ),
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(true),
                 style: TextButton.styleFrom(foregroundColor: AppColors.error),
-                child: const Text('Stop'),
+                child: Text(TranslationUtils.tr('investment_detail_stop')),
               ),
             ],
           ),
@@ -211,80 +220,38 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
     final res = await _subscriptionsCtrl.stop(widget.subscriptionId ?? 0);
     if (res.success) {
       CustomToastService.showSuccess(
-        title: 'Success',
-        message: 'Subscription stopped',
+        title: TranslationUtils.tr('create_account_success'),
+        message: TranslationUtils.tr('investment_detail_subscription_stopped'),
       );
       _fetchDetail();
     } else {
       CustomToastService.showError(
-        title: 'Error',
-        message: res.message ?? 'Failed to stop',
+        title: TranslationUtils.tr('close_position_error'),
+        message: res.message ??
+            TranslationUtils.tr('investment_detail_failed_to_stop'),
       );
     }
   }
-
-  void _showAddCapitalDialog() async {
-    final amountCtrl = TextEditingController();
-    final amount = await showDialog<num?>(
-      context: context,
-      builder:
-          (ctx) => AlertDialog(
-            title: const Text('Add capital'),
-            content: TextField(
-              controller: amountCtrl,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              decoration: const InputDecoration(hintText: 'Amount (USD)'),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(null),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () {
-                  final v = num.tryParse(amountCtrl.text.trim());
-                  if (v == null || v <= 0) return;
-                  Navigator.of(ctx).pop(v);
-                },
-                child: const Text('Add'),
-              ),
-            ],
-          ),
-    );
-    if (amount == null) return;
-    final res = await _subscriptionsCtrl.addCapital(
-      subscriptionId: widget.subscriptionId ?? 0,
-      amount: amount,
-    );
-    if (res.success) {
-      CustomToastService.showSuccess(
-        title: 'Success',
-        message: 'Capital added successfully',
-      );
-      _fetchDetail();
-    } else {
-      CustomToastService.showError(
-        title: 'Error',
-        message: res.message ?? 'Failed to add capital',
-      );
-    }
-  }
-
 
 
   String getCopyMethodDisplay(CopierSubscriptionItem? item) {
-    if (item == null) return 'Equal x1';
+    final equalX1 = TranslationUtils.tr('subscription_setup_screen_equal_x1');
+    if (item == null) return equalX1;
     final method = item.copyMethod.toLowerCase();
     if (method == 'multiplier') {
-      return 'Multiplier: x${item.lotMultiplier.toStringAsFixed(2)}';
+      return TranslationUtils.trArgs('investment_detail_multiplier_value', {
+        'value': item.lotMultiplier.toStringAsFixed(2),
+      });
     } else if (method == 'fixed') {
-      return 'Fixed Lot: ${item.fixedLotSize}';
+      return TranslationUtils.trArgs('investment_detail_fixed_lot_value', {
+        'value': '${item.fixedLotSize}',
+      });
     } else if (method == 'risk') {
-      return 'Risk: ${item.riskPercent}%';
+      return TranslationUtils.trArgs('investment_detail_risk_value', {
+        'value': item.riskPercent,
+      });
     }
-    return 'Equal x1';
+    return equalX1;
   }
 
   @override
@@ -305,7 +272,10 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
           ),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: Text('Your Investment', style: AppTextStyles.screenTitle),
+        title: Text(
+          TranslationUtils.tr('investment_detail_screen_your_investment'),
+          style: AppTextStyles.screenTitle,
+        ),
         centerTitle: true,
       ),
       body: Column(
@@ -333,14 +303,14 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
             : widget.equity;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      padding: EdgeInsets.symmetric(horizontal: 16.0),
       child: Card(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10.r),
         ),
         elevation: 0.8,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14),
+          padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 14),
           child: Row(
             children: [
               // Avatar
@@ -351,17 +321,17 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
                 children: [
                   Text(
                     widget.traderName,
-                    style: TextStyle(
+                    style: AppTextStyles.bodyText.copyWith(
                       fontSize: 16.sp,
                       fontWeight: FontWeight.w600,
                       color: AppColors.textPrimary,
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.only(top: 4.0),
+                    padding: EdgeInsets.only(top: 4.0),
                     child: Text(
-                      'Equity',
-                      style: TextStyle(
+                      TranslationUtils.tr('general_equity'),
+                      style: AppTextStyles.bodyText.copyWith(
                         fontSize: 10.sp,
                         fontWeight: FontWeight.w400,
                         color: AppColors.textGrey,
@@ -373,7 +343,7 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
               const Spacer(),
               Text(
                 displayEquity,
-                style: TextStyle(
+                style: AppTextStyles.bodyText.copyWith(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.w700,
                   color: AppColors.primary,
@@ -395,21 +365,21 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
       child: Row(
         children: [
           _TabButton(
-            label: 'Summary',
+            label: TranslationUtils.tr('common_summary'),
             index: 0,
             selected: _selectedTab,
             onTap: _onTab,
           ),
           SizedBox(width: 8.w),
           _TabButton(
-            label: 'Trades',
+            label: TranslationUtils.tr('tw_trades'),
             index: 1,
             selected: _selectedTab,
             onTap: _onTab,
           ),
           SizedBox(width: 8.w),
           _TabButton(
-            label: 'Options',
+            label: TranslationUtils.tr('investment_detail_options'),
             index: 2,
             selected: _selectedTab,
             onTap: _onTab,
@@ -433,7 +403,7 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
       case 2:
         return _buildOptionsTab();
       default:
-        return const SizedBox();
+        return SizedBox();
     }
   }
 
@@ -520,7 +490,7 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
                     children: [
                       Text(
                         copyingMethodDisplay,
-                        style: TextStyle(
+                        style: AppTextStyles.bodyText.copyWith(
                           fontSize: 14.sp,
                           fontWeight: FontWeight.w400,
                           color: AppColors.textPrimary,
@@ -537,35 +507,35 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
                 SizedBox(height: 16.h),
 
                 _SummaryRow(
-                  'Profit',
+                  TranslationUtils.tr('general_profit'),
                   profitDisplay,
                   valueColor:
                       profitVal >= 0 ? AppColors.green : AppColors.error,
                 ),
                 _SummaryRow(
-                  'Float profit',
+                  TranslationUtils.tr('investment_tab_float_profit'),
                   floatProfitDisplay,
                   valueColor:
                       floatProfitVal >= 0 ? AppColors.green : AppColors.error,
                 ),
                 _SummaryRow(
-                  'Gain',
+                  TranslationUtils.tr('trader_card_gain'),
                   gainDisplay,
                   valueColor: gainVal >= 0 ? AppColors.green : AppColors.error,
                 ),
                 _SummaryRow(
-                  'Commission Paid',
+                  TranslationUtils.tr('investment_detail_commission_paid'),
                   commissionDisplay,
                   valueColor: AppColors.error,
                 ),
                 _SummaryRow(
-                  'Risk Score',
+                  TranslationUtils.tr('traders_tab_risk_score'),
                   riskDisplay,
                   valueColor: AppColors.green,
                 ),
 
                 Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16.0),
+                  padding: EdgeInsets.symmetric(vertical: 16.0),
                   child: DashedUnderline(
                     color: AppColors.dashLineColor,
                     dashWidth: 1,
@@ -575,8 +545,8 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
 
                 // ── Investment range slider bar ──
                 _buildBarSection(
-                  leftLabel: 'Profit',
-                  rightLabel: 'Loss',
+                  leftLabel: TranslationUtils.tr('general_profit'),
+                  rightLabel: TranslationUtils.tr('investment_detail_loss'),
                   value: profitVal > 0 ? 1.0 : 0.0,
                   leftColor: AppColors.green,
                   rightColor: AppColors.error,
@@ -587,22 +557,22 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
                 SizedBox(height: 8.h),
 
                 _SummaryRow(
-                  'Equity',
+                  TranslationUtils.tr('general_equity'),
                   '\$${equityVal.toStringAsFixed(2)}',
                   valueColor: AppColors.icongrey,
                 ),
                 _SummaryRow(
-                  'Balance',
+                  TranslationUtils.tr('general_balance'),
                   '\$${balanceVal.toStringAsFixed(2)}',
                   valueColor: AppColors.icongrey,
                 ),
                 _SummaryRow(
-                  'Server Type',
+                  TranslationUtils.tr('investment_detail_server_type'),
                   leverageDisplay,
                   valueColor: AppColors.icongrey,
                 ),
                 _SummaryRow(
-                  'Daily Avg P&L',
+                  TranslationUtils.tr('investment_detail_daily_avg_pnl'),
                   item != null
                       ? '\$${(item.totalPnl / 30.0).toStringAsFixed(2)}'
                       : '\$0.00',
@@ -610,8 +580,10 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
                       profitVal >= 0 ? AppColors.green : AppColors.error,
                 ),
                 _SummaryRow(
-                  'Status',
-                  item != null ? item.status.toUpperCase() : 'UNKNOWN',
+                  TranslationUtils.tr('common_status'),
+                  item != null
+                      ? item.status.toUpperCase()
+                      : TranslationUtils.tr('investment_detail_unknown'),
                   valueColor:
                       item != null && item.status.toLowerCase() == 'active'
                           ? AppColors.green
@@ -651,8 +623,8 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Quick Actions',
-              style: TextStyle(
+              TranslationUtils.tr('investment_detail_quick_actions'),
+              style: AppTextStyles.bodyText.copyWith(
                 fontSize: 14.sp,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary,
@@ -665,8 +637,8 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
                   Expanded(
                     child: ElevatedButton.icon(
                       onPressed: _onPauseTap,
-                      icon: const Icon(Icons.pause, color: Colors.white),
-                      label: const Text('Pause'),
+                      icon: Icon(Icons.pause, color: Colors.white),
+                      label: Text(TranslationUtils.tr('my_plans_tab_pause')),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.warning,
                         foregroundColor: Colors.white,
@@ -681,8 +653,8 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
                   Expanded(
                     child: ElevatedButton.icon(
                       onPressed: _onResumeTap,
-                      icon: const Icon(Icons.play_arrow, color: Colors.white),
-                      label: const Text('Resume'),
+                      icon: Icon(Icons.play_arrow, color: Colors.white),
+                      label: Text(TranslationUtils.tr('my_plans_tab_resume')),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.green,
                         foregroundColor: Colors.white,
@@ -698,8 +670,8 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
                   Expanded(
                     child: ElevatedButton.icon(
                       onPressed: _onStopTap,
-                      icon: const Icon(Icons.stop, color: Colors.white),
-                      label: const Text('Stop'),
+                      icon: Icon(Icons.stop, color: Colors.white),
+                      label: Text(TranslationUtils.tr('investment_detail_stop')),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.error,
                         foregroundColor: Colors.white,
@@ -720,8 +692,11 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
                       ),
                       alignment: Alignment.center,
                       child: Text(
-                        'No Actions Available (${status.toUpperCase()})',
-                        style: TextStyle(
+                        TranslationUtils.trArgs(
+                          'investment_detail_no_actions_available',
+                          {'status': status.toUpperCase()},
+                        ),
+                        style: AppTextStyles.bodyText.copyWith(
                           color: AppColors.textGrey,
                           fontWeight: FontWeight.w500,
                           fontSize: 12.sp,
@@ -751,7 +726,7 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
           children: [
             Text(
               leftLabel,
-              style: TextStyle(
+              style: AppTextStyles.bodyText.copyWith(
                 fontSize: 14.sp,
                 color: leftColor,
                 fontWeight: FontWeight.w400,
@@ -759,11 +734,11 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
             ),
             Text(
               '—',
-              style: TextStyle(fontSize: 13.sp, color: AppColors.textGrey),
+              style: AppTextStyles.bodyText.copyWith(fontSize: 13.sp, color: AppColors.textGrey),
             ),
             Text(
               rightLabel,
-              style: TextStyle(
+              style: AppTextStyles.bodyText.copyWith(
                 fontSize: 14.sp,
                 color: rightColor,
                 fontWeight: FontWeight.w400,
@@ -814,7 +789,7 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
   // ─────────────────────────────────────────────────────────────────
   Widget _buildTradesTab() {
     if (_isLoadingTrades && _trades.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
+      return Center(child: CircularProgressIndicator());
     }
     if (_tradesError.isNotEmpty && _trades.isEmpty) {
       return Center(
@@ -822,7 +797,7 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
           padding: EdgeInsets.all(16.w),
           child: Text(
             _tradesError,
-            style: TextStyle(color: AppColors.error, fontSize: 14.sp),
+            style: AppTextStyles.bodyText.copyWith(color: AppColors.error, fontSize: 14.sp),
             textAlign: TextAlign.center,
           ),
         ),
@@ -831,8 +806,8 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
     if (_trades.isEmpty) {
       return Center(
         child: Text(
-          'No trade history found.',
-          style: TextStyle(color: AppColors.textGrey, fontSize: 14.sp),
+          TranslationUtils.tr('investment_detail_no_trade_history'),
+          style: AppTextStyles.bodyText.copyWith(color: AppColors.textGrey, fontSize: 14.sp),
         ),
       );
     }
@@ -855,26 +830,25 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
         child: Column(
           children: [
             _OptionItem(
-              icon: Icons.add_circle_outline,
-              label: 'Add Investment',
-              onTap: _showAddCapitalDialog,
-            ),
-            _divider(),
-            _OptionItem(
               icon: Icons.remove_circle_outline,
-              label: 'Reduce Investment',
+              label: TranslationUtils.tr(
+                'reduce_investment_screen_reduce_investment',
+              ),
               onTap: () {
                 CustomToastService.showError(
-                  title: 'Not Supported',
-                  message:
-                      'Reducing investment amount is not supported by the copy trading backend directly. To withdraw, please Stop Copying or adjust settings.',
+                  title: TranslationUtils.tr('investment_detail_not_supported'),
+                  message: TranslationUtils.tr(
+                    'investment_detail_reducing_not_supported',
+                  ),
                 );
               },
             ),
             _divider(),
             _OptionItem(
               icon: Icons.settings_outlined,
-              label: 'Change Copy Proportion',
+              label: TranslationUtils.tr(
+                'change_proportion_screen_change_copy_proportion',
+              ),
               onTap: () async {
                 final sub = subscriptionItem;
                 if (sub == null) return;
@@ -901,13 +875,13 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
             _divider(),
             _OptionItem(
               icon: Icons.cancel_outlined,
-              label: 'Stop Copying',
+              label: TranslationUtils.tr('investment_detail_stop_copying'),
               onTap: () => _showStopCopyingDialog(),
             ),
             _divider(),
             _OptionItem(
               icon: Icons.grid_view_outlined,
-              label: "View Master's Performance",
+              label: TranslationUtils.tr('investment_detail_view_master_performance'),
               onTap:
                   () => Get.offAll(
                     () => const CopyTradingMainScreen(initialIndex: 1),
@@ -916,7 +890,9 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
             _divider(),
             _OptionItem(
               icon: Icons.notifications_outlined,
-              label: 'Receive Trading Notifications',
+              label: TranslationUtils.tr(
+                'investment_detail_receive_trading_notifications',
+              ),
               onTap: () {},
               isSwitch: true,
               switchWidget: SizedBox(
@@ -968,7 +944,7 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
       context: context,
       builder:
           (context) => AlertDialog(
-            insetPadding: const EdgeInsets.symmetric(
+            insetPadding: EdgeInsets.symmetric(
               horizontal: 16.0,
             ), // ← main change for width
             shape: RoundedRectangleBorder(
@@ -988,8 +964,8 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
                 ),
                 SizedBox(height: 20.h), // slightly more breathing room
                 Text(
-                  'Are you Sure?',
-                  style: TextStyle(
+                  TranslationUtils.tr('investment_detail_are_you_sure'),
+                  style: AppTextStyles.bodyText.copyWith(
                     fontSize: 18.sp, // optional: little bigger title
                     fontWeight: FontWeight.w600,
                     color: AppColors.textPrimary,
@@ -997,9 +973,9 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
                 ),
                 SizedBox(height: 16.h),
                 Text(
-                  'This investment has a bonus applied. It amounts \$23.50. If you stop copying, the bonus will be cancelled and you will not be able to reapply it.',
+                  TranslationUtils.tr('investment_detail_bonus_applied_warning'),
                   textAlign: TextAlign.center,
-                  style: TextStyle(
+                  style: AppTextStyles.bodyText.copyWith(
                     fontSize: 14.sp,
                     color: AppColors.textGrey,
                     fontWeight: FontWeight.w400,
@@ -1021,8 +997,8 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
                             ),
                           ),
                           child: Text(
-                            'Back',
-                            style: TextStyle(
+                            TranslationUtils.tr('investment_detail_back'),
+                            style: AppTextStyles.bodyText.copyWith(
                               color: AppColors.primary,
                               fontSize: 14.sp,
                               fontWeight: FontWeight.w600,
@@ -1043,15 +1019,23 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
                             );
                             if (res.success) {
                               CustomToastService.showSuccess(
-                                title: 'Success',
-                                message: 'Subscription stopped successfully',
+                                title: TranslationUtils.tr(
+                                  'create_account_success',
+                                ),
+                                message: TranslationUtils.tr(
+                                  'investment_detail_subscription_stopped_successfully',
+                                ),
                               );
                               _fetchDetail();
                             } else {
                               CustomToastService.showError(
-                                title: 'Error',
-                                message:
-                                    res.message ?? 'Failed to stop copying',
+                                title: TranslationUtils.tr(
+                                  'close_position_error',
+                                ),
+                                message: res.message ??
+                                    TranslationUtils.tr(
+                                      'investment_detail_failed_to_stop_copying',
+                                    ),
                               );
                             }
                           },
@@ -1063,8 +1047,8 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
                             ),
                           ),
                           child: Text(
-                            'Close and Stop',
-                            style: TextStyle(
+                            TranslationUtils.tr('investment_detail_close_and_stop'),
+                            style: AppTextStyles.bodyText.copyWith(
                               color: AppColors.whiteColor,
                               fontSize: 13.5.sp, // was 12.8 – little small
                               fontWeight: FontWeight.w600,
@@ -1113,7 +1097,7 @@ class _TabButton extends StatelessWidget {
           alignment: Alignment.center,
           child: Text(
             label,
-            style: TextStyle(
+            style: AppTextStyles.bodyText.copyWith(
               fontSize: 14.sp,
               fontWeight: FontWeight.w600,
               color: isSelected ? AppColors.whiteColor : AppColors.primary,
@@ -1159,7 +1143,7 @@ class _TradeExpandableCardState extends State<_TradeExpandableCard> {
           InkWell(
             onTap: () => setState(() => _expanded = !_expanded),
             child: Padding(
-              padding: const EdgeInsets.all(14.0),
+              padding: EdgeInsets.all(14.0),
               child: Column(
                 children: [
                   Row(
@@ -1171,7 +1155,7 @@ class _TradeExpandableCardState extends State<_TradeExpandableCard> {
                           Row(
                             children: [
                               Container(
-                                padding: const EdgeInsets.symmetric(
+                                padding: EdgeInsets.symmetric(
                                   horizontal: 6,
                                   vertical: 2,
                                 ),
@@ -1182,17 +1166,17 @@ class _TradeExpandableCardState extends State<_TradeExpandableCard> {
                                 ),
                                 child: Text(
                                   t.tradeType.toUpperCase(),
-                                  style: TextStyle(
+                                  style: AppTextStyles.bodyText.copyWith(
                                     color: AppColors.whiteColor,
                                     fontSize: 10,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 8),
+                              SizedBox(width: 8),
                               Text(
                                 t.copierVolume.toStringAsFixed(2),
-                                style: TextStyle(
+                                style: AppTextStyles.bodyText.copyWith(
                                   color: AppColors.icongrey,
                                   fontSize: 10,
                                   fontWeight: FontWeight.w400,
@@ -1200,10 +1184,10 @@ class _TradeExpandableCardState extends State<_TradeExpandableCard> {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 8),
+                          SizedBox(height: 8),
                           Text(
                             t.symbol,
-                            style: const TextStyle(
+                            style: AppTextStyles.bodyText.copyWith(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
                             ),
@@ -1219,20 +1203,20 @@ class _TradeExpandableCardState extends State<_TradeExpandableCard> {
                               SvgPicture.asset(
                                 'assets/svg/copy_trading/calendar.svg',
                               ),
-                              const SizedBox(width: 4),
+                              SizedBox(width: 4),
                               Text(
                                 t.status,
-                                style: TextStyle(
+                                style: AppTextStyles.bodyText.copyWith(
                                   color: AppColors.icongrey,
                                   fontSize: 12,
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 8),
+                          SizedBox(height: 8),
                           Text(
                             '\$${t.copierProfit.toStringAsFixed(2)}',
-                            style: TextStyle(
+                            style: AppTextStyles.bodyText.copyWith(
                               color:
                                   t.copierProfit >= 0
                                       ? AppColors.green
@@ -1243,7 +1227,7 @@ class _TradeExpandableCardState extends State<_TradeExpandableCard> {
                           ),
                         ],
                       ),
-                      const SizedBox(width: 16),
+                      SizedBox(width: 16),
                       Icon(
                         _expanded
                             ? Icons.keyboard_arrow_up
@@ -1262,7 +1246,7 @@ class _TradeExpandableCardState extends State<_TradeExpandableCard> {
 
           // ── Expanded details ──
           AnimatedCrossFade(
-            firstChild: const SizedBox(width: double.infinity),
+            firstChild: SizedBox(width: double.infinity),
             secondChild: _buildDetails(t),
             crossFadeState:
                 _expanded
@@ -1283,13 +1267,25 @@ class _TradeExpandableCardState extends State<_TradeExpandableCard> {
           padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
           child: Column(
             children: [
-              _DetailRow('Open time', _formatDateTime(t.openTime)),
-              _DetailRow('Close time', _formatDateTime(t.closeTime)),
-              _DetailRow('Open Price', t.openPrice.toString()),
-              _DetailRow('Close Price', t.closePrice.toString()),
-              _DetailRow('Order ID', '#${t.id}'),
               _DetailRow(
-                'Commission you paid',
+                TranslationUtils.tr('open_time'),
+                _formatDateTime(t.openTime),
+              ),
+              _DetailRow(
+                TranslationUtils.tr('pmam_investor_portal_screen_close_time'),
+                _formatDateTime(t.closeTime),
+              ),
+              _DetailRow(
+                TranslationUtils.tr('trading_order_open_price'),
+                t.openPrice.toString(),
+              ),
+              _DetailRow(
+                TranslationUtils.tr('pmam_investor_portal_screen_close_price'),
+                t.closePrice.toString(),
+              ),
+              _DetailRow(TranslationUtils.tr('clients_tab_order_id'), '#${t.id}'),
+              _DetailRow(
+                TranslationUtils.tr('clients_tab_commission_you_paid'),
                 '\$${t.commissionCharged.toStringAsFixed(2)}',
                 isLast: true,
               ),
@@ -1310,11 +1306,11 @@ class _TradeExpandableCardState extends State<_TradeExpandableCard> {
             children: [
               Text(
                 label,
-                style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey),
+                style: AppTextStyles.bodyText.copyWith(fontSize: 12.sp, color: AppColors.textGrey),
               ),
               Text(
                 value,
-                style: TextStyle(
+                style: AppTextStyles.bodyText.copyWith(
                   fontSize: 12.sp,
                   color: AppColors.textPrimary,
                   fontWeight: FontWeight.w500,
@@ -1358,7 +1354,7 @@ class _OptionItem extends StatelessWidget {
             Expanded(
               child: Text(
                 label,
-                style: TextStyle(
+                style: AppTextStyles.bodyText.copyWith(
                   fontSize: 14.sp,
                   fontWeight: FontWeight.w400,
                   color: AppColors.textPrimary,
@@ -1424,7 +1420,7 @@ class _SummaryRow extends StatelessWidget {
         children: [
           Text(
             label,
-            style: TextStyle(
+            style: AppTextStyles.bodyText.copyWith(
               fontSize: 14.sp,
               fontWeight: FontWeight.w400,
               color: AppColors.icongrey,
@@ -1439,7 +1435,7 @@ class _SummaryRow extends StatelessWidget {
           ),
           Text(
             value,
-            style: TextStyle(
+            style: AppTextStyles.bodyText.copyWith(
               fontSize: 14.sp,
               fontWeight: FontWeight.w400,
               color: valueColor,

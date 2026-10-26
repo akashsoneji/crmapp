@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import 'package:crm_app/constants/color.dart';
@@ -37,10 +36,11 @@ class _CopyTradingMainScreenState extends State<CopyTradingMainScreen> {
   @override
   void initState() {
     super.initState();
+    final initial = widget.initialIndex ??
+        ((Get.arguments is int) ? (Get.arguments as int) : 0);
     _hubController = Get.put(CopyTradingHubController());
-    _pageController = PageController(
-      initialPage: widget.initialIndex ?? 0,
-    );
+    _hubController.currentTabIndex.value = initial;
+    _pageController = PageController(initialPage: initial);
 
     // Tap on the bottom nav → controller updates → worker scrolls PageView.
     // The clamp upper bound is read LIVE on every event so the navigation
@@ -62,17 +62,13 @@ class _CopyTradingMainScreenState extends State<CopyTradingMainScreen> {
     // When the user's role flips from copier → master (or vice-versa) the
     // tab count changes. If the current index is now out-of-range, snap it
     // back so we never show an empty page.
-    _statusWorker = ever(
-      _hubController.masterStatus,
-      (_) {
-        final maxIndex = _maxIndexForCurrentRole;
-        final clamped =
-            _hubController.currentTabIndex.value.clamp(0, maxIndex);
-        if (clamped != _hubController.currentTabIndex.value) {
-          _hubController.currentTabIndex.value = clamped;
-        }
-      },
-    );
+    _statusWorker = ever(_hubController.masterStatus, (_) {
+      final maxIndex = _maxIndexForCurrentRole;
+      final clamped = _hubController.currentTabIndex.value.clamp(0, maxIndex);
+      if (clamped != _hubController.currentTabIndex.value) {
+        _hubController.currentTabIndex.value = clamped;
+      }
+    });
   }
 
   @override
@@ -100,48 +96,51 @@ class _CopyTradingMainScreenState extends State<CopyTradingMainScreen> {
           CopyTradingMasterApplicationStatus.approved;
 
       final maxIndex = isMaster ? 4 : 2;
-      final activeIndex = _hubController.currentTabIndex.value.clamp(0, maxIndex);
+      final activeIndex = _hubController.currentTabIndex.value.clamp(
+        0,
+        maxIndex,
+      );
 
       final List<Widget> tabs =
           isMaster
               ? [
-                  KeepAliveWrapper(
-                    key: const ValueKey('master_dashboard'),
-                    child: MasterDashboardScreen(
-                      masterCode: _hubController.masterCode.value,
-                    ),
+                KeepAliveWrapper(
+                  key: const ValueKey('master_dashboard'),
+                  child: MasterDashboardScreen(
+                    masterCode: _hubController.masterCode.value,
                   ),
-                  const KeepAliveWrapper(
-                    key: ValueKey('my_plans'),
-                    child: MyPlansTab(),
-                  ),
-                  const KeepAliveWrapper(
-                    key: ValueKey('my_copies'),
-                    child: MyCopiesScreen(),
-                  ),
-                  const KeepAliveWrapper(
-                    key: ValueKey('explore_masters_master'),
-                    child: ExploreMastersScreen(),
-                  ),
-                  const KeepAliveWrapper(
-                    key: ValueKey('my_investments_master'),
-                    child: MyInvestmentsScreen(),
-                  ),
-                ]
+                ),
+                const KeepAliveWrapper(
+                  key: ValueKey('my_plans'),
+                  child: MyPlansTab(),
+                ),
+                const KeepAliveWrapper(
+                  key: ValueKey('my_copies'),
+                  child: MyCopiesScreen(),
+                ),
+                const KeepAliveWrapper(
+                  key: ValueKey('explore_masters_master'),
+                  child: ExploreMastersScreen(),
+                ),
+                const KeepAliveWrapper(
+                  key: ValueKey('my_investments_master'),
+                  child: MyInvestmentsScreen(),
+                ),
+              ]
               : [
-                  const KeepAliveWrapper(
-                    key: ValueKey('become_master'),
-                    child: BecomeMasterTab(),
-                  ),
-                  const KeepAliveWrapper(
-                    key: ValueKey('explore_masters_copier'),
-                    child: ExploreMastersScreen(),
-                  ),
-                  const KeepAliveWrapper(
-                    key: ValueKey('my_investments_copier'),
-                    child: MyInvestmentsScreen(),
-                  ),
-                ];
+                const KeepAliveWrapper(
+                  key: ValueKey('become_master'),
+                  child: BecomeMasterTab(),
+                ),
+                const KeepAliveWrapper(
+                  key: ValueKey('explore_masters_copier'),
+                  child: ExploreMastersScreen(),
+                ),
+                const KeepAliveWrapper(
+                  key: ValueKey('my_investments_copier'),
+                  child: MyInvestmentsScreen(),
+                ),
+              ];
 
       return Scaffold(
         backgroundColor: AppColors.tradeBackgroundCenterColor,
@@ -188,4 +187,3 @@ class _KeepAliveWrapperState extends State<KeepAliveWrapper>
   @override
   bool get wantKeepAlive => true;
 }
-
