@@ -52,6 +52,14 @@ class AuthController extends GetxController {
     }
   }
 
+  /// Called by screens that write a saved session back to storage and jump
+  /// straight to TRADING (the "back to previous session" path). Without the
+  /// flag the stream socket keeps waiting for login and no prices arrive.
+  void markSessionRestored() {
+    _isAuthenticated.value = true;
+    _rebindStreamSocketIfNeeded();
+  }
+
   final AuthService _authService = Get.find<AuthService>();
   GoogleOtpService get _googleOtpService => Get.find<GoogleOtpService>();
 
@@ -317,6 +325,10 @@ class AuthController extends GetxController {
 
         _loginResponse.value = response;
         _userData.value = response.data.user;
+        // StreamWebSocketService._bindAccountStream() waits on this flag; it
+        // was never set on email login, so the socket only opened after an
+        // app restart re-read the login status from storage.
+        _isAuthenticated.value = true;
 
         // Apply staged Tenax broker branding (if any) BEFORE the controller
         // re-init / persistTenaxUserBrokerProfile so the new (email, broker)

@@ -322,6 +322,7 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
     if (FlavorConfig.usesSingleStreamSocket) {
       _bindTradeSymbolSubscriptions();
       _bindSymbolUnavailableListener();
+      _bindStreamAuthResubscribe();
     }
 
     // ✅ FIX: DON'T initialize WebSocket automatically - let screen decide when to start
@@ -435,6 +436,28 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
     }
   }
 
+  Worker? _streamAuthWorker;
+
+  /// After login the account worker, the watchlist load and the socket auth
+  /// race each other, so favorites could miss the authenticate frame and never
+  /// be subscribed (hot restart worked because the order differs). Re-send
+  /// them every time the `/ws/stream` socket authenticates.
+  void _bindStreamAuthResubscribe() {
+    if (!Get.isRegistered<StreamWebSocketService>()) return;
+    final stream = Get.find<StreamWebSocketService>();
+    _streamAuthWorker?.dispose();
+    _streamAuthWorker = ever<bool>(stream.isAuthenticated, (authenticated) {
+      if (!authenticated || isClosed) return;
+      print(
+        'Instruments: stream authenticated, resubscribing ${_normalizedFavorites().length} favorites',
+      );
+      unawaited(_subscribeFavoritesForActiveAccount());
+    });
+    if (stream.isAuthenticated.value) {
+      unawaited(_subscribeFavoritesForActiveAccount());
+    }
+  }
+
   void _bindMarketWatchV2DecodedListener() {
     if (_marketWatchV2ListenerBound) return;
     if (!Get.isRegistered<MarketWatchV2Service>()) return;
@@ -480,6 +503,12 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
   /// account actually offers (favorites ∩ its REST catalogue).
   Future<void> _hydrateAndSubscribeForAccount(MT5Account account) async {
     _currentAccountNumber = account.metaAccountNumber;
+    // Fresh install: onInit ran before login (no token yet), so the server
+    // watchlist was never fetched and there were no favorites to subscribe.
+    if (!_marketWatchLoaded) {
+      final loaded = await _loadMarketWatchFromServer();
+      if (loaded && !isClosed) _updateFilteredInstruments();
+    }
     await hydrateFavoritesFromRest();
 
     // A newer switch superseded this one while REST was in flight.
@@ -1514,6 +1543,8 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
     _marketWatchV2Sub?.cancel();
     _marketWatchV2Sub = null;
     _marketWatchV2ListenerBound = false;
+    _streamAuthWorker?.dispose();
+    _streamAuthWorker = null;
     _streamControlSub?.cancel();
     _streamControlSub = null;
     for (final worker in _tradeSymbolWorkers) {
@@ -1868,6 +1899,12 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
       if (!loaded || isClosed) return;
       _updateFilteredInstruments();
       await hydrateFavoritesFromRest();
+      // On a fresh login the local favorites are empty when the screen and
+      // account bind subscribe, so nothing reaches /ws/stream. Subscribe the
+      // server watchlist now that it has landed.
+      if (FlavorConfig.usesSingleStreamSocket && !isClosed) {
+        await _subscribeFavoritesForActiveAccount();
+      }
     } catch (e) {
       print('Initial marketwatch load failed: $e');
     }
@@ -2187,6 +2224,7 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
     }
 
     _isClearingData = true; // Set flag to prevent duplicate clearing and block data processing
+
     
     print(
       '═══════════════════════════════════════════════════════════',

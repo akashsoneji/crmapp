@@ -5,6 +5,7 @@ import '../../widgets/custom_toast.dart';
 import '../../utils/precision_helper.dart';
 import '../../controllers/app_notification_controller.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/screens/home/more/finance/deposit_screen.dart';
 
@@ -262,16 +263,30 @@ class WalletController extends GetxController {
   var ibmWallet = Rxn<IbmWallet>();
 
   // History & pagination state
+  static const int _historyPerPage = 10;
+  int _historyRequestId = 0;
   var isLoadingMore = false.obs;
   var hasMore = true.obs;
   var currentPage = 1.obs;
   var lastPage = 1.obs;
-  var totalItems = 0.obs;
-  var historyTransactions = <Data>[].obs;
   var isHistoryLoading = false.obs;
 
-  var filterType = 'All Types'.obs;
-  var filterStatus = 'All Status'.obs;
+  final completedTransactions = <WalletHistoryEntry>[].obs;
+  final pendingTransactions = <WalletHistoryEntry>[].obs;
+  final rejectedTransactions = <WalletHistoryEntry>[].obs;
+  final selectedHistoryTab = WalletHistoryTab.completed.obs;
+
+  RxList<WalletHistoryEntry> get visibleHistoryTransactions {
+    switch (selectedHistoryTab.value) {
+      case WalletHistoryTab.completed:
+        return completedTransactions;
+      case WalletHistoryTab.pending:
+        return pendingTransactions;
+      case WalletHistoryTab.rejected:
+        return rejectedTransactions;
+    }
+  }
+
   var filterDateFrom = ''.obs;
   var filterDateTo = ''.obs;
 
@@ -570,6 +585,7 @@ class WalletController extends GetxController {
   }
 
   Future<void> fetchWalletData() async {
+    await _waitForBuildToFinish();
     try {
       isLoading.value = true;
 
@@ -630,84 +646,120 @@ class WalletController extends GetxController {
   }
 
   Future<void> fetchWalletHistory({int page = 1}) async {
+    await _waitForBuildToFinish();
+
+    // Only the newest request may write state; a slow page-1 response must not
+    // overwrite results fetched after a filter change.
+    final requestId = ++_historyRequestId;
+    if (page == 1) {
+      isHistoryLoading.value = true;
+      isLoadingMore.value = false;
+      hasMore.value = true;
+      _clearHistoryLists();
+    } else {
+      isLoadingMore.value = true;
+    }
+
+    var loaded = false;
     try {
-      print('DEBUG: fetchWalletHistory page = $page');
-      if (page == 1) {
-        isHistoryLoading.value = true;
-        hasMore.value = true;
-        historyTransactions.clear();
-      } else {
-        isLoadingMore.value = true;
-      }
-
       final token = await SecureStorageService.getAuthToken();
-      
-      final typeQuery = filterType.value != 'All Types' ? filterType.value : '';
-      final statusQuery = filterStatus.value != 'All Status' ? filterStatus.value : '';
-      final fromQuery = filterDateFrom.value;
-      final toQuery = filterDateTo.value;
-
-      print('DEBUG: calling getTransactions with type: $typeQuery, status: $statusQuery');
-      final Map<String, dynamic> queryParams = {
-        'page': page.toString(),
-        'perPage': '10',
-        'transactionType': typeQuery,
-        'dateFrom': fromQuery,
-        'dateTo': toQuery,
-        'type': typeQuery,
-        'status': statusQuery,
-        '_t': DateTime.now().millisecondsSinceEpoch.toString(),
-      };
-
       final response = await ApiService.get(
-        endpoint: ApiConstants.getTransactions,
-        queryParameters: queryParams,
+        endpoint: ApiConstants.getFinanceActivity,
+        // Uri.queryParameters only accepts String values.
+        queryParameters: {
+          'page': page.toString(),
+          'perPage': _historyPerPage.toString(),
+          'transactionType': '',
+          'includeTraderTransfers': '1',
+          'type': '',
+          'status': '',
+          'dateRange': _historyDateRangeParam(),
+          '_t': DateTime.now().millisecondsSinceEpoch.toString(),
+        },
         token: token,
       );
+      if (requestId != _historyRequestId) return;
 
-      print('DEBUG: getTransactions response success = ${response.success}');
-      if (response.success && response.data != null) {
-        final data = response.data;
-        print('DEBUG: getTransactions data keys = ${data is Map ? data.keys : "Not a Map"}');
-        List<Data> newItems = [];
-        if (data['data'] != null) {
-          final List transactionsList = data['data'];
-          print('DEBUG: transactionsList length = ${transactionsList.length}');
-          newItems = transactionsList.map((e) => Data.fromJson(e)).toList();
-        }
+      final body = response.data;
+      if (!response.success || body is! Map) {
+        if (page == 1) hasMore.value = false;
+        return;
+      }
 
-        if (data['pagination'] != null) {
-          currentPage.value = data['pagination']['current_page'] ?? page;
-          lastPage.value = data['pagination']['last_page'] ?? 1;
-          totalItems.value = data['pagination']['total'] ?? 0;
-          print('DEBUG: pagination: current = ${currentPage.value}, last = ${lastPage.value}');
-        }
+      final rows = body['data'] is List ? body['data'] as List : const [];
+      final pagination =
+          body['pagination'] is Map ? body['pagination'] as Map : const {};
+      currentPage.value = _toInt(pagination['current_page'], fallback: page);
+      lastPage.value =
+          _toInt(pagination['last_page'], fallback: currentPage.value);
 
-        if (page == 1) {
-          historyTransactions.assignAll(newItems);
-        } else {
-          historyTransactions.addAll(newItems);
-        }
-
-        if (newItems.isEmpty || currentPage.value >= lastPage.value) {
-          hasMore.value = false;
-        }
-      } else {
-        print('DEBUG: getTransactions failed with message: ${response.message}');
-        if (page == 1) {
-          hasMore.value = false;
+      for (final row in rows.whereType<Map>()) {
+        final entry = WalletHistoryEntry.fromFinanceActivity(
+          Map<String, dynamic>.from(row),
+        );
+        switch (entry.tab) {
+          case WalletHistoryTab.completed:
+            completedTransactions.add(entry);
+            break;
+          case WalletHistoryTab.pending:
+            pendingTransactions.add(entry);
+            break;
+          case WalletHistoryTab.rejected:
+            rejectedTransactions.add(entry);
+            break;
         }
       }
-    } catch (e, stack) {
-      print("Error fetching wallet history: $e");
-      print(stack);
-      if (page == 1) {
-        hasMore.value = false;
-      }
+
+      hasMore.value = rows.isNotEmpty && currentPage.value < lastPage.value;
+      loaded = true;
+    } catch (e) {
+      if (requestId != _historyRequestId) return;
+      debugPrint('Error fetching wallet history: $e');
+      if (page == 1) hasMore.value = false;
     } finally {
-      isHistoryLoading.value = false;
-      isLoadingMore.value = false;
+      if (requestId == _historyRequestId) {
+        isHistoryLoading.value = false;
+        isLoadingMore.value = false;
+      }
     }
+
+    if (loaded) _fillVisibleTab();
+  }
+
+  /// The finance-activity API filters on `dateRange=YYYY-MM-DD|YYYY-MM-DD`
+  /// (same as web); it ignores separate from/to params. Empty = no filter.
+  String _historyDateRangeParam() {
+    final from = filterDateFrom.value;
+    final to = filterDateTo.value;
+    if (from.isEmpty && to.isEmpty) return '';
+    // Match the date picker bounds (2020-01-01 .. today) for an open side.
+    final today = DateTime.now().toIso8601String().substring(0, 10);
+    return '${from.isEmpty ? '2020-01-01' : from}|${to.isEmpty ? today : to}';
+  }
+
+  int _toInt(dynamic value, {required int fallback}) {
+    if (value is int) return value;
+    return int.tryParse(value?.toString() ?? '') ?? fallback;
+  }
+
+  void _clearHistoryLists() {
+    completedTransactions.clear();
+    pendingTransactions.clear();
+    rejectedTransactions.clear();
+  }
+
+  /// Rows are split into tabs client-side, so a page can add nothing to the
+  /// visible tab. Keep paging until it has a screenful or the server runs out,
+  /// otherwise the list is too short to scroll and never triggers load-more.
+  void _fillVisibleTab() {
+    if (visibleHistoryTransactions.length >= _historyPerPage) return;
+    loadMoreTransactions();
+  }
+
+  void selectHistoryTab(WalletHistoryTab tab) {
+    if (selectedHistoryTab.value == tab) return;
+    selectedHistoryTab.value = tab;
+    _fillVisibleTab();
   }
 
   void loadMoreTransactions() {
@@ -722,11 +774,20 @@ class WalletController extends GetxController {
   }
 
   void clearFilters() {
-    filterType.value = 'All Types';
-    filterStatus.value = 'All Status';
     filterDateFrom.value = '';
     filterDateTo.value = '';
     fetchWalletHistory(page: 1);
+  }
+
+  /// Rx writes during the build phase throw "setState() called during build";
+  /// callers such as initState/onReady can land there.
+  Future<void> _waitForBuildToFinish() async {
+    final phase = SchedulerBinding.instance.schedulerPhase;
+    if (phase == SchedulerPhase.idle ||
+        phase == SchedulerPhase.postFrameCallbacks) {
+      return;
+    }
+    await SchedulerBinding.instance.endOfFrame;
   }
 
   void clearAllWalletData() {
@@ -757,5 +818,79 @@ class WalletController extends GetxController {
     balance.refresh();
 
     print('WalletController: All wallet data cleared successfully');
+  }
+}
+
+enum WalletHistoryTab { completed, pending, rejected }
+
+class WalletHistoryEntry {
+  final String id;
+  final String reference;
+  final double amount;
+  final String status;
+  final String type;
+  final String paymentMethod;
+  final String account;
+  final String reason;
+  final DateTime? createdAt;
+  final String? direction;
+
+  const WalletHistoryEntry({
+    required this.id,
+    required this.reference,
+    required this.amount,
+    required this.status,
+    required this.type,
+    required this.paymentMethod,
+    required this.account,
+    required this.reason,
+    required this.createdAt,
+    this.direction,
+  });
+
+  factory WalletHistoryEntry.fromFinanceActivity(Map<String, dynamic> json) {
+    String pick(List<String> keys) {
+      for (final key in keys) {
+        final value = json[key]?.toString().trim() ?? '';
+        if (value.isNotEmpty && value != 'null') return value;
+      }
+      return '';
+    }
+
+    final rawDate = pick(['created_at_iso', 'created_at', 'date']);
+    // API sends a formatted display string like "$1,000.00"; keep only the numeric part.
+    final rawAmount = pick(['amount']).replaceAll(RegExp(r'[^0-9.\-]'), '');
+    final direction = pick(['direction']);
+
+    return WalletHistoryEntry(
+      id: pick(['id']),
+      reference: pick(['reference_number', 'transaction_id', 'reference']),
+      amount: double.tryParse(rawAmount) ?? 0.0,
+      status: pick(['status']),
+      type: pick(['transaction_type', 'type']),
+      paymentMethod: pick(['payment_method', 'paymentMethod', 'method']),
+      account: pick(['mt5_account_id', 'account_number', 'account']),
+      reason: pick(['reason', 'rejection_reason', 'remark', 'comment']),
+      createdAt: DateTime.tryParse(rawDate)?.toLocal(),
+      direction: direction.isEmpty ? null : direction.toLowerCase(),
+    );
+  }
+
+  bool get isCredit {
+    if (direction == 'in' || direction == 'credit') return true;
+    if (direction == 'out' || direction == 'debit') return false;
+    if (amount < 0) return false;
+    final normalizedType = type.toLowerCase();
+    const debitMarkers = ['withdraw', 'transfer_out', 'debit', 'out'];
+    return !debitMarkers.any(normalizedType.contains);
+  }
+
+  WalletHistoryTab get tab {
+    final normalizedStatus = status.toLowerCase();
+    const completed = ['approved', 'completed', 'complete', 'success', 'successful', 'done', 'paid'];
+    const rejected = ['rejected', 'failed', 'cancelled', 'canceled', 'declined', 'expired'];
+    if (completed.contains(normalizedStatus)) return WalletHistoryTab.completed;
+    if (rejected.contains(normalizedStatus)) return WalletHistoryTab.rejected;
+    return WalletHistoryTab.pending;
   }
 }

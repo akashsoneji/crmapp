@@ -167,6 +167,7 @@ class _LoginScreenState extends State<LoginScreen> {
         } catch (_) {}
       }
       await SecureStorageService.saveLoginStatus(true);
+      Get.find<AuthController>().markSessionRestored();
 
       // 3) Clear the staged broker so a future broker pick doesn't see
       //    stale in-memory staging.

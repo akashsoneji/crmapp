@@ -116,6 +116,7 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
         } catch (_) {}
       }
       await SecureStorageService.saveLoginStatus(true);
+      Get.find<AuthController>().markSessionRestored();
 
       // 3) Clear the staged broker.
       try {

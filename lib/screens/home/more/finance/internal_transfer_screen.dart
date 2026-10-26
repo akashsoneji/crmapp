@@ -35,7 +35,11 @@ String _fmtMt5(dynamic balanceLike, String? metaAccountNumber) {
 }
 
 class InternalTransferScreen extends StatefulWidget {
-  const InternalTransferScreen({Key? key}) : super(key: key);
+  const InternalTransferScreen({Key? key, this.preselectWallet = false})
+      : super(key: key);
+
+  /// When opened from the Wallet screen, start with the wallet as source.
+  final bool preselectWallet;
 
   @override
   State<InternalTransferScreen> createState() => _InternalTransferScreenState();
@@ -103,7 +107,40 @@ class _InternalTransferScreenState extends State<InternalTransferScreen> {
     }
 
     if (!mounted) return;
-    _applyDefaultAccountSelections();
+    if (widget.preselectWallet) {
+      _preselectWalletAsSource();
+    } else {
+      _applyDefaultAccountSelections();
+    }
+  }
+
+  void _preselectWalletAsSource() {
+    final wallet = controller.wallet.value;
+    if (wallet == null) {
+      _applyDefaultAccountSelections();
+      return;
+    }
+    setState(() {
+      _selectedTransferFrom = wallet.walletId;
+      _selectedTransferFromType = 'wallet';
+      _selectedTransferFromAccount = wallet;
+      _transferFromController.text =
+          '${wallet.walletId} - \$ ${wallet.walletBalance}';
+    });
+    controller.selectedFromAccount.value = null;
+    controller.selectedFromAccountType.value = 'wallet';
+
+    if (controller.mt5Accounts.isEmpty || _selectedTransferTo != null) return;
+    final firstAccount = controller.mt5Accounts.first;
+    setState(() {
+      _selectedTransferTo = firstAccount.metaAccountNumber;
+      _selectedTransferToType = 'mt5';
+      _selectedTransferToAccount = firstAccount;
+      _transferToController.text =
+          '${firstAccount.metaAccountNumber} - ${_fmtMt5(firstAccount.balance, firstAccount.metaAccountNumber)}';
+    });
+    controller.selectedToAccount.value = firstAccount;
+    controller.selectedToAccountType.value = 'mt5';
   }
 
   void _applyDefaultAccountSelections() {
