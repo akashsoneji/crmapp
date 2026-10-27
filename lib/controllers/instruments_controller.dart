@@ -24,6 +24,7 @@ import 'package:crm_app/services/websocket_endpoint_helper.dart';
 import 'package:crm_app/services/unified_websocket_service.dart';
 import 'package:crm_app/services/market_watch_v2_service.dart';
 import 'package:crm_app/services/symbol_details_cache_service.dart';
+import 'package:crm_app/services/symbol_selection_service.dart';
 import 'package:crm_app/flavor_config.dart';
 import 'package:crm_app/utils/android_style_extensions.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
@@ -1856,6 +1857,11 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
         return;
       }
 
+      // Don't restore a removed favourite as the chart symbol on next start.
+      if (Get.isRegistered<SymbolSelectionService>()) {
+        Get.find<SymbolSelectionService>().resetIfCurrent(cleanSymbol);
+      }
+
       await _loadFavorites();
       _updateFilteredInstruments();
       await hydrateFavoritesFromRest();
@@ -1898,8 +1904,14 @@ class InstrumentsController extends GetxController with WidgetsBindingObserver {
       final loaded = await _loadMarketWatchFromServer();
       if (!loaded || isClosed) return;
       _updateFilteredInstruments();
+      // Server list is the source of truth: drop a restored chart symbol
+      // that is no longer a favourite (e.g. removed on another device).
+      if (Get.isRegistered<SymbolSelectionService>()) {
+        await Get.find<SymbolSelectionService>()
+            .validateAgainstFavorites(favoriteInstruments.toList());
+      }
       await hydrateFavoritesFromRest();
-      // On a fresh login the local favorites are empty when the screen and
+      // On a fresh login
       // account bind subscribe, so nothing reaches /ws/stream. Subscribe the
       // server watchlist now that it has landed.
       if (FlavorConfig.usesSingleStreamSocket && !isClosed) {

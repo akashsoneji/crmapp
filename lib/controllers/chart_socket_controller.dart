@@ -17,6 +17,7 @@ import 'package:crm_app/utils/message_pack_decoder.dart';
 import 'package:crm_app/services/unified_websocket_service.dart';
 import 'package:crm_app/services/app_lock_service.dart';
 import 'package:crm_app/services/symbol_selection_service.dart';
+import 'package:crm_app/services/favorites_storage_service.dart';
 import 'package:crm_app/services/market_watch_v2_service.dart';
 import 'package:crm_app/services/stream_websocket_service.dart';
 import 'package:crm_app/flavor_config.dart';
@@ -336,6 +337,10 @@ class ChartSocketController extends GetxController with WidgetsBindingObserver {
         if (Get.isRegistered<SymbolSelectionService>()) {
           final selSvc = Get.find<SymbolSelectionService>();
           await selSvc.ensureDefault();
+          // Don't preload a symbol that was removed from favourites.
+          final favorites =
+              await FavoritesStorageService.instance.getFavoriteInstruments();
+          await selSvc.validateAgainstFavorites(favorites);
           if (selSvc.currentSymbol.isNotEmpty) {
             symbol = selSvc.currentSymbol;
           }

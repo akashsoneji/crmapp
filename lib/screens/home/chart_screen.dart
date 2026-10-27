@@ -1530,10 +1530,23 @@ Placing Order:
         (instrument) => instrument.symbol == selectedSymbol,
       );
 
+      // A symbol restored from the previous session that has since been
+      // removed from favourites must not be shown again.
+      final favorites = instrumentsController.favoriteInstruments.toList();
+      final isStaleRestoredSymbol =
+          symbolSelectionService.isRestoredSelection &&
+          favorites.isNotEmpty &&
+          !SymbolSelectionService.isInFavorites(selectedSymbol, favorites) &&
+          !SymbolSelectionService.isInFavorites(selectedSymbol, const [
+            'XAUUSD',
+          ]);
+      final hasNoValidSessionSymbol =
+          (selectedSymbol.isEmpty || !isSymbolFromInstruments) &&
+          !symbolSelectionService.hasUserSelection;
+
       // ✅ FIX: If symbol is empty or not found in instruments, use preferred instrument
       // Only when user hasn't made a selection in this session
-      if ((selectedSymbol.isEmpty || !isSymbolFromInstruments) &&
-          !symbolSelectionService.hasUserSelection) {
+      if (hasNoValidSessionSymbol || isStaleRestoredSymbol) {
         final preferredInstrument = _findPreferredInstrument(
           instrumentsController.allInstruments,
         );

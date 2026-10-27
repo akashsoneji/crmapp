@@ -1286,7 +1286,8 @@ class TradingWebSocketService extends GetxService with WidgetsBindingObserver {
         decodedData = jsonDecode(messageStr);
       }
 
-      _handleSocketMessage(decodedData); // Process through main handler
+      // Already decoded above — route to the frame handler to avoid re-decoding a Map.
+      handleStreamFrame(decodedData);
     } catch (e) {
       AppLogger.error('Trading WS: Error handling symbols message', error: e);
     }
