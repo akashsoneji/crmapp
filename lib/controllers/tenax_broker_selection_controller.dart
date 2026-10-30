@@ -135,6 +135,9 @@ class TenaxBrokerSelectionController extends GetxController {
   Future<void> selectBroker(
     TenaxBrokerModel broker, {
     bool preserveBroker = false,
+    // Callers that are not the broker selection route (e.g. invite deep
+    // links) pass their own args instead of the current route's.
+    Map<String, dynamic>? routeArguments,
   }) async {
     if (!FlavorConfig.isMultiBrokerEnabled) return;
     if (isSaving.value) {
@@ -246,7 +249,7 @@ class TenaxBrokerSelectionController extends GetxController {
       // Forward any snapshot/route args from the calling screen (e.g.
       // MoreScreen → TENAX_BROKER_SELECTION → LOGIN/GET_STARTED chain)
       // so the destination screens can restore the previous session.
-      final incomingArgs = Get.arguments;
+      final incomingArgs = routeArguments ?? Get.arguments;
       final Map<String, dynamic> forwarded = <String, dynamic>{
         'pendingBroker': true,
         'forceAuth': true,

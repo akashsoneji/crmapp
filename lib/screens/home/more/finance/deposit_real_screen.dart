@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart' show NumberFormat;
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/finance/deposit_controller.dart';
@@ -487,7 +488,7 @@ class _DepositRealScreenState extends State<DepositRealScreen> {
           if (_hasConversion && _conversionRate > 0) ...[
             SizedBox(height: 4.h),
             Text(
-              'Exchange rate: 1 USD = ${_conversionRate.toStringAsFixed(2)} $sourceCurrency',
+              '1 USD = ${NumberFormat('#,##0.00', 'en_US').format(_conversionRate)} $sourceCurrency',
               style: helperStyle,
             ),
           ],
@@ -567,6 +568,16 @@ class _DepositRealScreenState extends State<DepositRealScreen> {
     return double.tryParse(raw.toString()) ?? 0;
   }
 
+  /// Gateway fee percentage from the method detail (`fees`, e.g. "1.00").
+  double get _feePercent =>
+      double.tryParse(controller.depositMethod.value?['fees']?.toString() ?? '') ??
+      0;
+
+  /// Rate as shown on the web (2 dp); the gateway converts back with this
+  /// figure, so using it keeps the payer's charge equal to the entered amount.
+  double get _displayRate =>
+      double.parse(_conversionRate.toStringAsFixed(2));
+
   bool get _isCentAccount {
     final account = controller.selectedTransferAccount.value;
     if (account == null) return false;
@@ -585,12 +596,19 @@ class _DepositRealScreenState extends State<DepositRealScreen> {
   }
 
   /// Converts the entered source-currency amount into USD, which is what
-  /// min/max limits are expressed in.
+  /// min/max limits are expressed in. The fee is taken out here because the
+  /// gateway adds it back on top, so the payer is charged exactly [entered].
   double _convertedAmount(double entered) {
-    if (_hasConversion && _conversionRate > 0) {
-      return entered / _conversionRate;
+    if (_hasConversion && _displayRate > 0) {
+      return entered / (1 + _feePercent / 100) / _displayRate;
     }
     return entered;
+  }
+
+  /// USD amount sent to redirect gateways: 6 dp when converted, raw otherwise.
+  String _redirectUsdAmount(double entered) {
+    if (!(_hasConversion && _conversionRate > 0)) return entered.toString();
+    return _convertedAmount(entered).toStringAsFixed(6);
   }
 
   /// Amount credited to the account, in [_targetCurrency] (100 USC = 1 USD).
@@ -602,7 +620,7 @@ class _DepositRealScreenState extends State<DepositRealScreen> {
   void _syncTargetAmount() {
     if (!mounted) return;
     final entered = double.tryParse(amountController.text.trim()) ?? 0;
-    targetAmountController.text = _toTargetAmount(entered).toStringAsFixed(2);
+    targetAmountController.text = _toTargetAmount(entered).toStringAsFixed(6);
   }
 
   Widget _buildFeeDisplay() {
@@ -723,11 +741,23 @@ class _DepositRealScreenState extends State<DepositRealScreen> {
       }
     }
 
-    // Get.toNamed(AppPages.DEPOSIT_INSTRUCTION_SCREEN,arguments: controller.depositMethod.value);
+    // `is_redirect` and `deposit_api` come on the methods list item; the
+    // detail object does not carry them, so fall back to the list values.
+    final methodDetail = controller.depositMethod.value!;
+    final listItem = widget.object;
+    final instructionObject = <String, dynamic>{
+      ...methodDetail,
+      if (!methodDetail.containsKey('is_redirect'))
+        'is_redirect': listItem['is_redirect'],
+      if (!methodDetail.containsKey('deposit_api'))
+        'deposit_api': listItem['deposit_api'],
+    };
+
     Get.to(
       () => DepositInstructionScreen(
-        object: controller.depositMethod.value!,
+        object: instructionObject,
         amountString: amountController.text,
+        receiveAmountString: _redirectUsdAmount(entered),
         selectedMT5AccountID:
             controller.selectedTransferAccount.value!['meta_account_number']
                 as String,

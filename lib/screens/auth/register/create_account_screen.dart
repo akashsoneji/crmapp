@@ -21,6 +21,7 @@ import 'package:crm_app/widgets/common_loading_widget.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
 import '../../../controllers/auth_controller.dart';
 import '../../../controllers/tenax_broker_selection_controller.dart';
+import '../../../services/deep_link_service.dart';
 import '../../../services/secure_storage_service.dart';
 import '../../../widgets/otp_modal.dart';
 
@@ -99,6 +100,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
     _previousBranding =
         TenaxBrokerSelectionController.pendingBrandingSnapshot ??
         FlavorConfig.snapshotBranding();
+    _prefillInviteReferral();
 
     final args = Get.arguments;
     if (args is Map) {
@@ -119,6 +121,14 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
     }
     _addListeners();
     _setDeviceCountry();
+  }
+
+  /// Fills the referrer code from a Tenax invite link, unless the user already
+  /// typed one.
+  Future<void> _prefillInviteReferral() async {
+    final code = await DeepLinkService.instance.getPendingReferralCode();
+    if (!mounted || code == null || _referrerController.text.isNotEmpty) return;
+    _referrerController.text = code;
   }
 
   @override

@@ -5,6 +5,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:crm_app/routes/app_pages.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
+
 import 'dart:io';
 import 'dart:async';
 
@@ -420,13 +421,16 @@ class DepositInstructionController extends GetxController {
     }
   }
 
-  /// Create a Cregis deposit address for the selected network
+  /// Create a redirect deposit (Cregis, SafePay, ...). Cregis needs a network
+  /// ([requireNetwork]); [depositApi] is the method's `deposit_api` path.
   Future<void> createCregisDepositAddress({
     required String gatewayMethodId,
     required String amount,
     required String mt5AccountId,
+    bool requireNetwork = true,
+    String depositApi = '',
   }) async {
-    if (selectedCregisNetwork.value.isEmpty) {
+    if (requireNetwork && selectedCregisNetwork.value.isEmpty) {
       CustomToastService.showError(
         message: 'Please select a network',
       );
@@ -439,15 +443,20 @@ class DepositInstructionController extends GetxController {
       isAddressLoading.value = true;
       final token = await SecureStorageService.getAuthToken();
 
+      final requestBody = {
+        'gateway_method_id': gatewayMethodId,
+        'amount': amount,
+        'mt5_account_id': mt5AccountId,
+        if (requireNetwork) 'crypto_network': selectedCregisNetwork.value,
+      };
+      final endpoint = depositApi.trim().isNotEmpty
+          ? _relativeDepositEndpoint(depositApi)
+          : ApiConstants.cregisDepositCreate;
+
       final response = await ApiService.post(
-        endpoint: ApiConstants.cregisDepositCreate,
+        endpoint: endpoint,
         token: token,
-        data: {
-          'gateway_method_id': gatewayMethodId,
-          'amount': amount,
-          'mt5_account_id': mt5AccountId,
-          'crypto_network': selectedCregisNetwork.value,
-        },
+        data: requestBody,
       );
 
       if (response.success && response.data != null) {
@@ -455,7 +464,10 @@ class DepositInstructionController extends GetxController {
 
         cregisReferenceNumber.value = data['reference_number']?.toString() ?? '';
         cregisChainId.value = data['chain_id']?.toString() ?? '';
-        cregisCheckoutUrl.value = data['checkout_url']?.toString() ?? '';
+        final redirectUrl = data['redirect_url']?.toString() ?? '';
+        cregisCheckoutUrl.value = redirectUrl.isNotEmpty
+            ? redirectUrl
+            : data['checkout_url']?.toString() ?? '';
         cregisDepositAddress.value = data['cregis_address']?.toString() ?? '';
         cregisQrPath.value = data['qr_path']?.toString() ?? '';
 print("object   imsgr cregisCheckoutUrl.value ${cregisCheckoutUrl.value}");
@@ -495,6 +507,15 @@ print("object   imsgr cregisCheckoutUrl.value ${cregisCheckoutUrl.value}");
     } finally {
       isAddressLoading.value = false;
     }
+  }
+
+  /// `deposit_api` is a site path (`/api/user/...`); [ApiService] prefixes a
+  /// base URL that already ends in `/api/`, so strip the leading `/api/`.
+  String _relativeDepositEndpoint(String depositApi) {
+    var path = depositApi.trim();
+    if (path.startsWith('/')) path = path.substring(1);
+    if (path.startsWith('api/')) path = path.substring(4);
+    return path;
   }
 
   /// Confirm Cregis deposit - navigate to address or success screen

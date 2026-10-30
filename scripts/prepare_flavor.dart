@@ -569,13 +569,21 @@ Future<void> configureIosFlavor(String flavor) async {
   final bundleId = bundleIds[flavor] ?? 'com.example.$flavor';
   print('  ✓ Resolved iOS Bundle ID: $bundleId');
 
+  // Deep linking is enabled only for Tenax; other flavors keep no entitlements
+  // and an empty URL scheme, exactly as before.
+  final deepLinkSettings = flavor == 'tenax'
+      ? '''APP_URL_SCHEME = tenax
+CODE_SIGN_ENTITLEMENTS = Runner/RunnerTenax.entitlements
+'''
+      : 'APP_URL_SCHEME =\n';
+
   // Write ios/Flutter/Flavor.xcconfig
   final flavorXcconfig = File(path.join('ios', 'Flutter', 'Flavor.xcconfig'));
   final content = '''// Generated file. Do not edit.
 BUNDLE_DISPLAY_NAME = $brandName
 BUNDLE_NAME = $brandName
 APP_BUNDLE_IDENTIFIER = $bundleId
-''';
+$deepLinkSettings''';
 
   await flavorXcconfig.writeAsString(content);
   print('  ✓ Generated ios/Flutter/Flavor.xcconfig');

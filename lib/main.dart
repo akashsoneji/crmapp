@@ -47,6 +47,7 @@ import 'services/app_status/app_status_service.dart';
 import 'services/app_status/app_status_controller.dart';
 import 'services/app_status/app_status_overlay.dart';
 import 'services/crm_settings_service.dart';
+import 'services/deep_link_service.dart';
 import 'services/enabled_modules_service.dart';
 
 // Connectivity overlay imports
@@ -514,6 +515,12 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
 
       final isLoggedIn = await SecureStorageService.isUserLoggedIn();
       await _applySavedTenaxBrokerSelection();
+      final inviteIntent = await DeepLinkService.instance.resolveStartupIntent(
+        isLoggedIn: isLoggedIn,
+      );
+      DeepLinkService.instance.listenForLiveLinks();
+      // Runs before broker selection so an invite skips the broker picker.
+      if (!isLoggedIn && await _openInviteBroker(inviteIntent)) return;
       if (await _shouldOpenTenaxBrokerSelection(isLoggedIn: isLoggedIn)) {
         ApiService.endStartupPhase();
         Get.offAllNamed(
@@ -605,6 +612,15 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
           // End startup phase so normal 401 handling (session expired) resumes
           ApiService.endStartupPhase();
           Get.offAllNamed(AppPages.TRADING);
+          if (inviteIntent != null) {
+            // Asks for confirmation before leaving the active session.
+            unawaited(
+              DeepLinkService.instance.openBrokerFromInvite(
+                inviteIntent,
+                isLoggedIn: true,
+              ),
+            );
+          }
         } else {
           // Token validation failed, navigate to get started
           // (no session-expired toast — user was not actively using the app)
@@ -613,6 +629,7 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
           );
           // Clear any stale auth data
           await SecureStorageService.clearAuthData();
+          if (await _openInviteBroker(inviteIntent)) return;
           // End startup phase before navigating
           ApiService.endStartupPhase();
           if (await _shouldSkipWelcomeForTenax()) {
@@ -644,6 +661,18 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
       ApiService.endStartupPhase();
       Get.offAllNamed(AppPages.GET_STARTED);
     }
+  }
+
+  /// Opens the invite's broker for a logged-out user. Returns true when it
+  /// navigated, in which case the normal startup routing must stop.
+  Future<bool> _openInviteBroker(DeepLinkIntent? intent) async {
+    if (intent == null) return false;
+    final opened = await DeepLinkService.instance.openBrokerFromInvite(
+      intent,
+      isLoggedIn: false,
+    );
+    if (opened) ApiService.endStartupPhase();
+    return opened;
   }
 
   Future<void> _applySavedTenaxBrokerSelection() async {

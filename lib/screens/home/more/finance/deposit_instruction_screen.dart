@@ -21,6 +21,8 @@ import '../../../../routes/app_pages.dart';
 class DepositInstructionScreen extends StatefulWidget {
   final Map<String, dynamic> object;
   final String amountString;
+  /// USD amount (6 dp) sent to redirect gateways; falls back to [amountString].
+  final String? receiveAmountString;
   final String selectedMT5AccountID;
   final String currency;
   final bool fromBonus;
@@ -29,6 +31,7 @@ class DepositInstructionScreen extends StatefulWidget {
     super.key,
     required this.object,
     required this.amountString,
+    this.receiveAmountString,
     required this.selectedMT5AccountID,
     this.currency = 'USD',
     this.fromBonus = false,
@@ -89,19 +92,46 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
     languageService = Get.find<LanguageService>();
 
     bankDetail = widget.object['payment_gateway'];
-    if (widget.object['type'].toString().toLowerCase() == 'bank') {
+    // `is_redirect` decides the flow first: every redirect method (Cregis,
+    // SafePay, ...) uses the Cregis/external flow regardless of `type`.
+    if (_isRedirect) {
+      titleString = widget.object['display_name']?.toString() ?? 'Cregis';
+      _initCregisNetworks();
+    } else if (widget.object['type'].toString().toLowerCase() == 'bank') {
       titleString = 'Bank Transfer';
     } else if (widget.object['type'].toString().toLowerCase() == 'local') {
       titleString = 'Local Transfer';
-    } else if (widget.object['type'].toString().toLowerCase() == 'cregis') {
-      titleString = widget.object['display_name']?.toString() ?? 'Cregis';
-      _initCregisNetworks();
     } else if (widget.object['type'].toString().toLowerCase() == 'crypto') {
       titleString = widget.object['title']?.toString() ?? 'Crypto';
     } else {
       titleString = 'UPI';
     }
   }
+
+  late final bool _isRedirect = _resolveIsRedirect();
+
+  /// The API may send the flag as true, 1, "1" or "true".
+  bool _resolveIsRedirect() {
+    final value = widget.object['is_redirect'];
+    if (value == true || value == 1) return true;
+    final text = value?.toString().trim().toLowerCase();
+    return text == 'true' || text == '1';
+  }
+
+  /// Only Cregis exposes a crypto network map; other redirect gateways
+  /// (e.g. SafePay) skip the network step.
+  late final bool _hasNetworkMap = _resolveHasNetworkMap();
+
+  bool _resolveHasNetworkMap() {
+    final paymentGateway = widget.object['payment_gateway'];
+    final networkMap =
+        paymentGateway is Map ? paymentGateway['cregis_network_map'] : null;
+    return networkMap is Map && networkMap.isNotEmpty;
+  }
+
+  /// Amount sent to redirect gateways: the "You will receive" USD figure.
+  String get _redirectAmount =>
+      widget.receiveAmountString ?? widget.amountString;
 
   void _initCregisNetworks() {
     try {
@@ -308,14 +338,14 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
   Widget build(BuildContext context) {
     final type = widget.object['type'].toString().toLowerCase();
     Widget body;
-    if (type == 'bank') {
+    if (_isRedirect) {
+      body = _buildCregisUI();
+    } else if (type == 'bank') {
       body = _buildBankUI();
     } else if (type == 'crypto') {
       body = _buildCryptoUI();
     } else if (type == 'local') {
       body = _buildLocalUI();
-    } else if (type == 'cregis') {
-      body = _buildCregisUI();
     } else {
       body = _buildUPI();
     }
@@ -1015,13 +1045,18 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
               ),
               childrenPadding: const EdgeInsets.all(16),
               children: [
-                _buildInstructionItem(
-                  'Choose a network and amount.',
-                ),
-                const SizedBox(height: 8),
-                _buildInstructionItem(
-                  'We will generate a unique deposit address for this payment.',
-                ),
+                if (_hasNetworkMap) ...[
+                  _buildInstructionItem(
+                    'Choose a network and amount.',
+                  ),
+                  const SizedBox(height: 8),
+                  _buildInstructionItem(
+                    'We will generate a unique deposit address for this payment.',
+                  ),
+                ] else
+                  _buildInstructionItem(
+                    'You will be redirected to the payment page to complete this deposit.',
+                  ),
               ],
             ),
           ),
@@ -1029,6 +1064,7 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
           const SizedBox(height: 24),
 
           // Network Selector
+          if (_hasNetworkMap) ...[
           Text(
             'Network',
             style: TextStyle(
@@ -1084,6 +1120,7 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
               ),
             );
           }),
+          ],
 
           const SizedBox(height: 24),
 
@@ -1370,14 +1407,17 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
                   if (hasAddress || hasCheckoutUrl) {
                     controller.submitCregisDeposit(
                       gatewayMethodId: widget.object['deposit_slug'],
-                      amount: widget.amountString,
+                      amount: _redirectAmount,
                       mt5AccountId: widget.selectedMT5AccountID,
                     );
                   } else {
                     controller.createCregisDepositAddress(
                       gatewayMethodId: widget.object['deposit_slug'],
-                      amount: widget.amountString,
+                      amount: _redirectAmount,
                       mt5AccountId: widget.selectedMT5AccountID,
+                      requireNetwork: _hasNetworkMap,
+                      depositApi:
+                          widget.object['deposit_api']?.toString() ?? '',
                     );
                   }
                 },
@@ -1399,7 +1439,9 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
                           ? 'Open link to payment'
                           : hasAddress
                               ? languageService.tr("deposit_confirm_deposit")
-                              : 'Generate Address',
+                              : _hasNetworkMap
+                                  ? 'Generate Address'
+                                  : languageService.tr("deposit_confirm_deposit"),
                       style: TextStyle(
                         fontSize: 14.sp,
                         height: 1.71,

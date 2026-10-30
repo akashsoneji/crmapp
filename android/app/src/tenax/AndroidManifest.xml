@@ -37,6 +37,21 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+            <!-- app_links handles deep links; stop Flutter from also pushing the URL as a GetX route -->
+            <meta-data android:name="flutter_deeplinking_enabled" android:value="false" />
+            <!-- Deep links: only /invite opens the app; the rest of app.tenaxcode.com stays on the web -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="https" android:host="app.tenaxcode.com" android:pathPrefix="/invite"/>
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="tenax" android:host="invite"/>
+            </intent-filter>
         </activity>
         <meta-data
             android:name="flutterEmbedding"

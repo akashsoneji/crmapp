@@ -50,9 +50,14 @@ class _CregisSuccessScreenState extends State<CregisSuccessScreen> {
   void initState() {
     super.initState();
     // Mirror pending state to the controller so the form-screen badge stays live.
-    final depositCtrl = _safeDepositCtrl();
-    depositCtrl?.setPollingStatus('pending');
-    depositCtrl?.setPollingAttemptCount(0);
+    // Deferred to after this frame: the form screen's Obx listens to this Rx and
+    // must not be marked dirty while this route is still being built.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final depositCtrl = _safeDepositCtrl();
+      depositCtrl?.setPollingStatus('pending');
+      depositCtrl?.setPollingAttemptCount(0);
+    });
 
     _openExternalBrowser();
     _startStatusPolling();
@@ -65,7 +70,10 @@ class _CregisSuccessScreenState extends State<CregisSuccessScreen> {
     // stale "polling" pill once the user navigates back from history.
     final depositCtrl = _safeDepositCtrl();
     if (depositCtrl != null && !_resolved) {
-      depositCtrl.clearPollingState();
+      // The tree is locked during dispose; notify the form screen's Obx later.
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => depositCtrl.clearPollingState(),
+      );
     }
     super.dispose();
   }

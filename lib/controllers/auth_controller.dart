@@ -7,6 +7,7 @@ import 'package:crm_app/flavor_config.dart';
 import 'package:get/get.dart' as g;
 import 'package:crm_app/services/auth_service.dart';
 import 'package:crm_app/services/secure_storage_service.dart';
+import 'package:crm_app/services/deep_link_service.dart';
 import 'package:crm_app/services/account_cache_service.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
 import 'package:crm_app/controllers/app_notification_controller.dart';
@@ -631,6 +632,8 @@ class AuthController extends GetxController {
           try {
             TenaxBrokerSelectionController.clearPendingBroker();
           } catch (_) {}
+          // The invite referral was sent with this registration.
+          await DeepLinkService.instance.clearPendingReferral();
 
           // Enable one-click trading by default after registration
           OneClickTradingService.instance.setOneClickTradingEnabled(true);
