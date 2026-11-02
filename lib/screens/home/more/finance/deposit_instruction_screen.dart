@@ -97,6 +97,8 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
     // SafePay, ...) uses the Cregis/external flow regardless of `type`.
     if (_isRedirect) {
       titleString = widget.object['display_name']?.toString() ?? 'Cregis';
+      controller.redirectGatewayName =
+          widget.object['display_name']?.toString() ?? '';
       _initCregisNetworks();
     } else if (_dynamicGatewaySlug.isNotEmpty) {
       titleString = widget.object['display_name']?.toString() ??

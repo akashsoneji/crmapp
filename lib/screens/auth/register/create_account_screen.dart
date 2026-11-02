@@ -133,6 +133,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
     final code = intent?.referralCode;
     if (code == null || _referrerController.text.isNotEmpty) return;
     _referrerController.text = code;
+    debugPrint('DeepLinkService: referral prefilled on register: $code');
   }
 
   @override

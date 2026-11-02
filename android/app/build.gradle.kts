@@ -7,6 +7,7 @@ plugins {
 
 import java.io.FileInputStream
 import java.util.Properties
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 val keystoreProperties = Properties()
 val keystorePropertiesFile = rootProject.file("key.properties")
@@ -26,10 +27,6 @@ android {
         isCoreLibraryDesugaringEnabled = true
     }
 
-    kotlinOptions {
-        jvmTarget = "1.8"
-    }
-
     packaging {
         jniLibs {
             useLegacyPackaging = false
@@ -39,6 +36,7 @@ android {
 
     buildFeatures {
         buildConfig = true
+        resValues = true
     }
 
     lint {
@@ -47,13 +45,13 @@ android {
     }
 
     sourceSets {
-        getByName("main").java.srcDirs("src/main/kotlin")
+        getByName("main").java.directories.add("src/main/kotlin")
 
         // Tenax3 is a clone of Tenax. Reuse Tenax's manifest + resources
         // so icons/launch assets remain identical without duplicating binaries.
         maybeCreate("tenax3").apply {
             manifest.srcFile("src/tenax/AndroidManifest.xml")
-            res.srcDirs("src/tenax/res")
+            res.directories.add("src/tenax/res")
         }
     }
 
@@ -276,6 +274,12 @@ android {
         debug {
             isDebuggable = true
         }
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_1_8)
     }
 }
 

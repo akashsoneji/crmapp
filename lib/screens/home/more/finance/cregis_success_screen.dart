@@ -19,6 +19,8 @@ class CregisSuccessScreen extends StatefulWidget {
   final String amount;
   final String checkoutUrl;
   final String tapTimeIso;
+  /// Selected deposit method's display name, used as the screen title.
+  final String gatewayName;
 
   const CregisSuccessScreen({
     super.key,
@@ -26,6 +28,7 @@ class CregisSuccessScreen extends StatefulWidget {
     required this.amount,
     required this.checkoutUrl,
     this.tapTimeIso = '',
+    this.gatewayName = '',
   });
 
   @override
@@ -307,7 +310,9 @@ class _CregisSuccessScreenState extends State<CregisSuccessScreen> {
             iconHeight: 30.h,
           ),
           title: Text(
-            'Cregis Payment',
+            widget.gatewayName.trim().isNotEmpty
+                ? '${widget.gatewayName.trim()} Payment'
+                : 'Payment',
             style: TextStyle(color: AppColors.textPrimary, fontSize: 16.sp),
           ),
           centerTitle: true,

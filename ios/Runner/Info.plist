@@ -58,6 +58,8 @@
 	<string>We need photo library access to save verification documents and statements.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>We need photo library access for Identity verification.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>We need your location to verify your address during Identity verification.</string>
 	<key>NSUserNotificationUsageDescription</key>
 	<string>This app needs notification permissions to send you price alerts for your trading instruments.</string>
 	<key>UIApplicationSceneManifest</key>

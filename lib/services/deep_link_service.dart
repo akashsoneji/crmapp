@@ -124,6 +124,7 @@ class DeepLinkService {
     try {
       final initialUri = await _appLinks.getInitialLink();
       if (initialUri != null) {
+        debugPrint('DeepLinkService: launch link received: $initialUri');
         _launchLinkToSkip = initialUri.toString();
         intent = parse(initialUri);
       }
@@ -145,6 +146,7 @@ class DeepLinkService {
     _linkSubscription = _appLinks.uriLinkStream.listen(
       (uri) async {
         final link = uri.toString();
+        debugPrint('DeepLinkService: live link received: $link');
         if (link == _launchLinkToSkip) {
           _launchLinkToSkip = null;
           return;
@@ -159,8 +161,16 @@ class DeepLinkService {
     );
   }
 
-  Future<void> savePendingReferral(DeepLinkIntent intent) =>
-      _storage.write(key: _pendingReferralKey, value: jsonEncode(intent.toJson()));
+  Future<void> savePendingReferral(DeepLinkIntent intent) async {
+    await _storage.write(
+      key: _pendingReferralKey,
+      value: jsonEncode(intent.toJson()),
+    );
+    debugPrint(
+      'DeepLinkService: referral saved broker=${intent.brokerSlug} '
+      'ref=${intent.referralCode}',
+    );
+  }
 
   Future<DeepLinkIntent?> getPendingReferral() async {
     final raw = await _storage.read(key: _pendingReferralKey);
@@ -293,6 +303,7 @@ class DeepLinkService {
   Future<DeepLinkIntent?> _readPlayInstallReferrer() async {
     final details = await PlayInstallReferrer.installReferrer;
     final referrer = details.installReferrer;
+    debugPrint('DeepLinkService: play install referrer: $referrer');
     if (referrer == null || referrer.isEmpty) return null;
     return DeepLinkIntent.fromParams(
       Uri.splitQueryString(referrer),
