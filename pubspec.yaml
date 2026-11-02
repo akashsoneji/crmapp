@@ -131,6 +131,9 @@ dependencies:
   fl_chart: ^1.1.1
   app_links: ^7.2.2
   play_install_referrer: ^0.6.0
+
+  # Sumsub KYC MobileSDK
+  flutter_idensic_mobile_sdk_plugin: ^1.46.1
   # local_auth + app_settings are declared above (Local Storage section)
 dev_dependencies:
   flutter_test:

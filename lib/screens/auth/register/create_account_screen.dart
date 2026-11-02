@@ -129,6 +129,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
     final code = await DeepLinkService.instance.getPendingReferralCode();
     if (!mounted || code == null || _referrerController.text.isNotEmpty) return;
     _referrerController.text = code;
+    debugPrint('DeepLinkService: referral prefilled on register: $code');
   }
 
   @override

@@ -37,6 +37,10 @@
 	<string>We need camera access for Identity verification.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>We need photo library access for Identity verification.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>We need microphone access for Identity verification videos.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>We need your location to verify your address during Identity verification.</string>
 	<key>NSUserNotificationUsageDescription</key>
 	<string>This app needs notification permissions to send you price alerts for your trading instruments.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>

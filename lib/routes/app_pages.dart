@@ -549,6 +549,7 @@ class AppPages {
           amount: args?['amount'] ?? '',
           checkoutUrl: args?['checkoutUrl'] ?? '',
           tapTimeIso: args?['tapTimeIso'] ?? '',
+          gatewayName: args?['gatewayName'] ?? '',
         );
       },
     ),

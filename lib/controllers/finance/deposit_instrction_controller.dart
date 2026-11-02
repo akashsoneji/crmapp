@@ -43,6 +43,10 @@ class DepositInstructionController extends GetxController {
   /// `/transactions` is the source of truth.
   DateTime? _cregisTapTime;
 
+  /// Name of the selected redirect method (e.g. "SafePay"), shown as the
+  /// wait-screen title. Set by the deposit instruction screen.
+  String redirectGatewayName = '';
+
   /// Keeps the deposit_instruction_screen badge working. The actual polling
   /// loop now lives on the wait screens; the controller is only a state holder
   /// so that the form-screen badge reflects current polling lifecycle.
@@ -482,6 +486,7 @@ print("object   imsgr cregisCheckoutUrl.value ${cregisCheckoutUrl.value}");
               'referenceNumber': cregisReferenceNumber.value,
               'amount': amount,
               'tapTimeIso': tapTimeIso,
+              'gatewayName': redirectGatewayName,
             },
           );
         } else if (cregisDepositAddress.value.isNotEmpty) {
@@ -536,6 +541,7 @@ print("object   imsgr cregisCheckoutUrl.value ${cregisCheckoutUrl.value}");
           'referenceNumber': cregisReferenceNumber.value,
           'amount': amount,
           'tapTimeIso': tapTimeIso,
+          'gatewayName': redirectGatewayName,
         },
       );
       return;
