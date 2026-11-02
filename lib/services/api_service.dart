@@ -66,6 +66,7 @@ class ApiService {
     required String endpoint,
     Map<String, dynamic>? queryParameters,
     String? token,
+    Map<String, String>? extraHeaders,
   }) async {
     _initializeLogging();
     try {
@@ -194,6 +195,7 @@ class ApiService {
           ...httpClient.keepAliveHeaders, // Add Keep-Alive headers
         if (authToken != null && authToken.isNotEmpty)
           'Authorization': 'Bearer $authToken',
+        ...?extraHeaders,
       };
 
       _logRequest(

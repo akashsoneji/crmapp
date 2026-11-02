@@ -18,9 +18,14 @@ class Transaction {
   List<Data>? data;
   Pagination? pagination;
 
+  /// Admin toggle "Show the Proof column in client Transaction History";
+  /// top-level `show_proof_column` on the list response, OFF by default.
+  bool showProofColumn = false;
+
   Transaction({this.message, this.success, this.data, this.pagination});
 
   Transaction.fromJson(Map<String, dynamic> json) {
+    showProofColumn = json['show_proof_column'] == true;
     message = json['message'];
     success = json['success'];
     if (json['data'] != null) {
@@ -65,6 +70,14 @@ class Data {
   String? transactionType;
   String? type;
   String? currencyAccount;
+  String? accountType;
+  String? accountLabel;
+  String? fromAccount;
+  String? toAccount;
+  String? walletId;
+  String? rejectReason;
+  String? commentForClient;
+  String? updatedAt;
 
   Data({
     this.id,
@@ -82,7 +95,22 @@ class Data {
     this.transactionType,
     this.type,
     this.currencyAccount,
+    this.accountType,
+    this.accountLabel,
+    this.fromAccount,
+    this.toAccount,
+    this.walletId,
+    this.rejectReason,
+    this.commentForClient,
+    this.updatedAt,
   });
+
+  bool get isInternalTransfer =>
+      (transactionType ?? '').toLowerCase().contains('transfer');
+
+  /// True only when the client actually uploaded a proof for this row.
+  bool get hasProof =>
+      (proof ?? '').trim().isNotEmpty || (proofUrl ?? '').trim().isNotEmpty;
 
   Data.fromJson(Map<String, dynamic> json) {
     id = json['id']?.toString();
@@ -103,6 +131,15 @@ class Data {
     createdAt = json['created_at_iso']?.toString() ?? json['created_at']?.toString();
     transactionType = json['transaction_type']?.toString();
     type = json['type']?.toString();
+    accountType = json['account_type']?.toString();
+    accountLabel = json['account_label']?.toString();
+    fromAccount = json['from_account']?.toString();
+    toAccount = json['to_account']?.toString();
+    walletId = json['wallet_id']?.toString();
+    rejectReason = json['reject_reason']?.toString();
+    commentForClient = json['comment_for_client']?.toString();
+    updatedAt =
+        json['updated_at_iso']?.toString() ?? json['updated_at']?.toString();
   }
 
   // USC (US Cent) accounts report `amount` in cents (as a display string like
@@ -201,6 +238,9 @@ class TransactionHistoryController extends GetxController {
   final selectedDate = Rxn<DateTime>();
   final selectedTransactionType = Rxn<String>();
   final selectedTransactionIndex = (-1).obs;
+
+  /// Mirrors the response's `show_proof_column` admin toggle.
+  final showProofColumn = false.obs;
 
   // For pagination
   var currentPage = 1;
@@ -472,6 +512,8 @@ class TransactionHistoryController extends GetxController {
           CustomToastService.showError(message: _errorMessage.value);
           return;
         }
+
+        showProofColumn.value = transactionResponse.showProofColumn;
 
         // update pagination info
         currentPage = transactionResponse.pagination?.currentPage ?? 1;
@@ -799,6 +841,16 @@ class TransactionHistoryController extends GetxController {
 
   void goBack() {
     selectedTransactionIndex.value = -1;
+  }
+
+  /// Raw file of the client's uploaded deposit proof, via the auth proxy.
+  Future<http.Response> fetchProof(String id) async {
+    final url = ApiConstants.baseUrl + ApiConstants.depositProofProxy + id;
+    final token = await SecureStorageService.getAuthToken();
+    final headers = token != null
+        ? <String, String>{'Authorization': 'Bearer $token'}
+        : <String, String>{};
+    return http.get(Uri.parse(url), headers: headers);
   }
 
   Future<void> viewReceipt(String id) async {

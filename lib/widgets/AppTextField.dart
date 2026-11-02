@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter/services.dart';
 import 'package:crm_app/constants/color.dart';
+import 'package:crm_app/constants/text_styles.dart';
+import 'package:crm_app/utils/single_decimal_point_formatter.dart';
 
 class AppTextField extends StatelessWidget {
   final TextEditingController? controller;
@@ -90,6 +93,127 @@ class AppTextField extends StatelessWidget {
             fillColor: enabled ? AppColors.whiteColor : AppColors.backgroundLight,
           ),
         ),
+      ],
+    );
+  }
+}
+
+/// Borderless form field; the caller supplies the container/decoration.
+/// Decimal keyboards get a single '.' guard ahead of caller formatters.
+class AppTextFormField extends StatelessWidget {
+  final TextEditingController? controller;
+  final String? label;
+  final String? hintText;
+  final String? Function(String?)? validator;
+  final void Function(String)? onChanged;
+  final bool obscureText;
+  final Widget? suffixIcon;
+  final Widget? prefixIcon;
+  final TextInputType? keyboardType;
+  final int? maxLines;
+  final bool enabled;
+  final FocusNode? focusNode;
+  final TextStyle? style;
+  final InputDecoration? decoration;
+  final TextAlign textAlign;
+  final double? width;
+  final TextStyle? hintStyle;
+  final List<TextInputFormatter>? inputFormatters;
+  final EdgeInsetsGeometry? contentPadding;
+  final bool readOnly;
+  final VoidCallback? onTap;
+
+  const AppTextFormField({
+    super.key,
+    this.controller,
+    this.label,
+    this.hintText,
+    this.validator,
+    this.onChanged,
+    this.obscureText = false,
+    this.suffixIcon,
+    this.prefixIcon,
+    this.keyboardType,
+    this.maxLines = 1,
+    this.enabled = true,
+    this.focusNode,
+    this.style,
+    this.decoration,
+    this.textAlign = TextAlign.start,
+    this.width,
+    this.hintStyle,
+    this.inputFormatters,
+    this.contentPadding,
+    this.readOnly = false,
+    this.onTap,
+  });
+
+  List<TextInputFormatter>? get _formatters {
+    if (keyboardType?.decimal != true) return inputFormatters;
+    return [const SingleDecimalPointFormatter(), ...?inputFormatters];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    Widget field = TextFormField(
+      cursorColor: AppColors.primary,
+      controller: controller,
+      validator: validator,
+      onChanged: onChanged,
+      obscureText: obscureText,
+      keyboardType: keyboardType,
+      maxLines: maxLines,
+      enabled: enabled,
+      focusNode: focusNode,
+      textAlign: textAlign,
+      inputFormatters: _formatters,
+      readOnly: readOnly,
+      onTap: onTap,
+      style: style ??
+          AppTextStyles.bodyText.copyWith(
+            color: AppColors.textPrimary,
+            fontSize: 14.sp,
+          ),
+      decoration: decoration ??
+          InputDecoration(
+            hintText: hintText,
+            hintStyle: hintStyle ??
+                AppTextStyles.bodyText.copyWith(
+                  color: AppColors.textGrey,
+                  fontSize: 14.sp,
+                ),
+            suffixIcon: suffixIcon,
+            prefixIcon: prefixIcon,
+            border: InputBorder.none,
+            enabledBorder: InputBorder.none,
+            focusedBorder: InputBorder.none,
+            errorBorder: InputBorder.none,
+            focusedErrorBorder: InputBorder.none,
+            contentPadding: contentPadding,
+            filled: false,
+          ),
+    );
+
+    if (width != null) {
+      field = SizedBox(width: width, child: field);
+    }
+
+    if (label == null) {
+      return field;
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label!,
+          style: AppTextStyles.bodyText.copyWith(
+            fontSize: 14.sp,
+            fontWeight: FontWeight.w400,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        SizedBox(height: 8.h),
+        field,
       ],
     );
   }

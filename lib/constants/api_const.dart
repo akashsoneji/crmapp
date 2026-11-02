@@ -39,7 +39,7 @@ class ApiConstants {
   static const String getMT5Accounts = '${ajax}mt5accounts/get';
   static const String createMT5Account = '${ajax}mt5accounts/create';
   static const String topupDemoAccount = '${ajax}mt5accounts/setbalance';
-  static const String syncMT5Accounts = '${ajax}mt5accounts/mt5AccountSync';
+  static const String syncMT5Accounts = '${ajax}tradingaccounts/sync';
   static const String placeOrder = '${ajax}trade/new-order';
   static const String closePositionByPositionId =
       '${ajax}trade/closePositionByPositionId';
@@ -56,6 +56,8 @@ class ApiConstants {
   static const String depositList = '${ajax}deposit';
   static const String depositRequest = '${ajax}deposit/depositrequest';
   static const String cregisDepositCreate = '${ajax}deposit/cregis';
+  static String dynamicDeposit(String gatewaySlug) =>
+      '${ajax}deposit/dynamic/$gatewaySlug';
   // NOTE: cregisDepositStatus (deposit/by-reference) was removed in the
   // 120s-wait refactor — wait screens now poll /transactions instead.
   static const String realPlanDetails = '${ajax}mt5accounts/plandetails';
@@ -75,9 +77,13 @@ class ApiConstants {
   static const String getCountryDropdown = '${ajax}settings/getCountryDropdown';
   static const String getStateDropdown = '${ajax}settings/getStateDropdown';
   static const String getCityDropdown = '${ajax}settings/getCityDropdown';
+  static String kycStates(int countryId) => '${ajax}kyc/states/$countryId';
+  static String kycCities(int stateId) => '${ajax}kyc/cities/$stateId';
 
   // KYC APIs
   static const String kycUpload = '${ajax}kyc/documents/upload';
+  static String kycImageProxy(int documentId) =>
+      '${ajax}kyc-image-proxy/$documentId';
   static const String kycStatus = '${ajax}kyc';
   static const String regulation = '${ajax}regulation';
   static const String kycProfileUpdate = '${ajax}kyc/profile';
@@ -88,6 +94,8 @@ class ApiConstants {
   static const String getFinanceActivity = '${ajax}finance-activity';
   static const String currencyList = '${ajax}utility/currency-list';
   static const String withdrawalRequest = '${ajax}withdrawal';
+  static String withdrawalMethodDelete(int id) => '${ajax}withdrawal/delete/$id';
+  static String withdrawalImageProxy(int id) => '${ajax}image-proxy/$id';
   static const String withdrawalSendOTPRequest = '${ajax}withdrawal/sendOTP';
   static const String withdrawalSubmitRequest =
       '${ajax}withdrawal/withdrawalrequest';
@@ -281,6 +289,63 @@ class ApiConstants {
   static String demoContestRuleViolations(String contestId) =>
       '${ajax}demo-contest/$contestId/rule-violations';
   static const String demoContestClaim = '${ajax}demo-contest/claim';
+
+  // Ported from white_label (client-portal API sync).
+  static const String activeNotices = '${ajax}notices/active';
+  static const String allNotifications = '${ajax}notifications/all';
+  static const String markAllNotificationsRead =
+      '${ajax}notifications/markasread';
+  static String markNotificationRead(int id) =>
+      '${ajax}notifications/markasread/$id';
+  static String mt5CredentialsNotification(int id) =>
+      '${ajax}notifications/mt5-credentials/$id';
+  static String mt5CredentialsAck(int id) =>
+      '${ajax}notifications/mt5-credentials/$id/ack';
+  static const String appSettings = '${ajax}app-settings';
+  static const String liveChatConfig = '${ajax}live-chat';
+  static const String platformLinks = '${ajax}platform-links';
+  static const String sessionCheck = '${ajax}session/check';
+  static const String userSessions = '${ajax}sessions';
+  static String userSession(int id) => '${ajax}sessions/$id';
+  static const String settingsActivityLog = '${ajax}settings/activitylog';
+  static const String googleOtpStatus = '${ajax}settings/google-otp/status';
+  static const String mobileVerificationSend = '${ajax}mobile-verification/send';
+  static const String mobileVerificationVerify =
+      '${ajax}mobile-verification/verify';
+  static const String setMt5Nickname = '${ajax}mt5accounts/setnickname';
+  static const String utilityIfscCode = '${ajax}utility/ifsc-code';
+  static const String uniPaymentDeposit = '${ajax}deposit/unipayment';
+  static const String depositByReference = '${ajax}deposit/by-reference';
+  static const String bonusClaimCancel = '${ajax}bonus/bonusClaimCancel';
+  static const String claimScratchReward = 'v1/user/scratch-cards/claim';
+  static const String priceAlertsUpdateFcmToken =
+      '${ajax}price-alerts/update-fcm-token';
+  static const String copyTradingPlansSearch = 'copytrading/plans/search';
+  static const String deepLinkAttribution = 'deeplink/attribution';
+  static const String deepLinkDeferredClaim = 'deeplink/deferred/claim';
+  static const String ibActivities = '${ajax}ib/activities';
+  static const String ibTreeStructure = '${ajax}ib/tree-structure';
+  static const String ibGetIbDetails = '${ajax}ib/get-ib-details/'; // + {userSlug}
+  static const String ibTemplateRates = '${ajax}ib/get-template-rates/'; // + {templateId}
+  static const String ibDemoContestMyContests = 'ib/demo-contest/my-contests';
+  static const String ibDemoContestInstruments = 'ib/demo-contest/instruments';
+  static const String ibDemoContestStore = 'ib/demo-contest/store';
+  static String ibDemoContestUpdate(int id) => 'ib/demo-contest/$id/update';
+  static String ibDemoContestCancel(int id) => 'ib/demo-contest/$id/cancel';
+  static String ibDemoContestAddPrizeFund(int id) =>
+      'ib/demo-contest/$id/add-prize-fund';
+  static String ibDemoContestEnrollments(int id) =>
+      'ib/demo-contest/$id/enrollments';
+  static String ibDemoContestEnrollmentApprove(int id) =>
+      'ib/demo-contest/enrollment/$id/approve';
+  static String ibDemoContestEnrollmentReject(int id) =>
+      'ib/demo-contest/enrollment/$id/reject';
+  static const String traderTransferConfig = '${ajax}trader-transfer/config';
+  static const String traderTransferVerifyRecipient =
+      '${ajax}trader-transfer/verify-recipient';
+  static const String traderTransferSendOtp = '${ajax}trader-transfer/send-otp';
+  static const String traderTransferSubmit = '${ajax}trader-transfer/submit';
+  static const String traderTransferHistory = '${ajax}trader-transfer/history';
 }
 
 // struct APIConstant {

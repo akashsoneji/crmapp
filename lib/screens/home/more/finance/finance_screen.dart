@@ -9,6 +9,7 @@ import 'package:crm_app/screens/home/more/widgets/more_menu_widgets.dart';
 import '../../../../constants/color.dart';
 import '../../../../constants/text_styles.dart';
 import '../../../../routes/app_pages.dart';
+import '../../../../services/enabled_modules_service.dart';
 import '../../../../services/language_service.dart';
 
 class FinanceScreen extends StatelessWidget {
@@ -67,6 +68,16 @@ class FinanceScreen extends StatelessWidget {
                     },
                     textColor: AppColors.textPrimary,
                   ),
+                  // Off unless the admin enables `enabled-modules.trader_transfer`.
+                  if (EnabledModulesService.flags.traderTransfer)
+                    MoreMenuTile(
+                      iconName: 'internal-transfer',
+                      label: languageService.tr('trader_transfer_title'),
+                      onTap: () {
+                        Get.toNamed(AppPages.TRADER_TRANSFER);
+                      },
+                      textColor: AppColors.textPrimary,
+                    ),
                   MoreMenuTile(
                     iconName: 'transaction_history',
                     label: 'Internal Transfer History',

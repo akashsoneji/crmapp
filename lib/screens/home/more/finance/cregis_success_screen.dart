@@ -8,6 +8,9 @@ import 'package:crm_app/widgets/custom_toast.dart';
 import 'package:crm_app/controllers/dashboard_controller.dart';
 import 'package:crm_app/controllers/finance/deposit_instrction_controller.dart';
 import 'package:crm_app/controllers/finance/transaction_history_controller.dart';
+import 'package:crm_app/constants/api_const.dart';
+import 'package:crm_app/services/api_service.dart';
+import 'package:crm_app/services/secure_storage_service.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -135,27 +138,66 @@ class _CregisSuccessScreenState extends State<CregisSuccessScreen> {
         if (ref.trim().isEmpty) return;
 
         _debugLastCall =
-            'GET /transactions @ ${DateTime.now().toIso8601String()} '
+            'GET deposit/by-reference @ ${DateTime.now().toIso8601String()} '
             '(attempt $_pollAttempts, ref=${ref.length > 10 ? '${ref.substring(0, 10)}…' : ref})';
-        final res =
-            await _thCtrl().fetchLatestTransactionForRef(ref, statusFilter: true);
+        final status = await _fetchDepositStatus(ref);
 
         if (!mounted || _resolved) return;
-        if (res.row != null) {
-          _debugLastResponse =
-              'MATCH status=${res.row!.status ?? '?'} amount=${res.row!.amount ?? '?'} '
-              'created_at=${res.row!.createdAt ?? '?'}';
-          _debugLastAt = DateTime.now();
-          if (mounted) setState(() {});
-          _onSuccess();
-          return;
-        }
-        _debugLastResponse =
-            'NO MATCH (status=${res.rawStatus}, totalRows=${res.totalRows})';
+        _debugLastResponse = 'status=${status ?? '(not found yet)'}';
         _debugLastAt = DateTime.now();
-        if (mounted) setState(() {});
+        setState(() {});
+        if (status == null) return;
+        if (_successStatuses.contains(status)) {
+          _onSuccess();
+        } else if (_failedStatuses.contains(status)) {
+          _onFailed();
+        }
       },
     );
+  }
+
+  static const _successStatuses = {'approved', 'success', 'completed'};
+  static const _failedStatuses = {
+    'rejected',
+    'failed',
+    'cancelled',
+    'canceled',
+    'declined',
+    'expired',
+  };
+
+  /// `data.status` of GET deposit/by-reference, lowercased; null when the
+  /// deposit is not found yet or the call failed (keep polling).
+  Future<String?> _fetchDepositStatus(String reference) async {
+    try {
+      final token = await SecureStorageService.getAuthToken();
+      final response = await ApiService.get(
+        endpoint: ApiConstants.depositByReference,
+        token: token,
+        queryParameters: {'reference': reference},
+      );
+      final body = response.data;
+      if (!response.success || body is! Map) return null;
+      final data = body['data'];
+      if (data is! Map) return null;
+      return data['status']?.toString().trim().toLowerCase();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  void _onFailed() {
+    if (_resolved) return;
+    _resolved = true;
+    _pollingTimer?.cancel();
+    if (mounted) {
+      setState(() {
+        _isPolling = false;
+        _statusText = 'Deposit failed';
+      });
+    }
+    CustomToastService.showError(message: 'Deposit failed');
+    _safeDepositCtrl()?.clearPollingState();
   }
 
   void _onSuccess() {

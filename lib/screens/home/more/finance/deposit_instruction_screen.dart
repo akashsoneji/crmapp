@@ -17,6 +17,7 @@ import '../../../../services/language_service.dart';
 import '../../../../services/secure_storage_service.dart';
 import '../../../../widgets/common_loading_widget.dart';
 import '../../../../routes/app_pages.dart';
+import 'widgets/dynamic_gateway_deposit_form.dart';
 
 class DepositInstructionScreen extends StatefulWidget {
   final Map<String, dynamic> object;
@@ -97,6 +98,9 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
     if (_isRedirect) {
       titleString = widget.object['display_name']?.toString() ?? 'Cregis';
       _initCregisNetworks();
+    } else if (_dynamicGatewaySlug.isNotEmpty) {
+      titleString = widget.object['display_name']?.toString() ??
+          TranslationUtils.tr('general_deposit');
     } else if (widget.object['type'].toString().toLowerCase() == 'bank') {
       titleString = 'Bank Transfer';
     } else if (widget.object['type'].toString().toLowerCase() == 'local') {
@@ -116,6 +120,29 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
     if (value == true || value == 1) return true;
     final text = value?.toString().trim().toLowerCase();
     return text == 'true' || text == '1';
+  }
+
+  static const _builtInGatewayTypes = {
+    'unipayment', 'local', 'bank', 'upi', 'crypto', '',
+  };
+
+  /// Admin-configured gateway slug (web `dynamicGatewaySlug`): the method's
+  /// gateway type when it is not one of the built-in flows, else empty.
+  late final String _dynamicGatewaySlug = _resolveDynamicGatewaySlug();
+
+  String _resolveDynamicGatewaySlug() {
+    if (_isRedirect) return '';
+    final paymentGateway = widget.object['payment_gateway'];
+    final gatewayType = [
+      widget.object['gateway_type'],
+      widget.object['type'],
+      paymentGateway is Map ? paymentGateway['type'] : null,
+    ].map((v) => v?.toString().trim() ?? '').firstWhere(
+          (v) => v.isNotEmpty && v != 'null',
+          orElse: () => '',
+        );
+    final slug = gatewayType.toLowerCase();
+    return _builtInGatewayTypes.contains(slug) ? '' : slug;
   }
 
   /// Only Cregis exposes a crypto network map; other redirect gateways
@@ -340,12 +367,21 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
     Widget body;
     if (_isRedirect) {
       body = _buildCregisUI();
+    } else if (_dynamicGatewaySlug.isNotEmpty) {
+      body = DynamicGatewayDepositForm(
+        gatewaySlug: _dynamicGatewaySlug,
+        gatewayMethodId: widget.object['deposit_slug']?.toString() ?? '',
+        amount: widget.amountString,
+        mt5AccountId: widget.selectedMT5AccountID,
+      );
     } else if (type == 'bank') {
       body = _buildBankUI();
     } else if (type == 'crypto') {
       body = _buildCryptoUI();
     } else if (type == 'local') {
       body = _buildLocalUI();
+    } else if (type == 'unipayment') {
+      body = _buildUniPaymentUI();
     } else {
       body = _buildUPI();
     }
@@ -852,6 +888,88 @@ class _DepositInstructionScreenState extends State<DepositInstructionScreen> {
           //       ? Center(child: OverlayLoadingWidget())
           //       : SizedBox.shrink(),
           // ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUniPaymentUI() {
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(16.w),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(
+            padding: EdgeInsets.all(16.w),
+            decoration: BoxDecoration(
+              color: AppColors.card,
+              borderRadius: BorderRadius.circular(12.r),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  languageService.tr('deposit_unipayment_amount'),
+                  style: AppTextStyles.bodyText.copyWith(
+                    fontSize: 12.sp,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                SizedBox(height: 4.h),
+                Text(
+                  '\$${widget.amountString}',
+                  style: AppTextStyles.bodyText.copyWith(
+                    fontSize: 20.sp,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                SizedBox(height: 8.h),
+                Text(
+                  languageService.tr('deposit_unipayment_hint'),
+                  style: AppTextStyles.bodyText.copyWith(
+                    fontSize: 12.sp,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: 20.h),
+          Obx(() {
+            final busy = controller.isLoading.value;
+            return SizedBox(
+              height: 48.h,
+              child: ElevatedButton(
+                onPressed: busy
+                    ? null
+                    : () => controller.submitUniPaymentDeposit(
+                          gatewayMethodId:
+                              widget.object['deposit_slug']?.toString() ?? '',
+                          mt5AccountId: widget.selectedMT5AccountID,
+                          amount: widget.amountString,
+                        ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: AppColors.whiteColor,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: busy
+                    ? SizedBox(
+                        width: 18.w,
+                        height: 18.w,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppColors.whiteColor,
+                        ),
+                      )
+                    : Text(languageService.tr('deposit_unipayment_pay')),
+              ),
+            );
+          }),
         ],
       ),
     );

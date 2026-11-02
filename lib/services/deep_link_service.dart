@@ -11,30 +11,56 @@ import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:play_install_referrer/play_install_referrer.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:crm_app/constants/api_const.dart';
 import 'package:crm_app/controllers/tenax_broker_selection_controller.dart';
 import 'package:crm_app/flavor_config.dart';
 import 'package:crm_app/models/tenax_broker_model.dart';
+import 'package:crm_app/services/api_service.dart';
 import 'package:crm_app/services/secure_storage_service.dart';
 import 'package:crm_app/services/tenax_broker_service.dart';
 
 /// Broker and referral code carried by a Tenax invite link.
 class DeepLinkIntent {
-  const DeepLinkIntent({required this.brokerSlug, this.referralCode});
+  const DeepLinkIntent({
+    required this.brokerSlug,
+    this.referralCode,
+    this.source = sourceLink,
+    this.clickId,
+  });
+
+  /// `referral_source` values sent with registration and attribution.
+  static const String sourceLink = 'link';
+  static const String sourcePlayReferrer = 'play_referrer';
+  static const String sourceServerMatch = 'server_match';
 
   final String brokerSlug;
   final String? referralCode;
+  final String source;
+  final String? clickId;
 
   Map<String, String> toJson() => {
     'broker_slug': brokerSlug,
     'ref': ?referralCode,
+    'source': source,
+    'click_id': ?clickId,
   };
 
-  /// Builds an intent from `broker` / `broker_slug` and `ref` keys, as used by
-  /// the Play install referrer and the deferred-link match API.
-  static DeepLinkIntent? fromParams(Map<String, dynamic> params) {
+  /// Builds an intent from `broker` / `broker_slug`, `ref` and `click_id`
+  /// keys, as used by the Play install referrer and the deferred-link match
+  /// API. A stored `source` wins over [source].
+  static DeepLinkIntent? fromParams(
+    Map<String, dynamic> params, {
+    String source = sourceLink,
+  }) {
     final slug = _clean(params['broker_slug'] ?? params['broker']);
     if (slug == null) return null;
-    return DeepLinkIntent(brokerSlug: slug, referralCode: _clean(params['ref']));
+    final clickId = _clean(params['click_id']);
+    return DeepLinkIntent(
+      brokerSlug: slug,
+      referralCode: _clean(params['ref']),
+      source: _clean(params['source']) ?? source,
+      clickId: clickId != null && clickId.length <= 64 ? clickId : null,
+    );
   }
 
   static String? _clean(dynamic value) {
@@ -83,6 +109,7 @@ class DeepLinkService {
     return DeepLinkIntent.fromParams({
       'broker_slug': segments[1],
       'ref': uri.queryParameters['ref'],
+      'click_id': uri.queryParameters['click_id'],
     });
   }
 
@@ -153,6 +180,45 @@ class DeepLinkService {
 
   Future<void> clearPendingReferral() =>
       _storage.delete(key: _pendingReferralKey);
+
+  /// `referral_source` / `referral_click_id` for the register request. Empty
+  /// when [enteredCode] is not the invite's code (the user typed their own).
+  static Map<String, String> registrationFieldsFor(
+    DeepLinkIntent? intent,
+    String enteredCode,
+  ) {
+    final code = intent?.referralCode;
+    if (intent == null || code == null || code != enteredCode.trim()) {
+      return const {};
+    }
+    return {
+      'referral_source': intent.source,
+      'referral_click_id': ?intent.clickId,
+    };
+  }
+
+  /// Tells the broker the account was just registered on which invite click
+  /// it came from (`POST deeplink/attribution`). Runs after registration, when
+  /// the API points at that broker. Failures are ignored.
+  Future<void> reportAttribution() async {
+    final intent = await getPendingReferral();
+    final code = intent?.referralCode;
+    final clickId = intent?.clickId;
+    if (intent == null || code == null || clickId == null) return;
+    try {
+      await ApiService.post(
+        endpoint: ApiConstants.deepLinkAttribution,
+        data: {
+          'brand': intent.brokerSlug,
+          'click_id': clickId,
+          'code': code,
+          'source': intent.source,
+        },
+      );
+    } catch (e) {
+      debugPrint('DeepLinkService: attribution report failed: $e');
+    }
+  }
 
   /// Selects the invite's broker through the normal broker-selection flow.
   /// Returns true when it navigated away from the current screen.
@@ -228,7 +294,10 @@ class DeepLinkService {
     final details = await PlayInstallReferrer.installReferrer;
     final referrer = details.installReferrer;
     if (referrer == null || referrer.isEmpty) return null;
-    return DeepLinkIntent.fromParams(Uri.splitQueryString(referrer));
+    return DeepLinkIntent.fromParams(
+      Uri.splitQueryString(referrer),
+      source: DeepLinkIntent.sourcePlayReferrer,
+    );
   }
 
   /// The App Store passes nothing to the app, so the backend matches this
@@ -262,7 +331,12 @@ class DeepLinkService {
     final body = jsonDecode(response.body);
     if (body is! Map<String, dynamic> || body['status'] != true) return null;
     final data = body['data'];
-    return data is Map<String, dynamic> ? DeepLinkIntent.fromParams(data) : null;
+    return data is Map<String, dynamic>
+        ? DeepLinkIntent.fromParams(
+            data,
+            source: DeepLinkIntent.sourceServerMatch,
+          )
+        : null;
   }
 
   Future<TenaxBrokerModel?> _findBroker(String slug) async {

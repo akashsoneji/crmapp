@@ -7,6 +7,8 @@ import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/routes/app_pages.dart';
 import 'package:crm_app/controllers/more/more_controller.dart';
 import 'package:crm_app/services/language_service.dart';
+import 'package:crm_app/services/app_settings_service.dart';
+import 'package:crm_app/widgets/mobile_verification_sheet.dart';
 
 class KycIntroScreen extends StatelessWidget {
   final StageCompletion? stageCompletion;
@@ -249,7 +251,7 @@ class KycIntroScreen extends StatelessWidget {
                       Get.toNamed(AppPages.KYC_DETAILS);
                     } else if (stageCompletion?.identityVerified == false ||
                         stageCompletion?.addressProofVerified == false) {
-                      Get.toNamed(AppPages.KYC_DOCS);
+                      _openKycDocs();
                     } else {
                       Get.toNamed(
                         AppPages.KYC_BANK,
@@ -286,6 +288,15 @@ class KycIntroScreen extends StatelessWidget {
     );
   }
 
+  /// `otp_policy.kyc_require_mobile_verified`: documents are only accepted
+  /// once the mobile number is verified.
+  Future<void> _openKycDocs() async {
+    final mustVerifyMobile = Get.isRegistered<AppSettingsService>() &&
+        Get.find<AppSettingsService>().kycRequiresMobileVerified;
+    if (mustVerifyMobile && !await ensureMobileVerified()) return;
+    Get.toNamed(AppPages.KYC_DOCS);
+  }
+
   Widget _buildStepCard({
     required int stepNumber,
     required String title,
@@ -304,7 +315,7 @@ class KycIntroScreen extends StatelessWidget {
           Get.toNamed(AppPages.KYC_DETAILS);
         } else if (stageCompletion?.identityVerified == false ||
             stageCompletion?.addressProofVerified == false) {
-          Get.toNamed(AppPages.KYC_DOCS);
+          _openKycDocs();
         } else {
           Get.toNamed(
             AppPages.KYC_BANK,

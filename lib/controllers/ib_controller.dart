@@ -3,6 +3,7 @@ import 'package:crm_app/services/api_service.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/models/ib_models.dart';
+import 'package:crm_app/services/language_service.dart';
 
 class IBController extends GetxController {
   final RxBool isLoading = false.obs;
@@ -1173,6 +1174,100 @@ class IBController extends GetxController {
       return false;
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  final RxList<IbActivity> recentActivities = <IbActivity>[].obs;
+  final RxBool isActivitiesLoading = false.obs;
+
+  final RxList<IbTreeNode> networkTree = <IbTreeNode>[].obs;
+  final RxBool isNetworkTreeLoading = false.obs;
+  final RxString networkTreeError = ''.obs;
+
+  static List<Map<String, dynamic>> _listRows(dynamic list) => list is List
+      ? list.whereType<Map>().map((e) => e.cast<String, dynamic>()).toList()
+      : const [];
+
+  /// `GET ib/activities` — recent commission / approval events for the dashboard.
+  Future<void> loadRecentActivities() async {
+    isActivitiesLoading.value = true;
+    try {
+      final response = await ApiService.get(endpoint: ApiConstants.ibActivities);
+      final data = response.data?['data'];
+      if (response.success) {
+        recentActivities.assignAll(_listRows(data).map(IbActivity.fromJson));
+      }
+    } catch (_) {
+      // Dashboard section simply stays empty; the rest of the dashboard is unaffected.
+    } finally {
+      isActivitiesLoading.value = false;
+    }
+  }
+
+  /// `GET ib/tree-structure` — full downline tree for My Network.
+  Future<void> loadNetworkTree() async {
+    isNetworkTreeLoading.value = true;
+    networkTreeError.value = '';
+    try {
+      final response =
+          await ApiService.get(endpoint: ApiConstants.ibTreeStructure);
+      final data = response.data?['data'];
+      if (response.success && data is Map) {
+        networkTree.assignAll(_listRows(data['tree']).map(IbTreeNode.fromJson));
+      } else {
+        networkTreeError.value =
+            response.message ?? TranslationUtils.tr('ib_network_load_failed');
+      }
+    } catch (_) {
+      networkTreeError.value = TranslationUtils.tr('ib_network_load_failed');
+    } finally {
+      isNetworkTreeLoading.value = false;
+    }
+  }
+
+  /// `GET ib/get-ib-details/{userSlug}` → `{ib_info, statistics, ib_structure}`,
+  /// or null on failure.
+  Future<Map<String, dynamic>?> loadIbDetails(String userSlug) async {
+    try {
+      final response = await ApiService.get(
+        endpoint: '${ApiConstants.ibGetIbDetails}$userSlug',
+      );
+      final data = response.data?['data'];
+      if (response.success && data is Map) return data.cast<String, dynamic>();
+    } catch (_) {}
+    return null;
+  }
+
+  /// `GET ib/get-template-rates/{templateId}` → `{masterGroupId: {categoryId: rate}}`.
+  /// Groups without rates come back as `[]` and are skipped.
+  Future<Map<String, Map<String, String>>?> loadTemplateRates(
+    int templateId,
+  ) async {
+    try {
+      final response = await ApiService.get(
+        endpoint: '${ApiConstants.ibTemplateRates}$templateId',
+      );
+      final data = response.data?['data'];
+      if (!response.success || data is! Map) {
+        CustomToastService.showError(
+          message:
+              response.message ?? TranslationUtils.tr('ib_template_rates_failed'),
+        );
+        return null;
+      }
+      return {
+        for (final entry in data.entries)
+          if (entry.value is Map)
+            '${entry.key}': {
+              for (final rate in (entry.value as Map).entries)
+                '${rate.key}': '${rate.value}',
+            },
+      };
+    } catch (_) {
+      CustomToastService.showError(
+        message: TranslationUtils.tr('ib_template_rates_failed'),
+      );
+      return null;
     }
   }
 }

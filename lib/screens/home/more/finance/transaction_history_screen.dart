@@ -11,6 +11,7 @@ import '../../../../routes/app_pages.dart';
 import '../../../../services/language_service.dart';
 import '../../../../utils/app_picker_theme.dart';
 import '../../../../widgets/custom_toast.dart';
+import 'proof_viewer_screen.dart';
 
 enum _TxStatus { completed, pending, failed }
 
@@ -482,10 +483,12 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     final flowBackground = isDeposit ? AppColors.successBg : AppColors.errorBg;
     final typeLabel = _formatType(transaction.transactionType);
     final method = (transaction.paymentMethod ?? '').trim();
+    final accountLabel = (transaction.accountLabel ?? '').trim();
     final date = _parseDate(transaction);
     final subtitle = [
       if (date != null) _formatTime(date),
       if (method.isNotEmpty) method,
+      if (accountLabel.isNotEmpty) accountLabel,
     ].join(' · ');
 
     return InkWell(
@@ -606,10 +609,15 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   Widget _buildTransactionDetails(Data transaction, bool isBusy) {
     final reference = (transaction.referenceNumber ?? '').trim();
     final transactionId = (transaction.transactionId ?? '').trim();
-    final accountId = (transaction.mt5AccountId ?? '').trim();
+    final account = _accountOf(transaction);
     final accountType = _formatType(transaction.type);
     final method = (transaction.paymentMethod ?? '').trim();
+    final paymentDetails = (transaction.paymentDetails ?? '').trim();
     final status = _formatType(transaction.status);
+    final updatedAt = (transaction.updatedAt ?? '').trim();
+    final reason = (transaction.rejectReason ?? '').trim();
+    final comment = (transaction.commentForClient ?? '').trim();
+    final flow = _flowOf(transaction);
 
     return Padding(
       padding: EdgeInsets.only(top: 10.h),
@@ -625,17 +633,49 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
               'Date & time',
               _formatDateTime(transaction.createdAt ?? ''),
             ),
+            if (flow.source.isNotEmpty)
+              _buildDetailRow(
+                languageService.tr('transaction_history_source'),
+                flow.source,
+              ),
+            if (flow.destination.isNotEmpty)
+              _buildDetailRow(
+                languageService.tr('transaction_history_destination'),
+                flow.destination,
+              ),
             if (reference.isNotEmpty)
               _buildDetailRow('Reference', reference, copyable: true),
             if (transactionId.isNotEmpty)
-              _buildDetailRow('Transaction ID', transactionId, copyable: true),
-            if (accountId.isNotEmpty)
+              _buildDetailRow(
+                languageService.tr('transaction_history_transaction_id'),
+                transactionId,
+                copyable: true,
+              ),
+            if (account.isNotEmpty)
               _buildDetailRow(
                 'Account',
-                accountType.isEmpty ? accountId : '$accountType: $accountId',
+                accountType.isEmpty ? account : '$accountType: $account',
               ),
             if (method.isNotEmpty) _buildDetailRow('Payment method', method),
+            if (paymentDetails.isNotEmpty && paymentDetails != method)
+              _buildDetailRow(
+                languageService.tr('wallet_screen_payment_details'),
+                paymentDetails,
+              ),
             if (status.isNotEmpty) _buildDetailRow('Status', status),
+            if (updatedAt.isNotEmpty)
+              _buildDetailRow(
+                languageService.tr('transaction_history_updated_date'),
+                _formatDateTime(updatedAt),
+              ),
+            if (reason.isNotEmpty)
+              _buildNoteBox(reason, AppColors.errorText, AppColors.errorBg),
+            if (comment.isNotEmpty)
+              _buildNoteBox(
+                comment,
+                AppColors.textPrimary,
+                AppColors.textGrey.withValues(alpha: 0.12),
+              ),
             if (_canDownloadReceipt(transaction))
               Padding(
                 padding: EdgeInsets.fromLTRB(0, 6.h, 8.w, 6.h),
@@ -646,10 +686,14 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                     onPressed:
                         isBusy
                             ? null
-                            : () => controller.viewReceipt(transaction.id!),
-                    icon: Icon(Icons.download_rounded, size: 16.r),
+                            : () => Get.to(
+                              () => ProofViewerScreen(
+                                transactionId: transaction.id!,
+                              ),
+                            ),
+                    icon: Icon(Icons.visibility_outlined, size: 16.r),
                     label: Text(
-                      'Download receipt',
+                      languageService.tr('transaction_history_view_proof'),
                       style: TextStyle(
                         fontSize: 12.sp,
                         fontWeight: FontWeight.w600,
@@ -668,6 +712,25 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                 ),
               ),
           ],
+        ),
+      ),
+    );
+  }
+
+  /// Highlighted box for the admin's reject reason / note to the client.
+  Widget _buildNoteBox(String text, Color foreground, Color background) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(0, 6.h, 8.w, 4.h),
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+        decoration: BoxDecoration(
+          color: background,
+          borderRadius: BorderRadius.circular(8.r),
+        ),
+        child: Text(
+          text,
+          style: TextStyle(fontSize: 11.sp, color: foreground, height: 1.35),
         ),
       ),
     );
@@ -789,11 +852,39 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     return _TxStatus.pending;
   }
 
-  /// Receipt is available for any transaction with an id that is not a withdrawal.
+  /// Proof is shown only when the admin enabled the Proof column
+  /// (`show_proof_column`) and the client actually uploaded one.
   bool _canDownloadReceipt(Data transaction) {
-    return (transaction.id ?? '').isNotEmpty &&
+    return controller.showProofColumn.value &&
+        transaction.hasProof &&
+        (transaction.id ?? '').isNotEmpty &&
         !(transaction.amount?.trim().startsWith('-') ?? false) &&
         (transaction.transactionType?.toLowerCase() ?? '') != 'withdrawal';
+  }
+
+  /// Account the money landed in (or left from): `WA#…` / `TA#…` label when
+  /// the API sends one, else the raw account id.
+  String _accountOf(Data t) {
+    final label = (t.accountLabel ?? '').trim();
+    return label.isNotEmpty ? label : (t.mt5AccountId ?? '').trim();
+  }
+
+  /// Same Source / Destination split as the web table: a deposit flows from
+  /// the payment method into the account, a withdrawal the other way round,
+  /// and a transfer between the user's own accounts.
+  ({String source, String destination}) _flowOf(Data t) {
+    final account = _accountOf(t);
+    final method = (t.paymentMethod ?? '').trim();
+    if (t.isInternalTransfer) {
+      final from = (t.fromAccount ?? '').trim();
+      final to = (t.toAccount ?? '').trim();
+      return (source: from.isNotEmpty ? from : account, destination: to);
+    }
+    final isWithdrawal =
+        (t.transactionType ?? '').toLowerCase().contains('withdraw');
+    return isWithdrawal
+        ? (source: account, destination: method)
+        : (source: method, destination: account);
   }
 
   String _formatAmount(Data transaction, bool isDeposit) {

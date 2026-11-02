@@ -1,5 +1,6 @@
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
+import 'package:crm_app/services/language_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -26,6 +27,24 @@ class NotificationsScreen extends GetView<NotificationController> {
           ),
           onPressed: () => Get.back(),
         ),
+        actions: [
+          Obx(() {
+            if (controller.unreadTotal.value == 0) {
+              return const SizedBox.shrink();
+            }
+            return IconButton(
+              tooltip: TranslationUtils.tr('notifications_mark_all_read'),
+              onPressed: controller.isMarkingAllRead.value
+                  ? null
+                  : controller.markAllAsRead,
+              icon: Icon(
+                Icons.done_all_rounded,
+                color: AppColors.primary,
+                size: 22.r,
+              ),
+            );
+          }),
+        ],
       ),
       body: Obx(() {
         if (controller.isLoading.value) {
@@ -74,7 +93,12 @@ class NotificationsScreen extends GetView<NotificationController> {
               }
               final item = controller.notifications[index];
               final isUnread = item.readAt == null;
-              return Container(
+              return GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => item.isMt5Credentials
+                    ? controller.openMt5Credentials(item)
+                    : controller.markAsRead(item),
+                child: Container(
                 decoration: BoxDecoration(
                   color: isUnread ? AppColors.primary.withValues(alpha: 0.05) : AppColors.cardBackground,
                   borderRadius: BorderRadius.circular(16.r),
@@ -124,6 +148,7 @@ class NotificationsScreen extends GetView<NotificationController> {
                     ),
                   ],
                 ),
+              ),
               );
             },
           ),

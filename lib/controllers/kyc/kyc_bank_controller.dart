@@ -14,6 +14,7 @@ import 'package:crm_app/services/secure_storage_service.dart';
 import 'package:crm_app/models/currency_list_model.dart';
 import 'package:crm_app/screens/home/kyc/kyc_bank_camera_screen.dart';
 import 'package:crm_app/controllers/app_notification_controller.dart';
+import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/controllers/finance/withdrawal_controller.dart'
     show WithdrawalMethod, WithdrawalMethodResponse;
 
@@ -22,6 +23,9 @@ class KycBankController extends GetxController {
   final RxBool isLoading = false.obs;
   final RxBool isOtpLoading = false.obs;
   final RxBool hasLoadedOnce = false.obs;
+
+  /// Withdrawal method ids with a delete request in flight.
+  final RxSet<int> deletingIds = <int>{}.obs;
   final RxString errorMessage = ''.obs;
   final RxString successMessage = ''.obs;
 
@@ -282,6 +286,48 @@ class KycBankController extends GetxController {
     }
   }
 
+  /// `DELETE withdrawal/delete/{id}`; drops the row locally on success.
+  Future<bool> deleteWithdrawalMethod(int id) async {
+    if (deletingIds.contains(id)) return false;
+    deletingIds.add(id);
+    try {
+      final response = await ApiService.delete(
+        endpoint: ApiConstants.withdrawalMethodDelete(id),
+      );
+      final serverMessage =
+          response.message?.isNotEmpty == true ? response.message! : null;
+      if (response.success) {
+        bankWithdrawalList.removeWhere((m) => m.id == id);
+        _notify(
+          success: true,
+          message: serverMessage ?? TranslationUtils.tr('bank_list_delete_success'),
+        );
+        return true;
+      }
+      _notify(
+        success: false,
+        message: serverMessage ?? TranslationUtils.tr('bank_list_delete_failed'),
+      );
+      return false;
+    } catch (_) {
+      _notify(
+        success: false,
+        message: TranslationUtils.tr('bank_list_delete_failed'),
+      );
+      return false;
+    } finally {
+      deletingIds.remove(id);
+    }
+  }
+
+  void _notify({required bool success, required String message}) {
+    if (!Get.isRegistered<AppNotificationController>()) return;
+    final notifier = Get.find<AppNotificationController>();
+    success
+        ? notifier.showSuccess(message: message)
+        : notifier.showError(message: message);
+  }
+
   // Set account type
   void setAccountType(String accountType) {
     selectedAccountType.value = accountType;
@@ -334,6 +380,55 @@ class KycBankController extends GetxController {
     isOtpSent.value = false;
     proofFile.value = null;
     accountHolderName.value = "";
+  }
+
+  final RxBool isVerifyingIfsc = false.obs;
+
+  /// Branch line shown under the code field once `utility/ifsc-code` resolves
+  /// the IFSC; cleared whenever the code is edited.
+  final RxString ifscBranchInfo = ''.obs;
+
+  /// `POST utility/ifsc-code`. Returns the bank name on success so the form
+  /// can fill its bank-name field.
+  Future<String?> verifyIfscCode() async {
+    final code = ifscIbanCode.value.trim().toUpperCase();
+    if (code.isEmpty || isVerifyingIfsc.value) return null;
+    isVerifyingIfsc.value = true;
+    ifscBranchInfo.value = '';
+    try {
+      final response = await ApiService.post(
+        endpoint: ApiConstants.utilityIfscCode,
+        data: {'ifscCode': code},
+      );
+      final body = response.data;
+      final outer = body is Map ? body['data'] : null;
+      final details = outer is Map ? outer['data'] : null;
+      if (!response.success || details is! Map) {
+        _notifyIfscError(
+          response.message?.isNotEmpty == true ? response.message! : null,
+        );
+        return null;
+      }
+      final bank = details['BANK']?.toString() ?? '';
+      ifscBranchInfo.value = [
+        details['BRANCH'],
+        details['CITY'],
+      ].where((v) => v != null && '$v'.isNotEmpty).join(', ');
+      if (bank.isNotEmpty) bankName.value = bank;
+      return bank.isEmpty ? null : bank;
+    } catch (_) {
+      _notifyIfscError(null);
+      return null;
+    } finally {
+      isVerifyingIfsc.value = false;
+    }
+  }
+
+  void _notifyIfscError(String? message) {
+    if (!Get.isRegistered<AppNotificationController>()) return;
+    Get.find<AppNotificationController>().showError(
+      message: message ?? TranslationUtils.tr('kyc_bank_ifsc_invalid'),
+    );
   }
 
   // Send OTP

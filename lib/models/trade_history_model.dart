@@ -4,6 +4,7 @@ class TradeHistoryResponse {
   final List<TradeHistoryItem> data;
   final PaginationInfo pagination;
   final TradeHistoryTotals? totals;
+  final TradeHistorySummary? summary;
 
   TradeHistoryResponse({
     required this.message,
@@ -11,6 +12,7 @@ class TradeHistoryResponse {
     required this.data,
     required this.pagination,
     this.totals,
+    this.summary,
   });
 
   factory TradeHistoryResponse.fromJson(Map<String, dynamic> json) {
@@ -22,6 +24,7 @@ class TradeHistoryResponse {
     List<TradeHistoryItem> tradeHistoryItems;
     Map<String, dynamic> paginationData;
     Map<String, dynamic>? totalsData;
+    Map<String, dynamic>? summaryData;
 
     if (dataField is List<dynamic>) {
       // ✅ NEW FLAT STRUCTURE: data is directly a list at root level
@@ -35,6 +38,7 @@ class TradeHistoryResponse {
       // Pagination and totals are at root level
       paginationData = json['pagination'] as Map<String, dynamic>? ?? {};
       totalsData = json['totals'] as Map<String, dynamic>?;
+      summaryData = json['summary'] as Map<String, dynamic>?;
     } else if (dataField is Map<String, dynamic>) {
       // Nested structure (backward compatibility): data.data, data.pagination, data.totals
       final nestedData = dataField['data'] as List<dynamic>?;
@@ -48,11 +52,13 @@ class TradeHistoryResponse {
           [];
       paginationData = dataField['pagination'] as Map<String, dynamic>? ?? {};
       totalsData = dataField['totals'] as Map<String, dynamic>?;
+      summaryData = dataField['summary'] as Map<String, dynamic>?;
     } else {
       // Fallback: empty data
       tradeHistoryItems = [];
       paginationData = json['pagination'] as Map<String, dynamic>? ?? {};
       totalsData = json['totals'] as Map<String, dynamic>?;
+      summaryData = json['summary'] as Map<String, dynamic>?;
     }
 
     return TradeHistoryResponse(
@@ -62,6 +68,10 @@ class TradeHistoryResponse {
       pagination: PaginationInfo.fromJson(paginationData),
       totals:
           totalsData != null ? TradeHistoryTotals.fromJson(totalsData) : null,
+      summary:
+          summaryData != null
+              ? TradeHistorySummary.fromJson(summaryData)
+              : null,
     );
   }
 }
@@ -117,19 +127,41 @@ class TradeHistoryItem {
     }
 
     return TradeHistoryItem(
-      mt5Account: _parseIntValue(json['mt5_account']),
-      tradePositionId: _parseIntValue(json['trade_position_id']),
+      // New API sends login / position_id / deal_id and plain field names.
+      mt5Account: _parseIntValue(json['mt5_account'] ?? json['login']),
+      tradePositionId: _parseIntValue(
+        json['trade_position_id'] ?? json['position_id'] ?? json['deal_id'],
+      ),
       tradeType: json['trade_type'] ?? json['action'] ?? '',
-      tradeSymbol: json['trade_symbol'] ?? '',
-      tradeVolume: json['trade_volume'] ?? '0',
-      tradePriceOrder: json['trade_price_order'] ?? '0',
-      tradeOpenTime: json['trade_open_time'] ?? '',
-      tradeCloseTime: json['trade_close_time'] ?? '',
-      tradePriceClose: json['trade_price_close'] ?? '0',
+      tradeSymbol: json['trade_symbol'] ?? json['symbol'] ?? '',
+      tradeVolume:
+          (json['trade_volume'] ?? json['volume'] ?? json['lots'])
+              ?.toString() ??
+          '0',
+      tradePriceOrder:
+          (json['trade_price_order'] ?? json['price_open'] ?? json['price'])
+              ?.toString() ??
+          '0',
+      tradeOpenTime:
+          json['trade_open_time'] ?? json['open_time'] ?? json['time'] ?? '',
+      tradeCloseTime: json['trade_close_time'] ?? json['close_time'] ?? '',
+      tradePriceClose:
+          (json['trade_price_close'] ??
+                  json['price_close'] ??
+                  json['close_price'])
+              ?.toString() ??
+          '0',
       tradeProfit: _getProfitValue(json),
-      tradePriceTp: json['trade_price_tp'] ?? '0',
-      tradePriceSl: json['trade_price_sl'] ?? '0',
-      tradeCommission: json['trade_commission'] ?? '0',
+      tradePriceTp:
+          (json['trade_price_tp'] ?? json['tp'] ?? json['take_profit'])
+              ?.toString() ??
+          '0',
+      tradePriceSl:
+          (json['trade_price_sl'] ?? json['sl'] ?? json['stop_loss'])
+              ?.toString() ??
+          '0',
+      tradeCommission:
+          (json['trade_commission'] ?? json['commission'])?.toString() ?? '0',
       swap: _parseNumericValue(json['swap']),
       duration: json['duration'] ?? '',
     );
@@ -297,6 +329,41 @@ class TradeHistoryTotals {
     if (value is double) return value;
     if (value is int) return value.toDouble();
     if (value is String) return double.tryParse(value) ?? 0.0;
+    return 0.0;
+  }
+}
+
+/// Summary metadata returned by the API alongside paginated results.
+class TradeHistorySummary {
+  final int filteredCount;
+  final int totalDeals;
+  final double totalClosedVolume;
+
+  TradeHistorySummary({
+    required this.filteredCount,
+    required this.totalDeals,
+    required this.totalClosedVolume,
+  });
+
+  factory TradeHistorySummary.fromJson(Map<String, dynamic> json) {
+    return TradeHistorySummary(
+      filteredCount: _parseInt(json['filtered_count']),
+      totalDeals: _parseInt(json['total_deals']),
+      totalClosedVolume: _parseDouble(json['total_closed_volume']),
+    );
+  }
+
+  static int _parseInt(dynamic v) {
+    if (v == null) return 0;
+    if (v is num) return v.toInt();
+    if (v is String) return int.tryParse(v) ?? 0;
+    return 0;
+  }
+
+  static double _parseDouble(dynamic v) {
+    if (v == null) return 0.0;
+    if (v is num) return v.toDouble();
+    if (v is String) return double.tryParse(v) ?? 0.0;
     return 0.0;
   }
 }

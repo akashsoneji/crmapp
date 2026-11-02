@@ -33,6 +33,7 @@ abstract class Routes {
   static const CHOOSE_ACCOUNT = _Paths.CHOOSE_ACCOUNT;
   static const INTERNAL_TRANSFER = _Paths.INTERNAL_TRANSFER;
   static const INTERNAL_TRANSFER_HISTORY = _Paths.INTERNAL_TRANSFER_HISTORY;
+  static const TRADER_TRANSFER = _Paths.TRADER_TRANSFER;
   static const COPY_TRADING_MAIN = _Paths.COPY_TRADING_MAIN;
   static const COPY_TRADING_HUB = _Paths.COPY_TRADING_HUB;
   static const TRADER_DETAILS = _Paths.TRADER_DETAILS;
@@ -126,6 +127,7 @@ abstract class _Paths {
   static const CREATE_APP_ACCOUNT = '/create-pipze-account';
   static const INTERNAL_TRANSFER = '/internal-transfer';
   static const INTERNAL_TRANSFER_HISTORY = '/internal-transfer-history';
+  static const TRADER_TRANSFER = '/trader-transfer';
   static const CHART = '/chart';
   static const FINANCE = '/finance';
   static const IB_DASHBOARD = '/ib-dashboard';
@@ -159,6 +161,8 @@ abstract class _Paths {
   static const BANK_LIST = '/bank-list';
   static const CHANGE_PASSWORD = '/change-password';
   static const TWO_FACTOR_AUTH = '/two-factor-auth';
+  static const ACTIVE_SESSIONS = '/active-sessions';
+  static const LOGIN_ACTIVITY = '/login-activity';
   static const GOOGLE_LOGIN_OTP = '/google-login-otp';
   static const TENAX_BROKER_SELECTION = '/tenax-broker-selection';
   static const TENAX_BROKER_INFO = '/tenax-broker-info';

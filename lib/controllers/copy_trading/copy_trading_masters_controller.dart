@@ -31,6 +31,9 @@ class CopyTradingMasterListItem {
   final num minimumCapital;
   final num? commissionPercentage;
 
+  /// Master chose to hide copier counts (`hide_copiers`).
+  final bool hideCopiers;
+
   const CopyTradingMasterListItem({
     required this.planId,
     required this.planName,
@@ -54,6 +57,7 @@ class CopyTradingMasterListItem {
     required this.minInvestment,
     required this.minimumCapital,
     required this.commissionPercentage,
+    this.hideCopiers = false,
   });
 
   /// Copy is possible only for a real plan that still has copier slots.
@@ -96,6 +100,7 @@ class CopyTradingMasterListItem {
       minInvestment: _numOrNull(json['min_investment']) ?? minimumCapital,
       minimumCapital: minimumCapital,
       commissionPercentage: _numOrNull(json['commission_percentage']),
+      hideCopiers: json['hide_copiers'] == true,
     );
   }
 }
@@ -117,6 +122,31 @@ class MasterSearchSuggestion {
       code: (json['code'] ?? '').toString(),
       name: (json['name'] ?? '').toString(),
       plansCount: int.tryParse('${json['plans_count']}') ?? 0,
+    );
+  }
+}
+
+/// One row of `GET copytrading/plans/search?q=` —
+/// `{code: plan id, name: plan name, meta: master name, master_code}`.
+class PlanSearchSuggestion {
+  final int planId;
+  final String name;
+  final String masterName;
+  final String masterCode;
+
+  const PlanSearchSuggestion({
+    required this.planId,
+    required this.name,
+    required this.masterName,
+    required this.masterCode,
+  });
+
+  factory PlanSearchSuggestion.fromJson(Map<String, dynamic> json) {
+    return PlanSearchSuggestion(
+      planId: int.tryParse('${json['code']}') ?? 0,
+      name: (json['name'] ?? '').toString(),
+      masterName: (json['meta'] ?? '').toString(),
+      masterCode: (json['master_code'] ?? '').toString(),
     );
   }
 }
@@ -172,7 +202,18 @@ class CopyTradingMastersController extends GetxController {
 
   /// Master picked from the dropdown; while set, only that master's plans show.
   final Rxn<MasterSearchSuggestion> selectedMaster = Rxn<MasterSearchSuggestion>();
+
+  /// Plan suggestions from `GET copytrading/plans/search` (web
+  /// `searchPlanOptions`), shown under the master suggestions.
+  final RxList<PlanSearchSuggestion> planSuggestions =
+      <PlanSearchSuggestion>[].obs;
+
+  /// Plan picked from the dropdown; while set, only that plan shows.
+  final Rxn<PlanSearchSuggestion> selectedPlan = Rxn<PlanSearchSuggestion>();
   String _lastServerQuery = '';
+
+  bool get _hasPickedSuggestion =>
+      selectedMaster.value != null || selectedPlan.value != null;
 
   /// Plans after the tab, search, risk chip and sort chip are applied.
   List<CopyTradingMasterListItem> get visibleMasters {
@@ -180,11 +221,13 @@ class CopyTradingMastersController extends GetxController {
     final q = search.value.trim().toLowerCase();
     final risk = riskFilter.value;
     final pickedCode = selectedMaster.value?.code;
+    final pickedPlanId = selectedPlan.value?.planId;
 
     final result = masters.where((m) {
       if (tab == MasterFilterTab.enrolled && !m.isEnrolled) return false;
       if (tab == MasterFilterTab.discover && m.isEnrolled) return false;
       if (!_matchesRisk(m.riskScore ?? 0, risk)) return false;
+      if (pickedPlanId != null) return m.planId == pickedPlanId;
       if (pickedCode != null) return m.masterCode == pickedCode;
       if (q.isEmpty) return true;
       return m.nickname.toLowerCase().contains(q) ||
@@ -233,53 +276,83 @@ class CopyTradingMastersController extends GetxController {
   /// Picks a dropdown suggestion: the box shows its name and the list is
   /// narrowed to that master's plans.
   void selectMasterSuggestion(MasterSearchSuggestion suggestion) {
+    selectedPlan.value = null;
     selectedMaster.value = suggestion;
     masterSuggestions.clear();
+    planSuggestions.clear();
+    _lastServerQuery = suggestion.name;
+    search.value = suggestion.name;
+  }
+
+  /// Picks a plan suggestion: the box shows the plan name and the list is
+  /// narrowed to that one plan.
+  void selectPlanSuggestion(PlanSearchSuggestion suggestion) {
+    selectedMaster.value = null;
+    selectedPlan.value = suggestion;
+    masterSuggestions.clear();
+    planSuggestions.clear();
     _lastServerQuery = suggestion.name;
     search.value = suggestion.name;
   }
 
   void clearSearch() {
     selectedMaster.value = null;
+    selectedPlan.value = null;
     masterSuggestions.clear();
+    planSuggestions.clear();
     search.value = '';
   }
 
-  /// Typing again after a pick means a new search, so drop the picked master.
+  /// Typing again after a pick means a new search, so drop the picked item.
   void onSearchTyped(String text) {
     if (selectedMaster.value != null && text != selectedMaster.value!.name) {
       selectedMaster.value = null;
+    }
+    if (selectedPlan.value != null && text != selectedPlan.value!.name) {
+      selectedPlan.value = null;
     }
     search.value = text;
   }
 
   Future<void> _fetchMasterSuggestions(String rawQuery) async {
     final query = rawQuery.trim();
-    if (selectedMaster.value != null || query == _lastServerQuery) return;
+    if (_hasPickedSuggestion || query == _lastServerQuery) return;
     _lastServerQuery = query;
     if (query.isEmpty) {
       masterSuggestions.clear();
+      planSuggestions.clear();
       return;
     }
 
-    final res = await ApiService.get(
-      endpoint: ApiConstants.copyTradingMastersSearch,
-      queryParameters: {'q': query},
-    );
+    final responses = await Future.wait([
+      ApiService.get(
+        endpoint: ApiConstants.copyTradingMastersSearch,
+        queryParameters: {'q': query},
+      ),
+      ApiService.get(
+        endpoint: ApiConstants.copyTradingPlansSearch,
+        queryParameters: {'q': query},
+      ),
+    ]);
     // A newer keystroke (or a pick) already moved on; drop stale results.
-    if (query != _lastServerQuery || selectedMaster.value != null) return;
+    if (query != _lastServerQuery || _hasPickedSuggestion) return;
 
-    final body = res.data?['data'];
-    if (!res.success || body is! List) {
-      masterSuggestions.clear();
-      return;
-    }
     masterSuggestions.assignAll(
-      body
-          .whereType<Map>()
-          .map((e) => MasterSearchSuggestion.fromJson(e.cast<String, dynamic>()))
+      _suggestionRows(responses[0])
+          .map(MasterSearchSuggestion.fromJson)
           .where((s) => s.code.isNotEmpty),
     );
+    planSuggestions.assignAll(
+      _suggestionRows(responses[1])
+          .map(PlanSearchSuggestion.fromJson)
+          .where((s) => s.planId > 0),
+    );
+  }
+
+  static List<Map<String, dynamic>> _suggestionRows(ApiResponse res) {
+    final body = res.data?['data'];
+    if (!res.success || body is! List) return const [];
+    return body.whereType<Map>().map((e) => e.cast<String, dynamic>()).toList();
   }
 
   Future<void> loadMasters({bool showLoading = false}) async {

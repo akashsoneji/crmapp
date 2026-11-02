@@ -1606,25 +1606,79 @@ class _KycBankScreenState extends State<KycBankScreen> {
             ),
           ),
           SizedBox(height: 16.h),
-          // Right field - Code input
-          RTLHelper.rtlTextField(
-            controller: _ifscIbanCodeController,
-            onChanged: (value) => controller.ifscIbanCode.value = value,
-            labelText: 'Code',
-            hintText:
-                controller.optRadio.value == 'IFSC'
-                    ? 'Enter IFSC code'
-                    : 'Enter IBAN code',
-            decoration: InputDecoration(
-              labelText: 'Code',
-              labelStyle: TextStyle(color: AppColors.textGrey),
-              floatingLabelStyle: TextStyle(color: AppColors.primary),
-              hintStyle: TextStyle(color: AppColors.textGrey),
-            ),
-          ),
+          // Right field - Code input. IFSC codes can be verified through
+          // `utility/ifsc-code`, which also fills in the bank name.
+          Obx(() {
+            final isIfsc = controller.optRadio.value == 'IFSC';
+            final verifying = controller.isVerifyingIfsc.value;
+            return Directionality(
+              textDirection: TextDirection.ltr,
+              child: RTLHelper.rtlTextField(
+                controller: _ifscIbanCodeController,
+                onChanged: (value) {
+                  controller.ifscIbanCode.value = value;
+                  controller.ifscBranchInfo.value = '';
+                },
+                labelText: 'Code',
+                hintText: isIfsc ? 'Enter IFSC code' : 'Enter IBAN code',
+                suffixIcon: !isIfsc
+                    ? null
+                    : TextButton(
+                        onPressed: verifying ? null : _verifyIfsc,
+                        child: verifying
+                            ? SizedBox(
+                                width: 14.w,
+                                height: 14.w,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: AppColors.primary,
+                                ),
+                              )
+                            : Text(languageService.tr('kyc_bank_ifsc_verify')),
+                      ),
+                decoration: InputDecoration(
+                  labelText: 'Code',
+                  labelStyle: TextStyle(color: AppColors.textGrey),
+                  floatingLabelStyle: TextStyle(color: AppColors.primary),
+                  hintStyle: TextStyle(color: AppColors.textGrey),
+                ),
+              ),
+            );
+          }),
+          Obx(() {
+            final info = controller.ifscBranchInfo.value;
+            if (info.isEmpty || controller.optRadio.value != 'IFSC') {
+              return const SizedBox.shrink();
+            }
+            return Padding(
+              padding: EdgeInsets.only(top: 6.h),
+              child: Row(
+                children: [
+                  Icon(Icons.check_circle, size: 14.sp, color: AppColors.success),
+                  SizedBox(width: 6.w),
+                  Expanded(
+                    child: Text(
+                      info,
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
         ],
       ),
     );
+  }
+
+  Future<void> _verifyIfsc() async {
+    FocusScope.of(context).unfocus();
+    final bank = await controller.verifyIfscCode();
+    if (bank == null || !mounted) return;
+    _beneficiaryBankController.text = bank;
   }
 
   Widget _buildFormField(

@@ -6,6 +6,8 @@ import '../services/notification_service.dart';
 import '../services/price_alert_monitor_service.dart';
 import '../utils/precision_helper.dart';
 import '../controllers/app_notification_controller.dart';
+import '../screens/home/price_alerts_screen.dart';
+import '../services/language_service.dart';
 import 'package:get/get.dart';
 
 class PriceAlertDialog extends StatefulWidget {
@@ -140,6 +142,14 @@ class _PriceAlertDialogState extends State<PriceAlertDialog> {
                       fontSize: 18.sp,
                       fontWeight: FontWeight.w600,
                     ),
+                  ),
+                  TextButton.icon(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      Get.to(() => const PriceAlertsScreen());
+                    },
+                    icon: Icon(Icons.list_alt_rounded, size: 18.sp),
+                    label: Text(TranslationUtils.tr('price_alerts_my_alerts')),
                   ),
                 ],
               ),

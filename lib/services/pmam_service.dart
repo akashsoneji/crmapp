@@ -128,6 +128,16 @@ class PmamService {
 
   // ──── Investor APIs ────
 
+  /// Settled commission rows, paginated:
+  /// `data: {data: [...], current_page, last_page, per_page, total}`.
+  static Future<ApiResponse> getManagerCommissions({
+    int page = 1,
+    int perPage = 25,
+  }) =>
+      ApiService.get(
+        endpoint: 'user/pmam/manager/commissions?page=$page&per_page=$perPage',
+      );
+
   static Future<ApiResponse> getAvailablePlans() =>
       ApiService.get(endpoint: 'user/pmam/investor/plans');
 

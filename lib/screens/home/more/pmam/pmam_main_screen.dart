@@ -11,6 +11,8 @@ import 'pmam_explore_managers_screen.dart';
 import 'pmam_investor_portal_screen.dart';
 import 'pmam_manager_dashboard_screen.dart';
 import 'pmam_manager_portal_screen.dart';
+import 'pmam_manager_commissions_screen.dart';
+import '../../../../services/language_service.dart';
 import '../../../../flavor_config.dart';
 
 /// Single entry-point for the PAMM module.
@@ -131,6 +133,12 @@ class _PmamMainScreenState extends State<PmamMainScreen> {
             ),
           ),
           actions: [
+            if (mode == PmamNavMode.manager)
+              IconButton(
+                tooltip: TranslationUtils.tr('pmam_commissions_title'),
+                icon: Icon(Icons.payments_outlined, color: AppColors.textPrimary),
+                onPressed: () => Get.to(() => const PmamManagerCommissionsScreen()),
+              ),
             if (mode == PmamNavMode.manager)
               IconButton(
                 tooltip: 'Refresh',

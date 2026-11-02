@@ -44,6 +44,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _referrerController = TextEditingController();
+  DeepLinkIntent? _inviteIntent;
 
   // ==================== STATE VARIABLES ====================
   DateTime? _selectedDate;
@@ -126,8 +127,11 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
   /// Fills the referrer code from a Tenax invite link, unless the user already
   /// typed one.
   Future<void> _prefillInviteReferral() async {
-    final code = await DeepLinkService.instance.getPendingReferralCode();
-    if (!mounted || code == null || _referrerController.text.isNotEmpty) return;
+    final intent = await DeepLinkService.instance.getPendingReferral();
+    if (!mounted) return;
+    _inviteIntent = intent;
+    final code = intent?.referralCode;
+    if (code == null || _referrerController.text.isNotEmpty) return;
     _referrerController.text = code;
   }
 
@@ -427,6 +431,9 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
       final referrerCode = _referrerController.text.trim();
       if (referrerCode.isNotEmpty) {
         registrationData["ib_affiliate_refcode"] = referrerCode;
+        registrationData.addAll(
+          DeepLinkService.registrationFieldsFor(_inviteIntent, referrerCode),
+        );
       }
 
       // Step 1: Register user
@@ -496,6 +503,9 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
     final referrerCode = _referrerController.text.trim();
     if (referrerCode.isNotEmpty) {
       registrationData["ib_affiliate_refcode"] = referrerCode;
+      registrationData.addAll(
+        DeepLinkService.registrationFieldsFor(_inviteIntent, referrerCode),
+      );
     }
 
     Navigator.push(

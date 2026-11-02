@@ -18,11 +18,12 @@ import 'package:crm_app/services/one_click_trading_service.dart';
 import 'package:crm_app/screens/home/more/one_click_trading_disclaimer_screen.dart';
 import 'package:crm_app/screens/ibm/view_models/ibm_controller.dart';
 import 'package:crm_app/widgets/brand_logo.dart';
-import 'package:crm_app/widgets/theme_bottom_sheet.dart';
+
 import 'package:crm_app/services/secure_storage_service.dart';
 import 'package:crm_app/services/app_lock_service.dart';
 import 'package:crm_app/services/biometric_service.dart';
 import 'package:crm_app/services/enabled_modules_service.dart';
+import 'package:crm_app/services/live_chat_service.dart';
 import 'package:crm_app/controllers/tenax_broker_selection_controller.dart';
 
 class MoreScreen extends StatefulWidget {
@@ -54,6 +55,7 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
     // would send the old token to the new host and trip a 401.
     if (!TenaxBrokerSelectionController.hasPendingBroker) {
       moreController.loadMoreScreenData();
+      LiveChatService.load();
     }
     _loadTenaxProfiles();
     _hasLoadedInitialData = true;
@@ -1196,11 +1198,13 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                       if (mounted) _refreshDataIfNeeded();
                     },
                   ),
-                  _MenuItem(
-                    icon: 'dashboard',
-                    label: languageService.tr('more_dashboard'),
-                    onTap: () async => await _handleSwitchToIB(),
-                  ),
+                  // `enabled-modules.ib` off → admin hid the IB area.
+                  if (EnabledModulesService.flags.ib)
+                    _MenuItem(
+                      icon: 'dashboard',
+                      label: languageService.tr('more_dashboard'),
+                      onTap: () async => await _handleSwitchToIB(),
+                    ),
                 ];
 
                 if (showPromotional) {
@@ -1267,6 +1271,24 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
 
               SizedBox(height: 20.h),
 
+              // App Settings Section
+              _SectionHeader(
+                title: languageService.tr('more_app_settings'),
+              ),
+              // Language, theme, password, sessions, login activity and
+              // platforms live on the App Settings screen.
+              _CardGroup(
+                children: [
+                  _MenuItem(
+                    icon: 'settings',
+                    label: languageService.tr('more_app_settings'),
+                    onTap: () => Get.toNamed(AppPages.SETTING),
+                  ),
+                ],
+              ),
+
+              SizedBox(height: 20.h),
+
               // Others Section
               _SectionHeader(
                 title: languageService.tr('general_account_security'),
@@ -1278,13 +1300,22 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                     label: languageService.tr('ticket_title'),
                     onTap: () => Get.toNamed(AppPages.TICKET_LIST),
                   ),
-                  _ThemeMenuItem(),
+                  // Shown only when `GET user/live-chat` says enabled; label
+                  // comes from the broker's admin setting.
+                  Obx(() {
+                    final liveChat = LiveChatService.config.value;
+                    if (liveChat == null || !liveChat.enabled) {
+                      return const SizedBox.shrink();
+                    }
+                    return _MenuItem(
+                      icon: 'support',
+                      label: liveChat.label.isNotEmpty
+                          ? liveChat.label
+                          : languageService.tr('live_chat'),
+                      onTap: LiveChatService.open,
+                    );
+                  }),
                   const _BiometricLoginMenuItem(),
-                  _MenuItem(
-                    icon: 'change_password',
-                    label: languageService.tr('change_password'),
-                    onTap: () => Get.toNamed(AppPages.CHANGE_PASSWORD),
-                  ),
                   _MenuItem(
                     icon: 'two_factor_auth',
                     label: languageService.tr('two_factor_authentication'),
@@ -2191,62 +2222,6 @@ class _BiometricLoginMenuItemState extends State<_BiometricLoginMenuItem> {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _ThemeMenuItem extends StatelessWidget {
-  const _ThemeMenuItem();
-
-  @override
-  Widget build(BuildContext context) {
-    final languageService = Get.find<LanguageService>();
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () => showThemeBottomSheet(context),
-        borderRadius: BorderRadius.circular(18.r),
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 11.h),
-          child: Row(
-            children: [
-              Container(
-                width: 34.w,
-                height: 34.w,
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.08),
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: Icon(
-                    Icons.palette_outlined,
-                    size: 18.sp,
-                    color: AppColors.primary,
-                  ),
-                ),
-              ),
-              SizedBox(width: 14.w),
-              Expanded(
-                child: Text(
-                  languageService.tr('settings_theme'),
-                  style: TextStyle(
-                    fontFamily: 'Roboto',
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w400,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              ),
-              Icon(
-                Icons.arrow_forward_ios_rounded,
-                size: 16.sp,
-                color: AppColors.icongrey.withValues(alpha: 0.6),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

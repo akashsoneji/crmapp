@@ -4,6 +4,8 @@ import '../../services/secure_storage_service.dart';
 import '../../widgets/custom_toast.dart';
 import '../../utils/precision_helper.dart';
 import '../../controllers/app_notification_controller.dart';
+import '../../services/crm_settings_service.dart';
+import '../../services/language_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:get/get.dart';
@@ -445,14 +447,16 @@ class WalletController extends GetxController {
     }
   }
 
+  /// [otp] is null when the admin turned `internal_transfer_otp_required`
+  /// off, so no `otp` key is sent.
   Future<bool> submitInternalTransfer(
-    String otp,
+    String? otp,
     String comment,
     String fromAccountId,
     String toAccountId,
     String amount,
   ) async {
-    if (otp.isEmpty) {
+    if (otp != null && otp.isEmpty) {
       CustomToastService.showError(
         message: 'Please enter OTP',
       );
@@ -485,13 +489,13 @@ class WalletController extends GetxController {
           'to_account': toAccountId,
           'amount': amount,
           'comment': comment,
-          'otp': otp,
+          if (otp != null) 'otp': otp,
         },
       );
 
       if (response.success && response.data != null) {
         CustomToastService.showSuccess(
-          message: 'Transfer completed successfully',
+          message: _transferSuccessMessage(response.message),
         );
 
         await fetchWalletData();
@@ -511,6 +515,22 @@ class WalletController extends GetxController {
     } finally {
       isTransferLoading.value = false;
     }
+  }
+
+  /// With admin approval on, the transfer is only queued, so prefer the
+  /// server's wording over "completed".
+  String _transferSuccessMessage(String? apiMessage) {
+    final approvalRequired = Get.isRegistered<CrmSettingsService>() &&
+        (Get.find<CrmSettingsService>()
+                .current
+                ?.financialSettings
+                .internalTransferApprovalRequired ??
+            false);
+    if (!approvalRequired) return 'Transfer completed successfully';
+    final message = apiMessage?.trim() ?? '';
+    return message.isNotEmpty
+        ? message
+        : TranslationUtils.tr('wallet_controller_transfer_sent_for_approval');
   }
 
   void _resetTransferForm() {

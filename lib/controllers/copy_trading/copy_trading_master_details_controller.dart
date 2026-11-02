@@ -163,6 +163,9 @@ class CopyTradingMasterProfile {
   final List<CopyTradingTradeItem> openPositions;
   final List<PerformanceSeriesPoint> performanceSeries;
 
+  /// Master chose to hide copier counts (`hide_copiers`).
+  final bool hideCopiers;
+
   const CopyTradingMasterProfile({
     required this.masterCode,
     required this.nickname,
@@ -188,6 +191,7 @@ class CopyTradingMasterProfile {
     required this.tradeHistory,
     required this.openPositions,
     required this.performanceSeries,
+    this.hideCopiers = false,
   });
 
   factory CopyTradingMasterProfile.fromJson(Map<String, dynamic> json) {
@@ -234,13 +238,19 @@ class CopyTradingMasterProfile {
       tradeHistory: tradeHistoryList,
       openPositions: openPositionsList,
       performanceSeries: performanceSeriesList,
+      hideCopiers: json['hide_copiers'] == true,
     );
   }
 }
 
 class CopyTradingMasterDetailsController extends GetxController {
   final String masterCode;
-  CopyTradingMasterDetailsController({required this.masterCode});
+  /// [initialPlanId] opens the profile scoped to one plan (`plan_id`), as the
+  /// web does when a plan card is tapped on Explore. Empty = all plans.
+  CopyTradingMasterDetailsController({
+    required this.masterCode,
+    String initialPlanId = '',
+  }) : selectedPlanId = initialPlanId.obs;
 
   final RxBool isLoading = false.obs;
   final RxBool isTimeframeLoading = false.obs;
@@ -255,7 +265,7 @@ class CopyTradingMasterDetailsController extends GetxController {
   final Rxn<CopyTradingMasterProfile> profile = Rxn<CopyTradingMasterProfile>();
   final RxList<CopyTradingTradeItem> tradeHistory = <CopyTradingTradeItem>[].obs;
   final RxString selectedTimeframe = '3m'.obs;
-  final RxString selectedPlanId = ''.obs;
+  final RxString selectedPlanId;
 
   int tradeHistoryPage = 1;
   final RxBool hasMoreTradeHistory = true.obs;

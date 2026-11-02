@@ -13,6 +13,7 @@ import '../../../../services/api_service.dart';
 import '../../../../services/language_service.dart';
 import '../../../../utils/navigation_helper.dart';
 import '../../../../widgets/common_loading_widget.dart';
+import '../../../../widgets/feature_maintenance_gate.dart';
 
 class PaymentMethodsScreen extends StatefulWidget {
   final String accountNumber;
@@ -46,6 +47,14 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Every real deposit starts on this screen.
+    return FeatureMaintenanceGate(
+      feature: MaintenanceFeature.deposit,
+      child: Builder(builder: _buildScreen),
+    );
+  }
+
+  Widget _buildScreen(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
       resizeToAvoidBottomInset: true,

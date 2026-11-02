@@ -50,16 +50,21 @@ class MaintenanceScreen extends StatelessWidget {
               ),
               SizedBox(height: 16.h),
 
-              // Message
-              Text(
-                'App is under maintenance please try again later',
-                style: TextStyle(
-                  fontSize: 16.sp,
-                  color: AppColors.textSecondary,
-                  height: 1.5,
-                ),
-                textAlign: TextAlign.center,
-              ),
+              // Admin's portal maintenance message, else the default text.
+              Obx(() {
+                final adminMessage = controller.maintenanceMessage.value;
+                return Text(
+                  adminMessage.isNotEmpty
+                      ? adminMessage
+                      : 'App is under maintenance please try again later',
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    color: AppColors.textSecondary,
+                    height: 1.5,
+                  ),
+                  textAlign: TextAlign.center,
+                );
+              }),
               SizedBox(height: 48.h),
 
               // Retry Button

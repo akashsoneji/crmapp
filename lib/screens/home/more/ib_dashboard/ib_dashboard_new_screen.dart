@@ -8,6 +8,10 @@ import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/controllers/ib_controller.dart';
 import 'package:crm_app/screens/home/trading_main_screen.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:crm_app/models/ib_models.dart';
+import 'package:crm_app/screens/home/more/ib_dashboard/ib_network_tree_screen.dart';
+import 'package:crm_app/screens/home/more/ib_dashboard/ib_demo_contests_screen.dart';
+import 'package:crm_app/services/language_service.dart';
 
 enum CommissionPeriod { thisMonth, thisQuarter, thisYear }
 
@@ -38,7 +42,10 @@ class _IbDashboardNewScreenState extends State<IbDashboardNewScreen> {
   }
 
   Future<void> _loadDashboardData() async {
-    await ibController.loadDashboardData();
+    await Future.wait([
+      ibController.loadDashboardData(),
+      ibController.loadRecentActivities(),
+    ]);
     if (mounted) setState(() {});
   }
 
@@ -164,7 +171,40 @@ class _IbDashboardNewScreenState extends State<IbDashboardNewScreen> {
                     SizedBox(height: 12.h),
                     _buildCommissionGrid(),
                     SizedBox(height: 16.h),
-                    _buildSectionHeader(title: 'Overview'),
+                    _buildSectionHeader(
+                      title: 'Overview',
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            tooltip: TranslationUtils.tr('ib_contest_title'),
+                            visualDensity: VisualDensity.compact,
+                            onPressed: () =>
+                                Get.to(() => const IbDemoContestsScreen()),
+                            icon: Icon(
+                              Icons.emoji_events_outlined,
+                              size: 18.sp,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                          TextButton.icon(
+                            onPressed: () =>
+                                Get.to(() => const IbNetworkTreeScreen()),
+                            icon: Icon(
+                              Icons.account_tree_outlined,
+                              size: 16.sp,
+                            ),
+                            label: Text(
+                              TranslationUtils.tr('ib_network_title'),
+                              style: TextStyle(
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                     SizedBox(height: 8.h),
                   ]),
                 ),
@@ -184,6 +224,18 @@ class _IbDashboardNewScreenState extends State<IbDashboardNewScreen> {
                     ),
                   ),
                 ),
+              SliverPadding(
+                padding: EdgeInsetsDirectional.fromSTEB(16.w, 20.h, 16.w, 0),
+                sliver: SliverToBoxAdapter(
+                  child: Obx(() => _RecentActivities(
+                        activities: ibController.recentActivities.toList(),
+                        isLoading: ibController.isActivitiesLoading.value,
+                        header: _buildSectionHeader(
+                          title: TranslationUtils.tr('ib_recent_activities'),
+                        ),
+                      )),
+                ),
+              ),
               SliverPadding(
                 padding: EdgeInsets.only(bottom: _fabScrollExtent(context)+kBottomNavigationBarHeight),
               ),
@@ -571,6 +623,107 @@ class _IbDashboardNewScreenState extends State<IbDashboardNewScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// "Recent activities" from `GET ib/activities` (commission earned, approvals).
+class _RecentActivities extends StatelessWidget {
+  final List<IbActivity> activities;
+  final bool isLoading;
+  final Widget header;
+
+  const _RecentActivities({
+    required this.activities,
+    required this.isLoading,
+    required this.header,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (activities.isEmpty && !isLoading) return const SizedBox.shrink();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        header,
+        SizedBox(height: 8.h),
+        if (activities.isEmpty)
+          Padding(
+            padding: EdgeInsets.symmetric(vertical: 16.h),
+            child: const Center(child: CommonLoadingWidget(isFullScreen: false)),
+          )
+        else
+          for (final activity in activities.take(10))
+            Container(
+              margin: EdgeInsets.only(bottom: 6.h),
+              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+              decoration: BoxDecoration(
+                color: AppColors.whiteColor,
+                borderRadius: BorderRadius.circular(12.r),
+                border: Border.all(color: AppColors.border),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    activity.type == 'commission'
+                        ? Icons.payments_outlined
+                        : Icons.verified_outlined,
+                    size: 18.sp,
+                    color: AppColors.primary,
+                  ),
+                  SizedBox(width: 10.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          activity.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 13.sp,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        Text(
+                          activity.description,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 11.sp,
+                            color: AppColors.textGrey,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(width: 8.w),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      if (activity.amount.isNotEmpty)
+                        Text(
+                          activity.amount,
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.success,
+                          ),
+                        ),
+                      Text(
+                        activity.time,
+                        style: TextStyle(
+                          fontSize: 10.sp,
+                          color: AppColors.textGrey,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+      ],
     );
   }
 }

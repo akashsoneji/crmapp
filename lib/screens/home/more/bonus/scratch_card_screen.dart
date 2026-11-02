@@ -18,6 +18,8 @@ import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/api_const.dart';
 import 'package:crm_app/services/api_service.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
+import 'package:crm_app/widgets/mobile_verification_sheet.dart';
+import 'package:crm_app/services/language_service.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MODELS
@@ -155,6 +157,10 @@ class ScratchCardSummaryModel {
   final List<ScratchCardLotsStepModel> steps;
   final bool canConvertPendingToBalance;
   final String convertPendingHint;
+  final bool canClaim;
+  final String claimStatus;
+  final double claimAmount;
+  final String claimHint;
 
   ScratchCardSummaryModel({
     required this.earnedAllTime,
@@ -174,6 +180,10 @@ class ScratchCardSummaryModel {
     required this.steps,
     required this.canConvertPendingToBalance,
     required this.convertPendingHint,
+    this.canClaim = false,
+    this.claimStatus = '',
+    this.claimAmount = 0,
+    this.claimHint = '',
   });
 
   factory ScratchCardSummaryModel.fromJson(Map<String, dynamic> json) {
@@ -262,6 +272,10 @@ class ScratchCardSummaryModel {
       canConvertPendingToBalance:
           json['can_convert_pending_to_balance'] == true,
       convertPendingHint: json['convert_pending_hint']?.toString() ?? '',
+      canClaim: json['can_claim'] == true,
+      claimStatus: json['claim_status']?.toString() ?? '',
+      claimAmount: double.tryParse('${json['claim_amount'] ?? ''}') ?? 0.0,
+      claimHint: json['claim_hint']?.toString() ?? '',
     );
   }
 
@@ -413,6 +427,7 @@ class ScratchCardController extends GetxController {
   final RxBool isRefreshing = false.obs;
   final RxBool isRevealing = false.obs;
   final RxBool isConverting = false.obs;
+  final RxBool isClaiming = false.obs;
   final RxBool isCreatingAccount = false.obs;
   final RxBool isLeaderboardLoading = false.obs;
 
@@ -654,6 +669,40 @@ class ScratchCardController extends GetxController {
       isRevealing.value = false;
     }
     return null;
+  }
+
+  /// `POST v1/user/scratch-cards/claim` — sends the reward for admin approval;
+  /// the refreshed summary then carries `claim_status: pending`.
+  Future<void> claimReward() async {
+    if (isClaiming.value) return;
+    try {
+      isClaiming.value = true;
+      // The web portal verifies the mobile number before a reward claim.
+      if (!await ensureMobileVerified()) return;
+      final response = await ApiService.post(
+        endpoint: ApiConstants.claimScratchReward,
+      );
+      if (response.success) {
+        CustomToastService.showSuccess(
+          message: (response.message?.isNotEmpty == true)
+              ? response.message!
+              : TranslationUtils.tr('scratch_claim_sent'),
+        );
+        await fetchCards(showLoader: false);
+      } else {
+        CustomToastService.showError(
+          message: (response.message?.isNotEmpty == true)
+              ? response.message!
+              : TranslationUtils.tr('scratch_claim_failed'),
+        );
+      }
+    } catch (_) {
+      CustomToastService.showError(
+        message: TranslationUtils.tr('scratch_claim_failed'),
+      );
+    } finally {
+      isClaiming.value = false;
+    }
   }
 
   Future<void> convertCreditToBalance({required int accountId}) async {
@@ -1582,6 +1631,8 @@ class _ScratchLotsProgressSection extends StatelessWidget {
                               )
                               : null,
                     ),
+                    if (summary.canClaim || summary.claimStatus.isNotEmpty)
+                      ..._buildClaimSection(summary),
                   ],
                 );
               },
@@ -1590,6 +1641,58 @@ class _ScratchLotsProgressSection extends StatelessWidget {
         ),
       );
     });
+  }
+
+  /// Reward claim (`POST v1/user/scratch-cards/claim`): button while
+  /// `can_claim`, otherwise the pending/approved status chip.
+  List<Widget> _buildClaimSection(ScratchCardSummaryModel summary) {
+    final amount = summary.claimAmount > 0
+        ? ' \$${summary.claimAmount.toStringAsFixed(2)}'
+        : '';
+    return [
+      SizedBox(height: 10.h),
+      if (summary.canClaim)
+        RTLComponents.elevatedButton(
+          padding: EdgeInsets.zero,
+          text: '${TranslationUtils.tr('scratch_claim_reward')}$amount',
+          width: double.infinity,
+          height: 42,
+          backgroundColor: AppColors.success,
+          foregroundColor: AppColors.onColoredBackground,
+          isLoading: controller.isClaiming.value,
+          onPressed:
+              controller.isClaiming.value ? null : controller.claimReward,
+        )
+      else
+        Container(
+          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+          decoration: BoxDecoration(
+            color: AppColors.primary.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(10.r),
+          ),
+          child: Text(
+            TranslationUtils.trArgs('scratch_claim_status', {
+                  'status':
+                      summary.claimStatus.capitalizeFirst ?? summary.claimStatus,
+                }) +
+                amount,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 12.sp,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+          ),
+        ),
+      if (summary.claimHint.isNotEmpty) ...[
+        SizedBox(height: 6.h),
+        Text(
+          summary.claimHint,
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 11.sp, color: AppColors.textSecondary),
+        ),
+      ],
+    ];
   }
 }
 

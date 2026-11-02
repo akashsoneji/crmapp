@@ -632,7 +632,9 @@ class AuthController extends GetxController {
           try {
             TenaxBrokerSelectionController.clearPendingBroker();
           } catch (_) {}
-          // The invite referral was sent with this registration.
+          // The invite referral was sent with this registration; the API now
+          // points at the broker it was created on, so attribute the click.
+          await DeepLinkService.instance.reportAttribution();
           await DeepLinkService.instance.clearPendingReferral();
 
           // Enable one-click trading by default after registration

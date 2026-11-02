@@ -13,6 +13,7 @@ import 'package:crm_app/services/language_service.dart';
 import '../../../../controllers/finance/withdrawal_controller.dart';
 import '../../../../widgets/common_loading_widget.dart';
 import '../../../../widgets/custom_toast.dart';
+import '../../../../widgets/feature_maintenance_gate.dart';
 import '../../../../routes/app_pages.dart';
 import 'package:crm_app/utils/currency_format.dart';
 import 'package:crm_app/models/mt5_account.dart' as mt5m;
@@ -198,6 +199,13 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
 
   @override
   Widget build(BuildContext context) {
+    return FeatureMaintenanceGate(
+      feature: MaintenanceFeature.withdrawal,
+      child: Builder(builder: _buildScreen),
+    );
+  }
+
+  Widget _buildScreen(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
       resizeToAvoidBottomInset: true,

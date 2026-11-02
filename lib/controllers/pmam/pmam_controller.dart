@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:crm_app/services/pmam_service.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
 import 'package:crm_app/models/pmam_model.dart';
+import 'package:crm_app/services/language_service.dart';
 
 class PmamController extends GetxController {
   // ── Loading / Error ──
@@ -71,6 +72,14 @@ class PmamController extends GetxController {
   final RxDouble tradesNetPnl = 0.0.obs;
   final RxDouble tradesCommission = 0.0.obs;
   final RxDouble tradesSettledPnl = 0.0.obs;
+
+  // ── Manager commissions ──
+  final RxList<Map<String, dynamic>> commissions = <Map<String, dynamic>>[].obs;
+  final RxBool isCommissionsLoading = false.obs;
+  final RxString commissionsError = ''.obs;
+  final RxInt commissionsPage = 1.obs;
+  final RxInt commissionsLastPage = 1.obs;
+  final RxInt commissionsTotal = 0.obs;
 
   // ── Selected plan for investor requests ──
   final RxInt selectedPlanId = 0.obs;
@@ -556,6 +565,50 @@ class PmamController extends GetxController {
       errorMessage.value = e.toString();
     } finally {
       isManagersLoading.value = false;
+    }
+  }
+
+  /// Settled commissions (`GET manager/commissions`). [loadMore] appends the
+  /// next page; otherwise page 1 replaces the list.
+  Future<void> loadManagerCommissions({bool loadMore = false}) async {
+    if (isCommissionsLoading.value) return;
+    if (loadMore && commissionsPage.value >= commissionsLastPage.value) return;
+    final page = loadMore ? commissionsPage.value + 1 : 1;
+    isCommissionsLoading.value = true;
+    if (!loadMore) commissionsError.value = '';
+    try {
+      final response = await PmamService.getManagerCommissions(page: page);
+      final root = response.data is Map ? (response.data as Map)['data'] : null;
+      if (!response.success || root is! Map) {
+        if (!loadMore) {
+          commissionsError.value = response.message ??
+              TranslationUtils.tr('pmam_commissions_load_failed');
+        }
+        return;
+      }
+      final rows = root['data'] is List
+          ? (root['data'] as List)
+              .whereType<Map>()
+              .map((e) => e.cast<String, dynamic>())
+              .toList()
+          : <Map<String, dynamic>>[];
+      if (loadMore) {
+        commissions.addAll(rows);
+      } else {
+        commissions.assignAll(rows);
+      }
+      commissionsPage.value = int.tryParse('${root['current_page']}') ?? page;
+      commissionsLastPage.value = int.tryParse('${root['last_page']}') ?? page;
+      commissionsTotal.value =
+          int.tryParse('${root['total']}') ?? commissions.length;
+    } catch (e) {
+      if (!loadMore) {
+        commissionsError.value =
+            TranslationUtils.tr('pmam_commissions_load_failed');
+      }
+      if (kDebugMode) debugPrint('[PMAM] loadManagerCommissions error: $e');
+    } finally {
+      isCommissionsLoading.value = false;
     }
   }
 

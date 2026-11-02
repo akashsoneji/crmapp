@@ -1,4 +1,6 @@
+import 'package:crm_app/widgets/active_notices_banner.dart';
 import 'package:crm_app/widgets/brand_logo.dart';
+import 'package:crm_app/widgets/rename_account_dialog.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -83,7 +85,8 @@ class DashboardScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: Obx(
+      body: _withNotices(
+        Obx(
         () => RefreshIndicator(
           onRefresh: () async {
             // Call account get API when refresh is triggered
@@ -270,6 +273,18 @@ class DashboardScreen extends StatelessWidget {
           ),
         ),
       ),
+      ),
+    );
+  }
+
+  /// Puts the admin's active notices above the dashboard body; the banner
+  /// collapses to nothing when there are no notices.
+  Widget _withNotices(Widget body) {
+    return Column(
+      children: [
+        const ActiveNoticesBanner(),
+        Expanded(child: body),
+      ],
     );
   }
 
@@ -1440,6 +1455,15 @@ class AccountMenuBottomSheet extends StatelessWidget {
                     onTap: () {
                       Get.back(closeOverlays: true);
                       _showMT5ChangePasswordDialog(isInvestor: true);
+                    },
+                  ),
+                  SizedBox(height: 8),
+                  _buildMenuItem(
+                    icon: Icons.edit_outlined,
+                    label: languageService.tr('account_rename_title'),
+                    onTap: () {
+                      Get.back();
+                      Get.dialog(RenameAccountDialog(account: account));
                     },
                   ),
                 // ],

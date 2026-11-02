@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/controllers/kyc/compliance_controller.dart';
+import 'package:crm_app/models/kyc_document_config.dart';
 import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
 import 'package:flutter/material.dart';
@@ -303,8 +304,33 @@ class _UnifiedComplianceWizardScreenState
   }
 
   Widget _buildDocuments() {
-    return Obx(
-      () => Column(
+    return Obx(() {
+      final config = controller.effectiveDocumentConfig;
+      final hasConfig = controller.documentConfig.value != null;
+
+      if (controller.isDocumentConfigLoading.value && !hasConfig) {
+        return const Padding(
+          padding: EdgeInsets.symmetric(vertical: 40),
+          child: Center(child: CircularProgressIndicator()),
+        );
+      }
+      if (!hasConfig && controller.documentConfigError.value.isNotEmpty) {
+        return _DocumentConfigError(
+          message: controller.documentConfigError.value,
+          retryLabel: _t('kyc_doc_retry', 'Retry'),
+          onRetry: controller.fetchDocumentConfig,
+        );
+      }
+      if (config.isProviderMode) {
+        return _InfoBanner(
+          message: _t(
+            'kyc_doc_provider_mode',
+            "Your verification is handled by our verification partner, so documents can't be uploaded here.",
+          ),
+        );
+      }
+
+      return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
@@ -326,62 +352,151 @@ class _UnifiedComplianceWizardScreenState
             ),
             style: TextStyle(color: AppColors.textGrey, fontSize: 12),
           ),
+          if (config.isReupload) ...[
+            const SizedBox(height: 12),
+            _InfoBanner(
+              message: _t(
+                'kyc_doc_reupload_hint',
+                'Some documents were rejected. Upload only the rejected sides again.',
+              ),
+            ),
+          ],
           const SizedBox(height: 16),
           _SectionCard(
             title: _t(
               'unified_compliance_wizard_identity_document',
               'Identity Document',
             ),
-            children: [
-              _uploadRow(controller.idProofFront, controller.idProofBack),
-            ],
+            children: [_documentCategory(config, kycIdProof)],
           ),
           const SizedBox(height: 16),
           _SectionCard(
             title: _t('kyc_address_proof', 'Address Proof'),
-            children: [
-              _uploadRow(
-                controller.addressProofFront,
-                controller.addressProofBack,
-              ),
-            ],
+            children: [_documentCategory(config, kycAddressProof)],
           ),
         ],
-      ),
+      );
+    });
+  }
+
+  /// Option dropdown (first submit only), then the sides to upload. Sides
+  /// already on the server and not rejected show their status instead.
+  Widget _documentCategory(KycDocumentConfig config, String category) {
+    final options = config.optionsFor(category);
+    final showDropdown = options.isNotEmpty && !config.isReupload;
+    final error = controller.documentErrors[category];
+    final sides = [
+      for (final side in const [kycSideFront, kycSideBack])
+        if (controller.sideAcceptsUpload(category, side) ||
+            config.documentFor(category, side) != null)
+          side,
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (showDropdown) ...[
+          _optionDropdown(category, options),
+          const SizedBox(height: 12),
+        ],
+        if (sides.isEmpty)
+          Text(
+            _t(
+              'kyc_doc_pick_document_first',
+              'Select a document type to see which sides to upload.',
+            ),
+            style: TextStyle(color: AppColors.textGrey, fontSize: 12),
+          )
+        else
+          Row(
+            children: [
+              for (var i = 0; i < sides.length; i++) ...[
+                if (i > 0) const SizedBox(width: 12),
+                Expanded(child: _sideTile(config, category, sides[i])),
+              ],
+              // Keep a single side at half width, like the two-side layout.
+              if (sides.length == 1) ...[
+                const SizedBox(width: 12),
+                const Expanded(child: SizedBox.shrink()),
+              ],
+            ],
+          ),
+        if (error != null && error.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Text(error, style: TextStyle(color: AppColors.errorText, fontSize: 12)),
+        ],
+      ],
     );
   }
 
-  Widget _uploadRow(Rx<File?> front, Rx<File?> back) {
-    return Row(
-      children: [
-        Expanded(
-          child: _UploadBox(
-            label: _t('id_upload_front_side', 'Front Side'),
-            file: front.value,
-            isRequired: true,
-            onPick: () => controller.pickDocument(front),
-            onClear: () => controller.clearDocument(front),
+  Widget _sideTile(KycDocumentConfig config, String category, String side) {
+    final label = side == kycSideFront
+        ? _t('id_upload_front_side', 'Front Side')
+        : _t('id_upload_back_side', 'Back Side');
+    if (!controller.sideAcceptsUpload(category, side)) {
+      final submitted = config.documentFor(category, side)!;
+      return _SubmittedSideTile(
+        label: label,
+        optionName: submitted.documentOptionName,
+        status: submitted.status,
+        statusLabel: submitted.status == 'approved'
+            ? _t('kyc_doc_status_approved', 'Approved')
+            : _t('kyc_doc_status_pending', 'Under review'),
+      );
+    }
+    final target = controller.fileFor(category, side);
+    return _UploadBox(
+      label: label,
+      file: target.value,
+      isRequired: controller.isSideRequired(category, side),
+      onPick: () => controller.pickDocument(target),
+      onClear: () => controller.clearDocument(target),
+    );
+  }
+
+  Widget _optionDropdown(String category, List<KycDocumentOption> options) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          isExpanded: true,
+          dropdownColor: AppColors.card,
+          value: controller.pickedOptionFor(category)?.id,
+          hint: Text(
+            _t('kyc_doc_select_document_type', 'Select document type'),
+            style: TextStyle(color: AppColors.textGrey, fontSize: 13),
+          ),
+          items: [
+            for (final option in options)
+              DropdownMenuItem<String>(
+                value: option.id,
+                child: Text(
+                  option.name,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: AppColors.textPrimary, fontSize: 13),
+                ),
+              ),
+          ],
+          onChanged: (id) => controller.selectDocumentOption(
+            category,
+            options.firstWhereOrNull((option) => option.id == id),
           ),
         ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _UploadBox(
-            label: _t('id_upload_back_side', 'Back Side'),
-            file: back.value,
-            isRequired: false,
-            onPick: () => controller.pickDocument(back),
-            onClear: () => controller.clearDocument(back),
-          ),
-        ),
-      ],
+      ),
     );
   }
 
   Widget _buildBottomBar(int step) {
     final isLoading = controller.isLoading.value;
-    final canSubmitDocs =
-        controller.idProofFront.value != null &&
-        controller.addressProofFront.value != null;
+    // Required-side rules are checked on submit (with an inline message), so
+    // the button only needs at least one file and a manual-mode config.
+    final canSubmitDocs = controller.selectedDocumentCount > 0 &&
+        !controller.effectiveDocumentConfig.isProviderMode;
 
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
@@ -994,6 +1109,131 @@ class _UploadBox extends StatelessWidget {
                 ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _InfoBanner extends StatelessWidget {
+  const _InfoBanner({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.warningBg,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.warningBorder),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.info_outline, size: 18, color: AppColors.warningText),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(color: AppColors.warningText, fontSize: 12),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DocumentConfigError extends StatelessWidget {
+  const _DocumentConfigError({
+    required this.message,
+    required this.retryLabel,
+    required this.onRetry,
+  });
+
+  final String message;
+  final String retryLabel;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 32),
+      child: Column(
+        children: [
+          Icon(Icons.error_outline, color: AppColors.errorText),
+          const SizedBox(height: 8),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: TextStyle(color: AppColors.textPrimary, fontSize: 13),
+          ),
+          const SizedBox(height: 12),
+          OutlinedButton(onPressed: onRetry, child: Text(retryLabel)),
+        ],
+      ),
+    );
+  }
+}
+
+/// A side already on the server (pending or approved); it can't be replaced.
+class _SubmittedSideTile extends StatelessWidget {
+  const _SubmittedSideTile({
+    required this.label,
+    required this.optionName,
+    required this.status,
+    required this.statusLabel,
+  });
+
+  final String label;
+  final String optionName;
+  final String status;
+  final String statusLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final isApproved = status == 'approved';
+    final statusColor =
+        isApproved ? AppColors.successText : AppColors.warningText;
+    return AspectRatio(
+      aspectRatio: 1.25,
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: isApproved ? AppColors.successBg : AppColors.warningBg,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              isApproved ? Icons.verified_outlined : Icons.hourglass_top,
+              color: statusColor,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            if (optionName.isNotEmpty)
+              Text(
+                optionName,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(color: AppColors.textGrey, fontSize: 10),
+              ),
+            Text(statusLabel, style: TextStyle(color: statusColor, fontSize: 10)),
+          ],
         ),
       ),
     );

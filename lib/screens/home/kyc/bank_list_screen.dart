@@ -6,6 +6,8 @@ import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/kyc/kyc_bank_controller.dart';
+import 'package:crm_app/constants/api_const.dart';
+import 'package:crm_app/widgets/authenticated_network_image.dart';
 import 'package:crm_app/models/bank_withdralList_model.dart';
 import 'package:crm_app/routes/app_pages.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
@@ -364,6 +366,76 @@ class _BankListScreenState extends State<BankListScreen> {
       detailRows.add(_buildDetailRow('Currency', method.currency!));
     }
 
+    // Stored proof paths are not publicly reachable, so load it through
+    // `image-proxy/{id}` with the auth header, like the web portal does.
+    if (_hasValue(method.proofImg)) {
+      final proofUrl = method.id != null
+          ? '${ApiConstants.baseUrl}${ApiConstants.withdrawalImageProxy(method.id!)}'
+          : method.proofImg!;
+      detailRows.add(
+        Padding(
+          padding: EdgeInsets.only(top: 8.h, bottom: 4.h),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                languageService.tr('bank_list_screen_proof'),
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              SizedBox(height: 8.h),
+              GestureDetector(
+                onTap: () => _openProofViewer(proofUrl),
+                child: AuthenticatedNetworkImage(
+                  url: proofUrl,
+                  width: double.infinity,
+                  height: 180.h,
+                  fit: BoxFit.cover,
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (method.id != null) {
+      final id = method.id!;
+      detailRows.add(
+        Align(
+          alignment: AlignmentDirectional.centerEnd,
+          child: Obx(() {
+            final deleting = controller.deletingIds.contains(id);
+            return TextButton.icon(
+              onPressed: deleting ? null : () => _confirmDelete(id),
+              icon: deleting
+                  ? SizedBox(
+                      width: 14.w,
+                      height: 14.w,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppColors.error,
+                      ),
+                    )
+                  : Icon(Icons.delete_outline, size: 18.sp, color: AppColors.error),
+              label: Text(
+                languageService.tr('bank_list_delete'),
+                style: TextStyle(
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.error,
+                ),
+              ),
+            );
+          }),
+        ),
+      );
+    }
+
     return Container(
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
@@ -462,26 +534,80 @@ class _BankListScreenState extends State<BankListScreen> {
     }
   }
 
-  // Show proof dialog
-  void _showProofDialog(String proofUrl) {
-    showDialog(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            title: Text(languageService.tr('kyc_attached_proof')),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text('${languageService.tr('kyc_proof_url')}: $proofUrl'),
-                SizedBox(height: 16.h),
-                // TODO: Add image viewer or download functionality
-                ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text(languageService.tr('navigation_close')),
-                ),
-              ],
+  void _confirmDelete(int id) {
+    Get.dialog<void>(
+      AlertDialog(
+        backgroundColor: AppColors.card,
+        title: Text(
+          languageService.tr('bank_list_delete_title'),
+          style: TextStyle(
+            fontSize: 16.sp,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        content: Text(
+          languageService.tr('bank_list_delete_message'),
+          style: TextStyle(fontSize: 13.sp, color: AppColors.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: Get.back,
+            child: Text(languageService.tr('bank_list_delete_cancel')),
+          ),
+          TextButton(
+            onPressed: () {
+              Get.back();
+              controller.deleteWithdrawalMethod(id);
+            },
+            child: Text(
+              languageService.tr('bank_list_delete'),
+              style: TextStyle(color: AppColors.error),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  // Full-screen proof image viewer with pinch-to-zoom.
+  void _openProofViewer(String url) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => _ProofImageViewer(url: url),
+      ),
+    );
+  }
+}
+
+/// Full-screen viewer for the proof image. The image is fetched via
+/// [AuthenticatedNetworkImage] so the auth token is attached.
+class _ProofImageViewer extends StatelessWidget {
+  const _ProofImageViewer({required this.url});
+
+  final String url;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        iconTheme: const IconThemeData(color: Colors.white),
+        elevation: 0,
+        title: Text(
+          TranslationUtils.tr('bank_list_screen_proof'),
+          style: const TextStyle(color: Colors.white),
+        ),
+      ),
+      body: Center(
+        child: InteractiveViewer(
+          minScale: 1,
+          maxScale: 4,
+          child: AuthenticatedNetworkImage(url: url, fit: BoxFit.contain),
+        ),
+      ),
     );
   }
 }

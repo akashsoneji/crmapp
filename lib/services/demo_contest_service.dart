@@ -1,16 +1,11 @@
-import 'dart:convert';
-
-import 'package:http/http.dart' as http;
-
 import '../constants/api_const.dart';
 import '../models/demo_contest/contest_winner_model.dart';
+import '../models/demo_contest/demo_contest_enrollment_model.dart';
 import '../models/demo_contest/demo_contest_model.dart';
 import '../models/demo_contest/leaderboard_entry_model.dart';
 import '../models/demo_contest/my_contest_entry_model.dart';
 import '../models/demo_contest/demo_contest_my_stats_model.dart';
 import '../services/api_service.dart';
-import '../services/secure_storage_service.dart';
-import '../flavor_config.dart';
 
 /// Real HTTP-backed service for the Demo Contest module.
 ///
@@ -60,21 +55,12 @@ class DemoContestService {
     String contestId, {
     int limit = 100,
   }) async {
-    final response = await ApiService.get(
-      endpoint: ApiConstants.demoContestContests,
-      queryParameters: {'contest_id': contestId, 'leaderboard': '1'},
+    final body = await _get(
+      ApiConstants.demoContestLeaderboard(contestId),
+      'Failed to load leaderboard',
     );
-
-    if (!response.success || response.data == null) {
-      throw Exception(response.message ?? 'Failed to load leaderboard');
-    }
-
-    final rawList = response.data is List
-        ? response.data as List
-        : (response.data['data'] as List? ?? <dynamic>[]);
-
-    return rawList
-        .map((e) => LeaderboardEntry.fromJson(e as Map<String, dynamic>))
+    return _list(body['data'])
+        .map((e) => LeaderboardEntry.fromJson(e))
         .take(limit)
         .toList(growable: false);
   }
@@ -134,35 +120,86 @@ class DemoContestService {
     );
   }
 
-  /// Join a contest (register / create entry).
-  Future<MyContestEntry> joinContest(String contestId) async {
-    final token = await SecureStorageService.getAuthToken();
-    final base = FlavorConfig.instance.apiBaseUrl.endsWith('/')
-        ? FlavorConfig.instance.apiBaseUrl
-        : '${FlavorConfig.instance.apiBaseUrl}/';
-    final url = Uri.parse('${base}${ApiConstants.ajax}demo-contest/join');
-
-    final response = await http.post(
-      url,
-      headers: <String, String>{
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        if (token != null && token.isNotEmpty)
-          'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode({'contest_id': contestId}),
+  Future<DemoContestEnrollPreview> enrollPreview(String contestId) async {
+    final body = await _post(
+      ApiConstants.demoContestEnrollPreview(contestId),
+      null,
+      'Failed to check enrollment',
     );
+    return DemoContestEnrollPreview.fromJson(_map(body['data']));
+  }
 
-    if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception('Failed to join contest (HTTP ${response.statusCode})');
-    }
+  Future<List<DemoContestStep>> fetchSteps(String contestId) async {
+    final body = await _get(
+      ApiConstants.demoContestSteps(contestId),
+      'Failed to load enrollment steps',
+    );
+    return _list(body['data'])
+        .map((e) => DemoContestStep.fromJson(e))
+        .toList(growable: false);
+  }
 
-    final body = jsonDecode(response.body) as Map<String, dynamic>;
-    if (body['status'] != true || body['data'] == null) {
-      throw Exception(body['message'] ?? 'Failed to join contest');
-    }
+  Future<void> clickStep(String stepId) async {
+    await _post(
+      ApiConstants.demoContestStepClick(stepId),
+      null,
+      'Failed to complete step',
+    );
+  }
 
-    return MyContestEntry.fromJson(body['data'] as Map<String, dynamic>);
+  Future<DemoContestTerms> fetchTerms(String contestId) async {
+    final body = await _get(
+      ApiConstants.demoContestTerms(contestId),
+      'Failed to load terms',
+    );
+    return DemoContestTerms(
+      enabled: body['enabled'] == true,
+      content: body['content']?.toString() ?? '',
+    );
+  }
+
+  /// Creates the contest MT5 account. Returns the backend success message.
+  Future<String> enroll(String contestId, {required bool termsAccepted}) async {
+    final body = await _post(
+      ApiConstants.demoContestEnroll(contestId),
+      {'terms_accepted': termsAccepted},
+      'Failed to join contest',
+    );
+    return body['message']?.toString() ?? '';
+  }
+
+  /// Submits a prize claim. Returns the backend success message.
+  Future<String> claim(String contestId, {String? realAccountNumber}) async {
+    final body = await _post(
+      ApiConstants.demoContestClaim,
+      {
+        'contest_id': int.tryParse(contestId) ?? contestId,
+        if (realAccountNumber != null && realAccountNumber.isNotEmpty)
+          'real_account_number': realAccountNumber,
+      },
+      'Failed to submit claim',
+    );
+    return body['message']?.toString() ?? '';
+  }
+
+  Future<List<DemoContestTrade>> fetchTradingHistory(String contestId) async {
+    final body = await _get(
+      ApiConstants.demoContestTradingHistory(contestId),
+      'Failed to load trading history',
+    );
+    return _list(body['data'])
+        .map((e) => DemoContestTrade.fromJson(e))
+        .toList(growable: false);
+  }
+
+  Future<DemoContestRuleViolations> fetchRuleViolations(
+    String contestId,
+  ) async {
+    final body = await _get(
+      ApiConstants.demoContestRuleViolations(contestId),
+      'Failed to load rule violations',
+    );
+    return DemoContestRuleViolations.fromJson(_map(body['data']));
   }
 
   /// Past winners (global leaderboard summary).
@@ -184,6 +221,47 @@ class DemoContestService {
         .map((e) => ContestWinner.fromJson(e as Map<String, dynamic>))
         .take(limit)
         .toList(growable: false);
+  }
+
+  // ───────────────────────────── Helpers ─────────────────────────────
+
+  Future<Map<String, dynamic>> _get(String endpoint, String fallback) async {
+    final response = await ApiService.get(endpoint: endpoint);
+    return _bodyOrThrow(response, fallback);
+  }
+
+  Future<Map<String, dynamic>> _post(
+    String endpoint,
+    Map<String, dynamic>? data,
+    String fallback,
+  ) async {
+    final response = await ApiService.post(endpoint: endpoint, data: data);
+    return _bodyOrThrow(response, fallback);
+  }
+
+  /// These APIs report business errors as `status: false` + `message`.
+  Map<String, dynamic> _bodyOrThrow(ApiResponse response, String fallback) {
+    final body = _map(response.data);
+    final message = body['message']?.toString();
+    if (!response.success || body['status'] == false) {
+      throw Exception(
+        (message != null && message.isNotEmpty)
+            ? message
+            : (response.message ?? fallback),
+      );
+    }
+    return body;
+  }
+
+  Map<String, dynamic> _map(dynamic v) {
+    if (v is Map<String, dynamic>) return v;
+    if (v is Map) return Map<String, dynamic>.from(v);
+    return <String, dynamic>{};
+  }
+
+  List<Map<String, dynamic>> _list(dynamic v) {
+    if (v is! List) return const [];
+    return v.whereType<Map>().map(Map<String, dynamic>.from).toList();
   }
 }
 

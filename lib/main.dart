@@ -29,6 +29,8 @@ import 'controllers/instruments_controller.dart';
 import 'controllers/trading_controller.dart';
 import 'services/auth_service.dart';
 import 'services/google_otp_service.dart';
+import 'services/session_check_service.dart';
+import 'services/app_settings_service.dart';
 import 'services/account_service.dart';
 import 'services/api_service.dart';
 import 'services/websocket_endpoint_helper.dart';
@@ -172,6 +174,7 @@ Future<void> initServices() async {
 
   Get.put<AuthService>(AuthServiceImpl(), permanent: true);
   Get.put<GoogleOtpService>(GoogleOtpService(), permanent: true);
+  Get.put<SessionCheckService>(SessionCheckService(), permanent: true);
   Get.put<AccountService>(AccountServiceImpl(), permanent: true);
   Get.put<LoadingService>(LoadingService(), permanent: true);
   Get.put<AppLockService>(AppLockService(), permanent: true);
@@ -213,6 +216,9 @@ Future<void> initServices() async {
   // Initialize app status service and controller for version check and maintenance mode
   // REQUIRED: Version check and maintenance check are enabled for testing
   Get.put<AppStatusService>(AppStatusService(), permanent: true);
+  // Public settings (portal/feature maintenance) load before login; must be
+  // registered before AppStatusController, which listens to it in onInit.
+  Get.put<AppSettingsService>(AppSettingsService(), permanent: true);
   Get.put<AppStatusController>(AppStatusController(), permanent: true);
   Get.put<CrmSettingsService>(CrmSettingsService(), permanent: true);
   Get.put<EnabledModulesService>(EnabledModulesService(), permanent: true);

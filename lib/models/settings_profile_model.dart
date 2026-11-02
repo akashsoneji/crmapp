@@ -76,6 +76,10 @@ class User {
   final int regulationRequired;
   final int regulatedBrokerEnabled;
 
+  /// Review state of the latest compliance form: '', pending, approved, rejected.
+  final String regulationReviewStatus;
+  final String regulationReviewNotes;
+
   String get fullName => '$firstName $lastName'.trim();
 
   User({
@@ -97,16 +101,20 @@ class User {
     this.regulationSubmitted = 0,
     this.regulationRequired = 0,
     this.regulatedBrokerEnabled = 0,
+    this.regulationReviewStatus = '',
+    this.regulationReviewNotes = '',
   });
 
-  /// True when the broker has the regulated profile form enabled and this user
-  /// still has to submit it. force_regulated_form alone can stay 1 after the
-  /// broker disables the module (regulation endpoint then answers 403).
+  bool get isRegulationRejected =>
+      regulationReviewStatus.toLowerCase() == 'rejected';
+
+  /// Compliance form must be (re)filled before KYC upload. Backend already
+  /// folds the force/skip flags into `regulation_required`, and
+  /// `regulation_submitted` stays 1 after a rejection, so the review status
+  /// is what tells a rejected form apart.
   bool get mustSubmitRegulation =>
-      regulatedBrokerEnabled == 1 &&
       regulationRequired == 1 &&
-      forceRegulatedForm == 1 &&
-      regulationSubmitted == 0;
+      (regulationSubmitted == 0 || isRegulationRejected);
 
   static int _parseInt(dynamic value) {
     if (value is int) return value;
@@ -144,6 +152,9 @@ class User {
       regulationSubmitted: _parseInt(json['regulation_submitted']),
       regulationRequired: _parseInt(json['regulation_required']),
       regulatedBrokerEnabled: _parseInt(json['regulated_broker_enabled']),
+      regulationReviewStatus:
+          (json['regulation_review_status'] ?? '').toString(),
+      regulationReviewNotes: (json['regulation_review_notes'] ?? '').toString(),
     );
   }
 
