@@ -15,6 +15,7 @@ import 'package:crm_app/widgets/custom_toast.dart';
 import 'package:crm_app/widgets/app_switch_tile.dart';
 import 'package:crm_app/widgets/app_svg_back_button.dart';
 import 'package:crm_app/widgets/chart_inapp_webview.dart';
+import 'package:crm_app/widgets/chart/app_tenax_chart.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
 import 'package:crm_app/utils/precision_helper.dart';
 import 'package:flutter/foundation.dart';
@@ -796,8 +797,18 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
               ),
             ),
           ),
-          // Chart WebView (only when chart is enabled)
-          if (showChart)
+          // Chart WebView (only when chart is enabled). Read-only here: the
+          // close is done through this screen's own button.
+          if (showChart && AppTenaxChart.isSupported)
+            Expanded(
+              child: AppTenaxChart(
+                key: ValueKey(widget.position.symbol),
+                symbol: widget.position.symbol,
+                allowOrderActions: false,
+              ),
+            ),
+          // LEGACY_CHART_START — remote /mobile-chart page for multi-socket flavors.
+          if (showChart && !AppTenaxChart.isSupported)
             Expanded(
               child: ChartInAppWebView(
                 key: ValueKey(
@@ -807,6 +818,7 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
                 url: _buildChartUrl(widget.position.symbol),
               ),
             ),
+          // LEGACY_CHART_END
         ],
       ),
     );

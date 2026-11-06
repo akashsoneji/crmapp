@@ -1,6 +1,5 @@
 // Generated file. Do not edit.
-BUNDLE_DISPLAY_NAME = Tenax
-BUNDLE_NAME = Tenax
-APP_BUNDLE_IDENTIFIER = com.tenaxcode.app
-APP_URL_SCHEME = tenax
-CODE_SIGN_ENTITLEMENTS = Runner/RunnerTenax.entitlements
+BUNDLE_DISPLAY_NAME = Tenax3
+BUNDLE_NAME = Tenax3
+APP_BUNDLE_IDENTIFIER = com.tenaxcode.tenax3
+APP_URL_SCHEME =

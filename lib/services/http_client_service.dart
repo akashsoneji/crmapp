@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:developer' as developer;
+import 'dart:io';
 import 'package:flutter/widgets.dart';
 import 'package:http/http.dart' as http;
+import 'package:http/io_client.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
 /// Singleton HTTP Client Service with Keep-Alive support
@@ -23,6 +25,7 @@ class HttpClientService with WidgetsBindingObserver {
 
   // Persistent HTTP client
   http.Client? _client;
+  HttpClient? _ioHttpClient;
   
   // Keep-Alive configuration
   int _keepAliveTimeout = 30; // seconds
@@ -36,8 +39,28 @@ class HttpClientService with WidgetsBindingObserver {
 
   /// Get the persistent HTTP client
   http.Client get client {
-    _client ??= http.Client();
+    _client ??= _createClient();
     return _client!;
+  }
+
+  http.Client _createClient() {
+    final ioHttpClient = HttpClient();
+    _ioHttpClient = ioHttpClient;
+    return IOClient(ioHttpClient);
+  }
+
+  // IOClient.close() force-closes the HttpClient, which cancels in-flight
+  // requests ("Connection attempt cancelled"). Close gracefully instead so
+  // requests already started on the old client can finish.
+  void _releaseClient() {
+    final ioHttpClient = _ioHttpClient;
+    if (ioHttpClient != null) {
+      ioHttpClient.close();
+    } else {
+      _client?.close();
+    }
+    _ioHttpClient = null;
+    _client = null;
   }
 
   /// Get Keep-Alive headers to add to requests
@@ -48,7 +71,7 @@ class HttpClientService with WidgetsBindingObserver {
 
   /// Initialize the HTTP client
   void _initializeClient() {
-    _client = http.Client();
+    _client = _createClient();
     developer.log(
       'HttpClientService: Initialized persistent HTTP client with Keep-Alive (timeout: ${_keepAliveTimeout}s)',
       name: 'HttpClientService',
@@ -126,8 +149,8 @@ class HttpClientService with WidgetsBindingObserver {
 
   /// Recreate the HTTP client (useful after network changes)
   void _recreateClient() {
-    _client?.close();
-    _client = http.Client();
+    _releaseClient();
+    _client = _createClient();
     developer.log(
       'HttpClientService: Recreated HTTP client',
       name: 'HttpClientService',
@@ -136,8 +159,7 @@ class HttpClientService with WidgetsBindingObserver {
 
   /// Close the HTTP client
   void closeClient() {
-    _client?.close();
-    _client = null;
+    _releaseClient();
     developer.log(
       'HttpClientService: Closed HTTP client',
       name: 'HttpClientService',

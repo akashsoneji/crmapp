@@ -45,6 +45,10 @@ class FlavorConfig {
   final Color secondaryColor;
   final Color accentColor;
   final String apiBaseUrl;
+
+  /// LEGACY_CHART: host of the remote `/mobile-chart` page. Flavors on the
+  /// single `/ws/stream` socket use the bundled Tenax chart
+  /// (`packages/tenax_chart`) and never load it.
   final String chartBaseUrl;
   final String websocketUrl;
   final String appIconPath;
@@ -160,10 +164,14 @@ class FlavorConfig {
   /// (`/ws/stream`) instead of the legacy 5-socket layout
   /// (`/ws/op`, `/ws/po`, `/ws/symbol`, `/ws/marketwatch`, `/ws/account`).
   ///
-  /// Only tenax is migrated for now; every other flavor keeps the legacy
-  /// multi-socket behavior. To move a flavor back to legacy, remove it from
-  /// [_singleStreamSocketFlavors]; to migrate one, add it.
-  static const Set<Flavor> _singleStreamSocketFlavors = <Flavor>{Flavor.tenax};
+  /// Only tenax and tenax3 are migrated for now; every other flavor keeps the
+  /// legacy multi-socket behavior. To move a flavor back to legacy, remove it
+  /// from [_singleStreamSocketFlavors]; to migrate one, add it.
+  static const Set<Flavor> _singleStreamSocketFlavors = <Flavor>{
+    Flavor.tenax,
+    Flavor.tenax3,
+    Flavor.pipze,
+  };
 
   static bool get usesSingleStreamSocket =>
       _singleStreamSocketFlavors.contains(_instance?.flavor);

@@ -16,6 +16,7 @@ import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/services/symbol_selection_service.dart';
 import 'package:crm_app/utils/rtl_wrapper.dart';
 import 'package:crm_app/widgets/exit_confirmation_wrapper.dart';
+import 'package:crm_app/widgets/chart/app_tenax_chart.dart';
 import '../../widgets/trading_bottom_navigation.dart';
 import 'instruments_screen.dart';
 import 'chart_screen.dart';
@@ -96,10 +97,14 @@ class _TradingMainScreenState extends State<TradingMainScreen> {
   void initState() {
     super.initState();
 
+    // LEGACY_CHART_START — pre-warms the remote chart page; the bundled
+    // Tenax chart has nothing remote to warm.
     // ✅ PERFORMANCE OPTIMIZATION: Pre-warm the chart WebView in background
-    
-    ChartWebViewPrewarmer.instance.prewarm(symbol: 'XAUUSD');
-    
+    if (!AppTenaxChart.isSupported) {
+      ChartWebViewPrewarmer.instance.prewarm(symbol: 'XAUUSD');
+    }
+    // LEGACY_CHART_END
+
 
     // ✅ FIX: Check for initial tab index from navigation arguments
     // This allows navigating directly to a specific tab (e.g., dashboard at index 3)
@@ -207,12 +212,15 @@ class _TradingMainScreenState extends State<TradingMainScreen> {
     }
   }
 
+  // LEGACY_CHART_START — pre-warm for the remote /mobile-chart page only.
   /// Android-only: Load chart URL in a hidden WebView to:
   /// 1. Pre-warm the WebView renderer process (biggest win — saves 3-5s)
   /// 2. Cache chart HTML/JS/CSS so visible WebView loads from cache
   Future<void> _preloadChartWebViewAndroid() async {
     if (!Platform.isAndroid) return;
     if (!mounted) return;
+    // The bundled Tenax chart ships in the APK; there is no remote page to cache.
+    if (AppTenaxChart.isSupported) return;
 
     try {
       // Get default/saved symbol
@@ -264,6 +272,7 @@ class _TradingMainScreenState extends State<TradingMainScreen> {
       _disposeHeadlessWebView();
     }
   }
+  // LEGACY_CHART_END
 
   // Ensure one-click trading is enabled (safety net)
   Future<void> _ensureOneClickTradingEnabled() async {

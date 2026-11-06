@@ -106,6 +106,17 @@ class StreamWebSocketService extends GetxService with WidgetsBindingObserver {
   Stream<dynamic> get accounts => _accountsCtrl.stream;
   Stream<Map<String, dynamic>> get control => _controlCtrl.stream;
 
+  final StreamController<List<dynamic>> _barsCtrl =
+      StreamController<List<dynamic>>.broadcast();
+
+  /// Server-built bar frames (`k`), each
+  /// `[symbol, tf, t, o, h, l, c, v, closed, digits]`.
+  Stream<List<dynamic>> get bars => _barsCtrl.stream;
+
+  /// Active bar subscriptions (`SYMBOL|tf` → listener count). Re-sent after
+  /// every authenticate, because a fresh socket carries none of them.
+  final Map<String, int> _barSubscriptions = <String, int>{};
+
   Worker? _accountWorker;
 
   @override
@@ -141,6 +152,7 @@ class StreamWebSocketService extends GetxService with WidgetsBindingObserver {
     _ordersCtrl.close();
     _accountsCtrl.close();
     _controlCtrl.close();
+    _barsCtrl.close();
     super.onClose();
   }
 
@@ -624,6 +636,57 @@ class StreamWebSocketService extends GetxService with WidgetsBindingObserver {
     }));
   }
 
+  /// Subscribe to server-built bars for [symbol]/[tf] (`subscribe_bars`).
+  /// Reference-counted so two charts on one pair share a subscription; sent
+  /// once the socket is authenticated, and again after every reconnect.
+  void subscribeBars(String symbol, String tf) {
+    final key = _barKey(symbol, tf);
+    final count = _barSubscriptions[key] ?? 0;
+    _barSubscriptions[key] = count + 1;
+    if (count > 0) return;
+    _sendBarAction('subscribe_bars', _normalize(symbol), tf: tf);
+  }
+
+  void unsubscribeBars(String symbol, String tf) {
+    final key = _barKey(symbol, tf);
+    final count = _barSubscriptions[key];
+    if (count == null) return;
+    if (count > 1) {
+      _barSubscriptions[key] = count - 1;
+      return;
+    }
+    _barSubscriptions.remove(key);
+    final normalized = _normalize(symbol);
+    // The engine unsubscribes by symbol only (flutter.md §2b), so any other
+    // timeframe still open on the same symbol is subscribed again.
+    _sendBarAction('unsubscribe_bars', normalized);
+    for (final remaining in _barSubscriptions.keys) {
+      final parts = remaining.split('|');
+      if (parts[0] == normalized) {
+        _sendBarAction('subscribe_bars', parts[0], tf: parts[1]);
+      }
+    }
+  }
+
+  void _resendBarSubscriptions() {
+    for (final key in _barSubscriptions.keys) {
+      final parts = key.split('|');
+      _sendBarAction('subscribe_bars', parts[0], tf: parts[1]);
+    }
+  }
+
+  void _sendBarAction(String action, String symbol, {String? tf}) {
+    if (_channel == null || !isAuthenticated.value) return;
+    _channel!.sink.add(jsonEncode(<String, dynamic>{
+      'action': action,
+      'symbol': symbol,
+      'tf': ?tf,
+    }));
+  }
+
+  static String _barKey(String symbol, String tf) =>
+      '${_normalize(symbol)}|$tf';
+
   /// Spec §5: tear down channel subscriptions without closing the socket.
   void tearDownSubscriptions() {
     if (_channel == null) return;
@@ -828,6 +891,7 @@ class StreamWebSocketService extends GetxService with WidgetsBindingObserver {
           break;
         }
         _authFailureCount = 0;
+        _resendBarSubscriptions();
         if (ok && _channel != null && _symbols.isNotEmpty) {
           _channel!.sink.add(jsonEncode(<String, dynamic>{
             'action': 'subscribe',
@@ -918,6 +982,18 @@ class StreamWebSocketService extends GetxService with WidgetsBindingObserver {
       case 'accounts':
         _accountsCtrl.add(payload);
         _forwardToAccount(payload);
+        break;
+      case 'k':
+        // `['k', [symbol, tf, t, o, h, l, c, v, closed, digits]]`; a batch
+        // arrives as a list of those rows.
+        final inner = _unwrap(payload);
+        if (inner is List && inner.isNotEmpty && inner.first is List) {
+          for (final row in inner) {
+            if (row is List) _barsCtrl.add(row);
+          }
+        } else if (inner is List && inner.isNotEmpty) {
+          _barsCtrl.add(inner);
+        }
         break;
       default:
         _controlCtrl.add(<String, dynamic>{

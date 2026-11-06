@@ -10,6 +10,7 @@ import 'package:crm_app/models/instrument.dart';
 import 'package:crm_app/models/socket_response.dart';
 import 'package:crm_app/widgets/app_switch_tile.dart';
 import 'package:crm_app/widgets/chart_inapp_webview.dart';
+import 'package:crm_app/widgets/chart/app_tenax_chart.dart';
 import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/flavor_config.dart';
 import 'dart:convert';
@@ -1879,6 +1880,18 @@ Placing Order:
             ? _datafeedSymbolForSelected
             : displaySymbol;
 
+    // Bundled Tenax chart on single-stream-socket flavors; a symbol change is
+    // sent to the same WebView by message, so no key per symbol.
+    if (AppTenaxChart.isSupported) {
+      return SizedBox(
+        width: double.infinity,
+        height: MediaQuery.of(context).size.height * 0.4,
+        child: AppTenaxChart(symbol: displaySymbol),
+      );
+    }
+
+    // LEGACY_CHART_START — remote /mobile-chart page, kept for flavors still
+    // on the multi-socket layout.
     // Use stable URL and stable webViewKey to prevent full page reloads on symbol change
     final chartUrl =
         '${FlavorConfig.instance.chartBaseUrl}/mobile-chart?theme=${AppColors.chartTheme}';
@@ -1894,6 +1907,7 @@ Placing Order:
         url: chartUrl,                   // stable URL triggers fast JS updates under didUpdateWidget
       ),
     );
+    // LEGACY_CHART_END
   }
 
 

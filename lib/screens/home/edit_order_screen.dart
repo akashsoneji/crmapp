@@ -18,6 +18,7 @@ import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/widgets/app_switch_tile.dart';
 import 'package:crm_app/widgets/app_svg_back_button.dart';
 import 'package:crm_app/widgets/chart_inapp_webview.dart';
+import 'package:crm_app/widgets/chart/app_tenax_chart.dart';
 import 'package:crm_app/flavor_config.dart';
 
 class EditOrderScreen extends StatefulWidget {
@@ -823,8 +824,18 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
               ),
             ),
           ),
-          // Chart WebView (only when chart is enabled)
-          if (showChart)
+          // Chart WebView (only when chart is enabled). Read-only here: the
+          // levels are edited through this screen's own form.
+          if (showChart && AppTenaxChart.isSupported)
+            Expanded(
+              child: AppTenaxChart(
+                key: ValueKey(widget.position.symbol),
+                symbol: widget.position.symbol,
+                allowOrderActions: false,
+              ),
+            ),
+          // LEGACY_CHART_START — remote /mobile-chart page for multi-socket flavors.
+          if (showChart && !AppTenaxChart.isSupported)
             Expanded(
               child: ChartInAppWebView(
                 key: ValueKey(widget.position.symbol),
@@ -832,6 +843,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                 url: _buildChartUrl(widget.position.symbol),
               ),
             ),
+          // LEGACY_CHART_END
         ],
       ),
     );

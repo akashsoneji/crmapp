@@ -1,3 +1,7 @@
+// LEGACY_CHART — old webview_flutter chart surface, already disabled. The app
+// chart is now AppTenaxChart (lib/widgets/chart/app_tenax_chart.dart) on
+// single-stream-socket flavors, and ChartInAppWebView everywhere else.
+
 // import 'package:flutter/material.dart';
 // import 'package:flutter_screenutil/flutter_screenutil.dart';
 // import 'package:crm_app/constants/color.dart';
