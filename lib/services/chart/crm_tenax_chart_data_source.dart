@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:tenax_chart/tenax_chart.dart';
@@ -43,16 +44,23 @@ class CrmTenaxChartDataSource implements TenaxChartDataSource {
     String interval, {
     int limit = 1000,
   }) async {
-    final account = _requireAccount();
+    // A user without a trading account still gets the chart: the request
+    // then carries neither the `account` key nor the account's group.
+    final account = Get.isRegistered<AccountController>()
+        ? Get.find<AccountController>().activeMT5Account
+        : null;
     final token = await SecureStorageService.getAuthToken();
+    final mt5AccountNumber = account?.metaAccountNumber.trim() ?? '';
+    final tradingAccount = mt5AccountNumber.isEmpty ? null : account;
     // The engine takes the numeric master_group_id. Some CRMs send the group
     // name ("Standard") instead, which the engine rejects with "unknown
     // symbol" — then fall back to the symbol's default series.
-    final groupId = int.tryParse(account.masterGroupId.trim());
+    final groupId = tradingAccount == null
+        ? null
+        : int.tryParse(tradingAccount.masterGroupId.trim());
     // The engine serves an MT5 account's own series only when told which
     // account; other platforms keep the group/default series.
-    final mt5AccountNumber = account.metaAccountNumber.trim();
-    final sendAccount = account.isMT5 && mt5AccountNumber.isNotEmpty;
+    final sendAccount = tradingAccount?.isMT5 ?? false;
     final uri = _barsUri({
       'symbol': _normalize(symbol),
       'tf': interval,
@@ -60,8 +68,19 @@ class CrmTenaxChartDataSource implements TenaxChartDataSource {
       if (groupId != null) 'group': '$groupId',
       if (sendAccount) 'account': mt5AccountNumber,
     });
-    tenaxChartDebugLog('API → GET $uri '
-        '(platform=${account.platformDisplayName}, isMT5=${account.isMT5})');
+    if (kDebugMode) {
+      final accountLabel = tradingAccount == null
+          ? 'WITHOUT trading account'
+          : 'WITH trading account ($mt5AccountNumber, '
+              'platform=${tradingAccount.platformDisplayName}, '
+              'isMT5=${tradingAccount.isMT5})';
+      debugPrint('📊 TenaxChart load URL [$accountLabel]');
+      debugPrint('📊   url     = $uri');
+      debugPrint('📊   account = '
+          '${uri.queryParameters['account'] ?? '(not sent)'}');
+      debugPrint('📊   group   = '
+          '${uri.queryParameters['group'] ?? '(not sent)'}');
+    }
     final stopwatch = Stopwatch()..start();
     final response = await http.get(
       uri,
@@ -209,7 +228,16 @@ class CrmTenaxChartDataSource implements TenaxChartDataSource {
 
   @override
   Future<TenaxOrdersOptions?> instrumentOptions(String symbol) async {
-    final account = _requireAccount();
+    final account = Get.isRegistered<AccountController>()
+        ? Get.find<AccountController>().activeMT5Account
+        : null;
+    if (account == null || account.metaAccountNumber.trim().isEmpty) {
+      // The chart awaits this before showing bars, so no account must not
+      // throw; the chart falls back to its default tick size.
+      tenaxChartDebugLog('instrument options skipped for $symbol: '
+          'no trading account');
+      return null;
+    }
     final details = await SymbolDetailsCacheService.getSymbolDetails(
       symbol,
       account.metaAccountNumber,

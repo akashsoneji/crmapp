@@ -11,6 +11,7 @@ import 'package:crm_app/models/socket_response.dart';
 import 'package:crm_app/widgets/app_switch_tile.dart';
 import 'package:crm_app/widgets/chart_inapp_webview.dart';
 import 'package:crm_app/widgets/chart/app_tenax_chart.dart';
+import 'package:crm_app/widgets/chart/landscape_chart_page.dart';
 import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/flavor_config.dart';
 import 'dart:convert';
@@ -115,6 +116,10 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
   Map<String, dynamic>? realTimePrice;
   bool isLoading = true;
   bool _isPlacingOrder = false; // Prevent multiple order executions
+
+  // True while the chart lives in the landscape fullscreen route. The chart is
+  // keyed by a GlobalKey, so the portrait layout must not build it meanwhile.
+  final ValueNotifier<bool> _isLandscapeChartOpen = ValueNotifier(false);
   String? errorMessage;
 
   // Trading Order Bottom Sheet State with ValueNotifier
@@ -169,6 +174,10 @@ class _ChartScreenState extends State<ChartScreen> with WidgetsBindingObserver {
   // GlobalKey to access WebView state for explicit symbol updates
   final GlobalKey<ChartInAppWebViewState> _webViewKey =
       GlobalKey<ChartInAppWebViewState>();
+
+  // Keeps the same Tenax chart (timeframe, drawings, loaded bars) when it moves
+  // between the portrait layout and the landscape fullscreen route.
+  final GlobalKey _tenaxChartKey = GlobalKey();
 
   // Helper method to remove symbol suffixes (.c, .r, etc.)
   // IMPORTANT: Use this ONLY for display and chart iframe
@@ -1405,8 +1414,450 @@ Placing Order:
     );
   }
 
+  // The device never rotates: the page is laid out landscape inside the
+  // portrait app (see openLandscapeChartPage), so Android never resizes the
+  // window and the chart WebView never paints black while turning.
+  void _openLandscapeChart() {
+    FocusScope.of(context).unfocus();
+    openLandscapeChartPage(
+      context: context,
+      isOpen: _isLandscapeChartOpen,
+      backgroundColor: AppColors.tradeBackgroundCenterColor,
+      // The page is not rebuilt by ChartScreen's setState, so symbol switches
+      // reach the chart and the panel through the shared notifier.
+      chartBuilder:
+          (_) => ValueListenableBuilder<String>(
+            valueListenable: ChartScreen._selectedSymbolNotifier,
+            builder: (_, _, _) => _buildChartArea(),
+          ),
+      toolbarBuilder:
+          (pageContext, openSymbolPicker) => ValueListenableBuilder<String>(
+            valueListenable: ChartScreen._selectedSymbolNotifier,
+            builder:
+                (_, _, _) =>
+                    _buildLandscapeTopBar(pageContext, openSymbolPicker),
+          ),
+      symbolPickerBuilder:
+          (_, closePicker) => _buildLandscapeSymbolPicker(closePicker),
+      overlayBuilder: (_) => _buildNotificationStack(),
+    );
+  }
+
+  static const double _landscapeBarControlHeight = 40;
+
+  // Top bar of the landscape page, left to right: minimize, symbol, SELL,
+  // −, lot, +, BUY. The chart fills the rest of the page below it.
+  Widget _buildLandscapeTopBar(
+    BuildContext pageContext,
+    VoidCallback openSymbolPicker,
+  ) {
+    return Container(
+      // 24px sides keep the end controls clear of the screen's rounded
+      // corners (the page's top corners are physical screen corners).
+      padding: const EdgeInsets.fromLTRB(24, 8, 24, 8),
+      // Theme base background, not cardBackGround: that one is a primary
+      // tint and reads as a brand-coloured (e.g. pink) band here.
+      decoration: BoxDecoration(
+        color: AppColors.tradeBackgroundCenterColor,
+        border: Border(
+          bottom: BorderSide(color: AppColors.border.withOpacity(0.4)),
+        ),
+      ),
+      child: Row(
+        children: [
+          IconButton(
+            tooltip: 'Exit full screen',
+            // maybePop goes through the page's PopScope, so the exit button
+            // and system back share the same cover -> hand back -> swing out.
+            onPressed: () => Navigator.of(pageContext).maybePop(),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints.tightFor(
+              width: _landscapeBarControlHeight,
+              height: _landscapeBarControlHeight,
+            ),
+            style: IconButton.styleFrom(
+              backgroundColor: AppColors.primary.withOpacity(0.1),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            icon: Icon(
+              Icons.fullscreen_exit_rounded,
+              size: 20,
+              color: AppColors.primary,
+            ),
+          ),
+          const SizedBox(width: 8),
+          SizedBox(
+            width: 116,
+            child: _buildLandscapeSymbolSwitch(openSymbolPicker),
+          ),
+          const SizedBox(width: 12),
+          // ChartScreen's own setState does not rebuild this route, so the
+          // price stream drives the bid/ask/spread refresh here.
+          Expanded(
+            child: StreamBuilder<dynamic>(
+              stream: chartSocketController.priceStream,
+              builder: (_, _) => _buildTradingControls(isLandscape: true),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLandscapeSymbolSwitch(VoidCallback openSymbolPicker) {
+    return Semantics(
+      button: true,
+      label: 'Change symbol',
+      child: InkWell(
+        onTap: openSymbolPicker,
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          height: _landscapeBarControlHeight,
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: AppColors.primary.withOpacity(0.35)),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    _removeSymbolSuffix(selectedSymbol),
+                    maxLines: 1,
+                    style: AppTextStyles.label.copyWith(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+              Icon(
+                Icons.keyboard_arrow_down_rounded,
+                size: 16,
+                color: AppColors.primary,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Content of the in-page landscape symbol picker. SearchInstrumentsScreen
+  // and dialogs would open in portrait outside the rotated page, and a search
+  // field would open the keyboard sideways, so this is a plain favourites list
+  // (same source and de-duplication as SearchInstrumentsScreen's favourites).
+  Widget _buildLandscapeSymbolPicker(VoidCallback closePicker) {
+    return Column(
+      children: [
+        _buildLandscapePickerHeader(closePicker),
+        Expanded(child: _buildLandscapePickerList(closePicker)),
+      ],
+    );
+  }
+
+  Widget _buildLandscapePickerHeader(VoidCallback closePicker) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 4, 4),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              'Symbols',
+              style: AppTextStyles.label.copyWith(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          IconButton(
+            tooltip: 'Close',
+            onPressed: closePicker,
+            icon: Icon(
+              Icons.close_rounded,
+              size: 20,
+              color: AppColors.primary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLandscapePickerList(VoidCallback closePicker) {
+    return Obx(() {
+      final instruments = instrumentsController.instruments;
+      final seen = <String>{};
+      final filtered = <ListElement>[];
+      for (final instrument in instruments) {
+        final name = _removeSymbolSuffix(instrument.symbol);
+        if (seen.add(name.toUpperCase())) filtered.add(instrument);
+      }
+
+      if (instrumentsController.isLoadingFavorites.value &&
+          instruments.isEmpty) {
+        return const Center(child: CircularProgressIndicator());
+      }
+
+      if (filtered.isEmpty) {
+        return Center(
+          child: Text(
+            'No favourite symbols',
+            style: AppTextStyles.label.copyWith(fontSize: 13),
+          ),
+        );
+      }
+
+      final currentName = _removeSymbolSuffix(selectedSymbol);
+      return ListView.builder(
+        padding: const EdgeInsets.only(bottom: 8),
+        itemCount: filtered.length,
+        itemBuilder: (_, index) {
+          final symbol = filtered[index].symbol;
+          final name = _removeSymbolSuffix(symbol);
+          final isSelected = name == currentName;
+          return InkWell(
+            onTap: () {
+              closePicker();
+              if (!isSelected) _onSymbolChanged(symbol);
+            },
+            child: Container(
+              height: 48,
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              decoration: BoxDecoration(
+                color: isSelected ? AppColors.primary.withOpacity(0.08) : null,
+                border: Border(
+                  bottom: BorderSide(
+                    color: AppColors.border.withOpacity(0.3),
+                    width: 0.5,
+                  ),
+                ),
+              ),
+              child: Row(
+                children: [
+                  _buildLandscapeFlag(symbol),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.input.copyWith(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  if (isSelected)
+                    Icon(
+                      Icons.check_rounded,
+                      size: 18,
+                      color: AppColors.primary,
+                    ),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+    });
+  }
+
+  // Fixed-size flag: _buildFlagIcon uses .w/.h, which stretches it in landscape.
+  Widget _buildLandscapeFlag(String symbol) {
+    final flagPath = _getFlagPath(symbol);
+    final name = _removeSymbolSuffix(symbol);
+    return SizedBox(
+      width: 28,
+      height: 28,
+      child: FutureBuilder<String?>(
+        future: _checkAssetExists(flagPath),
+        builder: (_, snapshot) {
+          if (snapshot.data != null) {
+            return ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: SvgPicture.asset(flagPath, fit: BoxFit.cover),
+            );
+          }
+          return Container(
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Text(
+              name.length < 2 ? name : name.substring(0, 2),
+              style: AppTextStyles.label.copyWith(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildLandscapeTradeTile({
+    required String label,
+    required String price,
+    required Color color,
+  }) {
+    return AnimatedOpacity(
+      duration: const Duration(milliseconds: 100),
+      opacity: _isPlacingOrder ? 0.5 : 1.0,
+      child: Container(
+        width: double.infinity,
+        height: _landscapeBarControlHeight,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: color.withOpacity(0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        // Scales down instead of overflowing on narrow phones or with
+        // extra-tall brand fonts.
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+            Text(
+              label,
+              style: AppTextStyles.button.copyWith(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1.2,
+                color: AppColors.onColoredBackground.withOpacity(0.85),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              price,
+              style: AppTextStyles.button.copyWith(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                color: AppColors.onColoredBackground,
+              ),
+            ),
+          ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _stepLandscapeVolume(double delta) {
+    setState(() {
+      volume = double.parse(
+        (volume + delta).clamp(_minLot, _maxLot).toStringAsFixed(2),
+      );
+      _volumeController.text = volume.toStringAsFixed(2);
+    });
+  }
+
+  // [−] [lot / spread] [+], between SELL and BUY in the landscape top bar.
+  // Display-only: the landscape page is rotated inside a portrait app, so a
+  // keyboard would open sideways across it. The lot changes via −/+ only;
+  // the value is shared with the portrait lot field through its controller.
+  Widget _buildLandscapeLotStepper({required String spread}) {
+    return Container(
+      height: _landscapeBarControlHeight,
+      margin: const EdgeInsets.symmetric(horizontal: 8),
+      decoration: BoxDecoration(
+        color: AppColors.tradeBackgroundCenterColor,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildLandscapeLotButton(
+            label: 'Decrease lot',
+            icon: Icons.remove_rounded,
+            onTap: () => _stepLandscapeVolume(-0.01),
+          ),
+          SizedBox(
+            width: 64,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ValueListenableBuilder<TextEditingValue>(
+                    valueListenable: _volumeController,
+                    builder:
+                        (_, value, _) => Text(
+                          value.text.isEmpty
+                              ? volume.toStringAsFixed(2)
+                              : value.text,
+                          key: const ValueKey('landscape-lot-value'),
+                          maxLines: 1,
+                          style: AppTextStyles.label.copyWith(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                  ),
+                  Text(
+                    'Spread $spread',
+                    maxLines: 1,
+                    style: AppTextStyles.label.copyWith(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textGrey,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          _buildLandscapeLotButton(
+            label: 'Increase lot',
+            icon: Icons.add_rounded,
+            onTap: () => _stepLandscapeVolume(0.01),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Plain InkWell with a fixed size: IconButton pads itself to a 48px tap
+  // target, which does not fit the landscape bar.
+  Widget _buildLandscapeLotButton({
+    required String label,
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return Semantics(
+      button: true,
+      label: label,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: SizedBox(
+          width: 36,
+          height: _landscapeBarControlHeight,
+          child: Icon(icon, size: 18, color: AppColors.primary),
+        ),
+      ),
+    );
+  }
+
   @override
   void dispose() {
+    _isLandscapeChartOpen.dispose();
+
     // Cancel stream subscriptions
     _priceStreamSubscription1?.cancel();
     _priceStreamSubscription2?.cancel();
@@ -1628,7 +2079,16 @@ Placing Order:
                           : isLargeScreen
                           ? 4
                           : 3,
-                  child: _buildChartArea(),
+                  // Rebuilds in the same frame as the landscape page, so the
+                  // GlobalKey'd chart is moved between them, not reloaded.
+                  child: ValueListenableBuilder<bool>(
+                    valueListenable: _isLandscapeChartOpen,
+                    builder:
+                        (_, isOpen, _) =>
+                            isOpen
+                                ? const SizedBox.shrink()
+                                : _buildChartArea(),
+                  ),
                 ),
 
                 // Interactive Icons - Fixed height
@@ -1886,7 +2346,7 @@ Placing Order:
       return SizedBox(
         width: double.infinity,
         height: MediaQuery.of(context).size.height * 0.4,
-        child: AppTenaxChart(symbol: displaySymbol),
+        child: AppTenaxChart(key: _tenaxChartKey, symbol: displaySymbol),
       );
     }
 
@@ -2146,7 +2606,8 @@ Placing Order:
       padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 10.h),
       child: Row(
         children: [
-          GestureDetector(
+          Expanded(
+            child: GestureDetector(
             onTap: () {
               // Navigate to fullscreen pending order screen
               Get.to(
@@ -2158,7 +2619,6 @@ Placing Order:
             },
             child: Container(
               height: 45.h,
-              width: Get.width / 1.25,
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(7.r),
@@ -2172,8 +2632,9 @@ Placing Order:
                 style: AppTextStyles.labelOnTradeButton,
               ),
             ),
+            ),
           ),
-          Spacer(),
+          SizedBox(width: 8.w),
 
           GestureDetector(
             onTap: () {
@@ -2192,6 +2653,24 @@ Placing Order:
               //   "assets/svg/chart_screen_icon/bell_icon.svg",
               //   color: AppColors.primary,
               // ),
+            ),
+          ),
+          SizedBox(width: 8.w),
+          Semantics(
+            button: true,
+            label: 'Full screen chart',
+            child: GestureDetector(
+              onTap: _openLandscapeChart,
+              child: Container(
+                height: 45.h,
+                width: 45.w,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(7.r),
+                  color: AppColors.cardBackGround,
+                ),
+                child: Icon(Icons.fullscreen_rounded, color: AppColors.primary),
+              ),
             ),
           ),
           // SizedBox(width: 8.w),
@@ -2234,7 +2713,7 @@ Placing Order:
     );
   }
 
-  Widget _buildTradingControls() {
+  Widget _buildTradingControls({bool isLandscape = false}) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 400;
 
@@ -2266,7 +2745,8 @@ Placing Order:
     // }
 
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 10.w),
+      padding:
+          isLandscape ? EdgeInsets.zero : EdgeInsets.symmetric(horizontal: 10.w),
       child: Container(
         child: Stack(
           children: [
@@ -2470,7 +2950,13 @@ Placing Order:
                         });
                       }
                     },
-                    child: AnimatedOpacity(
+                    child: isLandscape
+                        ? _buildLandscapeTradeTile(
+                          label: 'SELL',
+                          price: bidPrice,
+                          color: AppColors.error,
+                        )
+                        : AnimatedOpacity(
                       duration: Duration(milliseconds: 100),
                       opacity: _isPlacingOrder ? 0.5 : 1.0,
                       child: Container(
@@ -2505,7 +2991,9 @@ Placing Order:
                     ),
                   ),
                 ),
-                SizedBox(width: isSmallScreen ? 8.w : 16.w),
+                isLandscape
+                    ? _buildLandscapeLotStepper(spread: difference)
+                    : SizedBox(width: isSmallScreen ? 8.w : 16.w),
                 // BUY Button - now wrapped in GestureDetector
                 Expanded(
                   child: GestureDetector(
@@ -2704,7 +3192,13 @@ Placing Order:
                         });
                       }
                     },
-                    child: AnimatedOpacity(
+                    child: isLandscape
+                        ? _buildLandscapeTradeTile(
+                          label: 'BUY',
+                          price: askPrice,
+                          color: AppColors.success,
+                        )
+                        : AnimatedOpacity(
                       duration: Duration(milliseconds: 100),
                       opacity: _isPlacingOrder ? 0.5 : 1.0,
                       child: Container(
@@ -2741,6 +3235,8 @@ Placing Order:
                 ),
               ],
             ),
+            // Landscape shows the spread inside the lot box between SELL/BUY.
+            if (!isLandscape)
             Align(
               alignment: Alignment.center,
               child: Padding(
