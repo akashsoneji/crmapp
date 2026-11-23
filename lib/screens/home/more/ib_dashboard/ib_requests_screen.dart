@@ -1,5 +1,5 @@
 import 'package:crm_app/constants/text_styles.dart';
-import 'package:crm_app/screens/home/trading_main_screen.dart';
+import 'package:crm_app/screens/home/trading_home_screen.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -110,7 +110,7 @@ class _IBRequestsScreenState extends State<IBRequestsScreen> {
         ),
         leading: IconButton(
           icon: SvgPicture.asset("assets/svg/ib_dashboard/home.svg", colorFilter: ColorFilter.mode(AppColors.textPrimary, BlendMode.srcIn)),
-          onPressed: () => Get.offAll(() => const TradingMainScreen()),
+          onPressed: () => Get.offAll(() => const TradingHomeScreen()),
         ),
         centerTitle: true,
       ),

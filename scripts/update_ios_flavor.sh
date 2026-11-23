@@ -53,6 +53,10 @@ case "$FLAVOR" in
         APP_NAME="Tenax3"
         APP_ICON="AppIcon"
         ;;
+    tenaxnew)
+        APP_NAME="Tenax"
+        APP_ICON="tenax_app_icon"
+        ;;
     celestial)
         APP_NAME="Celestial"
         APP_ICON="celestial_app_icon"

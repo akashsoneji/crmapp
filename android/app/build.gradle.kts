@@ -53,6 +53,14 @@ android {
             manifest.srcFile("src/tenax/AndroidManifest.xml")
             res.directories.add("src/tenax/res")
         }
+
+        // TenaxNew is Tenax on the new home design: reuse Tenax's manifest
+        // (deep links). Its res lives in src/tenaxnew/res (a copy of Tenax's),
+        // because prepare_flavor.dart writes launcher icons there and a shared
+        // src/tenax/res would cause duplicate-resource errors.
+        maybeCreate("tenaxnew").apply {
+            manifest.srcFile("src/tenax/AndroidManifest.xml")
+        }
     }
 
 
@@ -134,6 +142,17 @@ android {
             resValue("color", "accent_color", "#4A0C54")
             buildConfigField("String", "FLAVOR", "\"tenax3\"")
             manifestPlaceholders["FLAVOR"] = "tenax3"
+        }
+
+        create("tenaxnew") {
+            dimension = "brand"
+            applicationId = "com.tenaxcode.tenaxnew"
+            resValue("string", "app_name", "Tenax")
+            resValue("color", "primary_color", "#4A0C54")
+            resValue("color", "secondary_color", "#E8F5E8")
+            resValue("color", "accent_color", "#4A0C54")
+            buildConfigField("String", "FLAVOR", "\"tenaxnew\"")
+            manifestPlaceholders["FLAVOR"] = "tenaxnew"
         }
 
         create("celestial") {
@@ -354,6 +373,13 @@ afterEvaluate {
   // Tenax3 flavor currently has no Firebase config.
   tasks.matching {
       it.name.startsWith("processTenax3") && it.name.endsWith("GoogleServices")
+  }.configureEach {
+      enabled = false
+  }
+
+  // Tenaxnew flavor has no Firebase app for com.tenaxcode.tenaxnew yet.
+  tasks.matching {
+      it.name.startsWith("processTenaxnew") && it.name.endsWith("GoogleServices")
   }.configureEach {
       enabled = false
   }

@@ -1,4 +1,4 @@
-import 'package:crm_app/screens/home/trading_main_screen.dart';
+import 'package:crm_app/screens/home/trading_home_screen.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -67,7 +67,7 @@ class _MyStructureScreenState extends State<MyStructureScreen> {
                     BlendMode.srcIn,
                   ),
                 ),
-                onPressed: () => Get.offAll(() => const TradingMainScreen()),
+                onPressed: () => Get.offAll(() => const TradingHomeScreen()),
               ),
               title: Text(
                 'My Structure',

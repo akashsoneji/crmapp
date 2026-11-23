@@ -6,6 +6,10 @@
     // TIP: To filter out WebView/GPU logs in Debug Console, use the filter box at the top:
     // Filter: !setRequestedFrameRate !ImageReader_JNI !GPUAUX
     // This will hide logs containing these patterns.
+    //
+    // Every config runs through scripts/flutter_wrapper.sh ("customTool") so the
+    // same config works on Android and iOS: Android keeps --flavor, iOS has no
+    // flavor schemes, so the wrapper prepares the flavor and drops --flavor.
     "version": "0.2.0",
     "configurations": [
         // ─── AFX ────────────────────────────────────────────────────────────────
@@ -14,6 +18,8 @@
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
+            "customTool": "${workspaceFolder}/scripts/flutter_wrapper.sh",
+            "customToolReplacesArgs": 0,
             "args": [
                 "--flavor",
                 "afx",
@@ -28,6 +34,8 @@
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
+            "customTool": "${workspaceFolder}/scripts/flutter_wrapper.sh",
+            "customToolReplacesArgs": 0,
             "args": [
                 "--flavor",
                 "afx",
@@ -41,6 +49,8 @@
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
+            "customTool": "${workspaceFolder}/scripts/flutter_wrapper.sh",
+            "customToolReplacesArgs": 0,
             "args": [
                 "--flavor",
                 "afx",
@@ -56,7 +66,11 @@
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
+            "customTool": "${workspaceFolder}/scripts/flutter_wrapper.sh",
+            "customToolReplacesArgs": 0,
             "args": [
+                "--flavor",
+                "amirifx",
                 "--dart-define=FLAVOR=amirifx",
                 "--no-enable-impeller"
             ],
@@ -68,7 +82,11 @@
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
+            "customTool": "${workspaceFolder}/scripts/flutter_wrapper.sh",
+            "customToolReplacesArgs": 0,
             "args": [
+                "--flavor",
+                "amirifx",
                 "--dart-define=FLAVOR=amirifx"
             ],
             "flutterMode": "profile",
@@ -79,7 +97,11 @@
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
+            "customTool": "${workspaceFolder}/scripts/flutter_wrapper.sh",
+            "customToolReplacesArgs": 0,
             "args": [
+                "--flavor",
+                "amirifx",
                 "--dart-define=FLAVOR=amirifx"
             ],
             "flutterMode": "release",
@@ -92,6 +114,8 @@
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
+            "customTool": "${workspaceFolder}/scripts/flutter_wrapper.sh",
+            "customToolReplacesArgs": 0,
             "args": [
                 "--flavor",
                 "askbid",
@@ -106,6 +130,8 @@
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
+            "customTool": "${workspaceFolder}/scripts/flutter_wrapper.sh",
+            "customToolReplacesArgs": 0,
             "args": [
                 "--flavor",
                 "askbid",
@@ -119,6 +145,8 @@
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
+            "customTool": "${workspaceFolder}/scripts/flutter_wrapper.sh",
+            "customToolReplacesArgs": 0,
             "args": [
                 "--flavor",
                 "askbid",
@@ -134,6 +162,8 @@
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
+            "customTool": "${workspaceFolder}/scripts/flutter_wrapper.sh",
+            "customToolReplacesArgs": 0,
             "args": [
                 "--flavor",
                 "celestial",
@@ -148,6 +178,8 @@
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
+            "customTool": "${workspaceFolder}/scripts/flutter_wrapper.sh",
+            "customToolReplacesArgs": 0,
             "args": [
                 "--flavor",
                 "celestial",
@@ -161,6 +193,8 @@
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
+            "customTool": "${workspaceFolder}/scripts/flutter_wrapper.sh",
+            "customToolReplacesArgs": 0,
             "args": [
                 "--flavor",
                 "celestial",
@@ -176,6 +210,8 @@
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
+            "customTool": "${workspaceFolder}/scripts/flutter_wrapper.sh",
+            "customToolReplacesArgs": 0,
             "args": [
                 "--flavor",
                 "goldenwolffx",
@@ -190,6 +226,8 @@
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
+            "customTool": "${workspaceFolder}/scripts/flutter_wrapper.sh",
+            "customToolReplacesArgs": 0,
             "args": [
                 "--flavor",
                 "goldenwolffx",
@@ -203,6 +241,8 @@
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
+            "customTool": "${workspaceFolder}/scripts/flutter_wrapper.sh",
+            "customToolReplacesArgs": 0,
             "args": [
                 "--flavor",
                 "goldenwolffx",
@@ -218,6 +258,8 @@
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
+            "customTool": "${workspaceFolder}/scripts/flutter_wrapper.sh",
+            "customToolReplacesArgs": 0,
             "args": [
                 "--flavor",
                 "gtxprime",
@@ -232,6 +274,8 @@
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
+            "customTool": "${workspaceFolder}/scripts/flutter_wrapper.sh",
+            "customToolReplacesArgs": 0,
             "args": [
                 "--flavor",
                 "gtxprime",
@@ -245,6 +289,8 @@
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
+            "customTool": "${workspaceFolder}/scripts/flutter_wrapper.sh",
+            "customToolReplacesArgs": 0,
             "args": [
                 "--flavor",
                 "gtxprime",
@@ -260,6 +306,8 @@
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
+            "customTool": "${workspaceFolder}/scripts/flutter_wrapper.sh",
+            "customToolReplacesArgs": 0,
             "args": [
                 "--flavor",
                 "Kantara",
@@ -274,6 +322,8 @@
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
+            "customTool": "${workspaceFolder}/scripts/flutter_wrapper.sh",
+            "customToolReplacesArgs": 0,
             "args": [
                 "--flavor",
                 "Kantara",
@@ -287,6 +337,8 @@
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
+            "customTool": "${workspaceFolder}/scripts/flutter_wrapper.sh",
+            "customToolReplacesArgs": 0,
             "args": [
                 "--flavor",
                 "Kantara",
@@ -302,6 +354,8 @@
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
+            "customTool": "${workspaceFolder}/scripts/flutter_wrapper.sh",
+            "customToolReplacesArgs": 0,
             "args": [
                 "--flavor",
                 "octa",
@@ -316,6 +370,8 @@
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
+            "customTool": "${workspaceFolder}/scripts/flutter_wrapper.sh",
+            "customToolReplacesArgs": 0,
             "args": [
                 "--flavor",
                 "octa",
@@ -329,6 +385,8 @@
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
+            "customTool": "${workspaceFolder}/scripts/flutter_wrapper.sh",
+            "customToolReplacesArgs": 0,
             "args": [
                 "--flavor",
                 "octa",
@@ -344,6 +402,8 @@
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
+            "customTool": "${workspaceFolder}/scripts/flutter_wrapper.sh",
+            "customToolReplacesArgs": 0,
             "args": [
                 "--flavor",
                 "onsa",
@@ -358,6 +418,8 @@
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
+            "customTool": "${workspaceFolder}/scripts/flutter_wrapper.sh",
+            "customToolReplacesArgs": 0,
             "args": [
                 "--flavor",
                 "onsa",
@@ -371,6 +433,8 @@
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
+            "customTool": "${workspaceFolder}/scripts/flutter_wrapper.sh",
+            "customToolReplacesArgs": 0,
             "args": [
                 "--flavor",
                 "onsa",
@@ -386,6 +450,8 @@
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
+            "customTool": "${workspaceFolder}/scripts/flutter_wrapper.sh",
+            "customToolReplacesArgs": 0,
             "args": [
                 "--flavor",
                 "pipze",
@@ -400,6 +466,8 @@
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
+            "customTool": "${workspaceFolder}/scripts/flutter_wrapper.sh",
+            "customToolReplacesArgs": 0,
             "args": [
                 "--flavor",
                 "pipze",
@@ -413,6 +481,8 @@
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
+            "customTool": "${workspaceFolder}/scripts/flutter_wrapper.sh",
+            "customToolReplacesArgs": 0,
             "args": [
                 "--flavor",
                 "pipze",
@@ -428,6 +498,8 @@
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
+            "customTool": "${workspaceFolder}/scripts/flutter_wrapper.sh",
+            "customToolReplacesArgs": 0,
             "args": [
                 "--flavor",
                 "profx",
@@ -442,6 +514,8 @@
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
+            "customTool": "${workspaceFolder}/scripts/flutter_wrapper.sh",
+            "customToolReplacesArgs": 0,
             "args": [
                 "--flavor",
                 "profx",
@@ -455,6 +529,8 @@
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
+            "customTool": "${workspaceFolder}/scripts/flutter_wrapper.sh",
+            "customToolReplacesArgs": 0,
             "args": [
                 "--flavor",
                 "profx",
@@ -470,6 +546,8 @@
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
+            "customTool": "${workspaceFolder}/scripts/flutter_wrapper.sh",
+            "customToolReplacesArgs": 0,
             "args": [
                 "--flavor",
                 "sr",
@@ -484,6 +562,8 @@
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
+            "customTool": "${workspaceFolder}/scripts/flutter_wrapper.sh",
+            "customToolReplacesArgs": 0,
             "args": [
                 "--flavor",
                 "sr",
@@ -497,6 +577,8 @@
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
+            "customTool": "${workspaceFolder}/scripts/flutter_wrapper.sh",
+            "customToolReplacesArgs": 0,
             "args": [
                 "--flavor",
                 "sr",
@@ -512,6 +594,8 @@
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
+            "customTool": "${workspaceFolder}/scripts/flutter_wrapper.sh",
+            "customToolReplacesArgs": 0,
             "args": [
                 "--flavor",
                 "tenax",
@@ -526,6 +610,8 @@
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
+            "customTool": "${workspaceFolder}/scripts/flutter_wrapper.sh",
+            "customToolReplacesArgs": 0,
             "args": [
                 "--flavor",
                 "tenax",
@@ -539,10 +625,60 @@
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
+            "customTool": "${workspaceFolder}/scripts/flutter_wrapper.sh",
+            "customToolReplacesArgs": 0,
             "args": [
                 "--flavor",
                 "tenax",
                 "--dart-define=FLAVOR=tenax"
+            ],
+            "flutterMode": "release",
+            "console": "integratedTerminal"
+        },
+
+        // ─── Tenax New (new home design) ───────────────────────────────────────
+        {
+            "name": "🟪 Tenax New (Debug)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "customTool": "${workspaceFolder}/scripts/flutter_wrapper.sh",
+            "customToolReplacesArgs": 0,
+            "args": [
+                "--flavor",
+                "tenaxnew",
+                "--dart-define=FLAVOR=tenaxnew",
+                "--no-enable-impeller"
+            ],
+            "flutterMode": "debug",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "🟪 Tenax New (Profile)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "customTool": "${workspaceFolder}/scripts/flutter_wrapper.sh",
+            "customToolReplacesArgs": 0,
+            "args": [
+                "--flavor",
+                "tenaxnew",
+                "--dart-define=FLAVOR=tenaxnew"
+            ],
+            "flutterMode": "profile",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "🟪 Tenax New (Release)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "customTool": "${workspaceFolder}/scripts/flutter_wrapper.sh",
+            "customToolReplacesArgs": 0,
+            "args": [
+                "--flavor",
+                "tenaxnew",
+                "--dart-define=FLAVOR=tenaxnew"
             ],
             "flutterMode": "release",
             "console": "integratedTerminal"
@@ -554,6 +690,8 @@
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
+            "customTool": "${workspaceFolder}/scripts/flutter_wrapper.sh",
+            "customToolReplacesArgs": 0,
             "args": [
                 "--flavor",
                 "tenax3",
@@ -568,6 +706,8 @@
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
+            "customTool": "${workspaceFolder}/scripts/flutter_wrapper.sh",
+            "customToolReplacesArgs": 0,
             "args": [
                 "--flavor",
                 "tenax3",
@@ -581,6 +721,8 @@
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
+            "customTool": "${workspaceFolder}/scripts/flutter_wrapper.sh",
+            "customToolReplacesArgs": 0,
             "args": [
                 "--flavor",
                 "tenax3",
@@ -596,6 +738,8 @@
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
+            "customTool": "${workspaceFolder}/scripts/flutter_wrapper.sh",
+            "customToolReplacesArgs": 0,
             "args": [
                 "--flavor",
                 "tradoxy",
@@ -610,6 +754,8 @@
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
+            "customTool": "${workspaceFolder}/scripts/flutter_wrapper.sh",
+            "customToolReplacesArgs": 0,
             "args": [
                 "--flavor",
                 "tradoxy",
@@ -623,6 +769,8 @@
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
+            "customTool": "${workspaceFolder}/scripts/flutter_wrapper.sh",
+            "customToolReplacesArgs": 0,
             "args": [
                 "--flavor",
                 "tradoxy",
@@ -638,6 +786,8 @@
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
+            "customTool": "${workspaceFolder}/scripts/flutter_wrapper.sh",
+            "customToolReplacesArgs": 0,
             "args": [
                 "--flavor",
                 "vr19",
@@ -652,6 +802,8 @@
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
+            "customTool": "${workspaceFolder}/scripts/flutter_wrapper.sh",
+            "customToolReplacesArgs": 0,
             "args": [
                 "--flavor",
                 "vr19",
@@ -665,6 +817,8 @@
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
+            "customTool": "${workspaceFolder}/scripts/flutter_wrapper.sh",
+            "customToolReplacesArgs": 0,
             "args": [
                 "--flavor",
                 "vr19",

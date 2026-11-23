@@ -264,4 +264,42 @@ class AppColors {
   /// Switch track when off.
   static Color get switchTrackOff =>
       isDarkMode ? const Color(0xFF505050) : const Color(0xFFDCDCDC);
+
+  // ── Home (Instruments tab) redesign ────────────────────────────────────────
+  // Placeholder values derived from the brand palette until the final design
+  // colours are delivered; swap the values here, not in the widgets.
+  static Color get homeHeaderGradientStart => brandPrimary;
+  static Color get homeHeaderGradientEnd =>
+      Color.lerp(brandPrimary, _pureBlack, 0.25)!;
+
+  static Color get homeInviteGradientStart =>
+      Color.lerp(brandPrimary, _pureBlack, 0.15)!;
+  static Color get homeInviteGradientEnd =>
+      Color.lerp(brandPrimary, _pureWhite, 0.15)!;
+
+  static Color get homeCardBackground => card;
+  static Color get homeCardBorder =>
+      isDarkMode ? borderDark : const Color(0xFFECECEC);
+
+  static Color get homeFeaturePanelBackground =>
+      isDarkMode ? surfaceDarkTheme : const Color(0xFFEFEDF1);
+
+  static Color get homeSellBoxBackground =>
+      red.withValues(alpha: isDarkMode ? 0.18 : 0.08);
+  static Color get homeSellBoxBorder => red.withValues(alpha: 0.7);
+
+  static Color get homeBuyBoxBackground =>
+      green.withValues(alpha: isDarkMode ? 0.18 : 0.08);
+  static Color get homeBuyBoxBorder => green.withValues(alpha: 0.6);
+
+  static Color get homeIconTint => primary;
+
+  static Color get homeChipPositiveBg => successBg;
+  static Color get homeChipNegativeBg => errorBg;
+
+  // Docked bottom tab bar (placeholders until final codes arrive).
+  static Color get homeNavBackground => homeFeaturePanelBackground;
+  static Color get homeNavActive => homeIconTint;
+  static Color get homeNavInactive =>
+      isDarkMode ? textGreyLight : const Color(0xFF414141);
 }

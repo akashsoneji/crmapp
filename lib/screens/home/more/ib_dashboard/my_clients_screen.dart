@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:crm_app/screens/home/trading_main_screen.dart';
+import 'package:crm_app/screens/home/trading_home_screen.dart';
 import 'package:crm_app/utils/trl_helper.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
 import 'package:flutter/material.dart';
@@ -476,7 +476,7 @@ class _MyClientsScreenState extends State<MyClientsScreen> {
               BlendMode.srcIn,
             ),
           ),
-          onPressed: () => Get.offAll(() => const TradingMainScreen()),
+          onPressed: () => Get.offAll(() => const TradingHomeScreen()),
         ),
         centerTitle: true,
         // leading: IconButton(

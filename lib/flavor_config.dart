@@ -6,6 +6,7 @@ import 'clients/pipze/config.dart';
 import 'clients/octa/config.dart';
 import 'clients/tenax/config.dart';
 import 'clients/tenax3/config.dart';
+import 'clients/tenaxnew/config.dart';
 import 'clients/onsa/config.dart';
 import 'clients/profx/config.dart';
 import 'clients/tradoxy/config.dart';
@@ -22,6 +23,7 @@ enum Flavor {
   octa,
   tenax,
   tenax3,
+  tenaxnew,
   celestial,
   onsa,
   profx,
@@ -149,16 +151,27 @@ class FlavorConfig {
   static bool isProduction() => _instance?.flavor == Flavor.pipze;
   static bool isDevelopment() => _instance?.flavor == Flavor.octa;
   static bool isTenax() =>
-      _instance?.flavor == Flavor.tenax || _instance?.flavor == Flavor.tenax3;
+      _instance?.flavor == Flavor.tenax ||
+      _instance?.flavor == Flavor.tenax3 ||
+      _instance?.flavor == Flavor.tenaxnew;
+  static bool isTenaxNew() => _instance?.flavor == Flavor.tenaxnew;
+
+  /// Whether the redesigned home / bottom navigation (TSK-0165) is used.
+  /// Add a flavor here to move it onto the new design.
+  static bool get usesNewHomeDesign => isTenaxNew();
   static bool isCelestial() => _instance?.flavor == Flavor.celestial;
 
   /// Whether the multi-broker selection flow is enabled for Tenax.
   /// Controlled by [TenaxConfig.enableMultiBroker].
   /// Set that flag to false to disable the broker picker everywhere.
   static bool get isMultiBrokerEnabled =>
-      isTenax() && TenaxConfig.enableMultiBroker;
+      isTenaxNew()
+          ? TenaxNewConfig.enableMultiBroker
+          : isTenax() && TenaxConfig.enableMultiBroker;
   static bool get isTenaxBrokerDemoEnabled =>
-      isTenax() && TenaxConfig.enableBrokerDemoMode;
+      isTenaxNew()
+          ? TenaxNewConfig.enableBrokerDemoMode
+          : isTenax() && TenaxConfig.enableBrokerDemoMode;
 
   /// Flavors that use the single multiplexed Trade Engine socket
   /// (`/ws/stream`) instead of the legacy 5-socket layout
@@ -170,6 +183,7 @@ class FlavorConfig {
   static const Set<Flavor> _singleStreamSocketFlavors = <Flavor>{
     Flavor.tenax,
     Flavor.tenax3,
+    Flavor.tenaxnew,
     Flavor.pipze,
   };
 
@@ -463,6 +477,27 @@ class FlavorConfig {
       appIconPath: config.getAssetPath('tenax', config.appIconPath),
       svgLogoPath: config.getAssetPath('tenax', config.logoSvgPath),
       splashLogoPath: config.getAssetPath('tenax', config.splashLogoPath),
+      remoteLogoUrl: null,
+      selectedBrokerData: null,
+    );
+  }
+
+  static FlavorConfig get tenaxnew {
+    _selectedFlavor = Flavor.tenaxnew;
+    const config = TenaxNewConfig();
+    return FlavorConfig(
+      flavor: Flavor.tenaxnew,
+      appName: config.brandName,
+      appTitle: config.appTitle,
+      primaryColor: config.primaryColor,
+      secondaryColor: config.secondaryColor,
+      accentColor: config.accentColor,
+      websocketUrl: config.websocketUrl,
+      chartBaseUrl: config.chartBaseUrl,
+      apiBaseUrl: config.apiBaseUrl,
+      appIconPath: config.getAssetPath('tenaxnew', config.appIconPath),
+      svgLogoPath: config.getAssetPath('tenaxnew', config.logoSvgPath),
+      splashLogoPath: config.getAssetPath('tenaxnew', config.splashLogoPath),
       remoteLogoUrl: null,
       selectedBrokerData: null,
     );

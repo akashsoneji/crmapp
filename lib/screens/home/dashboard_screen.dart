@@ -8,6 +8,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
+import 'package:crm_app/flavor_config.dart';
 import 'package:crm_app/models/mt5_account.dart';
 import 'package:crm_app/models/websocket_trading_response.dart';
 import 'package:crm_app/routes/app_pages.dart';
@@ -251,8 +252,14 @@ class DashboardScreen extends StatelessWidget {
                           left: 16,
                           right: 16,
                           top: 16,
+                          // The new home design docks the tab bar, so no
+                          // floating-nav clearance is needed.
                           bottom:
-                              16 + 77.h + MediaQuery.of(context).padding.bottom,
+                              FlavorConfig.usesNewHomeDesign
+                                  ? 16
+                                  : 16 +
+                                      77.h +
+                                      MediaQuery.of(context).padding.bottom,
                         ),
                         itemCount: controller.mt5Accounts.length,
                         itemBuilder: (context, index) {

@@ -830,7 +830,11 @@ Future<void> _initializeFlavor() async {
     try {
       final info = await PackageInfo.fromPlatform();
       final packageName = info.packageName.toLowerCase();
-      if (packageName.contains('tenax3')) {
+      // tenaxnew/tenax3 must be checked before tenax: contains('tenax') matches them too.
+      if (packageName.contains('tenaxnew')) {
+        FlavorConfig.tenaxnew;
+        AppLogger.debug('Flavor initialized from package id: tenaxnew');
+      } else if (packageName.contains('tenax3')) {
         FlavorConfig.tenax3;
         AppLogger.debug('Flavor initialized from package id: tenax3');
       } else if (packageName.contains('tenax')) {
@@ -909,6 +913,9 @@ void _initializeFlavorByName(String flavorName) {
       break;
     case 'tenax3':
       FlavorConfig.tenax3;
+      break;
+    case 'tenaxnew':
+      FlavorConfig.tenaxnew;
       break;
     case 'celestial':
       FlavorConfig.celestial;

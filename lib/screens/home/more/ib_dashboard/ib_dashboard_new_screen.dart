@@ -6,7 +6,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/controllers/ib_controller.dart';
-import 'package:crm_app/screens/home/trading_main_screen.dart';
+import 'package:crm_app/screens/home/trading_home_screen.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:crm_app/models/ib_models.dart';
 import 'package:crm_app/screens/home/more/ib_dashboard/ib_network_tree_screen.dart';
@@ -126,7 +126,7 @@ class _IbDashboardNewScreenState extends State<IbDashboardNewScreen> {
               BlendMode.srcIn,
             ),
           ),
-          onPressed: () => Get.offAll(() => const TradingMainScreen()),
+          onPressed: () => Get.offAll(() => const TradingHomeScreen()),
         ),
       ),
       body: Obx(() {

@@ -71,7 +71,7 @@ import '../screens/home/kyc/kyc_details_screen.dart';
 import '../screens/home/kyc/kyc_docs_screen.dart';
 import '../screens/home/kyc/kyc_success_screen.dart';
 import '../screens/home/more/finance/transaction_history_screen.dart';
-import '../screens/home/trading_main_screen.dart';
+import '../screens/home/trading_home_screen.dart';
 import '../screens/home/order_confirmation_screen.dart';
 import '../screens/settings/language_selector_screen.dart';
 import '../screens/settings/account_management_screen.dart';
@@ -294,7 +294,7 @@ class AppPages {
     ),
     GetPage(
       name: _Paths.TRADING,
-      page: () => const KycLockGate(child: TradingMainScreen()),
+      page: () => const KycLockGate(child: TradingHomeScreen()),
       binding: TradingBinding(),
     ),
     GetPage(

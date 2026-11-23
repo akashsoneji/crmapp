@@ -11,6 +11,7 @@ import 'package:crm_app/controllers/account_controller.dart';
 import 'package:crm_app/controllers/app_notification_controller.dart';
 import 'package:crm_app/controllers/dashboard_controller.dart';
 import 'package:crm_app/controllers/trading_controller.dart';
+import 'package:crm_app/flavor_config.dart';
 import 'package:crm_app/services/trading_websocket_service.dart';
 import 'package:crm_app/services/account_websocket_service.dart';
 import 'package:crm_app/widgets/account_header_widget.dart';
@@ -442,9 +443,15 @@ class _TradeScreenState extends State<TradeScreen> {
                                   padding: EdgeInsets.only(
                                     left: 16.w,
                                     right: 16.w,
+                                    // The new home design docks the tab bar,
+                                    // so no floating-nav clearance is needed.
                                     bottom:
-                                        77.h +
-                                        MediaQuery.of(context).padding.bottom,
+                                        FlavorConfig.usesNewHomeDesign
+                                            ? 16.h
+                                            : 77.h +
+                                                MediaQuery.of(
+                                                  context,
+                                                ).padding.bottom,
                                   ),
                                   sliver: SliverList(
                                     delegate: SliverChildBuilderDelegate((

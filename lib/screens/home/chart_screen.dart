@@ -2098,8 +2098,15 @@ Placing Order:
                 _buildTradingControls(),
                 _buildInteractiveIcons(),
 
-                // Bottom padding for navigation bar
-                SizedBox(height: navBarHeight + 8.h),
+                // Bottom padding for navigation bar. The new home design docks
+                // the tab bar (Scaffold.bottomNavigationBar), so the body already
+                // ends above it and only a small gap is needed.
+                SizedBox(
+                  height:
+                      FlavorConfig.usesNewHomeDesign
+                          ? 8.h
+                          : navBarHeight + 8.h,
+                ),
               ],
             ),
             // Notification stack overlay (only when one-click trading is enabled)
