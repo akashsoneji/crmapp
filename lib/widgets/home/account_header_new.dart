@@ -12,7 +12,7 @@ import 'package:crm_app/controllers/dashboard_controller.dart';
 import 'package:crm_app/models/mt5_account.dart';
 import 'package:crm_app/models/websocket_trading_response.dart';
 import 'package:crm_app/utils/currency_format.dart';
-import 'package:crm_app/widgets/account_header_widget.dart';
+import 'package:crm_app/widgets/home/sheets/account_select_sheet_new.dart';
 
 /// Purple gradient account header used by the trading tabs in the new design.
 ///
@@ -40,9 +40,9 @@ class AccountHeaderNew extends StatelessWidget {
       child: Container(
         padding: EdgeInsetsDirectional.fromSTEB(
           16.w,
-          topInset + 10.h,
+          topInset + 8.h,
           16.w,
-          12.h,
+          8.h,
         ),
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -57,7 +57,7 @@ class AccountHeaderNew extends StatelessWidget {
         child: Row(
           children: [
             _LogoButton(onTap: onMenuTap),
-            SizedBox(width: 12.w),
+            SizedBox(width: 10.w),
             Expanded(child: _AccountSummary(floatingProfit: floatingProfit)),
             if (rightWidget != null) ...[SizedBox(width: 8.w), rightWidget!],
           ],
@@ -80,11 +80,11 @@ class _LogoButton extends StatelessWidget {
       excludeSemantics: true,
       child: InkResponse(
         onTap: onTap,
-        radius: 28.r,
+        radius: 22.r,
         child: SvgPicture.asset(
           'assets/svg/new_svg/home_logo.svg',
-          width: 48.r,
-          height: 48.r,
+          width: 36.r,
+          height: 36.r,
         ),
       ),
     );
@@ -183,7 +183,7 @@ class _AccountSummary extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: AppTextStyles.heading.copyWith(
-                    fontSize: 24.sp,
+                    fontSize: 18.sp,
                     fontWeight: FontWeight.w700,
                     color: onHeader,
                   ),
@@ -200,24 +200,21 @@ class _AccountSummary extends StatelessWidget {
             child: InkWell(
               onTap: () {
                 accountController.resetToDefaultAccounts();
-                AccountHeaderWidget.showAccountSelectionSheet(
-                  context,
-                  accountController,
-                );
+                AccountSelectSheetNew.show(context);
               },
               child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: 28.h),
+                constraints: BoxConstraints(minHeight: 22.h),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       primaryAccount?.metaAccountNumber ?? '',
                       style: AppTextStyles.subheading.copyWith(
-                        fontSize: 14.sp,
+                        fontSize: 12.sp,
                         color: onHeader.withValues(alpha: 0.9),
                       ),
                     ),
-                    Icon(Icons.arrow_drop_down, size: 22.r, color: onHeader),
+                    Icon(Icons.arrow_drop_down, size: 18.r, color: onHeader),
                   ],
                 ),
               ),
@@ -245,7 +242,7 @@ class _AccountTypeBadge extends StatelessWidget {
     };
 
     return Container(
-      padding: EdgeInsetsDirectional.symmetric(horizontal: 8.w, vertical: 2.h),
+      padding: EdgeInsetsDirectional.symmetric(horizontal: 6.w, vertical: 1.h),
       decoration: BoxDecoration(
         color:
             isDemo
@@ -256,7 +253,7 @@ class _AccountTypeBadge extends StatelessWidget {
       child: Text(
         label,
         style: TextStyle(
-          fontSize: 11.sp,
+          fontSize: 9.sp,
           fontWeight: FontWeight.w700,
           color:
               isDemo
@@ -293,8 +290,8 @@ class HeaderPillButton extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(12.r),
         child: Container(
-          constraints: BoxConstraints(minHeight: 44.h),
-          padding: EdgeInsetsDirectional.symmetric(horizontal: 14.w),
+          constraints: BoxConstraints(minHeight: 34.h),
+          padding: EdgeInsetsDirectional.symmetric(horizontal: 10.w),
           decoration: BoxDecoration(
             color: AppColors.homeHeaderPillBackground,
             borderRadius: BorderRadius.circular(12.r),
@@ -306,14 +303,14 @@ class HeaderPillButton extends StatelessWidget {
               Text(
                 label,
                 style: AppTextStyles.label.copyWith(
-                  fontSize: 15.sp,
+                  fontSize: 13.sp,
                   fontWeight: FontWeight.w600,
                   color: onHeader,
                 ),
               ),
               if (showCaret) ...[
                 SizedBox(width: 4.w),
-                Icon(Icons.arrow_drop_down, size: 22.r, color: onHeader),
+                Icon(Icons.arrow_drop_down, size: 18.r, color: onHeader),
               ],
             ],
           ),

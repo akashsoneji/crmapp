@@ -315,4 +315,64 @@ class AppColors {
   static Color get homePendingBarBackground =>
       isDarkMode ? surfaceDarkTheme : const Color(0xFFE9E6EC);
   static const Color homeAlertDot = Color(0xFFFFC107);
+
+  // Chart trade dock (SELL/BUY tiles, spread chip, quantity pill, actions).
+  // Light values match the mockup; dark values are brightened for contrast
+  // on the #2C2C2C card.
+  static Color get chartSellAccent =>
+      isDarkMode ? const Color(0xFFFF6B5E) : red;
+  static Color get chartBuyAccent =>
+      isDarkMode ? const Color(0xFF5FC157) : green;
+  static Color get chartSellTint =>
+      isDarkMode ? const Color(0xFF3A1F1D) : const Color(0xFFFCE4E2);
+  static Color get chartBuyTint =>
+      isDarkMode ? const Color(0xFF1D3320) : const Color(0xFFE3F0E2);
+  static Color get chartTileFillEnd =>
+      isDarkMode ? cardDarkTheme : const Color(0xFFFFFFFF);
+  static Color get chartSpreadChipBackground =>
+      isDarkMode ? const Color(0xFF3A3A3A) : const Color(0xFFFFFFFF);
+  static Color get chartDockShadow =>
+      isDarkMode
+          ? const Color(0xFF000000).withValues(alpha: 0.5)
+          : const Color(0xFF000000).withValues(alpha: 0.08);
+  static Color get chartPillBackground =>
+      isDarkMode ? surfaceDarkTheme : const Color(0xFFF1EFF4);
+  static Color get chartPillButtonBackground =>
+      isDarkMode ? const Color(0xFF3A3A3A) : const Color(0xFFFFFFFF);
+
+  // Bottom sheets (tenaxnew redesign): price alert, instrument search,
+  // account select. Dark values keep body text >= 4.5:1 on the surface.
+  static Color get sheetSurface =>
+      isDarkMode ? const Color(0xFF1A1A1C) : const Color(0xFFFFFFFF);
+  static Color get sheetGrabber =>
+      isDarkMode ? const Color(0xFF4A4A4E) : const Color(0xFFD6D3DB);
+  static Color get sheetField =>
+      isDarkMode ? const Color(0xFF26262A) : const Color(0xFFF4F2F7);
+  static Color get sheetFieldBorder =>
+      isDarkMode ? const Color(0xFF38383D) : const Color(0xFFE4E0EA);
+  static Color get sheetRow =>
+      isDarkMode ? const Color(0xFF222225) : const Color(0xFFFAF9FC);
+  static Color get sheetRowDivider =>
+      isDarkMode ? const Color(0xFF2E2E32) : const Color(0xFFEEEBF2);
+  static Color get sheetSelectedOutline => homeHeaderGradientEnd;
+  static Color get sheetSelectedFill =>
+      homeHeaderGradientStart.withValues(alpha: isDarkMode ? 0.22 : 0.07);
+  static Color get sheetChipIdle =>
+      isDarkMode ? const Color(0xFF26262A) : const Color(0xFFFFFFFF);
+  static Color get sheetChipIdleBorder =>
+      isDarkMode ? const Color(0xFF3A3A40) : const Color(0xFFE0DBE6);
+  static Color get sheetChipIdleText =>
+      isDarkMode ? const Color(0xFFD8D6DC) : const Color(0xFF3C3842);
+  static Color get sheetTextPrimary =>
+      isDarkMode ? const Color(0xFFF2F1F4) : const Color(0xFF16141A);
+  static Color get sheetTextMuted =>
+      isDarkMode ? const Color(0xFFA9A7AE) : const Color(0xFF6B6872);
+  static Color get sheetAvatarBackground =>
+      isDarkMode ? const Color(0xFF2C2C31) : const Color(0xFFEDEAF1);
+  static Color get sheetConditionAbove => chartBuyAccent;
+  static Color get sheetConditionBelow => chartSellAccent;
+  static Color get sheetActiveChipBackground =>
+      isDarkMode ? const Color(0xFF1D3320) : const Color(0xFFE3F4E2);
+  static Color get sheetActiveChipText =>
+      isDarkMode ? const Color(0xFF7FD877) : const Color(0xFF2E7D32);
 }

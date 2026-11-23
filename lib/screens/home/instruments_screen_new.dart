@@ -27,7 +27,7 @@ import '../../widgets/home/invite_banner_card.dart';
 import '../../widgets/home/quick_actions_grid.dart';
 import '../../widgets/home/ticker_cards_row.dart';
 import 'chart_screen.dart';
-import 'search_instruments_screen.dart';
+import '../../widgets/home/sheets/instrument_search_sheet_new.dart';
 import 'package:crm_app/services/symbol_selection_service.dart';
 import 'package:crm_app/services/market_watch_v2_service.dart';
 
@@ -254,23 +254,9 @@ class _InstrumentsScreenNewState extends State<InstrumentsScreenNew>
   }
 
   void _openSearchSheet() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.9,
-        decoration: BoxDecoration(
-          color: AppColors.tradeBackgroundCenterColor,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
-          child: SearchInstrumentsScreen(
-            onNavigateToChart: widget.onNavigateToChart,
-          ),
-        ),
-      ),
+    InstrumentSearchSheetNew.show(
+      context,
+      onNavigateToChart: widget.onNavigateToChart,
     );
   }
 

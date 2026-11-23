@@ -40,23 +40,35 @@ Widget _panel({double textScale = 1.0}) {
                         const Align(child: ChartSpreadChipNew(spread: '41')),
                       ],
                     ),
+                    // Same shape as the chart dock's quantity row.
                     Row(
                       children: [
-                        ChartQuantityButtonNew(
-                          isIncrement: false,
-                          onPressed: () {},
+                        Expanded(
+                          child: Row(
+                            children: [
+                              ChartQuantityButtonNew(
+                                isIncrement: false,
+                                onPressed: () {},
+                              ),
+                              const Expanded(
+                                child: Text(
+                                  '0.01',
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                              ChartQuantityButtonNew(
+                                isIncrement: true,
+                                onPressed: () {},
+                              ),
+                            ],
+                          ),
                         ),
-                        const Expanded(child: SizedBox()),
-                        ChartQuantityButtonNew(
-                          isIncrement: true,
-                          onPressed: () {},
+                        ChartTradeActionsNew(
+                          onPendingTap: () {},
+                          onAlertsTap: () {},
+                          onFullscreenTap: () {},
                         ),
                       ],
-                    ),
-                    ChartPendingBarNew(
-                      label: 'Pending order • SL • TP',
-                      onPendingTap: () {},
-                      onAlertsTap: () {},
                     ),
                   ],
                 ),
@@ -80,7 +92,7 @@ void main() {
     view.resetDevicePixelRatio();
   });
 
-  testWidgets('renders SELL/BUY, spread and pending bar at 375px', (
+  testWidgets('renders SELL/BUY, spread and the three actions at 375px', (
     tester,
   ) async {
     await tester.pumpWidget(_panel());
@@ -88,8 +100,12 @@ void main() {
     expect(find.text('SELL'), findsOneWidget);
     expect(find.text('BUY'), findsOneWidget);
     expect(find.text('41'), findsOneWidget);
-    expect(find.text('Pending order • SL • TP'), findsOneWidget);
+    expect(
+      find.bySemanticsLabel('Pending order, stop loss and take profit'),
+      findsOneWidget,
+    );
     expect(find.bySemanticsLabel('Price alerts'), findsOneWidget);
+    expect(find.bySemanticsLabel('Full screen chart'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -99,6 +115,31 @@ void main() {
     final size = tester.getSize(find.byType(ChartQuantityButtonNew).first);
     expect(size.width, greaterThanOrEqualTo(44));
     expect(size.height, greaterThanOrEqualTo(44));
+  });
+
+  testWidgets('trade dock renders its sections without overflow', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ScreenUtilInit(
+        designSize: const Size(375, 812),
+        builder:
+            (_, _) => const MaterialApp(
+              home: Scaffold(
+                body: ChartTradeDockNew(
+                  children: [
+                    ChartTradeTileNew(isSell: true, price: '1.08512'),
+                    ChartSpreadChipNew(spread: '12'),
+                  ],
+                ),
+              ),
+            ),
+      ),
+    );
+
+    expect(find.text('SELL'), findsOneWidget);
+    expect(find.bySemanticsLabel('Spread 12'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('no overflow at large text scale', (tester) async {

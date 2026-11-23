@@ -29,6 +29,8 @@ import '../../widgets/price_alert_dialog.dart';
 import '../../widgets/account_header_widget.dart';
 import '../../widgets/home/account_header_new.dart';
 import '../../widgets/home/chart_trade_panel_new.dart';
+import '../../widgets/home/sheets/instrument_search_sheet_new.dart';
+import '../../widgets/home/sheets/price_alert_sheet_new.dart';
 import '../../services/price_alert_service.dart';
 import '../../services/price_alert_monitor_service.dart';
 import '../../services/audio_service.dart';
@@ -1055,6 +1057,18 @@ Placing Order:
     // Hide keyboard first to prevent dialog visibility issues
     FocusScope.of(context).unfocus();
 
+    if (FlavorConfig.usesNewHomeDesign) {
+      PriceAlertSheetNew.show(
+        context,
+        symbol: selectedSymbol,
+        currentPrice: currentPrice,
+        digits: digits,
+        bidChanges: chartSocketController.realTimePrice.stream,
+        readBid: chartSocketController.getMarketPrice,
+      );
+      return;
+    }
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -2074,7 +2088,7 @@ Placing Order:
               children: [
                 // Header - Fixed height
                 _buildHeader(context),
-                if (FlavorConfig.usesNewHomeDesign) _buildAssetDetails(),
+                
 
                 // Chart Area - Responsive height
                 Expanded(
@@ -2096,12 +2110,29 @@ Placing Order:
                   ),
                 ),
 
-                // Interactive Icons - Fixed height
-                _buildVolumeInputScreen(context, true),
+                if (FlavorConfig.usesNewHomeDesign)
+                  ChartTradeDockNew(
+                    children: [
+                      // − quantity (lots) + | Pending · Alerts · Expand
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildVolumeInputScreen(context, true),
+                          ),
+                          _buildInteractiveIcons(),
+                        ],
+                      ),
+                      _buildTradingControls(),
+                    ],
+                  )
+                else ...[
+                  // Interactive Icons - Fixed height
+                  _buildVolumeInputScreen(context, true),
 
-                // Trading Controls - Fixed height
-                _buildTradingControls(),
-                _buildInteractiveIcons(),
+                  // Trading Controls - Fixed height
+                  _buildTradingControls(),
+                  _buildInteractiveIcons(),
+                ],
 
                 // Bottom padding for navigation bar. The new home design docks
                 // the tab bar (Scaffold.bottomNavigationBar), so the body already
@@ -2280,18 +2311,8 @@ Placing Order:
             ),
           ),
           const Spacer(),
-          if (FlavorConfig.usesNewHomeDesign)
-            IconButton(
-              onPressed: _openLandscapeChart,
-              tooltip: 'Full screen chart',
-              visualDensity: VisualDensity.compact,
-              icon: Icon(
-                Icons.fullscreen_rounded,
-                size: 22.r,
-                color: AppColors.textGrey,
-              ),
-            )
-          else
+          // New design: fullscreen sits next to the bell in the pending bar.
+          if (!FlavorConfig.usesNewHomeDesign)
           Container(
             width: 20.w,
             height: 20.h,
@@ -2613,6 +2634,16 @@ Placing Order:
   // }
 
   void _showSymbolSelector() {
+    if (FlavorConfig.usesNewHomeDesign) {
+      InstrumentSearchSheetNew.show(
+        context,
+        favoritesOnly: true,
+        activeSymbol: selectedSymbol,
+        onNavigateToChart: _onSymbolChanged,
+      );
+      return;
+    }
+
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -2641,11 +2672,10 @@ Placing Order:
 
   Widget _buildInteractiveIcons() {
     if (FlavorConfig.usesNewHomeDesign) {
-      // Fullscreen moves to the stats strip (_buildAssetDetails) in this design.
+      // Sits at the end of the quantity row (see build()), so only end padding.
       return Padding(
-        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 10.h),
-        child: ChartPendingBarNew(
-          label: languageService.tr('chart_pending_order_header'),
+        padding: EdgeInsetsDirectional.only(end: 10.w),
+        child: ChartTradeActionsNew(
           onPendingTap: () {
             Get.to(
               () => PendingOrderScreen(
@@ -2655,6 +2685,7 @@ Placing Order:
             );
           },
           onAlertsTap: _showPriceAlertDialog,
+          onFullscreenTap: _openLandscapeChart,
         ),
       );
     }
@@ -3056,7 +3087,13 @@ Placing Order:
                 ),
                 isLandscape
                     ? _buildLandscapeLotStepper(spread: difference)
-                    : SizedBox(width: isSmallScreen ? 8.w : 16.w),
+                    // New design: two bordered tiles, spread chip on the gap.
+                    : SizedBox(
+                      width:
+                          FlavorConfig.usesNewHomeDesign
+                              ? 10.w
+                              : (isSmallScreen ? 8.w : 16.w),
+                    ),
                 // BUY Button - now wrapped in GestureDetector
                 Expanded(
                   child: GestureDetector(
@@ -3306,13 +3343,10 @@ Placing Order:
             ),
             // Landscape shows the spread inside the lot box between SELL/BUY.
             if (!isLandscape && FlavorConfig.usesNewHomeDesign)
-              Align(
-                alignment: Alignment.center,
-                child: Padding(
-                  // Centres the 28.h chip on the 60.h tiles.
-                  padding: EdgeInsets.only(top: 16.h),
-                  child: ChartSpreadChipNew(spread: difference),
-                ),
+              // Positioned.fill keeps the chip centred on the tiles at any
+              // tile height instead of a hard-coded top offset.
+              Positioned.fill(
+                child: Center(child: ChartSpreadChipNew(spread: difference)),
               )
             else if (!isLandscape)
             Align(
@@ -3350,25 +3384,19 @@ Placing Order:
     return Padding(
       padding: EdgeInsets.symmetric(
         horizontal: isborder ? 10.w : 0,
-        vertical: isborder ? 10.h : 2.h,
+        vertical: isborder ? (FlavorConfig.usesNewHomeDesign ? 8.h : 10.h) : 2.h,
       ),
       child: Container(
-        height: FlavorConfig.usesNewHomeDesign ? 60.h : 48.h,
+        height: FlavorConfig.usesNewHomeDesign ? 44.h : 48.h,
         padding: EdgeInsets.symmetric(
-          horizontal: FlavorConfig.usesNewHomeDesign ? 4.w : 11.w,
+          horizontal: FlavorConfig.usesNewHomeDesign ? 2.w : 11.w,
         ),
         decoration:
             FlavorConfig.usesNewHomeDesign
+                // Grey pill inside the trade dock (dark-mode aware).
                 ? BoxDecoration(
-                  color: AppColors.homeCardBackground,
-                  borderRadius: BorderRadius.circular(12.r),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.border.withValues(alpha: 0.35),
-                      blurRadius: 10,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
+                  color: AppColors.chartPillBackground,
+                  borderRadius: BorderRadius.circular(22.r),
                 )
                 : BoxDecoration(
                   color: AppColors.whiteColor,
