@@ -11,6 +11,7 @@ import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/more/more_controller.dart';
 import 'package:crm_app/flavor_config.dart';
+import 'package:crm_app/widgets/home/gradient_app_bar.dart';
 import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/controllers/auth_controller.dart';
 import 'package:crm_app/routes/app_pages.dart';
@@ -902,29 +903,37 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
     final AuthController authController = Get.find<AuthController>();
     final languageService = Get.find<LanguageService>();
 
+    final bool useGradientBar = FlavorConfig.usesNewHomeDesign;
+    final notificationsAction = IconButton(
+      icon: Icon(
+        Icons.notifications_none_rounded,
+        size: 24.sp,
+        color:
+            useGradientBar ? AppColors.onColoredBackground : AppColors.primary,
+      ),
+      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
+      onPressed: () => Get.toNamed(AppPages.NOTIFICATIONS),
+    );
+
     return Scaffold(
       backgroundColor: AppColors.tradeBackgroundCenterColor,
-      appBar: AppBar(
-        scrolledUnderElevation: 0.0,
-        backgroundColor: AppColors.tradeBackgroundCenterColor,
-        elevation: 0,
-        title: Text(
-          languageService.tr('setting_title'),
-          style: AppTextStyles.screenTitle,
-        ),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: Icon(
-              Icons.notifications_none_rounded,
-              size: 24.sp,
-              color: AppColors.primary,
-            ),
-            padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
-            onPressed: () => Get.toNamed(AppPages.NOTIFICATIONS),
-          ),
-        ],
-      ),
+      appBar:
+          useGradientBar
+              ? GradientAppBar(
+                title: languageService.tr('setting_title'),
+                actions: [notificationsAction],
+              )
+              : AppBar(
+                scrolledUnderElevation: 0.0,
+                backgroundColor: AppColors.tradeBackgroundCenterColor,
+                elevation: 0,
+                title: Text(
+                  languageService.tr('setting_title'),
+                  style: AppTextStyles.screenTitle,
+                ),
+                centerTitle: true,
+                actions: [notificationsAction],
+              ),
       body: SingleChildScrollView(
         child: Padding(
           padding: EdgeInsets.fromLTRB(

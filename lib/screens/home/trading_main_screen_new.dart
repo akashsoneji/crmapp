@@ -380,9 +380,9 @@ class _TradingMainScreenNewState extends State<TradingMainScreenNew> {
   }
 
   Widget _buildPageView() {
-    // The home tab paints its purple header under the status bar itself.
+    // Every tab paints its purple gradient header under the status bar itself.
     return SafeArea(
-      top: _currentIndex != 0,
+      top: false,
       child: PageView(
         controller: _pageController,
         onPageChanged: _onTabChanged,

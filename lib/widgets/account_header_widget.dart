@@ -249,7 +249,7 @@ class AccountHeaderWidget extends StatelessWidget {
                         GestureDetector(
                           onTap: () {
                             accountController.resetToDefaultAccounts();
-                            _showAccountSelectionBottomSheet(
+                            showAccountSelectionSheet(
                               context,
                               accountController,
                             );
@@ -390,7 +390,7 @@ class AccountHeaderWidget extends StatelessWidget {
     return ''; // Keep blank while initial account data is loading.
   }
 
-  void _showAccountSelectionBottomSheet(
+  static void showAccountSelectionSheet(
     BuildContext context,
     AccountController accountController,
   ) {

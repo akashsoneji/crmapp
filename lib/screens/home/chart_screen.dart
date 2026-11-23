@@ -27,6 +27,8 @@ import '../../controllers/trading_controller.dart';
 import '../../services/trading_websocket_service.dart';
 import '../../widgets/price_alert_dialog.dart';
 import '../../widgets/account_header_widget.dart';
+import '../../widgets/home/account_header_new.dart';
+import '../../widgets/home/chart_trade_panel_new.dart';
 import '../../services/price_alert_service.dart';
 import '../../services/price_alert_monitor_service.dart';
 import '../../services/audio_service.dart';
@@ -2064,12 +2066,15 @@ Placing Order:
       resizeToAvoidBottomInset: true,
       backgroundColor: AppColors.tradeBackgroundCenterColor,
       body: SafeArea(
+        // The new gradient header runs under the status bar itself.
+        top: !FlavorConfig.usesNewHomeDesign,
         child: Stack(
           children: [
             Column(
               children: [
                 // Header - Fixed height
                 _buildHeader(context),
+                if (FlavorConfig.usesNewHomeDesign) _buildAssetDetails(),
 
                 // Chart Area - Responsive height
                 Expanded(
@@ -2194,6 +2199,20 @@ Placing Order:
     return Obx(() {
       final double? floatingProfit = tradingController.accountInfo?.profit;
 
+      if (FlavorConfig.usesNewHomeDesign) {
+        return AccountHeaderNew(
+          onMenuTap: widget.onNavigateToTab != null
+              ? () => widget.onNavigateToTab!(4)
+              : null,
+          rightWidget: HeaderPillButton(
+            label: _removeSymbolSuffix(selectedSymbol),
+            showCaret: true,
+            onTap: _showSymbolSelector,
+          ),
+          floatingProfit: floatingProfit,
+        );
+      }
+
       return AccountHeaderWidget(
         onMenuTap: widget.onNavigateToTab != null
             ? () => widget.onNavigateToTab!(4)
@@ -2261,6 +2280,18 @@ Placing Order:
             ),
           ),
           const Spacer(),
+          if (FlavorConfig.usesNewHomeDesign)
+            IconButton(
+              onPressed: _openLandscapeChart,
+              tooltip: 'Full screen chart',
+              visualDensity: VisualDensity.compact,
+              icon: Icon(
+                Icons.fullscreen_rounded,
+                size: 22.r,
+                color: AppColors.textGrey,
+              ),
+            )
+          else
           Container(
             width: 20.w,
             height: 20.h,
@@ -2609,6 +2640,25 @@ Placing Order:
 
 
   Widget _buildInteractiveIcons() {
+    if (FlavorConfig.usesNewHomeDesign) {
+      // Fullscreen moves to the stats strip (_buildAssetDetails) in this design.
+      return Padding(
+        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 10.h),
+        child: ChartPendingBarNew(
+          label: languageService.tr('chart_pending_order_header'),
+          onPendingTap: () {
+            Get.to(
+              () => PendingOrderScreen(
+                symbol: selectedSymbol,
+                onNavigateToTrade: widget.onNavigateToTrade,
+              ),
+            );
+          },
+          onAlertsTap: _showPriceAlertDialog,
+        ),
+      );
+    }
+
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 10.h),
       child: Row(
@@ -2963,6 +3013,12 @@ Placing Order:
                           price: bidPrice,
                           color: AppColors.error,
                         )
+                        : FlavorConfig.usesNewHomeDesign
+                        ? ChartTradeTileNew(
+                          isSell: true,
+                          price: bidPrice,
+                          isBusy: _isPlacingOrder,
+                        )
                         : AnimatedOpacity(
                       duration: Duration(milliseconds: 100),
                       opacity: _isPlacingOrder ? 0.5 : 1.0,
@@ -3205,6 +3261,12 @@ Placing Order:
                           price: askPrice,
                           color: AppColors.success,
                         )
+                        : FlavorConfig.usesNewHomeDesign
+                        ? ChartTradeTileNew(
+                          isSell: false,
+                          price: askPrice,
+                          isBusy: _isPlacingOrder,
+                        )
                         : AnimatedOpacity(
                       duration: Duration(milliseconds: 100),
                       opacity: _isPlacingOrder ? 0.5 : 1.0,
@@ -3243,7 +3305,16 @@ Placing Order:
               ],
             ),
             // Landscape shows the spread inside the lot box between SELL/BUY.
-            if (!isLandscape)
+            if (!isLandscape && FlavorConfig.usesNewHomeDesign)
+              Align(
+                alignment: Alignment.center,
+                child: Padding(
+                  // Centres the 28.h chip on the 60.h tiles.
+                  padding: EdgeInsets.only(top: 16.h),
+                  child: ChartSpreadChipNew(spread: difference),
+                ),
+              )
+            else if (!isLandscape)
             Align(
               alignment: Alignment.center,
               child: Padding(
@@ -3282,20 +3353,41 @@ Placing Order:
         vertical: isborder ? 10.h : 2.h,
       ),
       child: Container(
-        height: 48.h,
-        padding: EdgeInsets.symmetric(horizontal: 11.w),
-        decoration: BoxDecoration(
-          color: AppColors.whiteColor,
-          borderRadius: BorderRadius.circular(8.r),
-          border: Border.all(
-            color: isborder ? AppColors.border : Colors.transparent,
-          ),
+        height: FlavorConfig.usesNewHomeDesign ? 60.h : 48.h,
+        padding: EdgeInsets.symmetric(
+          horizontal: FlavorConfig.usesNewHomeDesign ? 4.w : 11.w,
         ),
+        decoration:
+            FlavorConfig.usesNewHomeDesign
+                ? BoxDecoration(
+                  color: AppColors.homeCardBackground,
+                  borderRadius: BorderRadius.circular(12.r),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.border.withValues(alpha: 0.35),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                )
+                : BoxDecoration(
+                  color: AppColors.whiteColor,
+                  borderRadius: BorderRadius.circular(8.r),
+                  border: Border.all(
+                    color: isborder ? AppColors.border : Colors.transparent,
+                  ),
+                ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             // Minus button
+            if (FlavorConfig.usesNewHomeDesign)
+              ChartQuantityButtonNew(
+                isIncrement: false,
+                onPressed: _decrementVolume,
+              )
+            else
             Container(
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
@@ -3304,15 +3396,7 @@ Placing Order:
               ),
               width: 24.w,
               child: IconButton(
-                onPressed: () {
-                  setState(() {
-                    final next = double.parse(
-                      (volume - 0.01).toStringAsFixed(2),
-                    );
-                    volume = next < _minLot ? _minLot : next;
-                    _volumeController.text = volume.toStringAsFixed(2);
-                  });
-                },
+                onPressed: _decrementVolume,
                 icon: StepperAdjustIcon(
                   kind: StepperAdjustKind.decrement,
                   size: 14,
@@ -3398,6 +3482,12 @@ Placing Order:
             ),
 
             // Plus button
+            if (FlavorConfig.usesNewHomeDesign)
+              ChartQuantityButtonNew(
+                isIncrement: true,
+                onPressed: _incrementVolume,
+              )
+            else
             Container(
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
@@ -3407,15 +3497,7 @@ Placing Order:
               width: 24.w,
               height: 24.h,
               child: IconButton(
-                onPressed: () {
-                  setState(() {
-                    final next = double.parse(
-                      (volume + 0.01).toStringAsFixed(2),
-                    );
-                    volume = next > _maxLot ? _maxLot : next;
-                    _volumeController.text = volume.toStringAsFixed(2);
-                  });
-                },
+                onPressed: _incrementVolume,
                 icon: StepperAdjustIcon(
                   kind: StepperAdjustKind.increment,
                   size: 14,
@@ -3428,6 +3510,22 @@ Placing Order:
         ),
       ),
     );
+  }
+
+  void _decrementVolume() {
+    setState(() {
+      final next = double.parse((volume - 0.01).toStringAsFixed(2));
+      volume = next < _minLot ? _minLot : next;
+      _volumeController.text = volume.toStringAsFixed(2);
+    });
+  }
+
+  void _incrementVolume() {
+    setState(() {
+      final next = double.parse((volume + 0.01).toStringAsFixed(2));
+      volume = next > _maxLot ? _maxLot : next;
+      _volumeController.text = volume.toStringAsFixed(2);
+    });
   }
 
   void _showTradingOrderBottomSheet() {

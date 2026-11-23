@@ -302,4 +302,17 @@ class AppColors {
   static Color get homeNavActive => homeIconTint;
   static Color get homeNavInactive =>
       isDarkMode ? textGreyLight : const Color(0xFF414141);
+
+  // Gradient account header + chart trade panel (tenaxnew redesign).
+  static const Color homeBadgeRealBackground = Color(0xFFFFC107);
+  static const Color homeBadgeRealText = Color(0xFF2B1A00);
+  static Color get homeHeaderPillBackground =>
+      onColoredBackground.withValues(alpha: 0.15);
+  static Color get homeHeaderPillBorder =>
+      onColoredBackground.withValues(alpha: 0.35);
+  static Color get homeQuantityButtonBackground =>
+      isDarkMode ? borderDark : const Color(0xFFD9D9D9);
+  static Color get homePendingBarBackground =>
+      isDarkMode ? surfaceDarkTheme : const Color(0xFFE9E6EC);
+  static const Color homeAlertDot = Color(0xFFFFC107);
 }

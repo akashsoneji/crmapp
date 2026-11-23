@@ -1,5 +1,6 @@
 import 'package:crm_app/widgets/active_notices_banner.dart';
 import 'package:crm_app/widgets/brand_logo.dart';
+import 'package:crm_app/widgets/home/gradient_app_bar.dart';
 import 'package:crm_app/widgets/rename_account_dialog.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -53,39 +54,57 @@ class DashboardScreen extends StatelessWidget {
       controller.setNavigationCallback(onNavigateToTab!);
     }
 
+    // White icons on the gradient bar; null keeps the SVGs' own colours.
+    List<Widget> appBarActions(ColorFilter? iconTint) => [
+      Container(
+        margin: EdgeInsets.only(right: 0),
+        child: IconButton(
+          icon: SvgPicture.asset(
+            "assets/svg/deshboard/empty-wallet-add.svg",
+            colorFilter: iconTint,
+          ),
+          onPressed: () {
+            Get.toNamed(AppPages.WALLET);
+          },
+        ),
+      ),
+      Container(
+        margin: EdgeInsets.only(right: 8),
+        child: IconButton(
+          icon: SvgPicture.asset(
+            "assets/svg/deshboard/add-square.svg",
+            colorFilter: iconTint,
+          ),
+          onPressed: controller.showOpenAccountSheet,
+        ),
+      ),
+    ];
+
     return Scaffold(
       // backgroundColor: Color(0xFFF5F5F5),
       backgroundColor: AppColors.tradeBackgroundCenterColor,
-      appBar: AppBar(
-        scrolledUnderElevation: 0,
-        backgroundColor: AppColors.tradeBackgroundCenterColor,
-        elevation: 0,
-        title: Text(
-          languageService.tr('dashboard_title'),
-          style: AppTextStyles.screenTitle,
-        ),
-        centerTitle: true,
-        actions: [
-          Container(
-            margin: EdgeInsets.only(right: 0),
-            child: IconButton(
-              icon: SvgPicture.asset(
-                "assets/svg/deshboard/empty-wallet-add.svg",
+      appBar:
+          FlavorConfig.usesNewHomeDesign
+              ? GradientAppBar(
+                title: languageService.tr('dashboard_title'),
+                actions: appBarActions(
+                  ColorFilter.mode(
+                    AppColors.onColoredBackground,
+                    BlendMode.srcIn,
+                  ),
+                ),
+              )
+              : AppBar(
+                scrolledUnderElevation: 0,
+                backgroundColor: AppColors.tradeBackgroundCenterColor,
+                elevation: 0,
+                title: Text(
+                  languageService.tr('dashboard_title'),
+                  style: AppTextStyles.screenTitle,
+                ),
+                centerTitle: true,
+                actions: appBarActions(null),
               ),
-              onPressed: () {
-                Get.toNamed(AppPages.WALLET);
-              },
-            ),
-          ),
-          Container(
-            margin: EdgeInsets.only(right: 8),
-            child: IconButton(
-              icon: SvgPicture.asset("assets/svg/deshboard/add-square.svg"),
-              onPressed: controller.showOpenAccountSheet,
-            ),
-          ),
-        ],
-      ),
       body: _withNotices(
         Obx(
         () => RefreshIndicator(

@@ -15,6 +15,7 @@ import 'package:crm_app/flavor_config.dart';
 import 'package:crm_app/services/trading_websocket_service.dart';
 import 'package:crm_app/services/account_websocket_service.dart';
 import 'package:crm_app/widgets/account_header_widget.dart';
+import 'package:crm_app/widgets/home/account_header_new.dart';
 import 'package:crm_app/widgets/dashBorder.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
 import 'package:crm_app/screens/home/edit_order_screen.dart';
@@ -349,6 +350,8 @@ class _TradeScreenState extends State<TradeScreen> {
       body: Stack(
         children: [
           SafeArea(
+            // The new gradient header runs under the status bar itself.
+            top: !FlavorConfig.usesNewHomeDesign,
             child: Column(
               children: [
                 _buildHeader(context, accountController, tradingController),
@@ -577,6 +580,25 @@ class _TradeScreenState extends State<TradeScreen> {
                 : null;
 
         final navigateToTab = widget.onNavigateToTab;
+        if (FlavorConfig.usesNewHomeDesign) {
+          return AccountHeaderNew(
+            onMenuTap: navigateToTab == null
+                ? null
+                : () => navigateToTab(4),
+            rightWidget: Obx(() {
+              final hasPositions =
+                  tradingController.getFilteredPositions().isNotEmpty;
+              if (!hasPositions || tradingController.selectedTab != 0) {
+                return const SizedBox.shrink();
+              }
+              return HeaderPillButton(
+                label: languageService.tr('trade_close_all'),
+                onTap: () => _showClosePositionsBottomSheet(tradingController),
+              );
+            }),
+            floatingProfit: floatingProfit,
+          );
+        }
         return AccountHeaderWidget(
           onMenuTap: navigateToTab == null
               ? null

@@ -24,6 +24,18 @@ String homeFormatSpread(double spreadDiff) {
   return trimmed.isEmpty ? '0' : trimmed;
 }
 
+/// Splits a formatted price into its body and the last two digits, which the
+/// redesign draws larger (`1249.48` → (`1249.`, `48`)). Strings shorter than
+/// three characters are returned whole as the highlight.
+(String, String) homeSplitPrice(String formattedPrice) {
+  if (formattedPrice.length < 3) return ('', formattedPrice);
+  final splitAt = formattedPrice.length - 2;
+  return (
+    formattedPrice.substring(0, splitAt),
+    formattedPrice.substring(splitAt),
+  );
+}
+
 const String _quoteCurrency = 'USDT';
 
 /// Watchlist row on the home tab: symbol + day range on the start side,
