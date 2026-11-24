@@ -10,6 +10,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/kyc/kyc_bank_controller.dart';
+import 'package:crm_app/controllers/finance/withdrawal_controller.dart'
+    show WithdrawalMethod;
 import 'package:crm_app/utils/trl_helper.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
 import 'package:crm_app/services/language_service.dart';
@@ -17,6 +19,33 @@ import 'package:crm_app/services/api_service.dart';
 import 'package:crm_app/controllers/app_notification_controller.dart';
 
 import '../../../widgets/kyc_scaffold.dart';
+
+/// Method logo from the API, with a wallet icon when missing or broken.
+class _WithdrawalMethodIcon extends StatelessWidget {
+  const _WithdrawalMethodIcon({required this.url});
+
+  final String? url;
+
+  @override
+  Widget build(BuildContext context) {
+    final fallback = Icon(
+      Icons.account_balance_wallet_outlined,
+      color: AppColors.primary,
+      size: 28.w,
+    );
+    final iconUrl = url ?? '';
+    if (iconUrl.isEmpty) return fallback;
+    return SizedBox(
+      width: 32.w,
+      height: 32.w,
+      child: Image.network(
+        iconUrl,
+        fit: BoxFit.contain,
+        errorBuilder: (context, error, stackTrace) => fallback,
+      ),
+    );
+  }
+}
 
 class KycBankScreen extends StatefulWidget {
   const KycBankScreen({Key? key}) : super(key: key);
@@ -399,14 +428,7 @@ class _KycBankScreenState extends State<KycBankScreen> {
           child: RTLHelper.rtlTextField(
             readOnly: true,
             onTap: _showAccountTypeOptions,
-            controller: TextEditingController(
-              text:
-                  controller.selectedAccountType.value.isEmpty
-                      ? ''
-                      : _getMethodTypeLabel(
-                        controller.selectedAccountType.value,
-                      ),
-            ),
+            controller: TextEditingController(text: _accountTypeFieldText()),
             labelText: '${languageService.tr('kyc_withdrawal_method_type')} *',
             suffixIcon: InkWell(
               onTap: _showAccountTypeOptions,
@@ -447,6 +469,10 @@ class _KycBankScreenState extends State<KycBankScreen> {
   }
 
   void _showAccountTypeOptions() {
+    if (controller.withdrawalMethods.isEmpty &&
+        !controller.isMethodsLoading.value) {
+      controller.fetchWithdrawalMethods();
+    }
     showModalBottomSheet(
       context: context,
       backgroundColor: AppColors.background,
@@ -454,11 +480,11 @@ class _KycBankScreenState extends State<KycBankScreen> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) {
+      builder: (sheetContext) {
         return SafeArea(
           child: ConstrainedBox(
             constraints: BoxConstraints(
-              maxHeight: MediaQuery.of(context).size.height * 0.5,
+              maxHeight: MediaQuery.sizeOf(sheetContext).height * 0.7,
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -484,45 +510,7 @@ class _KycBankScreenState extends State<KycBankScreen> {
                   ),
                 ),
                 Flexible(
-                  child: Obx(() {
-                    if (controller.accountTypes.isEmpty) {
-                      return Padding(
-                        padding: EdgeInsets.all(24.w),
-                        child: Text(
-                          'Loading account types...',
-                          style: TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 14.sp,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      );
-                    }
-                    return ListView.builder(
-                      shrinkWrap: true,
-                      itemCount: controller.accountTypes.length,
-                      itemBuilder: (context, index) {
-                        final type = controller.accountTypes[index];
-                        final label = _getMethodTypeLabel(type);
-                        return ListTile(
-                          title: Text(
-                            label,
-                            style: TextStyle(color: AppColors.textPrimary),
-                          ),
-                          trailing:
-                              controller.selectedAccountType.value == type
-                                  ? Icon(Icons.check, color: AppColors.primary)
-                                  : null,
-                          onTap: () {
-                            controller.setAccountType(type);
-                            _accountHolderController.clear();
-                            _cryptoAddressController.clear();
-                            Navigator.pop(context);
-                          },
-                        );
-                      },
-                    );
-                  }),
+                  child: Obx(() => _buildAccountTypeSheetBody(sheetContext)),
                 ),
               ],
             ),
@@ -530,6 +518,145 @@ class _KycBankScreenState extends State<KycBankScreen> {
         );
       },
     );
+  }
+
+  Widget _buildAccountTypeSheetBody(BuildContext sheetContext) {
+    final methods = controller.withdrawalMethods;
+    if (methods.isEmpty && controller.isMethodsLoading.value) {
+      return Padding(
+        padding: EdgeInsets.all(24.w),
+        child: Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
+      );
+    }
+    if (methods.isEmpty && controller.methodsError.value.isNotEmpty) {
+      return Padding(
+        padding: EdgeInsets.all(24.w),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              controller.methodsError.value,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 14.sp),
+            ),
+            SizedBox(height: 12.h),
+            TextButton(
+              onPressed: controller.fetchWithdrawalMethods,
+              child: Text(
+                languageService.tr('common_retry'),
+                style: TextStyle(color: AppColors.primary),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    if (methods.isEmpty) {
+      return Padding(
+        padding: EdgeInsets.all(24.w),
+        child: Text(
+          languageService.tr('common_no_data'),
+          textAlign: TextAlign.center,
+          style: TextStyle(color: AppColors.textSecondary, fontSize: 14.sp),
+        ),
+      );
+    }
+
+    // Read here so Obx tracks them; itemBuilder runs outside the Obx build.
+    final selected = controller.selectedMethod.value;
+    final selectedType = controller.selectedAccountType.value.toLowerCase();
+    return ListView.builder(
+      shrinkWrap: true,
+      itemCount: methods.length,
+      itemBuilder: (context, index) {
+        final method = methods[index];
+        final isSelected = _isMethodSelected(method, selected, selectedType);
+        final subtitle = _methodSubtitle(method);
+        return ListTile(
+          enabled: !method.isLocked,
+          leading: _WithdrawalMethodIcon(url: method.icon),
+          title: Text(
+            _methodTitle(method),
+            style: TextStyle(
+              color:
+                  method.isLocked ? AppColors.textGrey : AppColors.textPrimary,
+            ),
+          ),
+          subtitle:
+              subtitle == null
+                  ? null
+                  : Text(
+                    subtitle,
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 12.sp,
+                    ),
+                  ),
+          trailing:
+              method.isLocked
+                  ? Icon(Icons.lock_outline, color: AppColors.textGrey)
+                  : isSelected
+                  ? Icon(Icons.check, color: AppColors.primary)
+                  : null,
+          onTap: () {
+            controller.selectWithdrawalMethod(method);
+            _accountHolderController.clear();
+            _cryptoAddressController.clear();
+            Navigator.pop(sheetContext);
+          },
+        );
+      },
+    );
+  }
+
+  /// Matches by `method_slug` when the picked method is still the current
+  /// type, otherwise by `method_name` against the selected account type.
+  bool _isMethodSelected(
+    WithdrawalMethod method,
+    WithdrawalMethod? selected,
+    String selectedType,
+  ) {
+    final selectedSlug = selected?.methodSlug ?? '';
+    final selectedIsCurrent =
+        (selected?.methodName ?? '').toLowerCase() == selectedType;
+    if (selectedIsCurrent && selectedSlug.isNotEmpty) {
+      return method.methodSlug == selectedSlug;
+    }
+    return (method.methodName ?? '').toLowerCase() == selectedType;
+  }
+
+  String _methodTitle(WithdrawalMethod method) {
+    final displayName = method.displayName ?? '';
+    if (displayName.isNotEmpty) return displayName;
+    return _getMethodTypeLabel(method.methodName ?? '');
+  }
+
+  String? _methodSubtitle(WithdrawalMethod method) {
+    if (method.isLocked) {
+      final reason = method.lockReason ?? '';
+      return reason.isEmpty ? null : reason;
+    }
+    final min = method.minLimit ?? '';
+    final max = method.maxLimit ?? '';
+    final average = method.averageLabel ?? '';
+    final parts = [
+      if (min.isNotEmpty && max.isNotEmpty) '$min – $max',
+      if (average.isNotEmpty) average,
+    ];
+    return parts.isEmpty ? null : parts.join(' · ');
+  }
+
+  String _accountTypeFieldText() {
+    final type = controller.selectedAccountType.value;
+    if (type.isEmpty) return '';
+    final method = controller.selectedMethod.value;
+    final methodIsCurrent =
+        (method?.methodName ?? '').toLowerCase() == type.toLowerCase();
+    final displayName = method?.displayName ?? '';
+    if (methodIsCurrent && displayName.isNotEmpty) return displayName;
+    return _getMethodTypeLabel(type);
   }
 
   String _getMethodTypeLabel(String type) {

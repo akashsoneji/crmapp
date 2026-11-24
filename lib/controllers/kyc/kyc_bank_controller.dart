@@ -34,6 +34,9 @@ class KycBankController extends GetxController {
   final RxString selectedRelationship = 'Self'.obs;
   final RxList<String> accountTypes = <String>[].obs;
   final RxList<WithdrawalMethod> withdrawalMethods = <WithdrawalMethod>[].obs;
+  final RxBool isMethodsLoading = false.obs;
+  final RxString methodsError = ''.obs;
+  final Rxn<WithdrawalMethod> selectedMethod = Rxn<WithdrawalMethod>();
   final RxList<String> relationShips =
       ['Self', 'Other'].obs;
   final RxList<String> ifscIbanList = ['IFSC', 'IBAN'].obs;
@@ -144,6 +147,12 @@ class KycBankController extends GetxController {
   bool get requiresBankAccountValidation => accountTypeCategory == 'bank';
 
   WithdrawalMethod? get selectedWithdrawalMethod {
+    final picked = selectedMethod.value;
+    final pickedMatchesType =
+        picked != null &&
+        (picked.methodName ?? '').toLowerCase() ==
+            selectedAccountType.value.toLowerCase();
+    if (pickedMatchesType) return picked;
     if (withdrawalMethods.isEmpty) return null;
     try {
       return withdrawalMethods.firstWhere(
@@ -171,58 +180,74 @@ class KycBankController extends GetxController {
 
   // Fetch withdrawal methods for account type dropdown
   Future<void> fetchWithdrawalMethods() async {
+    if (isMethodsLoading.value) return;
+    isMethodsLoading.value = true;
+    methodsError.value = '';
     try {
-      errorMessage.value = '';
-
       final token = await SecureStorageService.getAuthToken();
       final response = await ApiService.get(
         endpoint: ApiConstants.withdrawalRequest,
         token: token,
       );
 
-      if (response.success && response.data != null) {
-        final withdrawalMethodResponse = WithdrawalMethodResponse.fromJson(
-          response.data,
-        );
-        if (withdrawalMethodResponse.status &&
-            withdrawalMethodResponse.data.isNotEmpty) {
-          withdrawalMethods.assignAll(withdrawalMethodResponse.data);
-          accountTypes.assignAll(
-            withdrawalMethodResponse.data
-                .map((m) => m.methodName ?? '')
-                .where((name) => name.isNotEmpty)
-                .toList(),
-          );
-// Prefer 'crypto' as the default selected withdrawal method when available.
-          if (selectedAccountType.value.isEmpty ||
-              !accountTypes.contains(selectedAccountType.value)) {
-            final cryptoIndex = accountTypes.indexWhere(
-              (m) => m.toLowerCase() == 'crypto',
-            );
-            if (cryptoIndex != -1) {
-              selectedAccountType.value = accountTypes[cryptoIndex];
-            } else if (accountTypes.isNotEmpty) {
-              selectedAccountType.value = accountTypes.first;
-            }
-          }
-          _applyAccountTypeDefaults();
-          print(
-            '✅ Loaded ${accountTypes.length} withdrawal methods for account type',
-          );
-        } else {
-          errorMessage.value =
-              withdrawalMethodResponse.message.isNotEmpty
-                  ? withdrawalMethodResponse.message
-                  : 'Failed to fetch withdrawal methods';
-        }
-      } else {
-        errorMessage.value =
+      if (!response.success || response.data == null) {
+        methodsError.value =
             response.message ?? 'Failed to fetch withdrawal methods';
+        return;
       }
+
+      final withdrawalMethodResponse = WithdrawalMethodResponse.fromJson(
+        response.data,
+      );
+      if (!withdrawalMethodResponse.status) {
+        methodsError.value =
+            withdrawalMethodResponse.message.isNotEmpty
+                ? withdrawalMethodResponse.message
+                : 'Failed to fetch withdrawal methods';
+        return;
+      }
+
+      final activeMethods =
+          withdrawalMethodResponse.data
+              .where((m) => (m.status ?? '').toLowerCase() == 'active')
+              .toList();
+      withdrawalMethods.assignAll(activeMethods);
+      accountTypes.assignAll(
+        activeMethods
+            .map((m) => m.methodName ?? '')
+            .where((name) => name.isNotEmpty)
+            .toList(),
+      );
+      _autoSelectWithdrawalMethod();
+      print('✅ Loaded ${activeMethods.length} active withdrawal methods');
     } catch (e) {
-      errorMessage.value = 'Error fetching withdrawal methods: $e';
+      methodsError.value = 'Error fetching withdrawal methods: $e';
       print('❌ Error fetching withdrawal methods: $e');
+    } finally {
+      isMethodsLoading.value = false;
     }
+  }
+
+  /// Keeps the current type if it is still offered, else prefers crypto
+  /// (previous default), else the first method that is not locked.
+  void _autoSelectWithdrawalMethod() {
+    final unlocked = withdrawalMethods.where((m) => !m.isLocked);
+    final current = selectedAccountType.value.toLowerCase();
+    final match =
+        unlocked
+            .where((m) => (m.methodName ?? '').toLowerCase() == current)
+            .firstOrNull ??
+        unlocked
+            .where((m) => (m.methodName ?? '').toLowerCase() == 'crypto')
+            .firstOrNull ??
+        unlocked.firstOrNull;
+    if (match == null) {
+      selectedMethod.value = null;
+      return;
+    }
+    selectedMethod.value = match;
+    selectedAccountType.value = match.methodName ?? '';
+    _applyAccountTypeDefaults();
   }
 
   // Fetch currency list
@@ -336,6 +361,13 @@ class KycBankController extends GetxController {
     isOtpSent.value = false;
     otp.value = '';
     _applyAccountTypeDefaults();
+  }
+
+  /// Picks a method from the Account Type sheet. Locked methods are ignored.
+  void selectWithdrawalMethod(WithdrawalMethod method) {
+    if (method.isLocked) return;
+    selectedMethod.value = method;
+    setAccountType(method.methodName ?? '');
   }
 
   void _applyAccountTypeDefaults() {

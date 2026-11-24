@@ -34,6 +34,7 @@ class EnabledModulesService extends GetxService {
   bool get isIbEnabled => current.ib;
   bool get isHelpdeskEnabled => current.helpdesk;
   bool get isDemoContestEnabled => current.democontest;
+  bool get isTradingCentralEnabled => current.tradingCentral;
   bool get isExternalCopyTradingEnabled => current.externalCopyTrading;
 
   /// Promotional entry when at least one in-app promotional module is on.
