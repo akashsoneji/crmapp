@@ -1196,6 +1196,7 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                 final modules = modulesService.modules.value;
                 final showCopyTrading = modules?.copytrading ?? false;
                 final showPmam = modules?.pmam ?? false;
+                final showTradingCentral = modules?.tradingCentral ?? false;
                 final showPromotional = modulesService.isPromotionalMenuVisible;
 
                 final items = <Widget>[
@@ -1245,6 +1246,19 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                       icon: 'dashboard',
                       label: 'PAMM',
                       onTap: () => Get.toNamed(AppPages.PMAM_MAIN),
+                    ),
+                  );
+                }
+                if (showTradingCentral) {
+                  items.add(
+                    _MenuItem(
+                      icon: '',
+                      materialIcon: Icons.insights_rounded,
+                      label: languageService.trf(
+                        'trading_central_title',
+                        'Trading Central',
+                      ),
+                      onTap: () => Get.toNamed(AppPages.TRADING_CENTRAL),
                     ),
                   );
                 }
@@ -1848,6 +1862,10 @@ class _MenuItemWithButton extends StatelessWidget {
 
 class _MenuItem extends StatelessWidget {
   final String icon;
+
+  /// Used instead of the `assets/svg/more/$icon.svg` asset when set, for
+  /// entries that have no SVG in the brand asset set.
+  final IconData? materialIcon;
   final String label;
   final VoidCallback onTap;
   final Color? color;
@@ -1857,6 +1875,7 @@ class _MenuItem extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.onTap,
+    this.materialIcon,
     this.color,
     this.showArrow = true,
   });
@@ -1880,12 +1899,14 @@ class _MenuItem extends StatelessWidget {
                   shape: BoxShape.circle,
                 ),
                 child: Center(
-                  child: SvgPicture.asset(
-                    'assets/svg/more/$icon.svg',
-                    height: 18.h,
-                    width: 18.w,
-                    color: AppColors.primary,
-                  ),
+                  child: materialIcon != null
+                      ? Icon(materialIcon, size: 18.sp, color: AppColors.primary)
+                      : SvgPicture.asset(
+                          'assets/svg/more/$icon.svg',
+                          height: 18.h,
+                          width: 18.w,
+                          color: AppColors.primary,
+                        ),
                 ),
               ),
               SizedBox(width: 14.w),

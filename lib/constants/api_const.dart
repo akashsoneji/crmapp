@@ -164,6 +164,9 @@ class ApiConstants {
   // Enabled modules (per-user feature flags)
   static const String enabledModules = '${ajax}enabled-modules';
 
+  // Trading Central (third-party research pages, deposit-gated)
+  static const String tradingCentral = '${ajax}trading-central';
+
   // Trade & Win APIs
   static const String tradeWinProducts = 'v1/user/trade-win/products';
   static const String tradeWinPastWins = 'v1/user/trade-win/past-wins';

@@ -258,6 +258,9 @@ class WithdrawalMethod {
   final String? conversionRate;
   final bool? hasConversion;
   final num? withdrawalMargin;
+  final String? displayName;
+  final bool isLocked;
+  final String? lockReason;
 
   WithdrawalMethod({
     this.id,
@@ -281,6 +284,9 @@ class WithdrawalMethod {
     this.conversionRate,
     this.hasConversion,
     this.withdrawalMargin,
+    this.displayName,
+    this.isLocked = false,
+    this.lockReason,
   });
 
   factory WithdrawalMethod.fromJson(Map<String, dynamic> json) {
@@ -324,7 +330,18 @@ class WithdrawalMethod {
           json['withdrawal_margin'] is num
               ? json['withdrawal_margin']
               : num.tryParse(json['withdrawal_margin']?.toString() ?? ''),
+      displayName: json['display_name']?.toString(),
+      isLocked: _parseBool(json['is_locked']),
+      lockReason: json['lock_reason']?.toString(),
     );
+  }
+
+  /// The API sends flags as bool, 0/1 or "0"/"1"/"true".
+  static bool _parseBool(dynamic value) {
+    if (value is bool) return value;
+    if (value is num) return value != 0;
+    final text = value?.toString().toLowerCase();
+    return text == '1' || text == 'true';
   }
 
   Map<String, dynamic> toJson() => {
@@ -346,6 +363,9 @@ class WithdrawalMethod {
     'crypto_method': cryptoMethod,
     'allowed_crypto_networks':
         allowedCryptoNetworks?.map((e) => e.toJson()).toList(),
+    'display_name': displayName,
+    'is_locked': isLocked,
+    'lock_reason': lockReason,
   };
 }
 

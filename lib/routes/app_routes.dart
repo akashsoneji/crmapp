@@ -91,6 +91,9 @@ abstract class Routes {
   // ── IBM (Manager Portal) ──
   static const IBM_MANAGER_PORTAL = _Paths.IBM_MANAGER_PORTAL;
   static const IBM_APPLICATION = _Paths.IBM_APPLICATION;
+
+  // ── Trading Central ──
+  static const TRADING_CENTRAL = _Paths.TRADING_CENTRAL;
 }
 
 abstract class _Paths {
@@ -199,4 +202,7 @@ abstract class _Paths {
   // ── IBM (Manager Portal) ──
   static const IBM_MANAGER_PORTAL = '/ibm-manager-portal';
   static const IBM_APPLICATION = '/ibm-application';
+
+  // ── Trading Central ──
+  static const TRADING_CENTRAL = '/trading-central';
 }

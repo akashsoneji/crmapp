@@ -107,6 +107,7 @@ import '../screens/home/more/finance/cregis_address_screen.dart';
 import '../screens/home/more/finance/cregis_success_screen.dart';
 import '../screens/notifications/presentation/pages/notifications_screen.dart';
 import '../screens/notifications/bindings/notification_binding.dart';
+import '../screens/home/more/trading_central/trading_central_screen.dart';
 
 part 'app_routes.dart';
 
@@ -212,6 +213,9 @@ class AppPages {
   // ── IBM (Manager Portal) ──
   static const IBM_MANAGER_PORTAL = _Paths.IBM_MANAGER_PORTAL;
   static const IBM_APPLICATION = _Paths.IBM_APPLICATION;
+
+  // ── Trading Central ──
+  static const TRADING_CENTRAL = _Paths.TRADING_CENTRAL;
 
   static final routes = [
     GetPage(
@@ -583,6 +587,10 @@ class AppPages {
     GetPage(
       name: _Paths.IBM_APPLICATION,
       page: () => const IbmApplicationScreen(),
+    ),
+    GetPage(
+      name: _Paths.TRADING_CENTRAL,
+      page: () => const TradingCentralScreen(),
     ),
   ];
 }
