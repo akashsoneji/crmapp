@@ -193,8 +193,12 @@ class _AccountTypePill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // primary is white in dark mode, so the live badge uses the brand fill
+    // to keep its white label readable.
     final Color background =
-        isLive ? AppColors.primary : AppColors.primary.withValues(alpha: 0.12);
+        isLive
+            ? AppColors.homeHeaderGradientStart
+            : AppColors.primary.withValues(alpha: 0.12);
     final Color foreground =
         isLive
             ? AppColors.onColoredBackground
@@ -545,7 +549,7 @@ class DashboardEmptyStateNew extends StatelessWidget {
                   onPressed: onOpenDemo,
                   style: FilledButton.styleFrom(
                     minimumSize: Size(0, 42.h),
-                    backgroundColor: AppColors.primary,
+                    backgroundColor: AppColors.homeHeaderGradientStart,
                     foregroundColor: AppColors.onColoredBackground,
                     shape: shape,
                     textStyle: buttonTextStyle,

@@ -82,7 +82,11 @@ class _PositionsTabButton extends StatelessWidget {
             constraints: BoxConstraints(minHeight: 32.h),
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: isSelected ? AppColors.primary : Colors.transparent,
+              // primary turns white in dark mode, which hid the white label.
+              color:
+                  isSelected
+                      ? AppColors.homeHeaderGradientStart
+                      : Colors.transparent,
               borderRadius: BorderRadius.circular(8.r),
             ),
             child: Row(

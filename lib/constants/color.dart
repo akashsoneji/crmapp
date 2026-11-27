@@ -279,9 +279,21 @@ class AppColors {
   // ── Home (Instruments tab) redesign ────────────────────────────────────────
   // Placeholder values derived from the brand palette until the final design
   // colours are delivered; swap the values here, not in the widgets.
-  static Color get homeHeaderGradientStart => brandPrimary;
+  // Dark mode lifts the brand purple a little so the header does not sink
+  // into the near-black page. Saturation is lowered too: lifting lightness
+  // alone at the brand's ~74% saturation turns it neon magenta.
+  static Color get homeHeaderGradientStart =>
+      isDarkMode ? _brandTone(0.32, saturation: 0.55) : brandPrimary;
   static Color get homeHeaderGradientEnd =>
-      Color.lerp(brandPrimary, _pureBlack, 0.25)!;
+      isDarkMode
+          ? _brandTone(0.24, saturation: 0.6)
+          : Color.lerp(brandPrimary, _pureBlack, 0.25)!;
+
+  static Color _brandTone(double lightness, {double? saturation}) {
+    final hsl = HSLColor.fromColor(brandPrimary).withLightness(lightness);
+    return (saturation == null ? hsl : hsl.withSaturation(saturation))
+        .toColor();
+  }
 
   static Color get homeInviteGradientStart =>
       Color.lerp(brandPrimary, _pureBlack, 0.15)!;
@@ -304,6 +316,14 @@ class AppColors {
   static Color get homeBuyBoxBorder => green.withValues(alpha: 0.6);
 
   static Color get homeIconTint => primary;
+
+  /// The two-tone home SVGs are drawn in dark brand purple, which disappears
+  /// on the dark page. srcIn keeps each path's opacity, so the two tones
+  /// survive the recolour. Null in light mode keeps the artwork as designed.
+  static ColorFilter? get homeArtworkColorFilter =>
+      isDarkMode
+          ? ColorFilter.mode(_brandTone(0.75), BlendMode.srcIn)
+          : null;
 
   static Color get homeChipPositiveBg => successBg;
   static Color get homeChipNegativeBg => errorBg;

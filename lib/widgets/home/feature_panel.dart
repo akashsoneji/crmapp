@@ -170,6 +170,7 @@ class _FeatureTile extends StatelessWidget {
                 width: 30.r,
                 height: 30.r,
                 fit: BoxFit.contain,
+                colorFilter: AppColors.homeArtworkColorFilter,
               ),
             ],
           ),

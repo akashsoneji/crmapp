@@ -190,8 +190,12 @@ class _QuickActionTile extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Icons keep their own two-tone design colours.
-                SvgPicture.asset(action.iconAsset, width: 32.r, height: 32.r),
+                SvgPicture.asset(
+                  action.iconAsset,
+                  width: 32.r,
+                  height: 32.r,
+                  colorFilter: AppColors.homeArtworkColorFilter,
+                ),
                 SizedBox(height: 6.h),
                 Text(
                   label,

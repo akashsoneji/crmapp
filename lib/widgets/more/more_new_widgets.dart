@@ -79,7 +79,10 @@ class MoreProfileHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final onHero = AppColors.whiteColor;
+    // whiteColor and primary both flip in dark mode, which turned this brand
+    // card light grey with dark text; pin it to the brand fill + white.
+    final onHero = AppColors.onColoredBackground;
+    final heroFill = AppColors.homeHeaderGradientStart;
     final hasBroker = (brokerName ?? '').isNotEmpty;
 
     return Container(
@@ -88,14 +91,14 @@ class MoreProfileHero extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppColors.primary,
-            AppColors.primary.withValues(alpha: 0.78),
+            heroFill,
+            heroFill.withValues(alpha: 0.78),
           ],
         ),
         borderRadius: BorderRadius.circular(16.r),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.22),
+            color: heroFill.withValues(alpha: 0.22),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
@@ -245,8 +248,8 @@ class _VerificationPill extends StatelessWidget {
       padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
       decoration: BoxDecoration(
         color: isFullyVerified
-            ? AppColors.whiteColor
-            : AppColors.whiteColor.withValues(alpha: 0.18),
+            ? AppColors.onColoredBackground
+            : AppColors.onColoredBackground.withValues(alpha: 0.18),
         borderRadius: BorderRadius.circular(20.r),
       ),
       child: Row(
@@ -255,7 +258,9 @@ class _VerificationPill extends StatelessWidget {
           Icon(
             isFullyVerified ? Icons.verified_rounded : Icons.shield_outlined,
             size: 11.sp,
-            color: isFullyVerified ? AppColors.primary : AppColors.whiteColor,
+            color: isFullyVerified
+                ? AppColors.homeHeaderGradientStart
+                : AppColors.onColoredBackground,
           ),
           SizedBox(width: 3.w),
           Text(
@@ -263,7 +268,9 @@ class _VerificationPill extends StatelessWidget {
             style: TextStyle(
               fontSize: 9.5.sp,
               fontWeight: FontWeight.w700,
-              color: isFullyVerified ? AppColors.primary : AppColors.whiteColor,
+              color: isFullyVerified
+                  ? AppColors.homeHeaderGradientStart
+                  : AppColors.onColoredBackground,
             ),
           ),
         ],
@@ -294,10 +301,10 @@ class _HeroIconButton extends StatelessWidget {
         width: 30.r,
         height: 30.r,
         decoration: BoxDecoration(
-          color: AppColors.whiteColor.withValues(alpha: 0.16),
+          color: AppColors.onColoredBackground.withValues(alpha: 0.16),
           shape: BoxShape.circle,
         ),
-        child: Icon(icon, size: 16.sp, color: AppColors.whiteColor),
+        child: Icon(icon, size: 16.sp, color: AppColors.onColoredBackground),
       ),
     );
   }
@@ -327,7 +334,7 @@ class _HeroQuickAction extends StatelessWidget {
               children: [
                 _moreIcon(
                   svgIcon: action.svgIcon,
-                  color: AppColors.whiteColor,
+                  color: AppColors.onColoredBackground,
                   size: 18.r,
                 ),
                 SizedBox(height: 4.h),
@@ -336,7 +343,7 @@ class _HeroQuickAction extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: AppColors.whiteColor,
+                    color: AppColors.onColoredBackground,
                     fontSize: 10.5.sp,
                     fontWeight: FontWeight.w600,
                   ),
