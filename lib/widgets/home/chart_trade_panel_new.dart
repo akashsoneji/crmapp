@@ -301,8 +301,8 @@ class ChartTradeActionsNew extends StatelessWidget {
   }
 }
 
-/// Icon-over-label button. The primary one is filled with the brand
-/// gradient; the others use the quantity pill's background.
+/// Icon-over-label button. The primary one has a transparent background with
+/// a brand outline; the others use the quantity pill's background.
 class _ActionButton extends StatelessWidget {
   final String label;
   final String semanticsLabel;
@@ -322,8 +322,7 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final foreground =
-        isPrimary ? AppColors.onColoredBackground : AppColors.homeIconTint;
+    final foreground = AppColors.homeIconTint;
     final radius = BorderRadius.circular(12.r);
     // At large accessibility text sizes three captions no longer fit beside
     // the quantity pill; fall back to icons (the semantics label stays).
@@ -338,17 +337,11 @@ class _ActionButton extends StatelessWidget {
         child: Ink(
           decoration: BoxDecoration(
             borderRadius: radius,
-            color: isPrimary ? null : AppColors.chartPillBackground,
-            gradient:
+            color:
+                isPrimary ? Colors.transparent : AppColors.chartPillBackground,
+            border:
                 isPrimary
-                    ? LinearGradient(
-                      begin: AlignmentDirectional.topStart,
-                      end: AlignmentDirectional.bottomEnd,
-                      colors: [
-                        AppColors.homeHeaderGradientStart,
-                        AppColors.homeHeaderGradientEnd,
-                      ],
-                    )
+                    ? Border.all(color: AppColors.homeIconTint, width: 1)
                     : null,
           ),
           child: InkWell(

@@ -7,6 +7,7 @@ import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/models/trading_central_model.dart';
 import 'package:crm_app/screens/common/webview_screen.dart';
 import 'package:crm_app/screens/home/more/finance/payment_methods_screen.dart';
+import 'package:crm_app/screens/finance_v2/finance_flow_switch.dart';
 import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/services/trading_central_service.dart';
 import 'package:crm_app/widgets/app_svg_back_button.dart';
@@ -50,7 +51,12 @@ class _TradingCentralScreenState extends State<TradingCentralScreen> {
   }
 
   Future<void> _openDeposit() async {
-    await Get.to(() => PaymentMethodsScreen(accountNumber: ''));
+    await Get.to(
+      () => FinanceFlowSwitch.deposit(
+        accountNumber: '',
+        legacy: () => PaymentMethodsScreen(accountNumber: ''),
+      ),
+    );
     // A deposit may have unlocked pages; reload so they open right away.
     if (!mounted) return;
     await _reload();

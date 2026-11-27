@@ -1,6 +1,5 @@
 import 'package:crm_app/widgets/app_svg_back_button.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
@@ -8,6 +7,7 @@ import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/pmam/pmam_controller.dart';
 import 'package:crm_app/routes/app_pages.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
+import 'package:crm_app/services/language_service.dart';
 import 'widgets/edit_plan_bottom_sheet.dart';
 import 'package:crm_app/screens/home/more/pmam/pmam_manager_investor_detail_screen.dart';
 
@@ -49,13 +49,27 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
     } else {
       _ctrl = Get.put(PmamController());
     }
-    _loadAll();
+    // Built inside the PAMM shell's Obx; touching Rx state synchronously here
+    // throws "setState() called during build".
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _loadAll();
+    });
   }
 
   Future<void> _loadAll() async {
     await Future.wait([
-      _ctrl.loadManagerDashboard(),
+      _ctrl.loadManagerPlans(),
+      _ctrl.loadManagerEligibleAccounts(),
       _ctrl.loadManagerInvestors(),
+    ]);
+  }
+
+  /// Pull-to-refresh on My Plans also re-reads the eligible accounts so a
+  /// newly freed account shows up in Create Plan.
+  Future<void> _refreshPlans() async {
+    await Future.wait([
+      _ctrl.loadManagerPlans(),
+      _ctrl.loadManagerEligibleAccounts(),
     ]);
   }
 
@@ -93,11 +107,13 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
           iconWidth: 30.w,
           iconHeight: 30.h,
         ),
-        title: Text('Manager Portal', style: AppTextStyles.heading),
+        title: Text(
+            TranslationUtils.tr('pmam_manager_portal_screen_manager_portal'),
+            style: AppTextStyles.heading),
         centerTitle: true,
         actions: [
           Padding(
-            padding: EdgeInsets.only(right: 12.w),
+            padding: EdgeInsetsDirectional.only(end: 12.w),
             child: GestureDetector(
               onTap: () => Get.toNamed(AppPages.PMAM_CREATE_PLAN),
               child: Container(
@@ -107,8 +123,8 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
                   borderRadius: BorderRadius.circular(8.r),
                 ),
                 child: Text(
-                  '+ New Plan',
-                  style: TextStyle(
+                  TranslationUtils.tr('pmam_manager_portal_screen_new_plan'),
+                  style: AppTextStyles.bodyText.copyWith(
                     color: AppColors.onColoredBackground,
                     fontSize: 12.sp,
                     fontWeight: FontWeight.w600,
@@ -128,12 +144,15 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
               unselectedLabelColor: AppColors.textGrey,
               indicatorColor: AppColors.primary,
               indicatorWeight: 2.5,
-              labelStyle: TextStyle(
+              labelStyle: AppTextStyles.bodyText.copyWith(
                 fontSize: 14.sp,
                 fontWeight: FontWeight.w600,
               ),
-              unselectedLabelStyle: TextStyle(fontSize: 14.sp),
-              tabs: const [Tab(text: 'My Investors'), Tab(text: 'My Plans')],
+              unselectedLabelStyle: AppTextStyles.bodyText.copyWith(fontSize: 14.sp),
+              tabs: [
+                Tab(text: TranslationUtils.tr('pmam_main_screen_my_investors')),
+                Tab(text: TranslationUtils.tr('copy_trading_nav_my_plans')),
+              ],
             ),
           ),
         ),
@@ -193,25 +212,25 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 _StatPill(
-                  label: 'Total',
+                  label: TranslationUtils.tr('common_total'),
                   value: '${allInvestors.length}',
                   color: AppColors.primary,
                 ),
                 _VertDivider(),
                 _StatPill(
-                  label: 'Active',
+                  label: TranslationUtils.tr('chart_active'),
                   value: '${counts['active']}',
                   color: AppColors.green,
                 ),
                 _VertDivider(),
                 _StatPill(
-                  label: 'Inactive',
+                  label: TranslationUtils.tr('wallet_inactive'),
                   value: '${counts['inactive']}',
                   color: AppColors.textGrey,
                 ),
                 _VertDivider(),
                 _StatPill(
-                  label: 'Rejected',
+                  label: TranslationUtils.tr('kyc_verification_rejected'),
                   value: '${counts['rejected']}',
                   color: AppColors.error,
                 ),
@@ -227,35 +246,35 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
             child: Row(
               children: [
                 _PortalFilterChip(
-                  label: 'All',
+                  label: TranslationUtils.tr('common_all'),
                   count: allInvestors.length,
                   selected: _investorFilter == 'all',
                   onTap: () => setState(() => _investorFilter = 'all'),
                 ),
                 SizedBox(width: 8.w),
                 _PortalFilterChip(
-                  label: 'Active',
+                  label: TranslationUtils.tr('chart_active'),
                   count: counts['active']!,
                   selected: _investorFilter == 'active',
                   onTap: () => setState(() => _investorFilter = 'active'),
                 ),
                 SizedBox(width: 8.w),
                 _PortalFilterChip(
-                  label: 'Inactive',
+                  label: TranslationUtils.tr('wallet_inactive'),
                   count: counts['inactive']!,
                   selected: _investorFilter == 'inactive',
                   onTap: () => setState(() => _investorFilter = 'inactive'),
                 ),
                 SizedBox(width: 8.w),
                 _PortalFilterChip(
-                  label: 'Rejected',
+                  label: TranslationUtils.tr('kyc_verification_rejected'),
                   count: counts['rejected']!,
                   selected: _investorFilter == 'rejected',
                   onTap: () => setState(() => _investorFilter = 'rejected'),
                 ),
                 SizedBox(width: 8.w),
                 _PortalFilterChip(
-                  label: 'Pending',
+                  label: TranslationUtils.tr('kyc_verification_pending'),
                   count: counts['pending']!,
                   selected: _investorFilter == 'pending',
                   onTap: () => setState(() => _investorFilter = 'pending'),
@@ -269,10 +288,13 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
           Expanded(
             child:
                 filtered.isEmpty
-                    ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                    ? RefreshIndicator(
+                      color: AppColors.primary,
+                      onRefresh: _ctrl.loadManagerInvestors,
+                      child: ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
                         children: [
+                          SizedBox(height: 100.h),
                           Icon(
                             Icons.people_outline_rounded,
                             size: 48.sp,
@@ -280,8 +302,10 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
                           ),
                           SizedBox(height: 12.h),
                           Text(
-                            'No investors in this category',
-                            style: TextStyle(
+                            TranslationUtils.tr(
+                                'pmam_manager_portal_screen_no_investors_in_this_category'),
+                            textAlign: TextAlign.center,
+                            style: AppTextStyles.bodyText.copyWith(
                               fontSize: 14.sp,
                               color: AppColors.textGrey,
                             ),
@@ -293,6 +317,7 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
                       color: AppColors.primary,
                       onRefresh: _ctrl.loadManagerInvestors,
                       child: ListView.separated(
+                        physics: const AlwaysScrollableScrollPhysics(),
                         padding: EdgeInsets.symmetric(horizontal: 16.w),
                         itemCount: filtered.length,
                         separatorBuilder: (_, __) => SizedBox(height: 8.h),
@@ -361,7 +386,7 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
                                           .withOpacity(0.12),
                                       child: Text(
                                         initials,
-                                        style: TextStyle(
+                                        style: AppTextStyles.bodyText.copyWith(
                                           color: AppColors.primary,
                                           fontWeight: FontWeight.w700,
                                           fontSize: 13.sp,
@@ -376,7 +401,7 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
                                         children: [
                                           Text(
                                             name,
-                                            style: TextStyle(
+                                            style: AppTextStyles.bodyText.copyWith(
                                               fontSize: 13.sp,
                                               fontWeight: FontWeight.w700,
                                               color: AppColors.textPrimary,
@@ -384,7 +409,7 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
                                           ),
                                           Text(
                                             email,
-                                            style: TextStyle(
+                                            style: AppTextStyles.bodyText.copyWith(
                                               fontSize: 11.sp,
                                               color: AppColors.textGrey,
                                             ),
@@ -407,7 +432,7 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
                                       ),
                                       child: Text(
                                         status.toUpperCase(),
-                                        style: TextStyle(
+                                        style: AppTextStyles.bodyText.copyWith(
                                           fontSize: 9.sp,
                                           color: _statusColor(status),
                                           fontWeight: FontWeight.w700,
@@ -429,20 +454,23 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
                                     children: [
                                       Expanded(
                                         child: _InvInfoCol(
-                                          label: 'Account',
+                                          label: TranslationUtils.tr(
+                                              'settings_account'),
                                           value: account,
                                         ),
                                       ),
                                       Expanded(
                                         child: _InvInfoCol(
-                                          label: 'Invested',
+                                          label:
+                                              TranslationUtils.tr('pmam_invested'),
                                           value:
                                               '\$${invested.toStringAsFixed(2)}',
                                         ),
                                       ),
                                       Expanded(
                                         child: _InvInfoCol(
-                                          label: 'Net PnL',
+                                          label: TranslationUtils.tr(
+                                              'pmam_net_pnl_short'),
                                           value:
                                               '${pnlIsPos ? '+' : ''}\$${pnl.toStringAsFixed(2)}',
                                           valueColor:
@@ -459,8 +487,8 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
                                     activeSince.length >= 10) ...[
                                   SizedBox(height: 6.h),
                                   Text(
-                                    'Active since: ${activeSince.substring(0, 10)}',
-                                    style: TextStyle(
+                                    '${TranslationUtils.tr('pmam_active_since')}: ${activeSince.substring(0, 10)}',
+                                    style: AppTextStyles.bodyText.copyWith(
                                       fontSize: 10.sp,
                                       color: AppColors.textGrey,
                                     ),
@@ -519,8 +547,8 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
                                                 ),
                                               )
                                               : Text(
-                                                'Reject',
-                                                style: TextStyle(
+                                                TranslationUtils.tr('pmam_reject'),
+                                                style: AppTextStyles.bodyText.copyWith(
                                                   color: AppColors.error,
                                                   fontSize: 13.sp,
                                                   fontWeight: FontWeight.w700,
@@ -579,9 +607,10 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
                                                 ),
                                               )
                                               : Text(
-                                                'Approve',
-                                                style: TextStyle(
+                                                TranslationUtils.tr('ibm_approve'),
+                                                style: AppTextStyles.bodyText.copyWith(
                                                   fontSize: 13.sp,
+                                                  color: AppColors.whiteColor,
                                                   fontWeight: FontWeight.w700,
                                                 ),
                                               ),
@@ -613,8 +642,8 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
                                         ),
                                       ),
                                       child: Text(
-                                        'View',
-                                        style: TextStyle(
+                                        TranslationUtils.tr('ibm_view'),
+                                        style: AppTextStyles.bodyText.copyWith(
                                           color: AppColors.primary,
                                           fontSize: 13.sp,
                                           fontWeight: FontWeight.w700,
@@ -644,241 +673,53 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
       }
       final plans = _ctrl.managerPlans;
       if (plans.isEmpty) {
-        return Center(
-          child: Text(
-            'No plans yet',
-            style: TextStyle(fontSize: 14.sp, color: AppColors.textGrey),
+        return RefreshIndicator(
+          color: AppColors.primary,
+          onRefresh: _refreshPlans,
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: [
+              SizedBox(height: 160.h),
+              Center(
+                child: Text(
+                  TranslationUtils.tr(
+                      'master_dashboard_overview_tab_no_plans_yet'),
+                  style: AppTextStyles.bodyText.copyWith(
+                    fontSize: 14.sp,
+                    color: AppColors.textGrey,
+                  ),
+                ),
+              ),
+            ],
           ),
         );
       }
       return RefreshIndicator(
         color: AppColors.primary,
-        onRefresh: _ctrl.loadManagerDashboard,
+        onRefresh: _refreshPlans,
         child: ListView.separated(
+          physics: const AlwaysScrollableScrollPhysics(),
           padding: EdgeInsets.all(16.w),
           itemCount: plans.length,
           separatorBuilder: (_, __) => SizedBox(height: 10.h),
           itemBuilder: (_, i) {
             final p = plans[i];
-            final status = (p['status'] ?? '').toString();
-            Color statusColor;
-            switch (status) {
-              case 'approved':
-                statusColor = AppColors.green;
-                break;
-              case 'pending_admin':
-                statusColor = AppColors.warningText;
-                break;
-              case 'paused':
-                statusColor = AppColors.warningText;
-                break;
-              default:
-                statusColor = AppColors.textGrey;
-            }
-            final isPaused = status == 'paused' ||
-                (p['is_paused'] == 1 || p['is_paused'] == true);
-            final canPauseResume = status == 'approved' || isPaused;
-            return Container(
-              padding: EdgeInsets.all(14.w),
-              decoration: BoxDecoration(
-                color: AppColors.card,
-                borderRadius: BorderRadius.circular(12.r),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.border.withValues(alpha: 0.04),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+            final planId = p['id'] is int
+                ? p['id'] as int
+                : int.tryParse('${p['id']}') ?? 0;
+            return _ManagerPlanCard(
+              plan: p,
+              onView: () => Get.toNamed(
+                AppPages.PMAM_MANAGER_PLAN_DETAIL,
+                arguments: planId,
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          p['plan_name'] ?? 'Unnamed Plan',
-                          style: TextStyle(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                      ),
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 10.w,
-                          vertical: 4.h,
-                        ),
-                        decoration: BoxDecoration(
-                          color: statusColor.withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(8.r),
-                        ),
-                        child: Text(
-                          status == 'approved'
-                              ? 'Approved'
-                              : status == 'pending_admin'
-                              ? 'Pending Admin'
-                              : status,
-                          style: TextStyle(
-                            fontSize: 10.sp,
-                            color: statusColor,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 8.h),
-                  _PortalPlanInfoRow(
-                    'Account',
-                    '${p['trading_account_number'] ?? p['trading_account_id'] ?? '-'}',
-                  ),
-                  _PortalPlanInfoRow(
-                    'Commission',
-                    '${p['commission_percentage'] ?? 0}%',
-                  ),
-                  _PortalPlanInfoRow(
-                    'Min. Investment',
-                    '\$${p['minimum_investment'] ?? 0}',
-                  ),
-                  _PortalPlanInfoRow(
-                    'Investors',
-                    '${p['active_investors'] ?? 0}',
-                  ),
-                  _PortalPlanInfoRow(
-                    'Locked AUM',
-                    '\$${p['total_locked'] ?? 0}',
-                  ),
-                  SizedBox(height: 8.h),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          icon: Icon(Icons.visibility),
-                          onPressed:
-                              () => Get.toNamed(
-                                AppPages.PMAM_MANAGER_PLAN_DETAIL,
-                                arguments: p['id'],
-                              ),
-                          style: OutlinedButton.styleFrom(
-                            side: BorderSide(color: AppColors.primary),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8.r),
-                            ),
-                            padding: EdgeInsets.symmetric(vertical: 8.h),
-                          ),
-                           label:  Text(
-                            'View',
-                            style: TextStyle(
-                              color: AppColors.primary,
-                              fontSize: 13.sp,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ),
-                      SizedBox(width: 8.w),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () => _openEditPlan(p),
-                          icon: Icon(
-                            Icons.edit_outlined,
-                            size: 16.sp,
-                            color: AppColors.primary,
-                          ),
-                          label: Text(
-                            'Edit',
-                            style: TextStyle(
-                              color: AppColors.primary,
-                              fontSize: 13.sp,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                                AppColors.primary.withValues(alpha: 0.1),
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8.r),
-                            ),
-                            padding: EdgeInsets.symmetric(vertical: 8.h),
-                          ),
-                        ),
-                      ),
-                      if (canPauseResume) ...[
-                        SizedBox(width: 8.w),
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: () => _confirmPauseResume(
-                              planId: (p['id'] is int)
-                                  ? p['id'] as int
-                                  : int.tryParse('${p['id']}') ?? 0,
-                              planName: (p['plan_name'] ?? 'Plan').toString(),
-                              isPaused: isPaused,
-                            ),
-                            icon: Icon(
-                              isPaused
-                                  ? Icons.play_arrow_rounded
-                                  : Icons.pause_rounded,
-                              size: 16.sp,
-                              color: isPaused
-                                  ? AppColors.green
-                                  : AppColors.warningText,
-                            ),
-                            label: Text(
-                              isPaused ? 'Resume' : 'Pause',
-                              style: TextStyle(
-                                color: isPaused
-                                    ? AppColors.green
-                                    : AppColors.warningText,
-                                fontSize: 13.sp,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: (isPaused
-                                      ? AppColors.green
-                                      : AppColors.warningText)
-                                  .withValues(alpha: 0.1),
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8.r),
-                              ),
-                              padding: EdgeInsets.symmetric(vertical: 8.h),
-                            ),
-                          ),
-                        ),
-                      ],
-                      if (status == 'approved') ...[
-                        SizedBox(width: 8.w),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: () => _ctrl.inactivatePlan(p['id'] ?? 0),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.error.withValues(alpha: 0.1),
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8.r),
-                              ),
-                              padding: EdgeInsets.symmetric(vertical: 8.h),
-                            ),
-                            child: Text(
-                              'Inactivate',
-                              style: TextStyle(
-                                color: AppColors.error,
-                                fontSize: 13.sp,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ],
+              onEdit: () => _openEditPlan(p),
+              onPauseResume: (isPaused) => _confirmPauseResume(
+                planId: planId,
+                planName: (p['plan_name'] ?? 'Plan').toString(),
+                isPaused: isPaused,
               ),
+              onInactivate: () => _ctrl.inactivatePlan(planId),
             );
           },
         ),
@@ -900,15 +741,12 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
   }) async {
     if (planId <= 0) return;
     final title = isPaused
-        ? 'Resume plan "$planName"?'
-        : 'Pause plan "$planName"?';
+        ? TranslationUtils.trArgs(
+            'pmam_resume_plan_confirm', {'name': planName})
+        : TranslationUtils.trArgs('pmam_pause_plan_confirm', {'name': planName});
     final body = isPaused
-        ? 'New investor joins and trade allocations will restart. '
-            'MT5 trading rights on the pool account will be re-enabled.'
-        : 'New investor joins and new trade allocations will stop.\n\n'
-            'Existing investor positions stay open. While paused, you also '
-            'cannot CLOSE positions on the pool MT5 account — resume the '
-            'plan first to manage open trades.';
+        ? TranslationUtils.tr('pmam_resume_plan_body')
+        : TranslationUtils.tr('pmam_pause_plan_body');
 
     final confirmed = await showDialog<bool>(
       context: context,
@@ -919,7 +757,7 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
         ),
         title: Text(
           title,
-          style: TextStyle(
+          style: AppTextStyles.bodyText.copyWith(
             fontSize: 15.sp,
             fontWeight: FontWeight.w700,
             color: AppColors.textPrimary,
@@ -927,7 +765,7 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
         ),
         content: Text(
           body,
-          style: TextStyle(
+          style: AppTextStyles.bodyText.copyWith(
             fontSize: 13.sp,
             color: AppColors.textGrey,
             height: 1.4,
@@ -937,8 +775,8 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
             child: Text(
-              'Cancel',
-              style: TextStyle(color: AppColors.textGrey),
+              TranslationUtils.tr('account_management_cancel'),
+              style: AppTextStyles.bodyText.copyWith(color: AppColors.textGrey),
             ),
           ),
           ElevatedButton(
@@ -951,7 +789,9 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
               ),
             ),
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text(isPaused ? 'Resume' : 'Pause'),
+            child: Text(isPaused
+                ? TranslationUtils.tr('my_plans_tab_resume')
+                : TranslationUtils.tr('my_plans_tab_pause')),
           ),
         ],
       ),
@@ -964,7 +804,9 @@ class _PmamManagerPortalScreenState extends State<PmamManagerPortalScreen>
 
     if (!mounted) return;
     Get.snackbar(
-      result.ok ? 'Success' : 'Error',
+      result.ok
+          ? TranslationUtils.tr('create_account_success')
+          : TranslationUtils.tr('close_position_error'),
       result.message,
       backgroundColor: result.ok
           ? AppColors.green.withValues(alpha: 0.95)
@@ -999,7 +841,7 @@ class _StatPill extends StatelessWidget {
       children: [
         Text(
           value,
-          style: TextStyle(
+          style: AppTextStyles.bodyText.copyWith(
             fontSize: 16.sp,
             fontWeight: FontWeight.w800,
             color: color,
@@ -1007,7 +849,7 @@ class _StatPill extends StatelessWidget {
         ),
         Text(
           label,
-          style: TextStyle(fontSize: 10.sp, color: AppColors.textGrey),
+          style: AppTextStyles.bodyText.copyWith(fontSize: 10.sp, color: AppColors.textGrey),
         ),
       ],
     );
@@ -1059,7 +901,7 @@ class _PortalFilterChip extends StatelessWidget {
         ),
         child: Text(
           count > 0 ? '$label ($count)' : label,
-          style: TextStyle(
+          style: AppTextStyles.bodyText.copyWith(
             fontSize: 12.sp,
             fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
             color: selected ? AppColors.onColoredBackground : AppColors.textGrey,
@@ -1087,7 +929,7 @@ class _InvInfoCol extends StatelessWidget {
       children: [
         Text(
           value,
-          style: TextStyle(
+          style: AppTextStyles.bodyText.copyWith(
             fontSize: 12.sp,
             fontWeight: FontWeight.w700,
             color: valueColor ?? AppColors.textPrimary,
@@ -1096,7 +938,7 @@ class _InvInfoCol extends StatelessWidget {
         ),
         Text(
           label,
-          style: TextStyle(fontSize: 10.sp, color: AppColors.textGrey),
+          style: AppTextStyles.bodyText.copyWith(fontSize: 10.sp, color: AppColors.textGrey),
           textAlign: TextAlign.center,
         ),
       ],
@@ -1104,29 +946,399 @@ class _InvInfoCol extends StatelessWidget {
   }
 }
 
-class _PortalPlanInfoRow extends StatelessWidget {
-  final String label;
-  final String value;
-  const _PortalPlanInfoRow(this.label, this.value);
+/// My Plans card: identity + status, a 2×2 metrics grid, and two primary
+/// actions. Pause/resume and inactivate sit in the overflow menu so the
+/// button row never gets cramped.
+class _ManagerPlanCard extends StatelessWidget {
+  final Map<String, dynamic> plan;
+  final VoidCallback onView;
+  final VoidCallback onEdit;
+  final ValueChanged<bool> onPauseResume;
+  final VoidCallback onInactivate;
+
+  const _ManagerPlanCard({
+    required this.plan,
+    required this.onView,
+    required this.onEdit,
+    required this.onPauseResume,
+    required this.onInactivate,
+  });
+
+  static double _num(dynamic v) =>
+      v is num ? v.toDouble() : double.tryParse('$v') ?? 0;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: 4.h),
-      child: Row(
-        children: [
-          Text(
-            '$label: ',
-            style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey),
-          ),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 12.sp,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
+    final status = (plan['status'] ?? '').toString();
+    final isPaused = status == 'paused' ||
+        plan['is_paused'] == 1 ||
+        plan['is_paused'] == true;
+    final canPauseResume = status == 'approved' || isPaused;
+    final canInactivate = status == 'approved';
+    final (String statusLabel, Color statusColor) = switch (status) {
+      'approved' => (
+          TranslationUtils.tr('kyc_verification_approved'),
+          AppColors.green,
+        ),
+      'pending_admin' => (
+          TranslationUtils.tr('pmam_pending_admin'),
+          AppColors.warningText,
+        ),
+      'paused' => (
+          TranslationUtils.tr('copy_trading_paused'),
+          AppColors.warningText,
+        ),
+      '' => ('-', AppColors.textGrey),
+      _ => (
+          status[0].toUpperCase() + status.substring(1),
+          AppColors.textGrey,
+        ),
+    };
+    final name = (plan['plan_name'] ?? 'Unnamed Plan').toString();
+    final account =
+        '${plan['trading_account_number'] ?? plan['trading_account_id'] ?? '-'}';
+    final locked = plan['total_locked'] ?? plan['total_locked_aum'];
+
+    return Material(
+      color: AppColors.card,
+      borderRadius: BorderRadius.circular(14.r),
+      child: InkWell(
+        onTap: onView,
+        borderRadius: BorderRadius.circular(14.r),
+        child: Container(
+          padding: EdgeInsets.all(14.w),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14.r),
+            border: Border.all(
+              color: AppColors.border.withValues(alpha: 0.15),
             ),
           ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 38.w,
+                    height: 38.w,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10.r),
+                    ),
+                    child: Text(
+                      name.isNotEmpty ? name[0].toUpperCase() : 'P',
+                      style: AppTextStyles.bodyText.copyWith(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 10.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTextStyles.bodyText.copyWith(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        SizedBox(height: 2.h),
+                        Text(
+                          '${TranslationUtils.tr('settings_account')} #$account',
+                          style: AppTextStyles.bodyText.copyWith(
+                            fontSize: 11.sp,
+                            color: AppColors.textGrey,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(width: 8.w),
+                  _StatusBadge(label: statusLabel, color: statusColor),
+                ],
+              ),
+              SizedBox(height: 12.h),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+                decoration: BoxDecoration(
+                  color: AppColors.tradeBackgroundCenterColor,
+                  borderRadius: BorderRadius.circular(10.r),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _PlanMetric(
+                            label: TranslationUtils.tr('general_commission'),
+                            value:
+                                '${_num(plan['commission_percentage']).toStringAsFixed(2)}%',
+                          ),
+                        ),
+                        Expanded(
+                          child: _PlanMetric(
+                            label: TranslationUtils.tr(
+                                'trader_details_screen_minimum_investment'),
+                            value:
+                                '\$${_num(plan['minimum_investment']).toStringAsFixed(2)}',
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 10.h),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _PlanMetric(
+                            label: TranslationUtils.tr('pmam_nav_investors'),
+                            value: '${_num(plan['active_investors']).toInt()}',
+                          ),
+                        ),
+                        Expanded(
+                          child: _PlanMetric(
+                            label: TranslationUtils.tr('pmam_locked_aum'),
+                            value: '\$${_num(locked).toStringAsFixed(2)}',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 12.h),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: onView,
+                      icon: Icon(
+                        Icons.visibility_outlined,
+                        size: 16.sp,
+                        color: AppColors.primary,
+                      ),
+                      label: Text(
+                        TranslationUtils.tr('ibm_view'),
+                        style: AppTextStyles.bodyText.copyWith(
+                          color: AppColors.primary,
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: Size(0, 38.h),
+                        side: BorderSide(color: AppColors.primary),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10.r),
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 8.w),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: onEdit,
+                      icon: Icon(
+                        Icons.edit_outlined,
+                        size: 16.sp,
+                        color: AppColors.onColoredBackground,
+                      ),
+                      label: Text(
+                        TranslationUtils.tr('general_edit'),
+                        style: AppTextStyles.bodyText.copyWith(
+                          color: AppColors.onColoredBackground,
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.brandPrimary,
+                        elevation: 0,
+                        minimumSize: Size(0, 38.h),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10.r),
+                        ),
+                      ),
+                    ),
+                  ),
+                  if (canPauseResume || canInactivate) ...[
+                    SizedBox(width: 8.w),
+                    _PlanOverflowMenu(
+                      isPaused: isPaused,
+                      canPauseResume: canPauseResume,
+                      canInactivate: canInactivate,
+                      onPauseResume: () => onPauseResume(isPaused),
+                      onInactivate: onInactivate,
+                    ),
+                  ],
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _StatusBadge extends StatelessWidget {
+  final String label;
+  final Color color;
+  const _StatusBadge({required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(20.r),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 6.w,
+            height: 6.w,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
+          SizedBox(width: 5.w),
+          Text(
+            label,
+            style: AppTextStyles.bodyText.copyWith(
+              fontSize: 10.sp,
+              color: color,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PlanMetric extends StatelessWidget {
+  final String label;
+  final String value;
+  const _PlanMetric({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: AppTextStyles.bodyText.copyWith(
+            fontSize: 11.sp,
+            color: AppColors.textGrey,
+          ),
+        ),
+        SizedBox(height: 2.h),
+        Text(
+          value,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: AppTextStyles.bodyText.copyWith(
+            fontSize: 14.sp,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textPrimary,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _PlanOverflowMenu extends StatelessWidget {
+  final bool isPaused;
+  final bool canPauseResume;
+  final bool canInactivate;
+  final VoidCallback onPauseResume;
+  final VoidCallback onInactivate;
+
+  const _PlanOverflowMenu({
+    required this.isPaused,
+    required this.canPauseResume,
+    required this.canInactivate,
+    required this.onPauseResume,
+    required this.onInactivate,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final pauseColor = isPaused ? AppColors.green : AppColors.warningText;
+    return Container(
+      width: 38.h,
+      height: 38.h,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10.r),
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.4)),
+      ),
+      child: PopupMenuButton<String>(
+        tooltip: TranslationUtils.tr('general_more'),
+        padding: EdgeInsets.zero,
+        color: AppColors.card,
+        icon: Icon(
+          Icons.more_vert_rounded,
+          size: 18.sp,
+          color: AppColors.textPrimary,
+        ),
+        onSelected: (v) => v == 'pause' ? onPauseResume() : onInactivate(),
+        itemBuilder: (_) => [
+          if (canPauseResume)
+            PopupMenuItem(
+              value: 'pause',
+              child: Row(
+                children: [
+                  Icon(
+                    isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
+                    size: 18.sp,
+                    color: pauseColor,
+                  ),
+                  SizedBox(width: 8.w),
+                  Text(
+                    isPaused
+                        ? TranslationUtils.tr('my_plans_tab_resume')
+                        : TranslationUtils.tr('my_plans_tab_pause'),
+                    style: AppTextStyles.bodyText.copyWith(
+                      fontSize: 13.sp,
+                      color: pauseColor,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          if (canInactivate)
+            PopupMenuItem(
+              value: 'inactivate',
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.block_rounded,
+                    size: 18.sp,
+                    color: AppColors.error,
+                  ),
+                  SizedBox(width: 8.w),
+                  Text(
+                    TranslationUtils.tr('pmam_inactivate'),
+                    style: AppTextStyles.bodyText.copyWith(
+                      fontSize: 13.sp,
+                      color: AppColors.error,
+                    ),
+                  ),
+                ],
+              ),
+            ),
         ],
       ),
     );

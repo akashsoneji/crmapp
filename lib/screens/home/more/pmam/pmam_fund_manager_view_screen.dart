@@ -1,5 +1,10 @@
 import 'package:crm_app/routes/app_pages.dart';
+import 'package:crm_app/constants/text_styles.dart';
+import 'package:crm_app/models/pmam_model.dart';
+import 'package:crm_app/controllers/wallet_controller.dart';
+import 'package:crm_app/widgets/custom_toast.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -10,6 +15,7 @@ import '../../../../controllers/pmam/pmam_controller.dart';
 import '../../../../widgets/app_select_field.dart';
 import '../../../../widgets/common_loading_widget.dart';
 import '../../../../widgets/app_svg_back_button.dart';
+import 'package:crm_app/services/language_service.dart';
 
 class PmamFundManagerViewScreen extends StatefulWidget {
   const PmamFundManagerViewScreen({super.key});
@@ -17,6 +23,30 @@ class PmamFundManagerViewScreen extends StatefulWidget {
   @override
   State<PmamFundManagerViewScreen> createState() =>
       _PmamFundManagerViewScreenState();
+}
+
+/// Disposes [controller] when the sheet is really unmounted. The sheet
+/// future completes on pop, while the exit animation still rebuilds the
+/// TextField, so disposing in `whenComplete` crashes.
+class _SheetControllerOwner extends StatefulWidget {
+  const _SheetControllerOwner({required this.controller, required this.child});
+
+  final TextEditingController controller;
+  final Widget child;
+
+  @override
+  State<_SheetControllerOwner> createState() => _SheetControllerOwnerState();
+}
+
+class _SheetControllerOwnerState extends State<_SheetControllerOwner> {
+  @override
+  void dispose() {
+    widget.controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }
 
 class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
@@ -27,6 +57,12 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
   bool _loadingTrades = false;
   bool _loadingOpen = false;
 
+  /// Friendly text when `managers/{code}` fails ("Manager not found", ...).
+  String _profileError = '';
+
+  /// Set when the plan's trades / open positions call fails ("Plan not found").
+  String _planError = '';
+
   Map<String, dynamic> _profile = {};
   List<Map<String, dynamic>> _plans = [];
   Map<String, dynamic>? _selectedPlan;
@@ -34,8 +70,14 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
   List<Map<String, dynamic>> _trades = [];
   List<Map<String, dynamic>> _openPositions = [];
 
+  /// Plan picked from an Explore search suggestion; preselected on load.
+  int? _initialPlanId;
+
   bool _showAllOpenPositions = false;
   bool _showAllTrades = false;
+
+  /// Selected Performance chip: 1W / 1M / 3M / 6M / 1Y / All.
+  String _chartRange = '1M';
 
   @override
   void initState() {
@@ -45,6 +87,7 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
       _managerCode = args;
     } else if (args is Map && args['manager_code'] is String) {
       _managerCode = args['manager_code'] as String;
+      _initialPlanId = int.tryParse('${args['plan_id'] ?? ''}');
     }
     if (Get.isRegistered<PmamController>()) {
       _ctrl = Get.find<PmamController>();
@@ -59,16 +102,27 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
       setState(() => _loadingProfile = false);
       return;
     }
-    setState(() => _loadingProfile = true);
+    setState(() {
+      _loadingProfile = true;
+      _profileError = '';
+    });
     try {
-      if (_ctrl.myInvestments.isEmpty) {
-        // Load investor portal silently in background so that `myInvestments` gets populated
-        _ctrl.loadInvestorPortal().then((_) {
-          if (mounted) setState(() {});
-        });
-      }
+      // Doc flow: the profile always refreshes enrollments + eligible accounts
+      // so "Invest now" vs "My investment" reflects the latest status.
+      Future.wait([
+        _ctrl.loadEnrollments(),
+        _ctrl.loadEligibleAccounts(),
+      ]).then((_) {
+        if (mounted) setState(() {});
+      });
       final resp = await PmamService.getManagerProfile(_managerCode);
-      if (resp.success && resp.data is Map) {
+      if (!resp.success) {
+        _profile = {};
+        _profileError = PmamController.friendlyError(
+          resp.message,
+          TranslationUtils.tr('pmam_fund_manager_view_manager_not_found'),
+        );
+      } else if (resp.data is Map) {
         final root = Map<String, dynamic>.from(resp.data as Map);
         final data = (root['data'] is Map)
             ? Map<String, dynamic>.from(root['data'] as Map)
@@ -81,12 +135,18 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                   .map((e) => Map<String, dynamic>.from(e))
                   .toList()
             : <Map<String, dynamic>>[];
-        _selectedPlan = _plans.isNotEmpty ? _plans.first : null;
+        _selectedPlan = _plans.firstWhereOrNull(
+              (p) => int.tryParse('${p['id']}') == _initialPlanId,
+            ) ??
+            (_plans.isNotEmpty ? _plans.first : null);
         if (_selectedPlan != null) {
           _loadPlanData(_selectedPlan!);
         }
       }
     } catch (_) {
+      _profile = {};
+      _profileError =
+          TranslationUtils.tr('pmam_fund_manager_view_manager_not_found');
     } finally {
       if (mounted) setState(() => _loadingProfile = false);
     }
@@ -100,6 +160,7 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
       _loadingTrades = true;
       _openPositions = [];
       _trades = [];
+      _planError = '';
     });
     try {
       final results = await Future.wait([
@@ -114,6 +175,16 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
       ]);
 
       final openResp = results[0];
+      final tradesFailed = results[1];
+      final failed = !openResp.success
+          ? openResp
+          : (!tradesFailed.success ? tradesFailed : null);
+      if (failed != null) {
+        _planError = PmamController.friendlyError(
+          failed.message,
+          TranslationUtils.tr('pmam_failed_to_load_plans'),
+        );
+      }
       if (openResp.success && openResp.data is Map) {
         final root = Map<String, dynamic>.from(openResp.data as Map);
         final data = root['data'];
@@ -145,6 +216,7 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
         }
       }
     } catch (_) {
+      _planError = TranslationUtils.tr('pmam_failed_to_load_plans');
     } finally {
       if (mounted) {
         setState(() {
@@ -153,6 +225,17 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
         });
       }
     }
+  }
+
+  /// True when the user has a pending/active enrollment with this manager
+  /// (doc 2.2), or the profile itself says so.
+  bool get _hasInvestment {
+    if (_profile['is_enrolled'] == true) return true;
+    return _ctrl.enrollments.any((e) {
+      final status = (e['status'] ?? '').toString();
+      return e['manager_code']?.toString() == _managerCode &&
+          (status == 'pending' || status == 'active');
+    });
   }
 
   String get _initials {
@@ -175,67 +258,171 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
     return '$prefix${val.toStringAsFixed(2)}';
   }
 
+  /// Success path of the Invest drawer: server message (+ add-on receipt when
+  /// `data.purchase` is a map), wallet refresh, and the enrolled badge.
+  void _onJoined(PmamJoinResult result) {
+    final purchase = result.purchase;
+    var message = result.message;
+    if (purchase != null) {
+      message += '\n${TranslationUtils.trArgs('pmam_addon_purchased', {
+            'name': (purchase['option_name'] ?? '').toString(),
+            'amount': _num(purchase['amount']).toStringAsFixed(2),
+            'wallet': _num(purchase['wallet_balance_after']).toStringAsFixed(2),
+          })}';
+      if (Get.isRegistered<WalletController>()) {
+        Get.find<WalletController>().fetchWalletData();
+      }
+    }
+    CustomToastService.showSuccess(message: message);
+    if (mounted) setState(() {});
+  }
+
   void _showInvestSheet(BuildContext btnCtx) {
     if (_selectedPlan == null) {
       Get.snackbar(
-        'Not Available',
-        'This manager has no active plans to invest in.',
+        TranslationUtils.tr('general_not_available'),
+        TranslationUtils.tr('pmam_no_active_plans_to_invest'),
         backgroundColor: Colors.orange,
         colorText: AppColors.onColoredBackground,
       );
       return;
     }
     Map<String, dynamic>? selectedAccount;
-    Map<String, dynamic>? sheetPlan = _selectedPlan;
+    Map<String, dynamic> sheetPlan = _selectedPlan!;
     bool accountsLoading = true;
     bool firstLoadTriggered = false;
+    bool submitting = false;
+    bool sheetOpen = true;
+    PmamPurchaseOptions addons = PmamPurchaseOptions.none;
+    int selectedAddonId = 0; // 0 = no add-on
+    double? serverShortage;
+    final amountCtrl = TextEditingController();
+    late StateSetter setSheetState;
 
-    final planId = int.tryParse(sheetPlan!['id'].toString()) ?? 0;
-
-    late StateSetter _setSheetState;
-
-    void _loadAccounts(int pId) async {
-      _setSheetState(() => accountsLoading = true);
-      await _ctrl.loadEligibleAccounts(pId);
-      if (_ctrl.eligibleAccounts.length == 1) {
-        selectedAccount = _ctrl.eligibleAccounts.first;
-      }
-      _setSheetState(() => accountsLoading = false);
+    void updateSheet(VoidCallback fn) {
+      if (sheetOpen) setSheetState(fn);
     }
+
+    void selectAccount(Map<String, dynamic>? acc) {
+      selectedAccount = acc;
+      amountCtrl.text = acc == null
+          ? ''
+          : _num(acc['available_balance']).toStringAsFixed(2);
+    }
+
+    // Doc flow: eligible accounts + purchase options on every drawer open.
+    Future<void> loadSheetData(int pId) async {
+      updateSheet(() => accountsLoading = true);
+      final accountsFuture = _ctrl.loadEligibleAccounts(pId);
+      final fresh = await _ctrl.loadPurchaseOptions();
+      await accountsFuture;
+      updateSheet(() {
+        addons = fresh;
+        if (!fresh.options.any((o) => o.id == selectedAddonId)) {
+          selectedAddonId = 0;
+        }
+        if (_ctrl.eligibleAccounts.length == 1) {
+          selectAccount(_ctrl.eligibleAccounts.first);
+        }
+        accountsLoading = false;
+      });
+    }
+
+    final labelStyle = AppTextStyles.bodyText.copyWith(
+      fontSize: 13.sp,
+      fontWeight: FontWeight.w600,
+      color: AppColors.textPrimary,
+    );
+    final hintStyle = AppTextStyles.bodyText.copyWith(
+      fontSize: 11.sp,
+      color: AppColors.textGrey,
+    );
 
     showModalBottomSheet(
       context: btnCtx,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setSheetState) {
-          _setSheetState = setSheetState;
+      builder: (ctx) => _SheetControllerOwner(
+        controller: amountCtrl,
+        child: StatefulBuilder(
+        builder: (ctx, setState) {
+          setSheetState = setState;
 
-          // Trigger first load only once
+          final planId = int.tryParse(sheetPlan['id'].toString()) ?? 0;
           if (!firstLoadTriggered && planId > 0) {
             firstLoadTriggered = true;
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              _loadAccounts(planId);
-            });
+            WidgetsBinding.instance
+                .addPostFrameCallback((_) => loadSheetData(planId));
           }
 
-          final double commission = _num(sheetPlan!['commission_percentage']);
-          final double minInvest = _num(sheetPlan!['minimum_investment']);
-          final String planName = (sheetPlan!['plan_name'] ?? 'Plan')
-              .toString();
+          final double commission = _num(sheetPlan['commission_percentage']);
+          final double minInvest = _num(sheetPlan['minimum_investment']);
+          final double minAllowed = minInvest < 1 ? 1 : minInvest;
+          final String planName =
+              (sheetPlan['plan_name'] ?? 'Plan').toString();
 
-          final double availBalance =
-              double.tryParse(
-                selectedAccount?['available_balance']?.toString() ?? '0',
-              ) ??
-              0;
-          final double accBalance =
-              double.tryParse(selectedAccount?['balance']?.toString() ?? '0') ??
-              0;
-          final String accNo =
-              selectedAccount?['meta_account_number']?.toString() ?? '';
-          final bool isBalanceEnough = availBalance >= minInvest;
-          final bool canInvest = isBalanceEnough && selectedAccount != null;
+          final double available = _num(selectedAccount?['available_balance']);
+          final String amountText = amountCtrl.text.trim();
+          final double amount = double.tryParse(amountText) ?? 0;
+
+          String? amountError;
+          if (selectedAccount != null) {
+            if (available < minAllowed) {
+              amountError = TranslationUtils.tr(
+                  'pmam_fund_manager_view_insufficient_balance_for_this_plan');
+            } else if (amountText.isNotEmpty && amount < minAllowed) {
+              amountError = TranslationUtils.trArgs(
+                  'pmam_amount_below_minimum',
+                  {'amount': minAllowed.toStringAsFixed(2)});
+            } else if (amount > available) {
+              amountError = TranslationUtils.tr('pmam_amount_above_available');
+            }
+          }
+
+          final PmamPurchaseOption? addon =
+              addons.options.firstWhereOrNull((o) => o.id == selectedAddonId);
+          final double localShortage =
+              addon == null ? 0 : addon.feeInUsd - addons.walletBalance;
+          final double shortage =
+              serverShortage ?? (localShortage > 0 ? localShortage : 0);
+
+          final bool canInvest = selectedAccount != null &&
+              !submitting &&
+              amountText.isNotEmpty &&
+              amountError == null &&
+              shortage <= 0;
+
+          Future<void> submit() async {
+            updateSheet(() => submitting = true);
+            final result = await _ctrl.requestJoin(
+              planId: planId,
+              accountId: int.tryParse('${selectedAccount!['id']}') ?? 0,
+              amount: amount,
+              purchaseOptionId: addon?.id,
+            );
+            if (result.ok) {
+              if (sheetOpen) Navigator.pop(ctx);
+              _onJoined(result);
+              return;
+            }
+            if (result.shortage != null) {
+              updateSheet(() {
+                submitting = false;
+                serverShortage = result.shortage;
+              });
+              return;
+            }
+            CustomToastService.showError(message: result.message);
+            // A stale or switched-off add-on is a 422 too: refresh the list.
+            final fresh = await _ctrl.loadPurchaseOptions();
+            updateSheet(() {
+              submitting = false;
+              addons = fresh;
+              if (!fresh.options.any((o) => o.id == selectedAddonId)) {
+                selectedAddonId = 0;
+              }
+            });
+          }
 
           return Padding(
             padding: EdgeInsets.only(
@@ -243,6 +430,9 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
             ),
             child: Container(
               width: double.infinity,
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.sizeOf(ctx).height * 0.9,
+              ),
               decoration: BoxDecoration(
                 color: AppColors.card,
                 borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
@@ -252,13 +442,15 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                 children: [
                   // ── Header ──
                   Padding(
-                    padding: EdgeInsets.fromLTRB(20.w, 16.h, 12.w, 12.h),
+                    padding:
+                        EdgeInsetsDirectional.fromSTEB(20.w, 16.h, 12.w, 12.h),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'Invest in Plan',
-                          style: TextStyle(
+                          TranslationUtils.tr(
+                              'pmam_fund_manager_view_invest_in_plan'),
+                          style: AppTextStyles.bodyText.copyWith(
                             fontSize: 18.sp,
                             fontWeight: FontWeight.w800,
                             color: AppColors.textPrimary,
@@ -280,222 +472,334 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                   Divider(height: 1, color: AppColors.border),
 
                   // ── Body ──
-                  Padding(
-                    padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // ── Select Plan ──
-                        Text(
-                          'Select Plan',
-                          style: TextStyle(
-                            fontSize: 13.sp,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
+                  Flexible(
+                    child: SingleChildScrollView(
+                      padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // ── Select Plan ──
+                          Text(
+                            TranslationUtils.tr(
+                                'pmam_fund_manager_view_select_plan'),
+                            style: labelStyle,
                           ),
-                        ),
-                        SizedBox(height: 8.h),
-                        if (_plans.length > 1)
-                          AppSelectField<Map<String, dynamic>>(
-                            value: sheetPlan,
-                            hint: 'Select a plan',
-                            sheetTitle: 'Select Plan',
-                            backgroundColor: AppColors.card,
-                            valueEquals: (a, b) =>
-                                a['id'].toString() == b['id'].toString(),
-                            options: _plans.map((p) {
-                              final pName = (p['plan_name'] ?? 'Plan')
-                                  .toString();
-                              final pComm = _num(p['commission_percentage']);
-                              return AppSelectOption<Map<String, dynamic>>(
-                                value: p,
-                                title:
-                                    '$pName - ${pComm.toStringAsFixed(2)}% Commission',
-                              );
-                            }).toList(),
-                            onChanged: (val) {
-                              if (val != null) {
-                                setSheetState(() {
+                          SizedBox(height: 8.h),
+                          if (_plans.length > 1)
+                            AppSelectField<Map<String, dynamic>>(
+                              value: sheetPlan,
+                              hint: TranslationUtils.tr('pmam_select_a_plan'),
+                              sheetTitle: TranslationUtils.tr(
+                                  'pmam_fund_manager_view_select_plan'),
+                              backgroundColor: AppColors.card,
+                              valueEquals: (a, b) =>
+                                  a['id'].toString() == b['id'].toString(),
+                              options: _plans.map((p) {
+                                final pName =
+                                    (p['plan_name'] ?? 'Plan').toString();
+                                final pComm = _num(p['commission_percentage']);
+                                return AppSelectOption<Map<String, dynamic>>(
+                                  value: p,
+                                  title:
+                                      '$pName - ${pComm.toStringAsFixed(2)}% ${TranslationUtils.tr('general_commission')}',
+                                );
+                              }).toList(),
+                              onChanged: (val) {
+                                if (val == null) return;
+                                updateSheet(() {
                                   sheetPlan = val;
-                                  selectedAccount = null;
+                                  selectAccount(null);
                                 });
                                 final newPlanId =
                                     int.tryParse(val['id'].toString()) ?? 0;
-                                if (newPlanId > 0) {
-                                  _loadAccounts(newPlanId);
-                                }
-                              }
-                            },
-                          )
-                        else
-                          Container(
-                            width: double.infinity,
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 14.w,
-                              vertical: 13.h,
-                            ),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(10.r),
-                              border: Border.all(color: AppColors.border),
-                              color: AppColors.onColoredBackground,
-                            ),
-                            child: Text(
-                              '$planName - ${commission.toStringAsFixed(2)}% Commission',
-                              style: TextStyle(
-                                fontSize: 13.sp,
-                                fontWeight: FontWeight.w500,
-                                color: AppColors.isDarkMode
-                                    ? AppColors.pureBlack
-                                    : AppColors.textPrimaryLight,
+                                if (newPlanId > 0) loadSheetData(newPlanId);
+                              },
+                            )
+                          else
+                            Container(
+                              width: double.infinity,
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 14.w,
+                                vertical: 13.h,
                               ),
-                            ),
-                          ),
-                        SizedBox(height: 6.h),
-                        Text(
-                          'Min. Investment: \$${minInvest.toStringAsFixed(2)}',
-                          style: TextStyle(
-                            fontSize: 11.sp,
-                            color: AppColors.textGrey,
-                          ),
-                        ),
-                        SizedBox(height: 20.h),
-
-                        // ── Trading Account ──
-                        Text(
-                          'Trading Account',
-                          style: TextStyle(
-                            fontSize: 13.sp,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        SizedBox(height: 8.h),
-                        if (accountsLoading)
-                          Center(
-                            child: Padding(
-                              padding: EdgeInsets.all(12.h),
-                              child: CommonLoadingWidget(
-                                size: 22,
-                                color: AppColors.primary,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(10.r),
+                                border: Border.all(color: AppColors.border),
+                                color: AppColors.onColoredBackground,
                               ),
-                            ),
-                          )
-                        else
-                          AppSelectField<Map<String, dynamic>>(
-                            value: selectedAccount,
-                            hint: 'Select Account',
-                            sheetTitle: 'Select Trading Account',
-                            backgroundColor: AppColors.card,
-                            valueEquals: (a, b) => a['id'] == b['id'],
-                            options: _ctrl.eligibleAccounts.map((acc) {
-                              final no =
-                                  acc['meta_account_number']?.toString() ?? '-';
-                              final bal =
-                                  double.tryParse(
-                                    acc['balance']?.toString() ?? '0',
-                                  ) ??
-                                  0;
-                              final avail =
-                                  double.tryParse(
-                                    acc['available_balance']?.toString() ?? '0',
-                                  ) ??
-                                  0;
-                              return AppSelectOption<Map<String, dynamic>>(
-                                value: acc,
-                                title:
-                                    '$no — Balance: \$${bal.toStringAsFixed(2)} (Available: \$${avail.toStringAsFixed(2)})',
-                              );
-                            }).toList(),
-                            onChanged: (val) {
-                              setSheetState(() => selectedAccount = val);
-                            },
-                          ),
-
-                        // ── Validation Error ──
-                        if (selectedAccount != null && !isBalanceEnough)
-                          Padding(
-                            padding: EdgeInsets.only(top: 8.h),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.warning_amber_rounded,
-                                  size: 14.sp,
-                                  color: AppColors.error,
+                              child: Text(
+                                '$planName - ${commission.toStringAsFixed(2)}% ${TranslationUtils.tr('general_commission')}',
+                                style: AppTextStyles.bodyText.copyWith(
+                                  fontSize: 13.sp,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.isDarkMode
+                                      ? AppColors.pureBlack
+                                      : AppColors.textPrimaryLight,
                                 ),
-                                SizedBox(width: 6.w),
-                                Expanded(
-                                  child: Text(
-                                    'Insufficient balance for this plan.',
-                                    style: TextStyle(
-                                      fontSize: 11.sp,
-                                      color: AppColors.error,
-                                      fontWeight: FontWeight.w500,
-                                    ),
+                              ),
+                            ),
+                          SizedBox(height: 6.h),
+                          Text(
+                            '${TranslationUtils.tr('pmam_manager_detail_screen_min_investment')} \$${minInvest.toStringAsFixed(2)}',
+                            style: hintStyle,
+                          ),
+                          SizedBox(height: 20.h),
+
+                          // ── Trading Account ──
+                          Text(
+                            TranslationUtils.tr(
+                                'copy_trading_edit_plan_trading_account'),
+                            style: labelStyle,
+                          ),
+                          SizedBox(height: 8.h),
+                          if (accountsLoading)
+                            Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(12.h),
+                                child: CommonLoadingWidget(
+                                  size: 22,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                            )
+                          else if (_ctrl.eligibleAccounts.isEmpty) ...[
+                            _sheetNotice(
+                              TranslationUtils.tr(
+                                  'pmam_no_eligible_investor_account'),
+                              AppColors.textGrey,
+                            ),
+                            SizedBox(height: 12.h),
+                            // No live account to invest from: close the sheet
+                            // and open the live-account picker. Reopening
+                            // Invest Now reloads the eligible accounts.
+                            ElevatedButton.icon(
+                              onPressed: () {
+                                Navigator.pop(ctx);
+                                Get.toNamed(AppPages.CHOOSE_ACCOUNT);
+                              },
+                              icon: Icon(
+                                Icons.add_rounded,
+                                size: 18.sp,
+                                color: AppColors.onColoredBackground,
+                              ),
+                              label: Text(
+                                TranslationUtils.tr(
+                                    'create_account_create_button'),
+                                style: AppTextStyles.bodyText.copyWith(
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.onColoredBackground,
+                                ),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.brandPrimary,
+                                elevation: 0,
+                                minimumSize: Size(double.infinity, 46.h),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10.r),
+                                ),
+                              ),
+                            ),
+                          ]
+                          else
+                            AppSelectField<Map<String, dynamic>>(
+                              value: selectedAccount,
+                              hint: TranslationUtils.tr(
+                                  'create_account_select_account'),
+                              sheetTitle: TranslationUtils.tr(
+                                  'pmam_manager_detail_screen_select_trading_account'),
+                              backgroundColor: AppColors.card,
+                              valueEquals: (a, b) =>
+                                  a['id'].toString() == b['id'].toString(),
+                              options: _ctrl.eligibleAccounts.map((acc) {
+                                final no =
+                                    acc['meta_account_number']?.toString() ??
+                                        '-';
+                                final avail = _num(acc['available_balance']);
+                                return AppSelectOption<Map<String, dynamic>>(
+                                  value: acc,
+                                  title: no,
+                                  subtitle:
+                                      '${TranslationUtils.tr('ibm_available')}: \$${avail.toStringAsFixed(2)}',
+                                );
+                              }).toList(),
+                              onChanged: (val) =>
+                                  updateSheet(() => selectAccount(val)),
+                            ),
+
+                          // ── Amount ──
+                          if (selectedAccount != null) ...[
+                            SizedBox(height: 16.h),
+                            Text(
+                              TranslationUtils.tr('pmam_investment_amount'),
+                              style: labelStyle,
+                            ),
+                            SizedBox(height: 8.h),
+                            TextField(
+                              controller: amountCtrl,
+                              keyboardType: const TextInputType.numberWithOptions(
+                                decimal: true,
+                              ),
+                              inputFormatters: [
+                                FilteringTextInputFormatter.allow(
+                                  RegExp(r'^\d*\.?\d{0,2}'),
+                                ),
+                              ],
+                              onChanged: (_) => updateSheet(() {}),
+                              style: AppTextStyles.bodyText.copyWith(
+                                fontSize: 14.sp,
+                                color: AppColors.textPrimary,
+                              ),
+                              decoration: InputDecoration(
+                                isDense: true,
+                                prefixText: '\$ ',
+                                errorText: amountError,
+                                errorMaxLines: 2,
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 14.w,
+                                  vertical: 12.h,
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10.r),
+                                  borderSide:
+                                      BorderSide(color: AppColors.border),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10.r),
+                                  borderSide:
+                                      BorderSide(color: AppColors.primary),
+                                ),
+                                errorBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10.r),
+                                  borderSide:
+                                      BorderSide(color: AppColors.error),
+                                ),
+                                focusedErrorBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10.r),
+                                  borderSide:
+                                      BorderSide(color: AppColors.error),
+                                ),
+                              ),
+                            ),
+                            SizedBox(height: 4.h),
+                            Text(
+                              '${TranslationUtils.tr('ibm_available')}: \$${available.toStringAsFixed(2)}',
+                              style: hintStyle,
+                            ),
+                          ],
+
+                          // ── Add-on (only when the server enables it) ──
+                          if (addons.isAvailable) ...[
+                            SizedBox(height: 16.h),
+                            Text(
+                              TranslationUtils.tr('pmam_addon_label'),
+                              style: labelStyle,
+                            ),
+                            SizedBox(height: 8.h),
+                            AppSelectField<int>(
+                              value: selectedAddonId,
+                              hint: TranslationUtils.tr('pmam_addon_none'),
+                              sheetTitle: TranslationUtils.tr('pmam_addon_label'),
+                              backgroundColor: AppColors.card,
+                              valueEquals: (a, b) => a == b,
+                              options: [
+                                AppSelectOption<int>(
+                                  value: 0,
+                                  title: TranslationUtils.tr('pmam_addon_none'),
+                                ),
+                                ...addons.options.map(
+                                  (o) => AppSelectOption<int>(
+                                    value: o.id,
+                                    title:
+                                        '${o.name} — \$${o.feeInUsd.toStringAsFixed(2)}',
+                                    subtitle: o.description.isEmpty
+                                        ? null
+                                        : o.description,
                                   ),
                                 ),
                               ],
+                              onChanged: (val) => updateSheet(() {
+                                selectedAddonId = val ?? 0;
+                                serverShortage = null;
+                              }),
                             ),
-                          ),
+                            SizedBox(height: 4.h),
+                            Text(
+                              TranslationUtils.trArgs('pmam_wallet_balance', {
+                                'amount':
+                                    addons.walletBalance.toStringAsFixed(2),
+                              }),
+                              style: hintStyle,
+                            ),
+                          ],
 
-                        // ── Full balance text ──
-                        if (selectedAccount != null) ...[
-                          SizedBox(height: 12.h),
-                          RichText(
-                            text: TextSpan(
-                              style: TextStyle(
-                                fontSize: 12.sp,
-                                color: AppColors.textGrey,
-                              ),
-                              children: [
-                                const TextSpan(
-                                  text: 'Full balance will be invested: ',
-                                ),
-                                TextSpan(
-                                  text: '\$${availBalance.toStringAsFixed(2)}',
-                                  style: TextStyle(
+                          // ── Wallet shortage (local check or server 422) ──
+                          if (shortage > 0) ...[
+                            SizedBox(height: 10.h),
+                            _sheetNotice(
+                              TranslationUtils.trArgs('pmam_wallet_shortage', {
+                                'amount': shortage.toStringAsFixed(2),
+                              }),
+                              AppColors.error,
+                              action: TextButton(
+                                onPressed: () {
+                                  Navigator.pop(ctx);
+                                  Get.toNamed(AppPages.WALLET);
+                                },
+                                child: Text(
+                                  TranslationUtils.tr('pmam_deposit_to_wallet'),
+                                  style: AppTextStyles.bodyText.copyWith(
+                                    fontSize: 12.sp,
                                     fontWeight: FontWeight.w700,
-                                    color: AppColors.textPrimary,
+                                    color: AppColors.primary,
                                   ),
                                 ),
-                              ],
+                              ),
                             ),
-                          ),
-                        ],
-                        SizedBox(height: 20.h),
+                          ],
+                          SizedBox(height: 20.h),
 
-                        // ── Summary card ──
-                        if (selectedAccount != null)
-                          Container(
-                            width: double.infinity,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(10.r),
-                              border: Border.all(color: AppColors.border),
+                          // ── Summary card ──
+                          if (selectedAccount != null)
+                            Container(
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(10.r),
+                                border: Border.all(color: AppColors.border),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _summaryRow(
+                                    TranslationUtils.tr('pmam_plan_label'),
+                                    planName,
+                                    isFirst: true,
+                                  ),
+                                  _summaryDivider(),
+                                  _summaryRow(
+                                    TranslationUtils.tr('general_commission'),
+                                    '${commission.toStringAsFixed(2)}%',
+                                  ),
+                                  _summaryDivider(),
+                                  _summaryRow(
+                                    TranslationUtils.tr(
+                                        'pmam_investment_amount'),
+                                    '\$${amount.toStringAsFixed(2)}',
+                                    isLast: addon == null,
+                                  ),
+                                  if (addon != null) ...[
+                                    _summaryDivider(),
+                                    _summaryRow(
+                                      TranslationUtils.tr('pmam_addon_label'),
+                                      '${addon.name} — \$${addon.feeInUsd.toStringAsFixed(2)}',
+                                      isLast: true,
+                                    ),
+                                  ],
+                                ],
+                              ),
                             ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _summaryRow('Plan', planName, isFirst: true),
-                                _summaryDivider(),
-                                _summaryRow(
-                                  'Commission',
-                                  '${commission.toStringAsFixed(2)}%',
-                                ),
-                                _summaryDivider(),
-                                _summaryRow(
-                                  'Min. Investment',
-                                  '\$${minInvest.toStringAsFixed(2)}',
-                                ),
-                                _summaryDivider(),
-                                _summaryRow(
-                                  'Investment Amount',
-                                  '\$${availBalance.toStringAsFixed(2)}',
-                                  valueColor: AppColors.textPrimary,
-                                  isLast: true,
-                                ),
-                              ],
-                            ),
-                          ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
 
@@ -522,8 +826,8 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                                 padding: EdgeInsets.symmetric(vertical: 13.h),
                               ),
                               child: Text(
-                                'Cancel',
-                                style: TextStyle(
+                                TranslationUtils.tr('account_management_cancel'),
+                                style: AppTextStyles.bodyText.copyWith(
                                   color: AppColors.textPrimary,
                                   fontSize: 14.sp,
                                   fontWeight: FontWeight.w600,
@@ -535,21 +839,7 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                           Expanded(
                             flex: 2,
                             child: ElevatedButton(
-                              onPressed: canInvest
-                                  ? () {
-                                      final curPlanId =
-                                          int.tryParse(
-                                            sheetPlan!['id'].toString(),
-                                          ) ??
-                                          0;
-                                      Navigator.pop(ctx);
-                                      _ctrl.joinPlan(
-                                        selectedAccount!['id'],
-                                        curPlanId,
-                                        availBalance,
-                                      );
-                                    }
-                                  : null,
+                              onPressed: canInvest ? submit : null,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.textPrimary,
                                 disabledBackgroundColor: AppColors.textPrimary
@@ -560,16 +850,25 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                                 padding: EdgeInsets.symmetric(vertical: 13.h),
                                 elevation: 0,
                               ),
-                              child: Text(
-                                'Confirm Investment',
-                                style: TextStyle(
-                                  color: AppColors.isDarkMode
-                                      ? AppColors.pureBlack
-                                      : AppColors.onColoredBackground,
-                                  fontSize: 14.sp,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
+                              child: submitting
+                                  ? SizedBox(
+                                      height: 18.h,
+                                      child: CommonLoadingWidget(
+                                        size: 18,
+                                        color: AppColors.card,
+                                      ),
+                                    )
+                                  : Text(
+                                      TranslationUtils.tr(
+                                          'pmam_fund_manager_view_confirm_investment'),
+                                      style: AppTextStyles.bodyText.copyWith(
+                                        color: AppColors.isDarkMode
+                                            ? AppColors.pureBlack
+                                            : AppColors.onColoredBackground,
+                                        fontSize: 14.sp,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
                             ),
                           ),
                         ],
@@ -581,6 +880,35 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
             ),
           );
         },
+        ),
+      ),
+    ).whenComplete(() => sheetOpen = false);
+  }
+
+  /// Small bordered message used inside the Invest drawer.
+  Widget _sheetNotice(String text, Color color, {Widget? action}) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(10.r),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            text,
+            style: AppTextStyles.bodyText.copyWith(
+              fontSize: 12.sp,
+              color: color,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          if (action != null)
+            Align(alignment: AlignmentDirectional.centerEnd, child: action),
+        ],
       ),
     );
   }
@@ -599,12 +927,12 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
         children: [
           Text(
             label,
-            style: TextStyle(fontSize: 11.sp, color: AppColors.textGrey),
+            style: AppTextStyles.bodyText.copyWith(fontSize: 11.sp, color: AppColors.textGrey),
           ),
           SizedBox(height: 4.h),
           Text(
             value,
-            style: TextStyle(
+            style: AppTextStyles.bodyText.copyWith(
               fontSize: 14.sp,
               fontWeight: FontWeight.w700,
               color: valueColor ?? AppColors.textPrimary,
@@ -634,8 +962,8 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
           iconHeight: 30.h,
         ),
         title: Text(
-          'Fund Manager',
-          style: TextStyle(
+          TranslationUtils.tr('pmam_fund_manager_view_fund_manager'),
+          style: AppTextStyles.bodyText.copyWith(
             color: AppColors.textPrimary,
             fontSize: 16.sp,
             fontWeight: FontWeight.w700,
@@ -643,21 +971,25 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
         ),
       ),
       body: _loadingProfile
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(child: CircularProgressIndicator())
           : _profile.isEmpty
           ? _buildEmpty()
           : RefreshIndicator(
               onRefresh: _loadProfile,
               child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 32.h),
+                padding: EdgeInsets.fromLTRB(12.w, 12.h, 12.w, 24.h),
                 children: [
                   _buildTopCard(),
-                  SizedBox(height: 16.h),
+                  if (_planError.isNotEmpty) ...[
+                    SizedBox(height: 10.h),
+                    _buildPlanErrorBanner(),
+                  ],
+                  SizedBox(height: 10.h),
                   _buildPerformanceChart(),
-                  SizedBox(height: 16.h),
+                  SizedBox(height: 10.h),
                   _buildOpenPositionsSection(),
-                  SizedBox(height: 16.h),
+                  SizedBox(height: 10.h),
                   _buildTradeHistory(),
                 ],
               ),
@@ -679,21 +1011,23 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
 
     double commission = 0;
     double minInv = 0;
-    String risk = 'Risk 1';
+    String risk = TranslationUtils.tr('pmam_risk_1_title');
     double drawdown = 0;
     String description = '';
 
     if (_selectedPlan != null) {
       commission = _num(_selectedPlan!['commission_percentage']);
       minInv = _num(_selectedPlan!['minimum_investment']);
-      risk = (_selectedPlan!['risk_information'] ?? 'Risk 1').toString();
+      risk = (_selectedPlan!['risk_information'] ??
+              TranslationUtils.tr('pmam_risk_1_title'))
+          .toString();
       description = (_selectedPlan!['strategy_description'] ?? '').toString();
       if (_selectedPlan!['performance'] is Map) {
         drawdown = _num(_selectedPlan!['performance']['max_drawdown']);
       }
     }
 
-    final hasInvestment = _profile['is_enrolled'] == true;
+    final hasInvestment = _hasInvestment;
 
     return Container(
       decoration: BoxDecoration(
@@ -705,61 +1039,75 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: EdgeInsets.all(16.w),
+            padding: EdgeInsets.all(12.w),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        CircleAvatar(
-                          radius: 26.r,
-                          backgroundColor: AppColors.chipSurface,
-                          child: Text(
-                            _initials,
-                            style: TextStyle(
-                              color: AppColors.textPrimary,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18.sp,
+                    SizedBox(
+                      width: 50.w,
+                      height: 50.h,
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          PositionedDirectional(
+                            start: 3.w,
+                            top: 1.h,
+                            child: CircleAvatar(
+                              radius: 22.r,
+                              backgroundColor: AppColors.chipSurface,
+                              child: Text(
+                                _initials,
+                                style: AppTextStyles.bodyText.copyWith(
+                                  color: AppColors.textPrimary,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16.sp,
+                                ),
+                              ),
                             ),
                           ),
-                        ),
-                        Positioned(
-                          bottom: -2,
-                          right: -2,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: AppColors.onColoredBackground,
-                            ),
-                            padding: const EdgeInsets.all(2),
-                            child: Icon(
-                              Icons.check_circle,
-                              size: 16.sp,
-                              color: AppColors.textPrimary,
+                          Positioned(
+                            right: 0,
+                            bottom: 0,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: AppColors.card,
+                              ),
+                              padding: EdgeInsets.all(1),
+                              child: Icon(
+                                Icons.check_circle,
+                                size: 14.sp,
+                                color: const Color(0xFF10B981),
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                    SizedBox(width: 12.w),
+                    SizedBox(width: 10.w),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
                             name,
-                            style: TextStyle(
-                              fontSize: 16.sp,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTextStyles.bodyText.copyWith(
+                              fontSize: 14.sp,
                               fontWeight: FontWeight.w800,
                               color: AppColors.textPrimary,
                             ),
                           ),
                           SizedBox(height: 4.h),
-                          Row(
+                          Wrap(
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            spacing: 6.w,
+                            runSpacing: 2.h,
                             children: [
                               Container(
                                 padding: EdgeInsets.symmetric(
@@ -771,24 +1119,26 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Text(
-                                  'FUND MANAGER',
-                                  style: TextStyle(
+                                  TranslationUtils.tr('pmam_fund_manager_caps'),
+                                  style: AppTextStyles.bodyText.copyWith(
                                     fontSize: 9.sp,
                                     fontWeight: FontWeight.w700,
                                     color: AppColors.textPrimary,
                                   ),
                                 ),
                               ),
-                              SizedBox(width: 8.w),
-                              Expanded(
-                                child: Text(
-                                  '• Member since $since',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontSize: 10.sp,
-                                    color: AppColors.textGrey,
-                                  ),
+                              Text(
+                                since.isNotEmpty
+                                    ? TranslationUtils.trArgs(
+                                        'pmam_member_since', {'date': since})
+                                    : TranslationUtils.tr(
+                                        'pmam_verified_manager'),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: AppTextStyles.bodyText.copyWith(
+                                  fontSize: 10.sp,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.textGrey,
                                 ),
                               ),
                             ],
@@ -796,28 +1146,31 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                         ],
                       ),
                     ),
+                    SizedBox(width: 8.w),
                     Container(
                       padding: EdgeInsets.symmetric(
-                        horizontal: 8.w,
-                        vertical: 4.h,
+                        horizontal: 7.w,
+                        vertical: 3.h,
                       ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFFEF3C7),
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
                             Icons.shield,
-                            size: 12.sp,
+                            size: 11.sp,
                             color: const Color(0xFFD97706),
                           ),
-                          SizedBox(width: 4.w),
+                          SizedBox(width: 3.w),
                           Text(
-                            risk,
-                            style: TextStyle(
-                              fontSize: 10.sp,
+                            risk.isNotEmpty
+                                ? risk
+                                : TranslationUtils.tr('pmam_moderate_risk'),
+                            style: AppTextStyles.bodyText.copyWith(
+                              fontSize: 9.sp,
                               fontWeight: FontWeight.bold,
                               color: const Color(0xFFD97706),
                             ),
@@ -827,7 +1180,7 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                     ),
                   ],
                 ),
-                SizedBox(height: 16.h),
+                SizedBox(height: 10.h),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
@@ -853,8 +1206,11 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
                     child: Text(
-                      hasInvestment ? 'My Investment' : 'INVEST NOW',
-                      style: TextStyle(
+                      hasInvestment
+                          ? TranslationUtils.tr('pmam_my_investment')
+                          : TranslationUtils.tr(
+                              'pmam_manager_detail_screen_invest_now'),
+                      style: AppTextStyles.bodyText.copyWith(
                         color: AppColors.isDarkMode
                             ? AppColors.pureBlack
                             : AppColors.onColoredBackground,
@@ -864,13 +1220,13 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                     ),
                   ),
                 ),
-                SizedBox(height: 4.h),
+                SizedBox(height: 2.h),
                 Align(
-                  alignment: Alignment.centerRight,
+                  alignment: AlignmentDirectional.centerEnd,
                   child: Text(
-                    'Min. Investment: \$${minInv.toStringAsFixed(0)}',
-                    style: TextStyle(
-                      fontSize: 10.sp,
+                    '${TranslationUtils.tr('pmam_manager_detail_screen_min_investment')} \$${minInv.toStringAsFixed(0)}',
+                    style: AppTextStyles.bodyText.copyWith(
+                      fontSize: 9.sp,
                       color: AppColors.textGrey,
                     ),
                   ),
@@ -884,7 +1240,7 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
             child: Row(
               children: [
                 _buildTopMetric(
-                  'GAIN',
+                  TranslationUtils.tr('pmam_gain_caps'),
                   '${profit.toStringAsFixed(1)}%',
                   profit >= 0
                       ? const Color(0xFF10B981)
@@ -892,37 +1248,37 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                 ),
                 _buildMetricDivider(),
                 _buildTopMetric(
-                  'TOTAL P&L',
+                  TranslationUtils.tr('pmam_total_pnl_caps'),
                   _money(pnl),
                   pnl >= 0 ? const Color(0xFF10B981) : const Color(0xFFEF4444),
                 ),
                 _buildMetricDivider(),
                 _buildTopMetric(
-                  'TOTAL AUM',
+                  TranslationUtils.tr('pmam_total_aum_caps'),
                   _money(aum),
                   AppColors.textPrimary,
                 ),
                 _buildMetricDivider(),
                 _buildTopMetric(
-                  'INVESTORS',
+                  TranslationUtils.tr('pmam_investors_caps'),
                   '$investors',
                   AppColors.textPrimary,
                 ),
                 _buildMetricDivider(),
                 _buildTopMetric(
-                  'COMMISSION',
+                  TranslationUtils.tr('pmam_commission_caps'),
                   '${commission.toStringAsFixed(2)}%',
                   AppColors.textPrimary,
                 ),
                 _buildMetricDivider(),
                 _buildTopMetric(
-                  'FLOATING PROFIT',
+                  TranslationUtils.tr('trader_details_screen_floating_profit'),
                   '\$0',
                   const Color(0xFF10B981),
                 ),
                 _buildMetricDivider(),
                 _buildTopMetric(
-                  'MAX DRAWDOWN',
+                  TranslationUtils.tr('pmam_max_drawdown_caps'),
                   '-${drawdown.toStringAsFixed(2)}%',
                   const Color(0xFFEF4444),
                 ),
@@ -932,24 +1288,28 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
           if (description.isNotEmpty) ...[
             const Divider(height: 1, color: Color(0xFFE5E7EB)),
             Padding(
-              padding: EdgeInsets.all(16.w),
+              padding: EdgeInsets.all(12.w),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     'DESCRIPTION',
-                    style: TextStyle(
+                    style: AppTextStyles.bodyText.copyWith(
                       fontSize: 10.sp,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textGrey,
                       letterSpacing: 0.5,
                     ),
                   ),
-                  SizedBox(height: 4.h),
+                  SizedBox(height: 8.h),
                   Text(
                     description,
-                    style: TextStyle(
-                      fontSize: 12.sp,
+                    maxLines: 4,
+                    overflow: TextOverflow.ellipsis,
+                    softWrap: true,
+                    style: AppTextStyles.bodyText.copyWith(
+                      fontSize: 13.sp,
+                      height: 1.4,
                       color: AppColors.textPrimary,
                     ),
                   ),
@@ -964,23 +1324,24 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
 
   Widget _buildTopMetric(String label, String value, Color valueColor) {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Text(
             label,
-            style: TextStyle(
-              fontSize: 10.sp,
+            style: AppTextStyles.bodyText.copyWith(
+              fontSize: 9.sp,
               fontWeight: FontWeight.w700,
               color: AppColors.textGrey,
               letterSpacing: 0.5,
             ),
           ),
-          SizedBox(height: 6.h),
+          SizedBox(height: 2.h),
           Text(
             value,
-            style: TextStyle(
-              fontSize: 14.sp,
+            style: AppTextStyles.bodyText.copyWith(
+              fontSize: 13.sp,
               fontWeight: FontWeight.w800,
               color: valueColor,
             ),
@@ -994,6 +1355,54 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
     return Container(width: 1, height: 30.h, color: AppColors.border);
   }
 
+  static const List<String> _chartRanges = ['1W', '1M', '3M', '6M', '1Y', 'All'];
+
+  /// Cumulative closed-trade P&L inside the selected range. Built from
+  /// `managers/{code}/trades` because `managers/{code}` has no time series.
+  /// x = close time in epoch ms, y = running P&L (starts at 0 at range start).
+  List<FlSpot> _buildPnlSpots() {
+    final closedTrades = <(DateTime, double)>[];
+    for (final trade in _trades) {
+      final closedAt =
+          DateTime.tryParse((trade['close_time'] ?? '').toString());
+      if (closedAt == null) continue;
+      closedTrades.add((closedAt, _num(trade['profit'])));
+    }
+    if (closedTrades.isEmpty) return [];
+    closedTrades.sort((a, b) => a.$1.compareTo(b.$1));
+
+    final rangeDays = switch (_chartRange) {
+      '1W' => 7,
+      '1M' => 30,
+      '3M' => 90,
+      '6M' => 180,
+      '1Y' => 365,
+      _ => null,
+    };
+    final rangeStart = rangeDays == null
+        ? closedTrades.first.$1
+        : DateTime.now().subtract(Duration(days: rangeDays));
+    final inRange = closedTrades.where((t) => !t.$1.isBefore(rangeStart));
+    if (inRange.isEmpty) return [];
+
+    var cumulativePnl = 0.0;
+    final spots = [FlSpot(rangeStart.millisecondsSinceEpoch.toDouble(), 0)];
+    for (final (closedAt, profit) in inRange) {
+      cumulativePnl += profit;
+      spots.add(
+        FlSpot(closedAt.millisecondsSinceEpoch.toDouble(), cumulativePnl),
+      );
+    }
+    return spots;
+  }
+
+  String _chartDateLabel(double epochMs) {
+    final date = DateTime.fromMillisecondsSinceEpoch(epochMs.toInt());
+    final month = date.month.toString().padLeft(2, '0');
+    final day = date.day.toString().padLeft(2, '0');
+    return '$month-$day';
+  }
+
   Widget _buildPerformanceChart() {
     return Container(
       decoration: BoxDecoration(
@@ -1001,7 +1410,7 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.border),
       ),
-      padding: EdgeInsets.all(16.w),
+      padding: EdgeInsets.all(12.w),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1009,9 +1418,9 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Performance',
-                style: TextStyle(
-                  fontSize: 14.sp,
+                TranslationUtils.tr('portfolio_performance'),
+                style: AppTextStyles.bodyText.copyWith(
+                  fontSize: 13.sp,
                   fontWeight: FontWeight.w800,
                   color: AppColors.textPrimary,
                 ),
@@ -1019,30 +1428,34 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
               Flexible(
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
-                  children: ['1W', '1M', '3M', '6M', '1Y', 'All'].map((e) {
-                    final isSelected = e == '1M';
-                    return Container(
-                      margin: EdgeInsets.only(left: 4.w),
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 8.w,
-                        vertical: 4.h,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? AppColors.textPrimary
-                            : AppColors.chipSurface,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        e,
-                        style: TextStyle(
-                          fontSize: 10.sp,
-                          fontWeight: FontWeight.bold,
+                  children: _chartRanges.map((range) {
+                    final isSelected = range == _chartRange;
+                    return GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => setState(() => _chartRange = range),
+                      child: Container(
+                        margin: EdgeInsetsDirectional.only(start: 3.w),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 7.w,
+                          vertical: 3.h,
+                        ),
+                        decoration: BoxDecoration(
                           color: isSelected
-                              ? AppColors.isDarkMode
-                                    ? AppColors.pureBlack
-                                    : Colors.white
-                              : AppColors.textGrey,
+                              ? AppColors.textPrimary
+                              : AppColors.chipSurface,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          range,
+                          style: AppTextStyles.bodyText.copyWith(
+                            fontSize: 9.sp,
+                            fontWeight: FontWeight.bold,
+                            color: isSelected
+                                ? AppColors.isDarkMode
+                                      ? AppColors.pureBlack
+                                      : Colors.white
+                                : AppColors.textGrey,
+                          ),
                         ),
                       ),
                     );
@@ -1051,94 +1464,113 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
               ),
             ],
           ),
-          SizedBox(height: 24.h),
-          SizedBox(
-            height: 200.h,
-            child: LineChart(
-              LineChartData(
-                gridData: FlGridData(
-                  show: true,
-                  drawVerticalLine: false,
-                  horizontalInterval: 100,
-                  getDrawingHorizontalLine: (value) {
-                    return FlLine(color: AppColors.chipSurface, strokeWidth: 1);
-                  },
-                ),
-                titlesData: FlTitlesData(
-                  show: true,
-                  rightTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  topTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 22,
-                      interval: 1,
-                      getTitlesWidget: (value, meta) {
-                        if (value == 0) return _bottomTitle('Start');
-                        if (value == 3) return _bottomTitle('2026-04-10');
-                        if (value == 6) return _bottomTitle('2026-04-13');
-                        if (value == 9) return _bottomTitle('2026-04-16');
-                        return const SizedBox.shrink();
-                      },
-                    ),
-                  ),
-                  leftTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      interval: 100,
-                      reservedSize: 30,
-                      getTitlesWidget: (value, meta) {
-                        return Text(
-                          value == 0 ? '\$0' : '\$${value.toInt()}',
-                          style: TextStyle(
-                            color: AppColors.textGreyLight,
-                            fontSize: 9.sp,
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-                borderData: FlBorderData(show: false),
-                minX: 0,
-                maxX: 10,
-                minY: -100,
-                maxY: 600,
-                lineBarsData: [
-                  LineChartBarData(
-                    spots: const [
-                      FlSpot(0, 0),
-                      FlSpot(1, 150),
-                      FlSpot(2, 300),
-                      FlSpot(3, 450),
-                      FlSpot(4, 550),
-                      FlSpot(4.5, 480),
-                      FlSpot(4.8, 500),
-                      FlSpot(5, 100),
-                      FlSpot(5.5, 120),
-                      FlSpot(6, 40),
-                      FlSpot(7, 40),
-                      FlSpot(7.5, 200),
-                      FlSpot(8, 200),
-                      FlSpot(9, 80),
-                      FlSpot(10, 80),
-                    ],
-                    isCurved: true,
-                    color: AppColors.textPrimary,
-                    barWidth: 2,
-                    isStrokeCapRound: true,
-                    dotData: const FlDotData(show: false),
-                    belowBarData: BarAreaData(
-                      show: true,
-                      color: AppColors.textPrimary.withValues(alpha: 0.05),
-                    ),
-                  ),
-                ],
+          SizedBox(height: 12.h),
+          SizedBox(height: 180.h, child: _buildPerformanceChartBody()),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPerformanceChartBody() {
+    if (_loadingTrades) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    final spots = _buildPnlSpots();
+    if (spots.length < 2) {
+      return Center(
+        child: Text(
+          TranslationUtils.tr(
+            'master_dashboard_overview_tab_no_performance_data_for_this_range',
+          ),
+          style: AppTextStyles.bodyText.copyWith(
+            fontSize: 11.sp,
+            color: AppColors.textGrey,
+          ),
+        ),
+      );
+    }
+
+    final minX = spots.first.x;
+    var maxX = spots.last.x;
+    // A single trade closing at the range start would give a zero-width axis.
+    if (maxX - minX < Duration.millisecondsPerDay) {
+      maxX = minX + Duration.millisecondsPerDay;
+    }
+
+    var minY = 0.0;
+    var maxY = 0.0;
+    for (final spot in spots) {
+      if (spot.y < minY) minY = spot.y;
+      if (spot.y > maxY) maxY = spot.y;
+    }
+    final ySpan = (maxY - minY) == 0 ? 1.0 : maxY - minY;
+    minY -= ySpan * 0.1;
+    maxY += ySpan * 0.1;
+    final yInterval = (maxY - minY) / 4;
+    final xInterval = (maxX - minX) / 3;
+
+    return LineChart(
+      LineChartData(
+        minX: minX,
+        maxX: maxX,
+        minY: minY,
+        maxY: maxY,
+        gridData: FlGridData(
+          show: true,
+          drawVerticalLine: false,
+          horizontalInterval: yInterval,
+          getDrawingHorizontalLine: (value) {
+            return FlLine(color: AppColors.chipSurface, strokeWidth: 1);
+          },
+        ),
+        titlesData: FlTitlesData(
+          show: true,
+          rightTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          topTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 22,
+              interval: xInterval,
+              getTitlesWidget: (value, meta) => _bottomTitle(
+                value == minX
+                    ? TranslationUtils.tr('transaction_history_start')
+                    : _chartDateLabel(value),
               ),
+            ),
+          ),
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              interval: yInterval,
+              reservedSize: 44,
+              getTitlesWidget: (value, meta) {
+                return Text(
+                  _money(value),
+                  style: AppTextStyles.bodyText.copyWith(
+                    color: AppColors.textGreyLight,
+                    fontSize: 9.sp,
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+        borderData: FlBorderData(show: false),
+        lineBarsData: [
+          LineChartBarData(
+            spots: spots,
+            color: AppColors.textPrimary,
+            barWidth: 2,
+            isStrokeCapRound: true,
+            dotData: const FlDotData(show: false),
+            belowBarData: BarAreaData(
+              show: true,
+              color: AppColors.textPrimary.withValues(alpha: 0.05),
             ),
           ),
         ],
@@ -1148,10 +1580,10 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
 
   Widget _bottomTitle(String text) {
     return Padding(
-      padding: const EdgeInsets.only(top: 8.0),
+      padding: EdgeInsets.only(top: 8.0),
       child: Text(
         text,
-        style: TextStyle(color: AppColors.textGreyLight, fontSize: 9.sp),
+        style: AppTextStyles.bodyText.copyWith(color: AppColors.textGreyLight, fontSize: 9.sp),
       ),
     );
   }
@@ -1167,28 +1599,29 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: EdgeInsets.all(16.w),
+            padding: EdgeInsets.fromLTRB(12.w, 10.h, 12.w, 8.h),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Open Positions',
-                  style: TextStyle(
-                    fontSize: 14.sp,
+                  TranslationUtils.tr('dashboard_open_positions'),
+                  style: AppTextStyles.bodyText.copyWith(
+                    fontSize: 13.sp,
                     fontWeight: FontWeight.w800,
                     color: AppColors.textPrimary,
                   ),
                 ),
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                  padding: EdgeInsets.symmetric(horizontal: 7.w, vertical: 3.h),
                   decoration: BoxDecoration(
                     color: const Color(0xFFECFDF5),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
-                    '${_openPositions.length} live',
-                    style: TextStyle(
-                      fontSize: 10.sp,
+                    TranslationUtils.trArgs('pmam_count_live',
+                        {'count': '${_openPositions.length}'}),
+                    style: AppTextStyles.bodyText.copyWith(
+                      fontSize: 9.sp,
                       fontWeight: FontWeight.bold,
                       color: const Color(0xFF10B981),
                     ),
@@ -1200,29 +1633,43 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
           const Divider(height: 1, color: Color(0xFFE5E7EB)),
           if (_loadingOpen)
             Padding(
-              padding: EdgeInsets.all(24.h),
-              child: const Center(child: CircularProgressIndicator()),
+              padding: EdgeInsets.all(16.h),
+              child: Center(child: CircularProgressIndicator()),
             )
           else if (_openPositions.isEmpty)
             Padding(
-              padding: EdgeInsets.all(24.h),
+              padding: EdgeInsets.all(16.h),
               child: Center(
                 child: Text(
-                  'No open positions',
-                  style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey),
+                  TranslationUtils.tr(
+                      'pmam_fund_manager_view_no_open_positions'),
+                  style: AppTextStyles.bodyText.copyWith(fontSize: 12.sp, color: AppColors.textGrey),
                 ),
               ),
             )
           else ...[
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
               child: Row(
                 children: [
-                  Expanded(flex: 3, child: _colHeader('Symbol')),
-                  Expanded(flex: 2, child: _colHeader('Type')),
-                  Expanded(flex: 3, child: _colHeader('Lot')),
-                  Expanded(flex: 4, child: _colHeader('Open Price')),
-                  Expanded(flex: 4, child: _colHeader('Open Time')),
+                  Expanded(
+                      flex: 3,
+                      child: _colHeader(
+                          TranslationUtils.tr('meta_watchlist_symbol'))),
+                  Expanded(
+                      flex: 2,
+                      child: _colHeader(TranslationUtils.tr('common_type'))),
+                  Expanded(
+                      flex: 3,
+                      child: _colHeader(
+                          TranslationUtils.tr('scratch_card_screen_lot'))),
+                  Expanded(
+                      flex: 4,
+                      child: _colHeader(
+                          TranslationUtils.tr('trading_order_open_price'))),
+                  Expanded(
+                      flex: 4,
+                      child: _colHeader(TranslationUtils.tr('open_time'))),
                 ],
               ),
             ),
@@ -1245,8 +1692,8 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                 final openTime = (p['open_time'] ?? '—').toString();
                 return Padding(
                   padding: EdgeInsets.symmetric(
-                    horizontal: 16.w,
-                    vertical: 10.h,
+                    horizontal: 12.w,
+                    vertical: 6.h,
                   ),
                   child: Row(
                     children: [
@@ -1254,7 +1701,7 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                         flex: 3,
                         child: Text(
                           symbol,
-                          style: TextStyle(
+                          style: AppTextStyles.bodyText.copyWith(
                             fontSize: 12.sp,
                             fontWeight: FontWeight.w700,
                             color: AppColors.textPrimary,
@@ -1278,7 +1725,7 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                           ),
                           child: Text(
                             isBuy ? 'BUY' : 'SELL',
-                            style: TextStyle(
+                            style: AppTextStyles.bodyText.copyWith(
                               fontSize: 9.sp,
                               fontWeight: FontWeight.w700,
                               color: isBuy
@@ -1291,8 +1738,10 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                       Expanded(
                         flex: 3,
                         child: Text(
-                          '${lot.toStringAsFixed(2)} lot',
-                          style: TextStyle(
+                          TranslationUtils.trArgs('pmam_lot_suffix', {
+                            'lots': lot.toStringAsFixed(2),
+                          }),
+                          style: AppTextStyles.bodyText.copyWith(
                             fontSize: 10.sp,
                             color: AppColors.textGrey,
                           ),
@@ -1302,7 +1751,7 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                         flex: 4,
                         child: Text(
                           openPrice,
-                          style: TextStyle(
+                          style: AppTextStyles.bodyText.copyWith(
                             fontSize: 10.sp,
                             color: AppColors.textPrimary,
                             fontWeight: FontWeight.w600,
@@ -1315,7 +1764,7 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                           openTime.length > 10
                               ? openTime.substring(0, 10)
                               : openTime,
-                          style: TextStyle(
+                          style: AppTextStyles.bodyText.copyWith(
                             fontSize: 10.sp,
                             color: AppColors.textGrey,
                           ),
@@ -1339,8 +1788,8 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                   padding: EdgeInsets.all(12.w),
                   alignment: Alignment.center,
                   child: Text(
-                    'View All',
-                    style: TextStyle(
+                    TranslationUtils.tr('pmam_fund_manager_view_view_all'),
+                    style: AppTextStyles.bodyText.copyWith(
                       fontSize: 12.sp,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textPrimary,
@@ -1366,28 +1815,29 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: EdgeInsets.all(16.w),
+            padding: EdgeInsets.fromLTRB(12.w, 10.h, 12.w, 8.h),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Trade History',
-                  style: TextStyle(
-                    fontSize: 14.sp,
+                  TranslationUtils.tr('my_clients_screen_trade_history'),
+                  style: AppTextStyles.bodyText.copyWith(
+                    fontSize: 13.sp,
                     fontWeight: FontWeight.w800,
                     color: AppColors.textPrimary,
                   ),
                 ),
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                  padding: EdgeInsets.symmetric(horizontal: 7.w, vertical: 3.h),
                   decoration: BoxDecoration(
                     color: AppColors.chipSurface,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
-                    '${_trades.length} trades',
-                    style: TextStyle(
-                      fontSize: 10.sp,
+                    TranslationUtils.trArgs(
+                        'pmam_count_trades', {'count': '${_trades.length}'}),
+                    style: AppTextStyles.bodyText.copyWith(
+                      fontSize: 9.sp,
                       fontWeight: FontWeight.bold,
                       color: AppColors.textGrey,
                     ),
@@ -1398,27 +1848,41 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
           ),
           const Divider(height: 1, color: Color(0xFFE5E7EB)),
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
             child: Row(
               children: [
-                Expanded(flex: 3, child: _colHeader('Symbol')),
-                Expanded(flex: 2, child: _colHeader('Type')),
-                Expanded(flex: 2, child: _colHeader('P&L')),
-                Expanded(flex: 3, child: _colHeader('Close Time')),
-                Expanded(flex: 2, child: _colHeader('Duration')),
+                Expanded(
+                    flex: 3,
+                    child:
+                        _colHeader(TranslationUtils.tr('meta_watchlist_symbol'))),
+                Expanded(
+                    flex: 2,
+                    child: _colHeader(TranslationUtils.tr('common_type'))),
+                Expanded(
+                    flex: 2, child: _colHeader(TranslationUtils.tr('pmam_pnl'))),
+                Expanded(
+                    flex: 3,
+                    child: _colHeader(TranslationUtils.tr(
+                        'pmam_investor_portal_screen_close_time'))),
+                Expanded(
+                    flex: 2,
+                    child: _colHeader(
+                        TranslationUtils.tr('bonus_screen_duration'))),
               ],
             ),
           ),
           const Divider(height: 1, color: Color(0xFFE5E7EB)),
           if (_loadingTrades)
             Padding(
-              padding: EdgeInsets.all(24.h),
-              child: const Center(child: CircularProgressIndicator()),
+              padding: EdgeInsets.all(16.h),
+              child: Center(child: CircularProgressIndicator()),
             )
           else if (_trades.isEmpty)
             Padding(
-              padding: EdgeInsets.all(24.h),
-              child: const Center(child: Text('No trades available')),
+              padding: EdgeInsets.all(16.h),
+              child: Center(
+                  child: Text(TranslationUtils.tr(
+                      'pmam_fund_manager_view_no_trades_available'))),
             )
           else
             ListView.separated(
@@ -1444,12 +1908,12 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
               },
               child: Container(
                 width: double.infinity,
-                padding: EdgeInsets.all(12.w),
+                padding: EdgeInsets.symmetric(vertical: 8.h),
                 alignment: Alignment.center,
                 child: Text(
-                  'View All',
-                  style: TextStyle(
-                    fontSize: 12.sp,
+                  TranslationUtils.tr('pmam_fund_manager_view_view_all'),
+                  style: AppTextStyles.bodyText.copyWith(
+                    fontSize: 11.sp,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textPrimary,
                   ),
@@ -1465,8 +1929,8 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
   Widget _colHeader(String text) {
     return Text(
       text,
-      style: TextStyle(
-        fontSize: 10.sp,
+      style: AppTextStyles.bodyText.copyWith(
+        fontSize: 9.sp,
         fontWeight: FontWeight.w600,
         color: AppColors.textGrey,
       ),
@@ -1501,14 +1965,14 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
     final isProfit = profit >= 0;
 
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 7.h),
       child: Row(
         children: [
           Expanded(
             flex: 3,
             child: Text(
               symbol,
-              style: TextStyle(
+              style: AppTextStyles.bodyText.copyWith(
                 fontSize: 12.sp,
                 fontWeight: FontWeight.w700,
                 color: AppColors.textPrimary,
@@ -1531,7 +1995,7 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
                   ),
                   child: Text(
                     isBuy ? 'BUY' : 'SELL',
-                    style: TextStyle(
+                    style: AppTextStyles.bodyText.copyWith(
                       fontSize: 9.sp,
                       fontWeight: FontWeight.w700,
                       color: isBuy
@@ -1549,7 +2013,7 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
               isProfit
                   ? '+\$${profit.toStringAsFixed(2)}'
                   : '-\$${profit.abs().toStringAsFixed(2)}',
-              style: TextStyle(
+              style: AppTextStyles.bodyText.copyWith(
                 fontSize: 12.sp,
                 fontWeight: FontWeight.w700,
                 color: isProfit
@@ -1562,14 +2026,53 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
             flex: 3,
             child: Text(
               closeTime.isNotEmpty ? closeTime : '-',
-              style: TextStyle(fontSize: 10.sp, color: AppColors.textGrey),
+              style: AppTextStyles.bodyText.copyWith(fontSize: 10.sp, color: AppColors.textGrey),
             ),
           ),
           Expanded(
             flex: 2,
             child: Text(
               duration,
-              style: TextStyle(fontSize: 10.sp, color: AppColors.textGrey),
+              style: AppTextStyles.bodyText.copyWith(fontSize: 10.sp, color: AppColors.textGrey),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPlanErrorBanner() {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+      decoration: BoxDecoration(
+        color: AppColors.error.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(10.r),
+        border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.error_outline, size: 16.sp, color: AppColors.error),
+          SizedBox(width: 8.w),
+          Expanded(
+            child: Text(
+              _planError,
+              style: AppTextStyles.bodyText.copyWith(
+                fontSize: 11.sp,
+                color: AppColors.error,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: _selectedPlan == null
+                ? null
+                : () => _loadPlanData(_selectedPlan!),
+            child: Text(
+              TranslationUtils.tr('common_retry'),
+              style: AppTextStyles.bodyText.copyWith(
+                fontSize: 12.sp,
+                fontWeight: FontWeight.w700,
+                color: AppColors.primary,
+              ),
             ),
           ),
         ],
@@ -1591,8 +2094,9 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
             ),
             SizedBox(height: 12.h),
             Text(
-              'Manager not found',
-              style: TextStyle(
+                  TranslationUtils.tr(
+                      'pmam_fund_manager_view_manager_not_found'),
+              style: AppTextStyles.bodyText.copyWith(
                 fontSize: 14.sp,
                 fontWeight: FontWeight.w700,
                 color: AppColors.textPrimary,
@@ -1601,11 +2105,29 @@ class _PmamFundManagerViewScreenState extends State<PmamFundManagerViewScreen> {
             SizedBox(height: 6.h),
             Text(
               _managerCode.isEmpty
-                  ? 'No manager id was provided.'
-                  : 'Unable to load profile for $_managerCode.',
+                      ? TranslationUtils.tr('pmam_no_manager_id_provided')
+                      : _profileError.isNotEmpty
+                          ? _profileError
+                          : TranslationUtils.trArgs('pmam_unable_to_load_profile',
+                              {'code': _managerCode}),
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey),
+              style: AppTextStyles.bodyText.copyWith(fontSize: 12.sp, color: AppColors.textGrey),
             ),
+            if (_managerCode.isNotEmpty) ...[
+              SizedBox(height: 12.h),
+              OutlinedButton.icon(
+                onPressed: _loadProfile,
+                icon: Icon(Icons.refresh, size: 16.sp, color: AppColors.primary),
+                label: Text(
+                  TranslationUtils.tr('common_retry'),
+                  style: AppTextStyles.bodyText.copyWith(
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),

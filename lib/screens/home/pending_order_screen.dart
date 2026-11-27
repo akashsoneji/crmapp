@@ -11,6 +11,7 @@ import 'package:crm_app/controllers/account_controller.dart';
 import 'package:crm_app/widgets/app_switch_tile.dart';
 import 'package:crm_app/widgets/app_svg_back_button.dart';
 import 'package:crm_app/widgets/chart_inapp_webview.dart';
+import 'package:crm_app/widgets/chart/app_tenax_chart.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
 import 'package:crm_app/utils/precision_helper.dart';
 import 'package:crm_app/models/order_types.dart';
@@ -19,6 +20,7 @@ import 'package:crm_app/routes/app_pages.dart';
 import 'package:crm_app/flavor_config.dart';
 import 'package:crm_app/services/symbol_details_cache_service.dart';
 import 'package:crm_app/models/mt5_account.dart';
+import 'package:crm_app/widgets/pending_order/pending_order_widgets_new.dart';
 import 'pending_order_content.dart';
 import 'dart:async';
 
@@ -27,7 +29,16 @@ class PendingOrderScreen extends StatefulWidget {
   final Function(int?)?
   onNavigateToTrade; // Optional tab parameter: null = Market (0), or specify tab index
 
-  const PendingOrderScreen({super.key, this.symbol, this.onNavigateToTrade});
+  /// Whether the screen is shown inside a modal bottom sheet (new design)
+  /// instead of as a pushed page.
+  final bool presentedAsSheet;
+
+  const PendingOrderScreen({
+    super.key,
+    this.symbol,
+    this.onNavigateToTrade,
+    this.presentedAsSheet = false,
+  });
 
   @override
   State<PendingOrderScreen> createState() => _PendingOrderScreenState();
@@ -67,7 +78,9 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
   late TextEditingController _openPriceController;
 
   // Chart toggle
-  bool showChart = false;
+  // The new-design sheet opens with the chart visible; the old page keeps it
+  // off until the user turns the switch on.
+  bool showChart = FlavorConfig.usesNewHomeDesign;
 
   // Selected symbol
   String selectedSymbol = 'EURUSD';
@@ -534,8 +547,202 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
   // Helper method to get symbol without .c suffix
   String get _displaySymbol => selectedSymbol.replaceFirst('.c', '');
 
+  /// Form content shared by the page and the bottom-sheet layouts.
+  Widget _buildPendingOrderContent({Widget? scrollHeader}) {
+    return PendingOrderContent(
+      scrollHeader: scrollHeader,
+      selectedPendingOrderType: _selectedPendingOrderType,
+      selectedOrderType: _selectedOrderType,
+      limitPrice: _limitPrice,
+      openPrice: _openPrice,
+      distance: _distance,
+      whenPriceIsEnabled: _whenPriceIsEnabled,
+      takeProfitEnabled: _takeProfitEnabled,
+      stopLossEnabled: _stopLossEnabled,
+      takeProfitPrice: _takeProfitPrice,
+      stopLossPrice: _stopLossPrice,
+      takeProfitController: _takeProfitController,
+      stopLossController: _stopLossController,
+      limitPriceController: _limitPriceController,
+      openPriceController: _openPriceController,
+      onPlaceOrder: _placePendingOrder,
+      selectedSymbol: selectedSymbol,
+      isLoading: _isPlacingOrder,
+      onVolumeChanged: (newVolume) {
+        setState(() {
+          volume = newVolume;
+        });
+      },
+    );
+  }
+
+  /// New design (tenaxnew): full-height sheet with a grab handle and a fixed
+  /// header; the Bid/Ask bar, collapsible chart and form scroll together, and
+  /// the form owns the sticky place button. Closing pops the sheet route, so
+  /// system back / swipe down / X all behave the same.
+  Widget _buildSheetLayout(BuildContext context) {
+    final isSheet = widget.presentedAsSheet;
+    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
+
+    return Material(
+      color: AppColors.homeCardBackground,
+      borderRadius:
+          isSheet
+              ? BorderRadius.vertical(top: Radius.circular(24.r))
+              : BorderRadius.zero,
+      clipBehavior: Clip.antiAlias,
+      child: SafeArea(
+        top: !isSheet,
+        child: Padding(
+          // The sheet route does not resize for the keyboard, so lift the
+          // whole layout; the sticky place button stays above the keyboard.
+          padding: EdgeInsets.only(bottom: bottomInset),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SizedBox(height: 6.h),
+              Center(
+                child: ExcludeSemantics(
+                  child: Container(
+                    width: 36.w,
+                    height: 4.h,
+                    decoration: BoxDecoration(
+                      color: AppColors.border,
+                      borderRadius: BorderRadius.circular(2.r),
+                    ),
+                  ),
+                ),
+              ),
+              _buildSheetHeader(context),
+              Expanded(
+                child: _buildPendingOrderContent(
+                  scrollHeader: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Obx(() {
+                        final bid = chartSocketController.getBidPrice() ?? 0.0;
+                        final ask = chartSocketController.getAskPrice() ?? 0.0;
+                        return PendingQuoteBarNew(
+                          bid: bid.toString(),
+                          ask: ask.toString(),
+                        );
+                      }),
+                      SizedBox(height: 12.h),
+                      _buildSheetChartCard(context),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSheetHeader(BuildContext context) {
+    return Padding(
+      padding: EdgeInsetsDirectional.fromSTEB(16.w, 4.h, 4.w, 6.h),
+      child: Row(
+        children: [
+          _buildFlagIcon(selectedSymbol, size: 18.h),
+          SizedBox(width: 8.w),
+          Expanded(
+            child: ValueListenableBuilder<String>(
+              valueListenable: _selectedOrderType,
+              builder: (context, orderType, child) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _displaySymbol,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.heading.copyWith(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    Text(
+                      'Pending order · $orderType',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.label.copyWith(
+                        fontSize: 11.sp,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.textGrey,
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+          IconButton(
+            tooltip: 'Close',
+            onPressed: () => Navigator.of(context).maybePop(),
+            icon: Icon(
+              Icons.close_rounded,
+              size: 22.r,
+              color: AppColors.textPrimary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// The same chart the chart screen shows, as a collapsible card: the bundled
+  /// Tenax chart on single-stream-socket flavors, the legacy remote page
+  /// otherwise.
+  Widget _buildSheetChartCard(BuildContext context) {
+    return PendingChartCardNew(
+      expanded: showChart,
+      chartHeight: MediaQuery.sizeOf(context).height * 0.26,
+      onToggle: () => setState(() => showChart = !showChart),
+      chart: showChart ? _buildSheetChart() : null,
+    );
+  }
+
+  Widget _buildSheetChart() {
+    final displaySymbol = _removeSymbolSuffixForDisplay(selectedSymbol);
+
+    // Read-only here, like the edit/close screens: the price is set through
+    // this sheet's own form.
+    if (AppTenaxChart.isSupported) {
+      return AppTenaxChart(
+        key: ValueKey(selectedSymbol),
+        symbol: displaySymbol,
+        allowOrderActions: false,
+      );
+    }
+
+    // LEGACY_CHART_START — remote /mobile-chart page for multi-socket flavors.
+    _resolveDatafeedSymbolIfNeeded();
+    return ChartInAppWebView(
+      key: ValueKey(
+        '$selectedSymbol|${accountController.activeMT5Account?.metaAccountNumber ?? ''}|${_datafeedSymbolForSelected.isNotEmpty ? _datafeedSymbolForSelected : selectedSymbol}',
+      ),
+      symbol:
+          _datafeedSymbolForSelected.isNotEmpty
+              ? _datafeedSymbolForSelected
+              : displaySymbol,
+      url: _buildChartUrlWithDatafeedSymbol(),
+    );
+    // LEGACY_CHART_END
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (FlavorConfig.usesNewHomeDesign) {
+      if (widget.presentedAsSheet) return _buildSheetLayout(context);
+      return Scaffold(
+        backgroundColor: AppColors.homeCardBackground,
+        body: _buildSheetLayout(context),
+      );
+    }
+
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       resizeToAvoidBottomInset: true,
@@ -620,30 +827,7 @@ class _PendingOrderScreenState extends State<PendingOrderScreen> {
                 Expanded(
                   child: SingleChildScrollView(
                     padding: EdgeInsets.all(16.w),
-                    child: PendingOrderContent(
-                      selectedPendingOrderType: _selectedPendingOrderType,
-                      selectedOrderType: _selectedOrderType,
-                      limitPrice: _limitPrice,
-                      openPrice: _openPrice,
-                      distance: _distance,
-                      whenPriceIsEnabled: _whenPriceIsEnabled,
-                      takeProfitEnabled: _takeProfitEnabled,
-                      stopLossEnabled: _stopLossEnabled,
-                      takeProfitPrice: _takeProfitPrice,
-                      stopLossPrice: _stopLossPrice,
-                      takeProfitController: _takeProfitController,
-                      stopLossController: _stopLossController,
-                      limitPriceController: _limitPriceController,
-                      openPriceController: _openPriceController,
-                      onPlaceOrder: _placePendingOrder,
-                      selectedSymbol: selectedSymbol,
-                      isLoading: _isPlacingOrder,
-                      onVolumeChanged: (newVolume) {
-                        setState(() {
-                          volume = newVolume;
-                        });
-                      },
-                    ),
+                    child: _buildPendingOrderContent(),
                   ),
                 ),
               ],

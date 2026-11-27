@@ -9,6 +9,7 @@ import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/screens/home/more/finance/internal_transfer_screen.dart';
 import 'package:crm_app/screens/home/more/finance/payment_methods_screen.dart';
+import 'package:crm_app/screens/finance_v2/finance_flow_switch.dart';
 import 'package:crm_app/controllers/wallet_controller.dart';
 import 'package:crm_app/utils/navigation_helper.dart';
 import '../../../../services/language_service.dart';
@@ -324,7 +325,12 @@ class _WalletScreenState extends State<WalletScreen> {
                   icon: Icons.add_circle_outline,
                   isPrimary: true,
                   onPressed: () {
-                    Get.to(() => PaymentMethodsScreen(accountNumber: ''));
+                    Get.to(
+                      () => FinanceFlowSwitch.deposit(
+                        accountNumber: '',
+                        legacy: () => PaymentMethodsScreen(accountNumber: ''),
+                      ),
+                    );
                   },
                 ),
               ),

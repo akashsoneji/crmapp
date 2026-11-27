@@ -17,5 +17,6 @@ class GoldenwolffxConfig extends BaseClientConfig {
         apiBaseUrl: 'https://portal.goldenwolffx.com/api/',
         websocketUrl: 'wss://portal.goldenwolffx.com/trade-engine',
         chartBaseUrl: 'https://portal.goldenwolffx.com',
+        useNewDepositWithdrawFlow: false,
       );
 }

@@ -15,6 +15,7 @@ import 'package:crm_app/controllers/trading_controller.dart';
 import 'package:crm_app/screens/home/more/finance/deposit_screen.dart';
 import 'package:crm_app/screens/home/more/finance/payment_methods_screen.dart';
 import 'package:crm_app/screens/home/more/finance/withdrawal_screen.dart';
+import 'package:crm_app/screens/finance_v2/finance_flow_switch.dart';
 
 import 'package:crm_app/services/api_service.dart';
 import 'package:crm_app/services/account_cache_service.dart';
@@ -558,14 +559,23 @@ class DashboardController extends GetxController {
     );
     // Get.to(() => DepositRealScreen(accountNumber: accountNumber));
     await Get.to(
-      () => PaymentMethodsScreen(accountNumber: accountNumber.toString()),
+      () => FinanceFlowSwitch.deposit(
+        accountNumber: accountNumber.toString(),
+        legacy: () =>
+            PaymentMethodsScreen(accountNumber: accountNumber.toString()),
+      ),
     );
     // Refresh MT5 accounts when returning from real deposit flow
     await refreshMT5Accounts();
   }
 
   void onWithdraw(String accountNumber) async {
-    await Get.to(() => WithdrawalScreen(accountNumber: accountNumber));
+    await Get.to(
+      () => FinanceFlowSwitch.withdrawal(
+        accountNumber: accountNumber,
+        legacy: () => WithdrawalScreen(accountNumber: accountNumber),
+      ),
+    );
     // Refresh MT5 accounts when returning from withdrawal
     await refreshMT5Accounts();
   }
@@ -651,6 +661,7 @@ class DashboardController extends GetxController {
     required String mainPassword,
     required String investorPassword,
     String? leverage,
+    bool termsAccepted = false,
   }) async {
     try {
       print('DashboardController: Creating MT5 account...');
@@ -676,6 +687,8 @@ class DashboardController extends GetxController {
           if (leverage != null && leverage.isNotEmpty) 'leverage': leverage,
         };
       }
+      // Only groups with terms enabled need it; others send nothing new.
+      if (termsAccepted) requestData['terms_accepted'] = true;
 
       print(
         'DashboardController: Making API call to ${ApiConstants.createMT5Account}',

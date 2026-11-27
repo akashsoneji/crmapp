@@ -138,6 +138,17 @@ class AppColors {
   static Color get iconBgSurface => surface;
   static Color get iconBgPrimary => primary.withValues(alpha: 0.12);
 
+  // ── Finance v2 (same values as white label) ───────────────────────────────
+  // Text field/input background — slightly lighter than card in dark mode.
+  static Color get textFieldBg =>
+      isDarkMode ? const Color(0xFF333333) : const Color(0xFFFFFFFF);
+
+  static Color get surfacePrimary =>
+      primary.withValues(alpha: isDarkMode ? 0.10 : 0.20);
+
+  static Color get onPrimary =>
+      primary.computeLuminance() > 0.5 ? pureBlack : pureWhite;
+
   // ── Trade & Win ────────────────────────────────────────────────────────────
   static const Color gold = Color(0xFFF2B92C);
   static const Color silver = Color(0xFFB87333);

@@ -25,6 +25,11 @@ class BaseClientConfig {
   final String websocketUrl;
   final String chartBaseUrl;
 
+  // Feature flags
+  /// Whether deposit / withdrawal open the new flow (finance v2) instead of
+  /// the legacy screens.
+  final bool useNewDepositWithdrawFlow;
+
   const BaseClientConfig({
     required this.brandName,
     required this.appTitle,
@@ -38,6 +43,7 @@ class BaseClientConfig {
     required this.apiBaseUrl,
     required this.websocketUrl,
     required this.chartBaseUrl,
+    this.useNewDepositWithdrawFlow = false,
   });
 
   /// Get the full asset path for a client asset

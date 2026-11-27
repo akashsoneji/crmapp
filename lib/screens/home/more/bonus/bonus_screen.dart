@@ -10,6 +10,7 @@ import 'package:crm_app/services/api_service.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
 import 'package:crm_app/controllers/dashboard_controller.dart';
 import 'package:crm_app/screens/home/more/finance/payment_methods_screen.dart';
+import 'package:crm_app/screens/finance_v2/finance_flow_switch.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MODELS
@@ -1211,8 +1212,12 @@ class BonusScreen extends StatelessWidget {
                 } catch (_) {}
 
                 Get.to(
-                  () =>
-                      PaymentMethodsScreen(accountNumber: primaryAccountNumber),
+                  () => FinanceFlowSwitch.deposit(
+                    accountNumber: primaryAccountNumber,
+                    legacy: () => PaymentMethodsScreen(
+                      accountNumber: primaryAccountNumber,
+                    ),
+                  ),
                   arguments: {
                     'from': 'bonus',
                     'accountNumber': primaryAccountNumber,
@@ -1859,8 +1864,12 @@ class BonusScreen extends StatelessWidget {
                 } catch (_) {}
 
                 Get.to(
-                  () =>
-                      PaymentMethodsScreen(accountNumber: primaryAccountNumber),
+                  () => FinanceFlowSwitch.deposit(
+                    accountNumber: primaryAccountNumber,
+                    legacy: () => PaymentMethodsScreen(
+                      accountNumber: primaryAccountNumber,
+                    ),
+                  ),
                   arguments: {
                     'from': 'bonus',
                     'accountNumber': primaryAccountNumber,

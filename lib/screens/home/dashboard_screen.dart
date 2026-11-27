@@ -1,5 +1,6 @@
 import 'package:crm_app/widgets/active_notices_banner.dart';
 import 'package:crm_app/widgets/brand_logo.dart';
+import 'package:crm_app/widgets/dashboard/dashboard_new_widgets.dart';
 import 'package:crm_app/widgets/home/gradient_app_bar.dart';
 import 'package:crm_app/widgets/rename_account_dialog.dart';
 import 'package:flutter/foundation.dart';
@@ -128,7 +129,9 @@ class DashboardScreen extends StatelessWidget {
               children: [
                 // Main Content
                 (controller.mt5Accounts.isEmpty)
-                    ? LayoutBuilder(
+                    ? FlavorConfig.usesNewHomeDesign
+                        ? _buildEmptyStateNew()
+                        : LayoutBuilder(
                       builder: (context, constraints) {
                         return SingleChildScrollView(
                           physics: AlwaysScrollableScrollPhysics(),
@@ -268,9 +271,9 @@ class DashboardScreen extends StatelessWidget {
                             true, // Add repaint boundaries for better performance
                         physics: AlwaysScrollableScrollPhysics(),
                         padding: EdgeInsets.only(
-                          left: 16,
-                          right: 16,
-                          top: 16,
+                          left: FlavorConfig.usesNewHomeDesign ? 12.w : 16,
+                          right: FlavorConfig.usesNewHomeDesign ? 12.w : 16,
+                          top: FlavorConfig.usesNewHomeDesign ? 12.h : 16,
                           // The new home design docks the tab bar, so no
                           // floating-nav clearance is needed.
                           bottom:
@@ -284,7 +287,10 @@ class DashboardScreen extends StatelessWidget {
                         itemBuilder: (context, index) {
                           final account = controller.mt5Accounts[index];
                           return Container(
-                            margin: EdgeInsets.only(bottom: 16),
+                            margin: EdgeInsets.only(
+                              bottom:
+                                  FlavorConfig.usesNewHomeDesign ? 10.h : 16,
+                            ),
                             child: _buildAccountCard(account),
                           );
                         },
@@ -338,8 +344,156 @@ class DashboardScreen extends StatelessWidget {
         account.metaAccountNumber,
       );
 
+      if (FlavorConfig.usesNewHomeDesign) {
+        return _buildAccountCardNew(account, accountInfo);
+      }
       return _buildAccountCardContent(account, accountInfo);
     });
+  }
+
+  /// New home design: centred empty state, still scrollable so
+  /// pull-to-refresh keeps working.
+  Widget _buildEmptyStateNew() {
+    final languageService = Get.find<LanguageService>();
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Center(
+              child: DashboardEmptyStateNew(
+                illustration: FutureBuilder<Widget>(
+                  future: SvgColorHelper.loadSvgWithColor(
+                    assetPath: 'assets/svg/deshboard/no_account.svg',
+                    targetColor: AppColors.primary,
+                    colorToReplace: '#5F259E',
+                    height: 64.r,
+                    width: 64.r,
+                  ),
+                  builder: (context, snapshot) {
+                    return snapshot.data ?? SizedBox.square(dimension: 64.r);
+                  },
+                ),
+                title: languageService.tr('dashboard_new_account_title'),
+                description: languageService.tr(
+                  'dashboard_new_account_description',
+                ),
+                realLabel: languageService.tr('dashboard_open_real_account'),
+                onOpenReal: controller.openRealAccount,
+                demoLabel: languageService.tr('dashboard_open_demo_account'),
+                onOpenDemo: controller.openDemoAccount,
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// New home design account card: same actions as
+  /// [_buildAccountCardContent], compact layout.
+  Widget _buildAccountCardNew(MT5Account account, AccountInfo? accountInfo) {
+    final languageService = Get.find<LanguageService>();
+    final bool isLive = account.accountType.toLowerCase() == 'live';
+    final double equity =
+        accountInfo?.equity ?? double.tryParse(account.equity) ?? 0.0;
+    final double balance =
+        accountInfo?.balance ?? double.tryParse(account.balance) ?? 0.0;
+    final double profit = accountInfo?.profit ?? 0.0;
+    final Color profitColor =
+        profit > 0
+            ? AppColors.green
+            : profit < 0
+            ? AppColors.error
+            : AppColors.textPrimary;
+
+    return DashboardAccountCardNew(
+      accountNumber: account.metaAccountNumber,
+      accountTypeLabel: account.accountType.capitalizeFirst ?? '',
+      isLive: isLive,
+      groupName: account.masterGroupId,
+      isScratchCard: account.isScratchCardAccount,
+      activeLabel:
+          account.isPrimaryAccount
+              ? languageService.trf('dashboard_active', 'Active')
+              : null,
+      metrics: [
+        DashboardAccountMetric(
+          label: languageService.tr('dashboard_equity'),
+          value: CurrencyFormat.amount(equity, account),
+        ),
+        DashboardAccountMetric(
+          label: languageService.tr('dashboard_balance'),
+          value: CurrencyFormat.amount(balance, account),
+        ),
+        DashboardAccountMetric(
+          label: languageService.tr('dashboard_total_pl'),
+          value: CurrencyFormat.amount(profit, account),
+          valueColor: profitColor,
+        ),
+      ],
+      actions: [
+        DashboardAccountAction(
+          label: languageService.tr('trade_title'),
+          svgAsset: 'assets/svg/bottom_navigation/candle_bold.svg',
+          color: AppColors.primary,
+          onTap: () => _openTradeForAccount(account),
+        ),
+        DashboardAccountAction(
+          label: languageService.tr('dashboard_deposit'),
+          svgAsset: 'assets/svg/deshboard/money-recive.svg',
+          color: AppColors.green,
+          onTap: () {
+            if (isLive) {
+              controller.onDepositRealAccount(account.metaAccountNumber);
+            } else {
+              controller.onDeposit(account.metaAccountNumber);
+            }
+          },
+        ),
+        isLive
+            ? DashboardAccountAction(
+              label: languageService.tr('dashboard_withdraw'),
+              svgAsset: 'assets/svg/deshboard/money-send.svg',
+              color: AppColors.error,
+              onTap: () => controller.onWithdraw(account.metaAccountNumber),
+            )
+            : DashboardAccountAction(
+              label: languageService.tr('more_settings'),
+              svgAsset: 'assets/svg/bottom_navigation/setting.svg',
+              color: AppColors.primary,
+              onTap: () => controller.onSettings(account.metaAccountNumber),
+            ),
+      ],
+      infoTooltip: languageService.trf('dashboard_account_info', 'Account info'),
+      onInfo: () => _showAccountInfoBottomSheet(account),
+      menuTooltip: languageService.trf('dashboard_more_options', 'More options'),
+      onMenu: () => _showAccountMenuBottomSheet(account),
+      switchLabel:
+          account.isPrimaryAccount
+              ? null
+              : languageService.tr('dashboard_switch_to_trade'),
+      onSwitch:
+          account.isPrimaryAccount ? null : () => _switchToAccount(account),
+    );
+  }
+
+  Future<void> _openTradeForAccount(MT5Account account) async {
+    final accountController = Get.find<AccountController>();
+    await accountController.setActiveMT5Account(account.metaAccountNumber);
+    onNavigateToTab?.call(2);
+  }
+
+  /// Switches in the background and stays on the dashboard, like the old card.
+  void _switchToAccount(MT5Account account) {
+    Get.find<AccountController>()
+        .setActiveMT5Account(account.metaAccountNumber)
+        .catchError((Object e) {
+          if (kDebugMode) {
+            print('Account switch failed: $e');
+          }
+        });
   }
 
   Widget _buildAccountCardContent(

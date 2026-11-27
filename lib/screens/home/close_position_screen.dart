@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
@@ -20,6 +21,7 @@ import 'package:crm_app/widgets/common_loading_widget.dart';
 import 'package:crm_app/utils/precision_helper.dart';
 import 'package:flutter/foundation.dart';
 import 'package:crm_app/flavor_config.dart';
+import 'package:crm_app/widgets/pending_order/pending_order_widgets_new.dart';
 
 class ClosePositionScreen extends StatefulWidget {
   final TradePosition position;
@@ -640,16 +642,43 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
       backgroundColor: AppColors.backgroundLight,
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
-        backgroundColor: AppColors.backgroundLight,
+        backgroundColor:
+            FlavorConfig.usesNewHomeDesign
+                ? Colors.transparent
+                : AppColors.backgroundLight,
         scrolledUnderElevation: 0,
         elevation: 0,
-        toolbarHeight: 72.h, // a bit more height so 2 lines fit nicely
+        toolbarHeight: FlavorConfig.usesNewHomeDesign ? 56.h : 72.h,
+        systemOverlayStyle:
+            FlavorConfig.usesNewHomeDesign ? SystemUiOverlayStyle.light : null,
+        flexibleSpace:
+            FlavorConfig.usesNewHomeDesign
+                ? DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: AlignmentDirectional.topStart,
+                      end: AlignmentDirectional.bottomEnd,
+                      colors: [
+                        AppColors.homeHeaderGradientStart,
+                        AppColors.homeHeaderGradientEnd,
+                      ],
+                    ),
+                  ),
+                  child: const SizedBox.expand(),
+                )
+                : null,
         centerTitle: false, // easier for layout; we’ll align manually
-        leading: AppSvgBackButton(
-          onPressed: () => Get.back(closeOverlays: true),
-          iconWidth: 30.w,
-          iconHeight: 30.h,
-        ),
+        leading:
+            FlavorConfig.usesNewHomeDesign
+                ? BackButton(
+                  color: AppColors.onColoredBackground,
+                  onPressed: () => Get.back(closeOverlays: true),
+                )
+                : AppSvgBackButton(
+                  onPressed: () => Get.back(closeOverlays: true),
+                  iconWidth: 30.w,
+                  iconHeight: 30.h,
+                ),
         titleSpacing: 0, // so title starts close to leading
         title: Column(
           mainAxisSize: MainAxisSize.min,
@@ -671,9 +700,13 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
                             TextOverflow
                                 .ellipsis, // <-- no overflow, show "..."
                         style: AppTextStyles.heading.copyWith(
-                          fontSize: 18.sp,
+                          fontSize:
+                              FlavorConfig.usesNewHomeDesign ? 16.sp : 18.sp,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
+                          color:
+                              FlavorConfig.usesNewHomeDesign
+                                  ? AppColors.onColoredBackground
+                                  : AppColors.textPrimary,
                         ),
                       ),
                       SizedBox(height: 2.h),
@@ -686,7 +719,12 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
                         style: AppTextStyles.label.copyWith(
                           fontSize: 12.sp,
                           fontWeight: FontWeight.w400,
-                          color: AppColors.textGrey,
+                          color:
+                              FlavorConfig.usesNewHomeDesign
+                                  ? AppColors.onColoredBackground.withValues(
+                                    alpha: 0.85,
+                                  )
+                                  : AppColors.textGrey,
                         ),
                       ),
                     ],
@@ -709,13 +747,18 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
                 Padding(
                   padding: EdgeInsets.symmetric(
                     horizontal: 16.w,
-                    vertical: 12.h,
+                    vertical: FlavorConfig.usesNewHomeDesign ? 8.h : 12.h,
                   ),
-                  child: _buildCurrentPrices(),
+                  child:
+                      FlavorConfig.usesNewHomeDesign
+                          ? _buildCurrentPricesNew()
+                          : _buildCurrentPrices(),
                 ),
 
                 // Chart Section
-                _buildChartSection(),
+                FlavorConfig.usesNewHomeDesign
+                    ? _buildChartSectionNew()
+                    : _buildChartSection(),
 
                 // Main Content
                 Expanded(
@@ -820,6 +863,47 @@ class _ClosePositionScreenState extends State<ClosePositionScreen> {
             ),
           // LEGACY_CHART_END
         ],
+      ),
+    );
+  }
+
+  /// New-design quote bar; reads the same chart socket prices as
+  /// [_buildCurrentPrices].
+  Widget _buildCurrentPricesNew() {
+    return Obx(() {
+      final bid = chartSocketController.getBidPrice() ?? 0.0;
+      final ask = chartSocketController.getAskPrice() ?? 0.0;
+      return PendingQuoteBarNew(bid: bid.toString(), ask: ask.toString());
+    });
+  }
+
+  /// New-design collapsible chart. The chart is only built while [showChart]
+  /// is on, exactly like [_buildChartSection], so socket usage is unchanged.
+  Widget _buildChartSectionNew() {
+    final Widget? chart;
+    if (!showChart) {
+      chart = null;
+    } else if (AppTenaxChart.isSupported) {
+      chart = AppTenaxChart(
+        key: ValueKey(widget.position.symbol),
+        symbol: widget.position.symbol,
+        allowOrderActions: false,
+      );
+    } else {
+      chart = ChartInAppWebView(
+        key: ValueKey(widget.position.symbol),
+        symbol: _removeSymbolSuffixForDisplay(widget.position.symbol),
+        url: _buildChartUrl(widget.position.symbol),
+      );
+    }
+
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16.w),
+      child: PendingChartCardNew(
+        expanded: showChart,
+        chartHeight: MediaQuery.of(context).size.height * 0.34,
+        onToggle: () => setState(() => showChart = !showChart),
+        chart: chart,
       ),
     );
   }

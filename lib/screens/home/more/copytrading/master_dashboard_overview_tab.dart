@@ -926,13 +926,9 @@ class _CopierHealthCard extends StatelessWidget {
 
   String _avgAgeLabel(int days) {
     if (days <= 0) return '—';
-    // Show in days until we have a full 2 months (60d) — otherwise
-    // values like 45d would jump to "2mo" via .round() and disagree
-    // with the web dashboard which keeps them as "d".
-    if (days < 60) return '${days}d';
+    if (days < 30) return '${days}d';
     if (days < 365) {
-      // floor() — so 89d still reads "2mo" instead of jumping to "3mo".
-      final m = (days / 30).floor();
+      final m = (days / 30).round();
       return '${m}mo';
     }
     final y = (days / 365).toStringAsFixed(1);

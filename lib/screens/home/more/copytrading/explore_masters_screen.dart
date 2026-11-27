@@ -535,6 +535,51 @@ class _SearchBarSectionState extends State<_SearchBarSection> {
   }
 }
 
+class _MasterSuggestionTile extends StatelessWidget {
+  final MasterSearchSuggestion suggestion;
+  final VoidCallback onTap;
+  const _MasterSuggestionTile({required this.suggestion, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final plansLabel = suggestion.plansCount == 1
+        ? TranslationUtils.tr('copy_trading_search_one_plan')
+        : TranslationUtils.trArgs('copy_trading_search_plans_count', {
+            'count': '${suggestion.plansCount}',
+          });
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                suggestion.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTextStyles.bodyText.copyWith(
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ),
+            SizedBox(width: 8.w),
+            Text(
+              plansLabel,
+              style: AppTextStyles.bodyText.copyWith(
+                fontSize: 11.sp,
+                color: AppColors.textGrey,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _PlanSuggestionTile extends StatelessWidget {
   final PlanSearchSuggestion suggestion;
   final VoidCallback onTap;
@@ -576,51 +621,6 @@ class _PlanSuggestionTile extends StatelessWidget {
                 ),
               ),
             ],
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _MasterSuggestionTile extends StatelessWidget {
-  final MasterSearchSuggestion suggestion;
-  final VoidCallback onTap;
-  const _MasterSuggestionTile({required this.suggestion, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final plansLabel = suggestion.plansCount == 1
-        ? TranslationUtils.tr('copy_trading_search_one_plan')
-        : TranslationUtils.trArgs('copy_trading_search_plans_count', {
-            'count': '${suggestion.plansCount}',
-          });
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                suggestion.name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: AppTextStyles.bodyText.copyWith(
-                  fontSize: 13.sp,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-            ),
-            SizedBox(width: 8.w),
-            Text(
-              plansLabel,
-              style: AppTextStyles.bodyText.copyWith(
-                fontSize: 11.sp,
-                color: AppColors.textGrey,
-              ),
-            ),
           ],
         ),
       ),
@@ -907,7 +907,6 @@ class _FilterChipsStrip extends StatelessWidget {
     showModalBottomSheet(
       context: context,
       backgroundColor: AppColors.card,
-      isScrollControlled: true,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(22.r)),
       ),
@@ -1036,13 +1035,13 @@ class _ProMasterCard extends StatelessWidget {
     final riskScore = item.riskScore ?? 0;
     final hasPlan = item.canCopy;
     final serverType = item.serverType.isNotEmpty ? item.serverType : 'mt5';
-    final commission = item.commissionPercentage;
     // API numbers can be int (4) or float (4.45); keep decimals only when present.
     String trimDecimals(num value) {
       final isWhole = value == value.truncate();
       return value.toStringAsFixed(isWhole ? 0 : 2);
     }
 
+    final commission = item.commissionPercentage;
     final commissionPct =
         commission == null ? '—' : '${trimDecimals(commission)}%';
     final displayName = item.nickname.isNotEmpty ? item.nickname : item.name;
@@ -1175,7 +1174,7 @@ class _ProMasterCard extends StatelessWidget {
                                       ? TranslationUtils.trArgs('copy_trading_days_active', {
                                           'days': '$activeDays',
                                         })
-                                      : '$planLabel • ${TranslationUtils.trArgs('copy_trading_days_active', {
+                                      : '$planLabel ${TranslationUtils.trArgs('copy_trading_days_active', {
                                           'days': '$activeDays',
                                         })}',
                                   maxLines: 1,
@@ -1322,9 +1321,9 @@ class _ProMasterCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    SizedBox(width: 8.w),
                     // Master can hide copier counts (`hide_copiers`).
                     if (!item.hideCopiers) ...[
+                      SizedBox(width: 8.w),
                       Icon(
                         Icons.people_alt_rounded,
                         size: 14.sp,

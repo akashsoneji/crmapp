@@ -38,6 +38,10 @@ class GradientAppBar extends StatelessWidget implements PreferredSizeWidget {
             ],
           ),
         ),
+        // A childless DecoratedBox sizes to the smallest allowed height, which
+        // is 0 under the AppBar's loose constraints, so the gradient never
+        // painted. SizedBox.expand makes it fill the whole bar.
+        child: const SizedBox.expand(),
       ),
       title: Text(
         title,

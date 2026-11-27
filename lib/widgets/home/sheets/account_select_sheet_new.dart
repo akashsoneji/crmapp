@@ -112,8 +112,15 @@ class AccountCardNew extends StatelessWidget {
       ),
     );
 
+    // The gradient outline below is painted behind the whole card, so the
+    // card itself must be opaque or the gradient bleeds through and hides
+    // the dark text in light mode.
+    final activeFill = Color.alphaBlend(
+      AppColors.sheetSelectedFill,
+      AppColors.sheetSurface,
+    );
     final card = Material(
-      color: isActive ? AppColors.sheetSelectedFill : AppColors.sheetRow,
+      color: isActive ? activeFill : AppColors.sheetRow,
       borderRadius: radius,
       child: InkWell(
         borderRadius: radius,

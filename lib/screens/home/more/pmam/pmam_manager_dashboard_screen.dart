@@ -1,14 +1,29 @@
-import 'package:crm_app/widgets/app_svg_back_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:crm_app/widgets/responsive_layout.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/pmam/pmam_controller.dart';
 import 'package:crm_app/routes/app_pages.dart';
+import 'package:crm_app/screens/home/more/pmam/pmam_manager_commissions_screen.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:crm_app/services/language_service.dart';
+
+/// Display-only label for a chart tab. The raw tab value is kept as the
+/// comparand used to pick the data series, so it must not be translated.
+String _chartTabLabel(String tab) {
+  switch (tab) {
+    case 'AUM':
+      return TranslationUtils.tr('pmam_aum');
+    case 'Net P&L':
+      return TranslationUtils.tr('pmam_net_pnl');
+    default:
+      return TranslationUtils.tr('dashboard_equity');
+  }
+}
 
 class PmamManagerDashboardScreen extends StatefulWidget {
   const PmamManagerDashboardScreen({super.key});
@@ -29,8 +44,12 @@ class _PmamManagerDashboardScreenState extends State<PmamManagerDashboardScreen>
     } else {
       _ctrl = Get.put(PmamController());
     }
-    _ctrl.loadManagerDashboard();
     super.initState();
+    // Built inside the PAMM shell's Obx; touching Rx state synchronously here
+    // throws "setState() called during build".
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _ctrl.loadManagerDashboard();
+    });
   }
 
   String _fmt(dynamic val) {
@@ -116,7 +135,7 @@ class _PmamManagerDashboardScreenState extends State<PmamManagerDashboardScreen>
         children: ['Today', '7d', '30d', '90d', '1y', 'all'].map((range) {
           final isSelected = _ctrl.dashboardRange.value == range;
           return Padding(
-            padding: EdgeInsets.only(right: 8.w),
+            padding: EdgeInsetsDirectional.only(end: 8.w),
             child: ChoiceChip(
               label: Text(range.toUpperCase()),
               selected: isSelected,
@@ -128,7 +147,7 @@ class _PmamManagerDashboardScreenState extends State<PmamManagerDashboardScreen>
               },
               selectedColor: AppColors.primary,
               backgroundColor: AppColors.card,
-              labelStyle: TextStyle(
+              labelStyle: AppTextStyles.bodyText.copyWith(
                 color: isSelected ? AppColors.onColoredBackground : AppColors.textPrimary,
                 fontWeight: FontWeight.w600,
                 fontSize: 12.sp,
@@ -154,17 +173,18 @@ class _PmamManagerDashboardScreenState extends State<PmamManagerDashboardScreen>
       physics: const NeverScrollableScrollPhysics(),
       crossAxisSpacing: 12.w,
       mainAxisSpacing: 12.h,
-      childAspectRatio: 1.35,
+      childAspectRatio: ResponsiveGrid.aspectRatio(1.35),
       children: [
         _HeroCard(
-          title: 'Total AUM',
+          title: TranslationUtils.tr('pmam_manager_dashboard_screen_total_aum'),
           value: _fmt(hero['aum']?['current']),
           delta: hero['aum']?['delta_pct']?.toString(),
           icon: Icons.account_balance_wallet_outlined,
           sparklineData: hero['aum']?['series']?['data'],
         ),
         _HeroCard(
-          title: 'Active Investors',
+          title: TranslationUtils.tr(
+              'pmam_manager_dashboard_screen_active_investors'),
           value: _fmtNum(hero['investors']?['current']),
           delta: hero['investors']?['delta']?.toString(),
           icon: Icons.people_outline,
@@ -172,14 +192,18 @@ class _PmamManagerDashboardScreenState extends State<PmamManagerDashboardScreen>
           deltaIsAbsolute: true,
         ),
         _HeroCard(
-          title: 'Commission Earned',
+          title: TranslationUtils.tr(
+              'pmam_manager_dashboard_screen_commission_earned'),
           value: _fmt(hero['earnings']?['current']),
           delta: hero['earnings']?['delta_pct']?.toString(),
           icon: Icons.payments_outlined,
           sparklineData: hero['earnings']?['series']?['data'],
+          // The dashboard is the only entry point to the Commissions page.
+          onTap: () => Get.to(() => const PmamManagerCommissionsScreen()),
         ),
         _HeroCard(
-          title: 'ROI (Window)',
+          title:
+              TranslationUtils.tr('pmam_manager_dashboard_screen_roi_window'),
           value: '${_fmtNum(hero['roi']?['current_pct'])}%',
           delta: hero['roi']?['delta_pct']?.toString(),
           icon: Icons.trending_up,
@@ -206,8 +230,9 @@ class _PmamManagerDashboardScreenState extends State<PmamManagerDashboardScreen>
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Performance Overview',
-                style: TextStyle(
+                TranslationUtils.tr(
+                    'master_dashboard_overview_tab_performance_overview'),
+                style: AppTextStyles.bodyText.copyWith(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.w700,
                   color: AppColors.textPrimary,
@@ -228,15 +253,15 @@ class _PmamManagerDashboardScreenState extends State<PmamManagerDashboardScreen>
                     });
                   },
                   child: Container(
-                    margin: EdgeInsets.only(right: 12.w),
+                    margin: EdgeInsetsDirectional.only(end: 12.w),
                     padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
                     decoration: BoxDecoration(
                       color: isSelected ? AppColors.primary.withOpacity(0.1) : Colors.transparent,
                       borderRadius: BorderRadius.circular(20.r),
                     ),
                     child: Text(
-                      tab,
-                      style: TextStyle(
+                      _chartTabLabel(tab),
+                      style: AppTextStyles.bodyText.copyWith(
                         color: isSelected ? AppColors.primary : AppColors.textGrey,
                         fontWeight: FontWeight.w600,
                         fontSize: 13.sp,
@@ -266,8 +291,9 @@ class _PmamManagerDashboardScreenState extends State<PmamManagerDashboardScreen>
     final series = chartData[dataKey]?['series'];
     if (series == null || series['data'] == null || (series['data'] as List).isEmpty) {
       return Center(
-        child: Text('No data available for $_selectedChartTab',
-            style: TextStyle(color: AppColors.textGrey)),
+        child: Text(
+            '${TranslationUtils.tr('pmam_no_data_available_for')} ${_chartTabLabel(_selectedChartTab)}',
+            style: AppTextStyles.bodyText.copyWith(color: AppColors.textGrey)),
       );
     }
 
@@ -287,7 +313,7 @@ class _PmamManagerDashboardScreenState extends State<PmamManagerDashboardScreen>
       spots.add(FlSpot(i.toDouble(), y));
     }
 
-    if (spots.isEmpty) return const SizedBox();
+    if (spots.isEmpty) return SizedBox();
 
     if (minY == maxY) {
       // Give zero / flat series a tiny visible band.
@@ -313,9 +339,19 @@ class _PmamManagerDashboardScreenState extends State<PmamManagerDashboardScreen>
       // raw is "YYYY-MM-DD HH:mm" → return "MMM dd"
       try {
         final dt = DateTime.parse(raw.replaceFirst(' ', 'T'));
-        const months = [
-          'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-          'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+        final months = [
+          TranslationUtils.tr('month_short_jan'),
+          TranslationUtils.tr('month_short_feb'),
+          TranslationUtils.tr('month_short_mar'),
+          TranslationUtils.tr('month_short_apr'),
+          TranslationUtils.tr('month_short_may'),
+          TranslationUtils.tr('month_short_jun'),
+          TranslationUtils.tr('month_short_jul'),
+          TranslationUtils.tr('month_short_aug'),
+          TranslationUtils.tr('month_short_sep'),
+          TranslationUtils.tr('month_short_oct'),
+          TranslationUtils.tr('month_short_nov'),
+          TranslationUtils.tr('month_short_dec'),
         ];
         return '${months[dt.month - 1]} ${dt.day}';
       } catch (_) {
@@ -343,7 +379,7 @@ class _PmamManagerDashboardScreenState extends State<PmamManagerDashboardScreen>
           getDrawingHorizontalLine: (_) => FlLine(
             color: AppColors.border.withOpacity(0.25),
             strokeWidth: 1,
-            dashArray: const [4, 4],
+            dashArray: [4, 4],
           ),
         ),
         titlesData: FlTitlesData(
@@ -357,12 +393,12 @@ class _PmamManagerDashboardScreenState extends State<PmamManagerDashboardScreen>
               interval: labelStep.toDouble(),
               getTitlesWidget: (value, meta) {
                 final text = fmtLabel(value);
-                if (text.isEmpty) return const SizedBox();
+                if (text.isEmpty) return SizedBox();
                 return Padding(
                   padding: EdgeInsets.only(top: 6.h),
                   child: Text(
                     text,
-                    style: TextStyle(
+                    style: AppTextStyles.bodyText.copyWith(
                       fontSize: 10.sp,
                       color: AppColors.textGrey,
                       fontWeight: FontWeight.w500,
@@ -391,7 +427,7 @@ class _PmamManagerDashboardScreenState extends State<PmamManagerDashboardScreen>
                 final val = fmtValue(s.y);
                 return LineTooltipItem(
                   '$val\n',
-                  TextStyle(
+                  AppTextStyles.bodyText.copyWith(
                     color: AppColors.onColoredBackground,
                     fontWeight: FontWeight.w700,
                     fontSize: 12.sp,
@@ -399,7 +435,7 @@ class _PmamManagerDashboardScreenState extends State<PmamManagerDashboardScreen>
                   children: [
                     TextSpan(
                       text: label,
-                      style: TextStyle(
+                      style: AppTextStyles.bodyText.copyWith(
                         color: AppColors.onColoredBackground.withOpacity(0.7),
                         fontWeight: FontWeight.w500,
                         fontSize: 10.sp,
@@ -474,8 +510,9 @@ class _PmamManagerDashboardScreenState extends State<PmamManagerDashboardScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Investor Health',
-            style: TextStyle(
+                  TranslationUtils.tr(
+                      'pmam_manager_dashboard_screen_investor_health'),
+            style: AppTextStyles.bodyText.copyWith(
               fontSize: 16.sp,
               fontWeight: FontWeight.w700,
               color: AppColors.textPrimary,
@@ -525,11 +562,20 @@ class _PmamManagerDashboardScreenState extends State<PmamManagerDashboardScreen>
               Expanded(
                 child: Column(
                   children: [
-                    _HealthRow(color: AppColors.green, label: 'Active', value: active.toString()),
+                    _HealthRow(
+                        color: AppColors.green,
+                        label: TranslationUtils.tr('chart_active'),
+                        value: active.toString()),
                     SizedBox(height: 8.h),
-                    _HealthRow(color: AppColors.warning, label: 'Pending', value: pending.toString()),
+                    _HealthRow(
+                        color: AppColors.warning,
+                        label: TranslationUtils.tr('kyc_verification_pending'),
+                        value: pending.toString()),
                     SizedBox(height: 8.h),
-                    _HealthRow(color: AppColors.textGrey, label: 'Inactive', value: inactive.toString()),
+                    _HealthRow(
+                        color: AppColors.textGrey,
+                        label: TranslationUtils.tr('wallet_inactive'),
+                        value: inactive.toString()),
                   ],
                 ),
               ),
@@ -566,8 +612,9 @@ class _PmamManagerDashboardScreenState extends State<PmamManagerDashboardScreen>
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Plan Performance',
-                style: TextStyle(
+                TranslationUtils.tr(
+                    'master_dashboard_overview_tab_plan_performance'),
+                style: AppTextStyles.bodyText.copyWith(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.w700,
                   color: AppColors.textPrimary,
@@ -579,8 +626,8 @@ class _PmamManagerDashboardScreenState extends State<PmamManagerDashboardScreen>
                   arguments: {'initialTab': 1},
                 ),
                 child: Text(
-                  'View All',
-                  style: TextStyle(
+                  TranslationUtils.tr('pmam_fund_manager_view_view_all'),
+                  style: AppTextStyles.bodyText.copyWith(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w600,
                     color: AppColors.primary,
@@ -591,7 +638,9 @@ class _PmamManagerDashboardScreenState extends State<PmamManagerDashboardScreen>
           ),
           SizedBox(height: 12.h),
           if (plans.isEmpty)
-            Text('No plans available', style: TextStyle(color: AppColors.textGrey))
+            Text(TranslationUtils.tr('choose_account_no_plans'),
+                style:
+                    AppTextStyles.bodyText.copyWith(color: AppColors.textGrey))
           else
             ListView.separated(
               shrinkWrap: true,
@@ -611,7 +660,7 @@ class _PmamManagerDashboardScreenState extends State<PmamManagerDashboardScreen>
                           children: [
                             Text(
                               p['plan_name'] ?? 'Unnamed',
-                              style: TextStyle(
+                              style: AppTextStyles.bodyText.copyWith(
                                 fontSize: 14.sp,
                                 fontWeight: FontWeight.w600,
                                 color: AppColors.textPrimary,
@@ -622,7 +671,7 @@ class _PmamManagerDashboardScreenState extends State<PmamManagerDashboardScreen>
                             SizedBox(height: 2.h),
                             Text(
                               '${p['active_investors'] ?? 0} Investors',
-                              style: TextStyle(fontSize: 11.sp, color: AppColors.textGrey),
+                              style: AppTextStyles.bodyText.copyWith(fontSize: 11.sp, color: AppColors.textGrey),
                             ),
                           ],
                         ),
@@ -632,7 +681,7 @@ class _PmamManagerDashboardScreenState extends State<PmamManagerDashboardScreen>
                         children: [
                           Text(
                             _fmt(p['total_locked_aum']),
-                            style: TextStyle(
+                            style: AppTextStyles.bodyText.copyWith(
                               fontSize: 13.sp,
                               fontWeight: FontWeight.w700,
                               color: AppColors.textPrimary,
@@ -641,7 +690,7 @@ class _PmamManagerDashboardScreenState extends State<PmamManagerDashboardScreen>
                           SizedBox(height: 2.h),
                           Text(
                             'AUM',
-                            style: TextStyle(fontSize: 11.sp, color: AppColors.textGrey),
+                            style: AppTextStyles.bodyText.copyWith(fontSize: 11.sp, color: AppColors.textGrey),
                           ),
                         ],
                       ),
@@ -667,13 +716,29 @@ class _PmamManagerDashboardScreenState extends State<PmamManagerDashboardScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Payouts',
-            style: TextStyle(
-              fontSize: 16.sp,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                TranslationUtils.tr('ibm_payouts'),
+                style: AppTextStyles.bodyText.copyWith(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              GestureDetector(
+                onTap: () => Get.to(() => const PmamManagerCommissionsScreen()),
+                child: Text(
+                  TranslationUtils.tr('pmam_fund_manager_view_view_all'),
+                  style: AppTextStyles.bodyText.copyWith(
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+            ],
           ),
           SizedBox(height: 16.h),
           Row(
@@ -689,13 +754,14 @@ class _PmamManagerDashboardScreenState extends State<PmamManagerDashboardScreen>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Earned (30d)',
-                        style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey),
+                        TranslationUtils.tr(
+                            'pmam_manager_dashboard_screen_earned_30d'),
+                        style: AppTextStyles.bodyText.copyWith(fontSize: 12.sp, color: AppColors.textGrey),
                       ),
                       SizedBox(height: 4.h),
                       Text(
                         _fmt(payouts['earned_period']),
-                        style: TextStyle(
+                        style: AppTextStyles.bodyText.copyWith(
                           fontSize: 18.sp,
                           fontWeight: FontWeight.bold,
                           color: AppColors.textPrimary,
@@ -717,13 +783,13 @@ class _PmamManagerDashboardScreenState extends State<PmamManagerDashboardScreen>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Pending',
-                        style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey),
+                        TranslationUtils.tr('kyc_verification_pending'),
+                        style: AppTextStyles.bodyText.copyWith(fontSize: 12.sp, color: AppColors.textGrey),
                       ),
                       SizedBox(height: 4.h),
                       Text(
                         _fmt(payouts['pending']),
-                        style: TextStyle(
+                        style: AppTextStyles.bodyText.copyWith(
                           fontSize: 18.sp,
                           fontWeight: FontWeight.bold,
                           color: AppColors.warning,
@@ -756,8 +822,9 @@ class _PmamManagerDashboardScreenState extends State<PmamManagerDashboardScreen>
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Recent Trades',
-                style: TextStyle(
+                TranslationUtils.tr(
+                    'master_dashboard_overview_tab_recent_trades'),
+                style: AppTextStyles.bodyText.copyWith(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.w700,
                   color: AppColors.textPrimary,
@@ -767,7 +834,11 @@ class _PmamManagerDashboardScreenState extends State<PmamManagerDashboardScreen>
           ),
           SizedBox(height: 12.h),
           if (trades.isEmpty)
-            Text('No recent trades', style: TextStyle(color: AppColors.textGrey))
+            Text(
+                TranslationUtils.tr(
+                    'pmam_manager_dashboard_screen_no_recent_trades'),
+                style:
+                    AppTextStyles.bodyText.copyWith(color: AppColors.textGrey))
           else
             ListView.separated(
               shrinkWrap: true,
@@ -801,7 +872,7 @@ class _PmamManagerDashboardScreenState extends State<PmamManagerDashboardScreen>
                           children: [
                             Text(
                               t['symbol'] ?? 'UNKNOWN',
-                              style: TextStyle(
+                              style: AppTextStyles.bodyText.copyWith(
                                 fontSize: 13.sp,
                                 fontWeight: FontWeight.bold,
                                 color: AppColors.textPrimary,
@@ -810,7 +881,7 @@ class _PmamManagerDashboardScreenState extends State<PmamManagerDashboardScreen>
                             SizedBox(height: 2.h),
                             Text(
                               t['close_time']?.toString().split(' ').first ?? '-',
-                              style: TextStyle(fontSize: 11.sp, color: AppColors.textGrey),
+                              style: AppTextStyles.bodyText.copyWith(fontSize: 11.sp, color: AppColors.textGrey),
                             ),
                           ],
                         ),
@@ -820,7 +891,7 @@ class _PmamManagerDashboardScreenState extends State<PmamManagerDashboardScreen>
                         children: [
                           Text(
                             _fmt(pnl),
-                            style: TextStyle(
+                            style: AppTextStyles.bodyText.copyWith(
                               fontSize: 13.sp,
                               fontWeight: FontWeight.bold,
                               color: isProfit ? AppColors.green : AppColors.error,
@@ -829,7 +900,7 @@ class _PmamManagerDashboardScreenState extends State<PmamManagerDashboardScreen>
                           SizedBox(height: 2.h),
                           Text(
                             'Vol: ${t['volume'] ?? 0}',
-                            style: TextStyle(fontSize: 11.sp, color: AppColors.textGrey),
+                            style: AppTextStyles.bodyText.copyWith(fontSize: 11.sp, color: AppColors.textGrey),
                           ),
                         ],
                       ),
@@ -863,10 +934,10 @@ class _HealthRow extends StatelessWidget {
               decoration: BoxDecoration(color: color, shape: BoxShape.circle),
             ),
             SizedBox(width: 8.w),
-            Text(label, style: TextStyle(fontSize: 13.sp, color: AppColors.textGrey)),
+            Text(label, style: AppTextStyles.bodyText.copyWith(fontSize: 13.sp, color: AppColors.textGrey)),
           ],
         ),
-        Text(value, style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+        Text(value, style: AppTextStyles.bodyText.copyWith(fontSize: 13.sp, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
       ],
     );
   }
@@ -884,12 +955,12 @@ class _StatItem extends StatelessWidget {
       children: [
         Text(
           value,
-          style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+          style: AppTextStyles.bodyText.copyWith(fontSize: 14.sp, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
         ),
         SizedBox(height: 4.h),
         Text(
           label,
-          style: TextStyle(fontSize: 11.sp, color: AppColors.textGrey),
+          style: AppTextStyles.bodyText.copyWith(fontSize: 11.sp, color: AppColors.textGrey),
         ),
       ],
     );
@@ -903,6 +974,7 @@ class _HeroCard extends StatelessWidget {
   final IconData icon;
   final dynamic sparklineData;
   final bool deltaIsAbsolute;
+  final VoidCallback? onTap;
 
   const _HeroCard({
     required this.title,
@@ -911,6 +983,7 @@ class _HeroCard extends StatelessWidget {
     required this.icon,
     this.sparklineData,
     this.deltaIsAbsolute = false,
+    this.onTap,
   });
 
   @override
@@ -921,7 +994,7 @@ class _HeroCard extends StatelessWidget {
     String dText = isPositive ? '+${d.toStringAsFixed(1)}' : d.toStringAsFixed(1);
     if (!deltaIsAbsolute) dText += '%';
 
-    return Container(
+    final card = Container(
       padding: EdgeInsets.all(12.w),
       decoration: BoxDecoration(
         color: AppColors.card,
@@ -936,15 +1009,19 @@ class _HeroCard extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey, fontWeight: FontWeight.w500),
+                style: AppTextStyles.bodyText.copyWith(fontSize: 12.sp, color: AppColors.textGrey, fontWeight: FontWeight.w500),
               ),
-              Icon(icon, size: 16.sp, color: AppColors.primary.withOpacity(0.6)),
+              Icon(
+                onTap != null ? Icons.chevron_right_rounded : icon,
+                size: 16.sp,
+                color: AppColors.primary.withOpacity(0.6),
+              ),
             ],
           ),
           SizedBox(height: 8.h),
           Text(
             value,
-            style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+            style: AppTextStyles.bodyText.copyWith(fontSize: 16.sp, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -959,7 +1036,7 @@ class _HeroCard extends StatelessWidget {
                 ),
                 child: Text(
                   dText,
-                  style: TextStyle(fontSize: 10.sp, fontWeight: FontWeight.bold, color: dColor),
+                  style: AppTextStyles.bodyText.copyWith(fontSize: 10.sp, fontWeight: FontWeight.bold, color: dColor),
                 ),
               ),
               if (sparklineData != null && sparklineData is List && (sparklineData as List).isNotEmpty)
@@ -974,6 +1051,12 @@ class _HeroCard extends StatelessWidget {
         ],
       ),
     );
+    if (onTap == null) return card;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: card,
+    );
   }
 }
 
@@ -984,7 +1067,7 @@ class _MiniSparkline extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (data.isEmpty) return const SizedBox();
+    if (data.isEmpty) return SizedBox();
     
     double minY = double.infinity;
     double maxY = -double.infinity;

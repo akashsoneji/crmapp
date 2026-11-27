@@ -54,6 +54,9 @@ class ApiConstants {
   static const String getInstruments = '${ajax}instruments';
   static const String logout = '${ajax}logout';
   static const String depositList = '${ajax}deposit';
+  // Finance v2 (quote-driven deposit / withdrawal flow).
+  static const String financePaymentTypes = '${ajax}finance/payment-types';
+  static const String financeChannels = '${ajax}finance/channels';
   static const String depositRequest = '${ajax}deposit/depositrequest';
   static const String cregisDepositCreate = '${ajax}deposit/cregis';
   static String dynamicDeposit(String gatewaySlug) =>
@@ -214,6 +217,10 @@ class ApiConstants {
       '${ajax}copytrading/copier/eligible-accounts';
   static const String copyTradingCopierSubscribe =
       '${ajax}copytrading/copier/subscribe';
+  static const String copyTradingCopierPurchaseOptions =
+      '${ajax}copytrading/copier/purchase-options';
+  static const String copyTradingCopierSafetySettings =
+      '${ajax}copytrading/copier/safety-settings';
   static const String copyTradingCopierSubscriptions =
       '${ajax}copytrading/copier/subscriptions';
   static String copyTradingCopierSubscriptionsList({int page = 1, int perPage = 20}) =>

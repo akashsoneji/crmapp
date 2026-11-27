@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/screens/home/more/finance/payment_methods_screen.dart';
+import 'package:crm_app/screens/finance_v2/finance_flow_switch.dart';
 import 'package:crm_app/screens/home/more/widgets/more_menu_widgets.dart';
 
 import '../../../../constants/color.dart';
@@ -48,7 +49,12 @@ class FinanceScreen extends StatelessWidget {
                     iconName: 'deposit',
                     label: languageService.tr('general_deposit'),
                     onTap: () {
-                      Get.to(() => PaymentMethodsScreen(accountNumber: ''));
+                      Get.to(
+                        () => FinanceFlowSwitch.deposit(
+                          accountNumber: '',
+                          legacy: () => PaymentMethodsScreen(accountNumber: ''),
+                        ),
+                      );
                     },
                     textColor: AppColors.textPrimary,
                   ),

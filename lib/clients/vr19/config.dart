@@ -18,5 +18,6 @@ class Vr19Config extends BaseClientConfig {
         apiBaseUrl: 'https://trade.vr19capital.com/api/',
         websocketUrl: 'wss://trade.vr19capital.com/trade-engine',
         chartBaseUrl: 'https://trade.vr19capital.com',
+        useNewDepositWithdrawFlow: false,
       );
 }

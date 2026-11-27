@@ -16,5 +16,6 @@ class ProfxConfig extends BaseClientConfig {
         apiBaseUrl: 'https://demo.tenaxcode.com/api/',
         websocketUrl: 'wss://demo.tenaxcode.com/trade-engine',
         chartBaseUrl: 'https://demo.tenaxcode.com',
+        useNewDepositWithdrawFlow: false,
       );
 }

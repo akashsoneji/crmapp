@@ -142,6 +142,21 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('pending button is outlined with no fill', (tester) async {
+    await tester.pumpWidget(_panel());
+
+    final pending = find.bySemanticsLabel(
+      'Pending order, stop loss and take profit',
+    );
+    final ink = tester.widget<Ink>(
+      find.descendant(of: pending, matching: find.byType(Ink)).first,
+    );
+    final decoration = ink.decoration! as BoxDecoration;
+    expect(decoration.gradient, isNull);
+    expect(decoration.color, Colors.transparent);
+    expect(decoration.border, isNotNull);
+  });
+
   testWidgets('no overflow at large text scale', (tester) async {
     await tester.pumpWidget(_panel(textScale: 1.6));
 

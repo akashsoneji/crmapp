@@ -57,6 +57,7 @@ import 'services/connectivity/connectivity_service.dart';
 import 'services/connectivity/connectivity_controller.dart';
 import 'services/connectivity/connectivity_overlay.dart';
 import 'services/app_lock_service.dart';
+import 'screens/finance_v2/data/finance_v2_repository.dart';
 import 'services/app_lock/app_lock_overlay.dart';
 import 'services/app_lock/app_lock_lifecycle.dart';
 
@@ -178,6 +179,8 @@ Future<void> initServices() async {
   Get.put<AccountService>(AccountServiceImpl(), permanent: true);
   Get.put<LoadingService>(LoadingService(), permanent: true);
   Get.put<AppLockService>(AppLockService(), permanent: true);
+  // The new deposit / withdrawal screens look the repository up with Get.find.
+  Get.put<FinanceV2Repository>(FinanceV2Repository(), permanent: true);
 
   // Initialize notification service
   final notificationService = NotificationService();

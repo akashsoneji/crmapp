@@ -59,6 +59,11 @@ class FlavorConfig {
   final String? remoteLogoUrl;
   final Map<String, dynamic>? selectedBrokerData;
 
+  /// Whether deposit / withdrawal open the quote-driven flow (finance v2)
+  /// instead of the legacy screens. Set per client with
+  /// `useNewDepositWithdrawFlow` in `lib/clients/<client>/config.dart`.
+  final bool useNewDepositWithdrawFlow;
+
   static FlavorConfig? _instance;
   static Flavor? _selectedFlavor;
 
@@ -77,6 +82,7 @@ class FlavorConfig {
     required String splashLogoPath,
     String? remoteLogoUrl,
     Map<String, dynamic>? selectedBrokerData,
+    bool useNewDepositWithdrawFlow = false,
   }) {
     // If no flavor is selected yet, or if the flavor matches the selected one, initialize it
     if (_selectedFlavor == null || _selectedFlavor == flavor) {
@@ -95,6 +101,7 @@ class FlavorConfig {
         splashLogoPath: splashLogoPath,
         remoteLogoUrl: remoteLogoUrl,
         selectedBrokerData: selectedBrokerData,
+        useNewDepositWithdrawFlow: useNewDepositWithdrawFlow,
       );
       _selectedFlavor = flavor;
     }
@@ -142,6 +149,7 @@ class FlavorConfig {
     required this.splashLogoPath,
     required this.remoteLogoUrl,
     required this.selectedBrokerData,
+    this.useNewDepositWithdrawFlow = false,
   }) : appTitle = title;
 
   static FlavorConfig get instance {
@@ -233,6 +241,7 @@ class FlavorConfig {
               ? brokerLogoUrl.trim()
               : null,
       selectedBrokerData: brokerData,
+      useNewDepositWithdrawFlow: current.useNewDepositWithdrawFlow,
     );
     _selectedFlavor = current.flavor;
   }
@@ -334,6 +343,10 @@ class FlavorConfig {
               ? resolvedLogoFromConfig
               : null,
       selectedBrokerData: brokerData,
+      useNewDepositWithdrawFlow:
+          source['useNewDepositWithdrawFlow'] is bool
+              ? source['useNewDepositWithdrawFlow'] as bool
+              : current.useNewDepositWithdrawFlow,
     );
     _selectedFlavor = current.flavor;
   }
@@ -414,6 +427,7 @@ class FlavorConfig {
       splashLogoPath: config.getAssetPath('pipze', config.splashLogoPath),
       remoteLogoUrl: null,
       selectedBrokerData: null,
+      useNewDepositWithdrawFlow: config.useNewDepositWithdrawFlow,
     );
   }
 
@@ -436,6 +450,7 @@ class FlavorConfig {
       splashLogoPath: config.getAssetPath('octa', config.splashLogoPath),
       remoteLogoUrl: null,
       selectedBrokerData: null,
+      useNewDepositWithdrawFlow: config.useNewDepositWithdrawFlow,
     );
   }
 
@@ -457,6 +472,7 @@ class FlavorConfig {
       splashLogoPath: config.getAssetPath('tenax', config.splashLogoPath),
       remoteLogoUrl: null,
       selectedBrokerData: null,
+      useNewDepositWithdrawFlow: config.useNewDepositWithdrawFlow,
     );
   }
 
@@ -479,6 +495,7 @@ class FlavorConfig {
       splashLogoPath: config.getAssetPath('tenax', config.splashLogoPath),
       remoteLogoUrl: null,
       selectedBrokerData: null,
+      useNewDepositWithdrawFlow: config.useNewDepositWithdrawFlow,
     );
   }
 
@@ -500,6 +517,7 @@ class FlavorConfig {
       splashLogoPath: config.getAssetPath('tenaxnew', config.splashLogoPath),
       remoteLogoUrl: null,
       selectedBrokerData: null,
+      useNewDepositWithdrawFlow: config.useNewDepositWithdrawFlow,
     );
   }
 
@@ -521,6 +539,7 @@ class FlavorConfig {
       splashLogoPath: config.getAssetPath('celestial', config.splashLogoPath),
       remoteLogoUrl: null,
       selectedBrokerData: null,
+      useNewDepositWithdrawFlow: config.useNewDepositWithdrawFlow,
     );
   }
 
@@ -543,6 +562,7 @@ class FlavorConfig {
           'assets/svg/onsa/splash_onsa.svg', // TODO: Move to centralized
       remoteLogoUrl: null,
       selectedBrokerData: null,
+      useNewDepositWithdrawFlow: config.useNewDepositWithdrawFlow,
     );
   }
 
@@ -564,6 +584,7 @@ class FlavorConfig {
       splashLogoPath: config.getAssetPath('profx', config.splashLogoPath),
       remoteLogoUrl: null,
       selectedBrokerData: null,
+      useNewDepositWithdrawFlow: config.useNewDepositWithdrawFlow,
     );
   }
 
@@ -585,6 +606,7 @@ class FlavorConfig {
       splashLogoPath: config.getAssetPath('afx', config.splashLogoPath),
       remoteLogoUrl: null,
       selectedBrokerData: null,
+      useNewDepositWithdrawFlow: config.useNewDepositWithdrawFlow,
     );
   }
 
@@ -606,6 +628,7 @@ class FlavorConfig {
       splashLogoPath: config.getAssetPath('kantara', config.splashLogoPath),
       remoteLogoUrl: null,
       selectedBrokerData: null,
+      useNewDepositWithdrawFlow: config.useNewDepositWithdrawFlow,
     );
   }
 
@@ -627,6 +650,7 @@ class FlavorConfig {
       splashLogoPath: config.getAssetPath('tradoxy', config.splashLogoPath),
       remoteLogoUrl: null,
       selectedBrokerData: null,
+      useNewDepositWithdrawFlow: config.useNewDepositWithdrawFlow,
     );
   }
 
@@ -648,6 +672,7 @@ class FlavorConfig {
       splashLogoPath: config.getAssetPath('askbid', config.splashLogoPath),
       remoteLogoUrl: null,
       selectedBrokerData: null,
+      useNewDepositWithdrawFlow: config.useNewDepositWithdrawFlow,
     );
   }
 
@@ -669,6 +694,7 @@ class FlavorConfig {
       splashLogoPath: config.getAssetPath('sr', config.splashLogoPath),
       remoteLogoUrl: null,
       selectedBrokerData: null,
+      useNewDepositWithdrawFlow: config.useNewDepositWithdrawFlow,
     );
   }
 
@@ -690,6 +716,7 @@ class FlavorConfig {
       splashLogoPath: config.getAssetPath('vr19', config.splashLogoPath),
       remoteLogoUrl: null,
       selectedBrokerData: null,
+      useNewDepositWithdrawFlow: config.useNewDepositWithdrawFlow,
     );
   }
 
@@ -711,6 +738,7 @@ class FlavorConfig {
       splashLogoPath: config.getAssetPath('goldenwolffx', config.splashLogoPath),
       remoteLogoUrl: null,
       selectedBrokerData: null,
+      useNewDepositWithdrawFlow: config.useNewDepositWithdrawFlow,
     );
     return _instance!;
   }
@@ -733,6 +761,7 @@ class FlavorConfig {
       splashLogoPath: config.getAssetPath('amirifx', config.splashLogoPath),
       remoteLogoUrl: null,
       selectedBrokerData: null,
+      useNewDepositWithdrawFlow: config.useNewDepositWithdrawFlow,
     );
   }
 
@@ -754,6 +783,7 @@ class FlavorConfig {
       splashLogoPath: config.getAssetPath('gtxprime', config.splashLogoPath),
       remoteLogoUrl: null,
       selectedBrokerData: null,
+      useNewDepositWithdrawFlow: config.useNewDepositWithdrawFlow,
     );
   }
 }

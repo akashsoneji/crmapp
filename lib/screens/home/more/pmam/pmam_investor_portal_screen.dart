@@ -1,17 +1,18 @@
 import 'dart:async';
+import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/widgets/app_svg_back_button.dart';
 import 'package:flutter/material.dart';
 
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
-import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/pmam/pmam_controller.dart';
-import 'package:crm_app/routes/app_pages.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
-import 'package:crm_app/models/pmam_model.dart';
 import 'package:crm_app/screens/home/more/pmam/pmam_trade_history_screen.dart';
+import 'package:crm_app/screens/home/more/pmam/widgets/pmam_pnl_history_section.dart';
 import 'package:crm_app/utils/app_picker_theme.dart';
+import 'package:crm_app/services/language_service.dart';
+import 'package:crm_app/widgets/addon_purchase_line.dart';
 
 class PmamInvestorPortalScreen extends StatefulWidget {
   const PmamInvestorPortalScreen({
@@ -38,15 +39,23 @@ class PmamInvestorPortalScreen extends StatefulWidget {
 class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
     with SingleTickerProviderStateMixin {
   late final PmamController _ctrl;
+  // Add funds (investor/deposit, doc 2.7) is hidden for now; flip to true to
+  // bring the button back — the dialog and API call are still wired.
+  static const bool _showAddFunds = false;
+
   late final TabController _tabCtrl;
 
-  String _searchQuery = '';
   String _myFilter = 'all';
-  Timer? _debounce;
 
   String _fmtMoney(dynamic v) {
     final d = double.tryParse((v ?? 0).toString()) ?? 0;
     return '\$${d.toStringAsFixed(2)}';
+  }
+
+  /// `addon_refunded` may come as the refunded amount or as a flag.
+  bool _isAddonRefunded(dynamic v) {
+    if (v is bool) return v;
+    return (num.tryParse('${v ?? ''}') ?? 0) > 0;
   }
 
   String _fmtYmd(DateTime dt) {
@@ -102,21 +111,12 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
     }
     // Avoid triggering reactive updates during first build.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _ctrl.loadManagersDataTable();
       _ctrl.loadInvestorPortal();
-    });
-  }
-
-  void _onSearchChanged(String value) {
-    _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 400), () {
-      _ctrl.loadManagersDataTable(search: value);
     });
   }
 
   @override
   void dispose() {
-    _debounce?.cancel();
     _tabCtrl.dispose();
     super.dispose();
   }
@@ -137,8 +137,10 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                 iconHeight: 30.h,
               ),
               title: Text(
-                widget.managerCode != null ? 'My Investment' : 'PAMM Investor',
-                style: TextStyle(
+                widget.managerCode != null
+                    ? TranslationUtils.tr('pmam_my_investment')
+                    : TranslationUtils.tr('pmam_pamm_investor'),
+                style: AppTextStyles.bodyText.copyWith(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.w800,
                   color: AppColors.textPrimary,
@@ -151,15 +153,17 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                       indicatorColor: AppColors.primary,
                       indicatorWeight: 3,
                       labelColor: AppColors.primary,
-                      labelStyle: TextStyle(
+                      labelStyle: AppTextStyles.bodyText.copyWith(
                         fontSize: 14.sp,
                         fontWeight: FontWeight.w700,
                       ),
                       unselectedLabelColor: AppColors.textGrey,
-                      unselectedLabelStyle: TextStyle(fontSize: 14.sp),
-                      tabs: const [
-                        Tab(text: 'Fund Managers'),
-                        Tab(text: 'My Investments'),
+                      unselectedLabelStyle: AppTextStyles.bodyText.copyWith(fontSize: 14.sp),
+                      tabs: [
+                        Tab(text: TranslationUtils.tr('pmam_fund_managers')),
+                        Tab(
+                            text: TranslationUtils.tr(
+                                'my_investments_screen_my_investments')),
                       ],
                     ),
             ),
@@ -171,12 +175,10 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
             child: CommonLoadingWidget(size: 40, color: AppColors.primary),
           );
         }
-        if (widget.managerCode != null) {
-          return _buildMyInvestmentsTab();
-        }
-        return TabBarView(
-          controller: _tabCtrl,
-          children: [_buildFundManagersTab(), _buildMyInvestmentsTab()],
+        return RefreshIndicator(
+          color: AppColors.primary,
+          onRefresh: () async => _ctrl.loadInvestorPortal(),
+          child: _buildMyInvestmentsTab(),
         );
       }),
     );
@@ -211,8 +213,9 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                   children: [
                     Expanded(
                       child: Text(
-                        'Add funds',
-                        style: TextStyle(
+                        TranslationUtils.tr(
+                            'pmam_investor_portal_screen_add_funds'),
+                        style: AppTextStyles.bodyText.copyWith(
                           fontSize: 16.sp,
                           fontWeight: FontWeight.w800,
                           color: AppColors.textPrimary,
@@ -221,18 +224,19 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                     ),
                     IconButton(
                       onPressed: () => Navigator.of(ctx).pop(),
-                      icon: const Icon(Icons.close),
+                      icon: Icon(Icons.close),
                     ),
                   ],
                 ),
                 Text(
-                  'The amount will be locked and deposited to the pool immediately. It will apply to future trades only.',
-                  style: TextStyle(fontSize: 11.sp, color: AppColors.textGrey),
+                  TranslationUtils.tr(
+                      'pmam_investor_portal_screen_the_amount_will_be_locked_and'),
+                  style: AppTextStyles.bodyText.copyWith(fontSize: 11.sp, color: AppColors.textGrey),
                 ),
                 SizedBox(height: 14.h),
                 Text(
-                  'Amount (\$)',
-                  style: TextStyle(
+                  TranslationUtils.tr('pmam_investor_portal_screen_amount'),
+                  style: AppTextStyles.bodyText.copyWith(
                     fontSize: 12.sp,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textPrimary,
@@ -245,7 +249,7 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                     decimal: true,
                     signed: false,
                   ),
-                  style: TextStyle(
+                  style: AppTextStyles.bodyText.copyWith(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textPrimary,
@@ -286,8 +290,8 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                           padding: EdgeInsets.symmetric(vertical: 12.h),
                         ),
                         child: Text(
-                          'Cancel',
-                          style: TextStyle(
+                          TranslationUtils.tr('account_management_cancel'),
+                          style: AppTextStyles.bodyText.copyWith(
                             color: AppColors.textPrimary,
                             fontSize: 13.sp,
                             fontWeight: FontWeight.w700,
@@ -306,7 +310,7 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                                   final amt =
                                       double.tryParse(amountCtrl.text.trim()) ??
                                       0;
-                                  if (amt <= 0) return;
+                                  if (amt < 1) return;
                                   final ok = await _ctrl.depositToEnrollment(
                                     pmamInvestorId: pmamInvestorId,
                                     amount: amt,
@@ -330,8 +334,9 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                                   ),
                                 )
                               : Text(
-                                  'Add funds',
-                                  style: TextStyle(
+                                  TranslationUtils.tr(
+                                      'pmam_investor_portal_screen_add_funds'),
+                                  style: AppTextStyles.bodyText.copyWith(
                                     color: AppColors.onColoredBackground,
                                     fontSize: 13.sp,
                                     fontWeight: FontWeight.w800,
@@ -355,26 +360,58 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
       context: context,
       builder: (ctx) {
         return AlertDialog(
-          title: const Text('Unsubscribe'),
-          content: const Text(
-            'Are you sure you want to Unsubscribe from this plan? This will trigger proportional trade settlement.',
+          title: Text(TranslationUtils.tr('pmam_unsubscribe')),
+          content: Text(
+            TranslationUtils.tr('pmam_unsubscribe_confirm_body'),
           ),
-          actions: [
+          actions: [ 
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('Cancel'),
+              child: Text(TranslationUtils.tr('account_management_cancel')),
             ),
             TextButton(
               onPressed: () async {
                 Navigator.of(ctx).pop();
                 await _ctrl.unsubscribe(pmamInvestorId);
               },
-              child: const Text('OK'),
+              child: Text('OK'),
             ),
           ],
         );
       },
     );
+  }
+
+  /// All of the user's settled P&L entries (doc 2.9, page 1).
+  Widget _buildPnlHistorySection() {
+    return Obx(
+      () => PmamPnlHistorySection(rows: _ctrl.pnlHistory.toList()),
+    );
+  }
+
+  /// Withdraws a `pending` join request (doc 2.6).
+  Future<void> _confirmCancelRequest(int pmamInvestorId) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(TranslationUtils.tr('pmam_cancel_request_title')),
+        content: Text(TranslationUtils.tr('pmam_cancel_request_body')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(TranslationUtils.tr('pmam_keep_request')),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(
+              TranslationUtils.tr('pmam_cancel_request'),
+              style: TextStyle(color: AppColors.error),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) await _ctrl.cancelJoinRequest(pmamInvestorId);
   }
 
   // ignore: unused_element
@@ -459,8 +496,9 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                         children: [
                           Expanded(
                             child: Text(
-                              'My P&L Trade History',
-                              style: TextStyle(
+                          TranslationUtils.tr(
+                              'pmam_investor_portal_screen_my_trade_history'),
+                              style: AppTextStyles.bodyText.copyWith(
                                 fontSize: 16.sp,
                                 fontWeight: FontWeight.w700,
                                 color: AppColors.textPrimary,
@@ -478,7 +516,7 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                       ),
                       Text(
                         '${enrollment['plan_name'] ?? ''} • ${enrollment['manager_name'] ?? ''}',
-                        style: TextStyle(
+                        style: AppTextStyles.bodyText.copyWith(
                           fontSize: 11.sp,
                           color: AppColors.textGrey,
                         ),
@@ -487,8 +525,8 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                       Row(
                         children: [
                           Text(
-                            'From',
-                            style: TextStyle(
+                            TranslationUtils.tr('tw_from_account'),
+                            style: AppTextStyles.bodyText.copyWith(
                               fontSize: 12.sp,
                               color: AppColors.textGrey,
                               fontWeight: FontWeight.w600,
@@ -514,7 +552,7 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                                     Expanded(
                                       child: Text(
                                         _fmtDateShort(from.toIso8601String()),
-                                        style: TextStyle(
+                                        style: AppTextStyles.bodyText.copyWith(
                                           fontSize: 12.sp,
                                           fontWeight: FontWeight.w700,
                                           color: AppColors.textPrimary,
@@ -534,7 +572,7 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                           SizedBox(width: 10.w),
                           Text(
                             'To',
-                            style: TextStyle(
+                            style: AppTextStyles.bodyText.copyWith(
                               fontSize: 12.sp,
                               color: AppColors.textGrey,
                               fontWeight: FontWeight.w600,
@@ -560,7 +598,7 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                                     Expanded(
                                       child: Text(
                                         _fmtDateShort(to.toIso8601String()),
-                                        style: TextStyle(
+                                        style: AppTextStyles.bodyText.copyWith(
                                           fontSize: 12.sp,
                                           fontWeight: FontWeight.w700,
                                           color: AppColors.textPrimary,
@@ -596,7 +634,7 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                               children: [
                                 Text(
                                   label,
-                                  style: TextStyle(
+                                  style: AppTextStyles.bodyText.copyWith(
                                     fontSize: 10.sp,
                                     color: AppColors.textGrey,
                                     fontWeight: FontWeight.w600,
@@ -605,7 +643,7 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                                 SizedBox(height: 2.h),
                                 Text(
                                   value,
-                                  style: TextStyle(
+                                  style: AppTextStyles.bodyText.copyWith(
                                     fontSize: 13.sp,
                                     fontWeight: FontWeight.w800,
                                     color: color,
@@ -627,13 +665,13 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                               Row(
                                 children: [
                                   metric(
-                                    'Trades:',
+                                TranslationUtils.tr('pmam_trade_history_trades'),
                                     total.toString(),
                                     AppColors.textPrimary,
                                   ),
                                   SizedBox(width: 10.w),
                                   metric(
-                                    'Net P&L:',
+                                TranslationUtils.tr('pmam_trade_history_net_pnl'),
                                     '${netPos ? '+' : ''}\$${net.abs().toStringAsFixed(2)}',
                                     netPos ? AppColors.green : AppColors.error,
                                   ),
@@ -643,13 +681,15 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                               Row(
                                 children: [
                                   metric(
-                                    'Commission:',
+                                TranslationUtils.tr(
+                                    'meta_history_screen_commission'),
                                     '${commPos ? '+' : ''}\$${comm.abs().toStringAsFixed(2)}',
                                     commPos ? AppColors.green : AppColors.error,
                                   ),
                                   SizedBox(width: 10.w),
                                   metric(
-                                    'Settled P&L (this period):',
+                                TranslationUtils.tr(
+                                    'pmam_trade_history_settled_pnl_this_period'),
                                     '${settledPos ? '+' : ''}\$${settled.abs().toStringAsFixed(2)}',
                                     settledPos
                                         ? AppColors.green
@@ -693,7 +733,7 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                                     Expanded(
                                       child: Text(
                                         _ctrl.errorMessage.value,
-                                        style: TextStyle(
+                                        style: AppTextStyles.bodyText.copyWith(
                                           fontSize: 12.sp,
                                           color: AppColors.error,
                                           fontWeight: FontWeight.w600,
@@ -702,7 +742,8 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                                     ),
                                     TextButton(
                                       onPressed: load,
-                                      child: const Text('Retry'),
+                                      child: Text(TranslationUtils.tr(
+                                          'edit_profile_retry')),
                                     ),
                                   ],
                                 ),
@@ -723,8 +764,9 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                           if (rows.isEmpty) {
                             return Center(
                               child: Text(
-                                'No trades found for the selected dates.',
-                                style: TextStyle(
+                            TranslationUtils.tr(
+                                'pmam_investor_portal_screen_no_trades_found_for_the_selected'),
+                                style: AppTextStyles.bodyText.copyWith(
                                   fontSize: 13.sp,
                                   color: AppColors.textGrey,
                                 ),
@@ -748,8 +790,9 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                                             Expanded(
                                               flex: 3,
                                               child: Text(
-                                                'POSITION ID',
-                                                style: TextStyle(
+                                        TranslationUtils.tr(
+                                            'pmam_investor_portal_screen_position_id'),
+                                                style: AppTextStyles.bodyText.copyWith(
                                                   fontSize: 10.sp,
                                                   color: AppColors.textGrey,
                                                   fontWeight: FontWeight.w700,
@@ -760,7 +803,7 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                                               flex: 2,
                                               child: Text(
                                                 'SYMBOL',
-                                                style: TextStyle(
+                                                style: AppTextStyles.bodyText.copyWith(
                                                   fontSize: 10.sp,
                                                   color: AppColors.textGrey,
                                                   fontWeight: FontWeight.w700,
@@ -771,7 +814,7 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                                               flex: 2,
                                               child: Text(
                                                 'TYPE',
-                                                style: TextStyle(
+                                                style: AppTextStyles.bodyText.copyWith(
                                                   fontSize: 10.sp,
                                                   color: AppColors.textGrey,
                                                   fontWeight: FontWeight.w700,
@@ -782,7 +825,7 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                                               flex: 2,
                                               child: Text(
                                                 'LOT',
-                                                style: TextStyle(
+                                                style: AppTextStyles.bodyText.copyWith(
                                                   fontSize: 10.sp,
                                                   color: AppColors.textGrey,
                                                   fontWeight: FontWeight.w700,
@@ -792,8 +835,9 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                                             Expanded(
                                               flex: 3,
                                               child: Text(
-                                                'CLOSE PRICE',
-                                                style: TextStyle(
+                                        TranslationUtils.tr(
+                                            'pmam_investor_portal_screen_close_price'),
+                                                style: AppTextStyles.bodyText.copyWith(
                                                   fontSize: 10.sp,
                                                   color: AppColors.textGrey,
                                                   fontWeight: FontWeight.w700,
@@ -803,8 +847,9 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                                             Expanded(
                                               flex: 4,
                                               child: Text(
-                                                'CLOSE TIME',
-                                                style: TextStyle(
+                                        TranslationUtils.tr(
+                                            'pmam_investor_portal_screen_close_time'),
+                                                style: AppTextStyles.bodyText.copyWith(
                                                   fontSize: 10.sp,
                                                   color: AppColors.textGrey,
                                                   fontWeight: FontWeight.w700,
@@ -815,8 +860,8 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                                               flex: 3,
                                               child: Text(
                                                 'COMMISSION',
-                                                textAlign: TextAlign.right,
-                                                style: TextStyle(
+                                                textAlign: TextAlign.end,
+                                                style: AppTextStyles.bodyText.copyWith(
                                                   fontSize: 10.sp,
                                                   color: AppColors.textGrey,
                                                   fontWeight: FontWeight.w700,
@@ -828,7 +873,7 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                                               child: Text(
                                                 'MY P&L',
                                                 textAlign: TextAlign.right,
-                                                style: TextStyle(
+                                                style: AppTextStyles.bodyText.copyWith(
                                                   fontSize: 10.sp,
                                                   color: AppColors.textGrey,
                                                   fontWeight: FontWeight.w700,
@@ -896,7 +941,7 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                                                     flex: 3,
                                                     child: Text(
                                                       posId,
-                                                      style: TextStyle(
+                                                      style: AppTextStyles.bodyText.copyWith(
                                                         fontSize: 12.sp,
                                                         color: AppColors
                                                             .textPrimary,
@@ -909,7 +954,7 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                                                     flex: 2,
                                                     child: Text(
                                                       symbol,
-                                                      style: TextStyle(
+                                                      style: AppTextStyles.bodyText.copyWith(
                                                         fontSize: 12.sp,
                                                         color: AppColors
                                                             .textPrimary,
@@ -922,7 +967,7 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                                                     flex: 2,
                                                     child: Text(
                                                       type.toUpperCase(),
-                                                      style: TextStyle(
+                                                      style: AppTextStyles.bodyText.copyWith(
                                                         fontSize: 12.sp,
                                                         color: isBuy
                                                             ? AppColors.green
@@ -936,7 +981,7 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                                                     flex: 2,
                                                     child: Text(
                                                       lot,
-                                                      style: TextStyle(
+                                                      style: AppTextStyles.bodyText.copyWith(
                                                         fontSize: 12.sp,
                                                         color: AppColors
                                                             .textPrimary,
@@ -949,7 +994,7 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                                                     flex: 3,
                                                     child: Text(
                                                       closePrice,
-                                                      style: TextStyle(
+                                                      style: AppTextStyles.bodyText.copyWith(
                                                         fontSize: 12.sp,
                                                         color: AppColors
                                                             .textPrimary,
@@ -962,7 +1007,7 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                                                     flex: 4,
                                                     child: Text(
                                                       closeTime,
-                                                      style: TextStyle(
+                                                      style: AppTextStyles.bodyText.copyWith(
                                                         fontSize: 12.sp,
                                                         color: AppColors
                                                             .textPrimary,
@@ -977,7 +1022,7 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                                                       '${comm >= 0 ? '+' : ''}${comm.toStringAsFixed(2)}',
                                                       textAlign:
                                                           TextAlign.right,
-                                                      style: TextStyle(
+                                                      style: AppTextStyles.bodyText.copyWith(
                                                         fontSize: 12.sp,
                                                         color: comm >= 0
                                                             ? AppColors.green
@@ -993,7 +1038,7 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                                                       '${pnlPos ? '+' : ''}${profit.toStringAsFixed(2)}',
                                                       textAlign:
                                                           TextAlign.right,
-                                                      style: TextStyle(
+                                                      style: AppTextStyles.bodyText.copyWith(
                                                         fontSize: 12.sp,
                                                         color: pnlColor,
                                                         fontWeight:
@@ -1026,237 +1071,6 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
     );
   }
 
-  Widget _buildFundManagersTab() {
-    return Column(
-      children: [
-        SizedBox(height: 12.h),
-        // Search bar
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16.w),
-          child: Container(
-            decoration: BoxDecoration(
-              color: AppColors.card,
-              borderRadius: BorderRadius.circular(12.r),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.border.withValues(alpha: 0.06),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: TextField(
-              onChanged: (v) {
-                setState(() => _searchQuery = v);
-                _onSearchChanged(v);
-              },
-              style: TextStyle(fontSize: 14.sp, color: AppColors.textPrimary),
-              decoration: InputDecoration(
-                hintText: 'Search managers by name or code…',
-                hintStyle: TextStyle(
-                  fontSize: 14.sp,
-                  color: AppColors.textGrey,
-                ),
-                prefixIcon: Icon(
-                  Icons.search,
-                  color: AppColors.textGrey,
-                  size: 20.sp,
-                ),
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.symmetric(
-                  vertical: 13.h,
-                  horizontal: 16.w,
-                ),
-              ),
-            ),
-          ),
-        ),
-        SizedBox(height: 12.h),
-        // Content
-        Expanded(
-          child: Obx(() {
-            if (_ctrl.isManagersLoading.value) {
-              return Center(
-                child: CommonLoadingWidget(size: 36, color: AppColors.primary),
-              );
-            }
-            final managers = _ctrl.managersList;
-            if (managers.isEmpty) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.person_search_rounded,
-                      size: 48.sp,
-                      color: AppColors.textGrey.withOpacity(0.4),
-                    ),
-                    SizedBox(height: 12.h),
-                    Text(
-                      _searchQuery.isEmpty
-                          ? 'No fund managers available'
-                          : 'No results for "$_searchQuery"',
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        color: AppColors.textGrey,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-              );
-            }
-            return RefreshIndicator(
-              color: AppColors.primary,
-              onRefresh: () =>
-                  _ctrl.loadManagersDataTable(search: _searchQuery),
-              child: ListView.separated(
-                padding: EdgeInsets.symmetric(horizontal: 16.w),
-                itemCount: managers.length,
-                separatorBuilder: (_, __) => SizedBox(height: 10.h),
-                itemBuilder: (_, i) {
-                  // Map model properties
-                  final PmamManager manager = managers[i];
-                  final name = manager.managerName ?? 'Unknown';
-                  final code = manager.managerCode;
-                  final initials = name
-                      .split(' ')
-                      .take(2)
-                      .map((e) => e.isNotEmpty ? e[0].toUpperCase() : '')
-                      .join();
-                  final profit = manager.profitPercentage;
-                  final profitIsPos = profit >= 0;
-                  final totalAum = manager.totalAum.toStringAsFixed(0);
-                  final investorsCount = manager.totalInvestors;
-                  final avgCommission = manager.avgCommission.toStringAsFixed(
-                    0,
-                  );
-                  final memberSince = manager.memberSince ?? '';
-
-                  return GestureDetector(
-                    onTap: () => Get.toNamed(
-                      AppPages.PMAM_MANAGER_DETAIL,
-                      arguments: manager,
-                    ),
-                    child: Container(
-                      padding: EdgeInsets.all(14.w),
-                      decoration: BoxDecoration(
-                        color: AppColors.card,
-                        borderRadius: BorderRadius.circular(12.r),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.border.withValues(alpha: 0.04),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Header row
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              CircleAvatar(
-                                radius: 22.r,
-                                backgroundColor: AppColors.primary.withOpacity(
-                                  0.15,
-                                ),
-                                child: Text(
-                                  initials,
-                                  style: TextStyle(
-                                    color: AppColors.primary,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 14.sp,
-                                  ),
-                                ),
-                              ),
-                              SizedBox(width: 12.w),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      name,
-                                      style: TextStyle(
-                                        fontSize: 14.sp,
-                                        fontWeight: FontWeight.w700,
-                                        color: AppColors.textPrimary,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    if (code.isNotEmpty)
-                                      Text(
-                                        code,
-                                        style: TextStyle(
-                                          fontSize: 11.sp,
-                                          color: AppColors.primary,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    if (memberSince.isNotEmpty)
-                                      Text(
-                                        'Since $memberSince',
-                                        style: TextStyle(
-                                          fontSize: 10.sp,
-                                          color: AppColors.textGrey,
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                              ),
-                              Icon(
-                                Icons.chevron_right_rounded,
-                                color: AppColors.textGrey,
-                                size: 24.sp,
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 12.h),
-                          // Stats chips
-                          SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: Row(
-                              children: [
-                                _PerfChip(
-                                  label: 'Profit %',
-                                  value:
-                                      '${profitIsPos ? '+' : ''}${profit.toStringAsFixed(2)}%',
-                                  color: profitIsPos
-                                      ? AppColors.green
-                                      : AppColors.error,
-                                ),
-                                SizedBox(width: 8.w),
-                                _PerfChip(label: 'AUM', value: '\$$totalAum'),
-                                SizedBox(width: 8.w),
-                                _PerfChip(
-                                  label: 'Investors',
-                                  value: '$investorsCount',
-                                ),
-                                SizedBox(width: 8.w),
-                                _PerfChip(
-                                  label: 'Commission',
-                                  value: '$avgCommission%',
-                                  color: AppColors.primary,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            );
-          }),
-        ),
-      ],
-    );
-  }
-
   Widget _buildMyInvestmentsTab() {
     var all = _ctrl.enrollments.toList();
     if (widget.managerCode != null) {
@@ -1273,24 +1087,31 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
     final openAllocations = _ctrl.openAllocations;
     final fundEntries = _ctrl.fundEntries;
 
+    // pending / rejected / cancelled requests never locked money (it is only
+    // locked on manager approval), so they must not count in the totals.
     double totalInvested = 0, totalPnl = 0, netBalance = 0;
     int activePlans = 0;
     for (final inv in all) {
+      final status = (inv['status'] ?? '').toString();
+      final isActive = status == 'active';
+      final hasTraded = isActive || status == 'inactive';
+      if (!hasTraded) continue;
+      // P&L is "all time", so investments already left still count.
+      totalPnl += double.tryParse((inv['total_pnl'] ?? 0).toString()) ?? 0;
+      if (!isActive) continue;
+      activePlans++;
       totalInvested +=
           double.tryParse((inv['invested_amount'] ?? 0).toString()) ?? 0;
-      totalPnl += double.tryParse((inv['total_pnl'] ?? 0).toString()) ?? 0;
       netBalance +=
           double.tryParse((inv['current_value'] ?? 0).toString()) ?? 0;
-      if ((inv['status'] ?? '') == 'active') activePlans++;
     }
 
     final filtered = _myFilter == 'all'
         ? all
-        : _myFilter == 'active'
-        ? all.where((i) => i['status'] == 'active').toList()
-        : all.where((i) => i['status'] != 'active').toList();
+        : all.where((i) => i['status'] == _myFilter).toList();
 
     return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: EdgeInsets.all(16.w),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1315,7 +1136,7 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                   Expanded(
                     child: Text(
                       _ctrl.errorMessage.value,
-                      style: TextStyle(
+                      style: AppTextStyles.bodyText.copyWith(
                         fontSize: 12.sp,
                         color: AppColors.error,
                         fontWeight: FontWeight.w600,
@@ -1324,7 +1145,7 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                   ),
                   TextButton(
                     onPressed: () => _ctrl.loadInvestorPortal(),
-                    child: const Text('Retry'),
+                    child: Text(TranslationUtils.tr('edit_profile_retry')),
                   ),
                 ],
               ),
@@ -1341,12 +1162,12 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                 child: Row(
                   children: [
                     _SummaryChip(
-                      label: 'Total Invested',
+                      label: TranslationUtils.tr('pmam_total_invested'),
                       value: '\$${totalInvested.toStringAsFixed(2)}',
                     ),
                     SizedBox(width: gap),
                     _SummaryChip(
-                      label: 'Total P&L',
+                      label: TranslationUtils.tr('pmam_total_pnl'),
                       value:
                           '${totalPnl >= 0 ? '+' : ''}\$${totalPnl.toStringAsFixed(2)}',
                       valueColor: totalPnl >= 0
@@ -1355,12 +1176,12 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                     ),
                     SizedBox(width: gap),
                     _SummaryChip(
-                      label: 'Net Balance',
+                      label: TranslationUtils.tr('pmam_net_balance'),
                       value: '\$${netBalance.toStringAsFixed(2)}',
                     ),
                     SizedBox(width: gap),
                     _SummaryChip(
-                      label: 'Active Plans',
+                      label: TranslationUtils.tr('pmam_active_plans'),
                       value: '$activePlans',
                       valueColor: AppColors.primary,
                     ),
@@ -1377,7 +1198,7 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
             child: Row(
               children: [
                 _SmallFilterChip(
-                  label: 'All',
+                  label: TranslationUtils.tr('common_all'),
                   selected: _myFilter == 'all',
                   onTap: () => setState(() => _myFilter = 'all'),
                 ),
@@ -1391,7 +1212,7 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                 SizedBox(width: 8.w),
                 _SmallFilterChip(
                   label:
-                      'Inactive (${all.where((i) => i['status'] != 'active').length})',
+                      'Inactive (${all.where((i) => i['status'] == 'inactive').length})',
                   selected: _myFilter == 'inactive',
                   onTap: () => setState(() => _myFilter = 'inactive'),
                 ),
@@ -1406,10 +1227,10 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
               child: Center(
                 child: Text(
                   _ctrl.errorMessage.value.isNotEmpty
-                      ? 'Unable to load investments.\nTap Retry to try again.'
-                      : 'No investments yet.\nBrowse Fund Managers to get started!',
+                      ? TranslationUtils.tr('pmam_unable_to_load_investments')
+                      : TranslationUtils.tr('pmam_no_investments_yet'),
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 14.sp, color: AppColors.textGrey),
+                  style: AppTextStyles.bodyText.copyWith(fontSize: 14.sp, color: AppColors.textGrey),
                 ),
               ),
             )
@@ -1426,11 +1247,12 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                     double.tryParse((inv['total_pnl'] ?? 0).toString()) ?? 0;
                 final pmamInvestorId =
                     int.tryParse((inv['id'] ?? 0).toString()) ?? 0;
-                final statusColor = status == 'active'
-                    ? AppColors.green
-                    : status == 'pending'
-                    ? AppColors.warningText
-                    : AppColors.textGrey;
+                final statusColor = switch (status) {
+                  'active' => AppColors.green,
+                  'pending' => AppColors.warningText,
+                  'rejected' => AppColors.error,
+                  _ => AppColors.textGrey, // inactive / cancelled
+                };
                 return Container(
                   padding: EdgeInsets.all(14.w),
                   decoration: BoxDecoration(
@@ -1456,8 +1278,9 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                                 Text(
                                   inv['plan_name'] ??
                                       inv['plan']?['plan_name'] ??
-                                      'Unnamed Plan',
-                                  style: TextStyle(
+                                      TranslationUtils.tr(
+                                          'my_plans_tab_unnamed_plan'),
+                                  style: AppTextStyles.bodyText.copyWith(
                                     fontSize: 14.sp,
                                     fontWeight: FontWeight.w700,
                                     color: AppColors.textPrimary,
@@ -1465,7 +1288,7 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                                 ),
                                 Text(
                                   'Manager: ${inv['manager_name'] ?? inv['manager']?['name'] ?? '-'}  •  ${inv['commission_percentage'] ?? 0}% commission',
-                                  style: TextStyle(
+                                  style: AppTextStyles.bodyText.copyWith(
                                     fontSize: 11.sp,
                                     color: AppColors.textGrey,
                                   ),
@@ -1484,7 +1307,7 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                             ),
                             child: Text(
                               status.isEmpty ? 'UNKNOWN' : status.toUpperCase(),
-                              style: TextStyle(
+                              style: AppTextStyles.bodyText.copyWith(
                                 fontSize: 9.sp,
                                 color: statusColor,
                                 fontWeight: FontWeight.w700,
@@ -1495,30 +1318,47 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                       ),
                       SizedBox(height: 10.h),
                       _InvestmentInfoRow(
-                        'Account',
+                        TranslationUtils.tr('settings_account'),
                         (inv['account_number'] ?? '-').toString(),
                       ),
                       _InvestmentInfoRow(
-                        'Invested',
+                        TranslationUtils.tr('pmam_invested'),
                         _fmtMoney(inv['invested_amount']),
                       ),
                       _InvestmentInfoRow(
-                        'Total P&L',
+                        TranslationUtils.tr('pmam_total_pnl'),
                         '${pnl >= 0 ? '+' : ''}\$${pnl.toStringAsFixed(2)}',
                         valueColor: pnl >= 0
                             ? AppColors.green
                             : AppColors.error,
                       ),
                       _InvestmentInfoRow(
-                        'Current Value',
+                        TranslationUtils.tr('pmam_current_value'),
                         _fmtMoney(inv['current_value']),
                       ),
-                      _InvestmentInfoRow(
-                        'Locked',
-                        _fmtMoney(inv['pmam_locked_amount']),
-                      ),
+                      // pmam_locked_amount is per account, not per
+                      // enrollment — on a rejected/pending row it would show
+                      // money locked by another investment on that account.
+                      if (status == 'active')
+                        _InvestmentInfoRow(
+                          TranslationUtils.tr('kyc_intro_screen_locked'),
+                          _fmtMoney(inv['pmam_locked_amount']),
+                        ),
+                      // addon_name is "" (not null) when no add-on was bought.
+                      if ((inv['addon_name'] ?? '').toString().isNotEmpty) ...[
+                        SizedBox(height: 6.h),
+                        AddonPurchaseLine(
+                          name: inv['addon_name'].toString(),
+                          fee: num.tryParse('${inv['addon_fee'] ?? ''}') ?? 0,
+                          refunded: _isAddonRefunded(inv['addon_refunded']),
+                        ),
+                      ],
                       SizedBox(height: 8.h),
-                      Row(
+                      // Buttons disable while any PAMM call is in flight so a
+                      // double tap can't cancel / unsubscribe twice.
+                      Obx(() {
+                        final busy = _ctrl.isLoading.value;
+                        return Row(
                         children: [
                           Expanded(
                             child: OutlinedButton(
@@ -1538,8 +1378,9 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                                 padding: EdgeInsets.symmetric(vertical: 8.h),
                               ),
                               child: Text(
-                                'View P&L Trades',
-                                style: TextStyle(
+                              TranslationUtils.tr(
+                                  'pmam_investor_portal_screen_view_trades'),
+                                style: AppTextStyles.bodyText.copyWith(
                                   color: AppColors.primary,
                                   fontSize: 12.sp,
                                   fontWeight: FontWeight.w600,
@@ -1547,36 +1388,14 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                               ),
                             ),
                           ),
-                          if (status == 'active' && pmamInvestorId > 0) ...[
+                          if (status == 'pending' && pmamInvestorId > 0) ...[
                             SizedBox(width: 8.w),
                             Expanded(
                               child: OutlinedButton(
-                                onPressed: () =>
-                                    _showAddFundsDialog(pmamInvestorId),
-                                style: OutlinedButton.styleFrom(
-                                  side: BorderSide(
-                                    color: AppColors.primary.withOpacity(0.6),
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8.r),
-                                  ),
-                                  padding: EdgeInsets.symmetric(vertical: 8.h),
-                                ),
-                                child: Text(
-                                  'Add Funds',
-                                  style: TextStyle(
-                                    color: AppColors.primary,
-                                    fontSize: 12.sp,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            SizedBox(width: 8.w),
-                            Expanded(
-                              child: OutlinedButton(
-                                onPressed: () =>
-                                    _confirmUnsubscribe(pmamInvestorId),
+                                onPressed: busy
+                                    ? null
+                                    : () =>
+                                        _confirmCancelRequest(pmamInvestorId),
                                 style: OutlinedButton.styleFrom(
                                   side: BorderSide(
                                     color: AppColors.error.withValues(
@@ -1589,8 +1408,67 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                                   padding: EdgeInsets.symmetric(vertical: 8.h),
                                 ),
                                 child: Text(
-                                  'Withdraw',
-                                  style: TextStyle(
+                                  TranslationUtils.tr('pmam_cancel_request'),
+                                  style: AppTextStyles.bodyText.copyWith(
+                                    color: AppColors.error,
+                                    fontSize: 12.sp,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                          if (status == 'active' && pmamInvestorId > 0) ...[
+                            if (_showAddFunds) ...[
+                              SizedBox(width: 8.w),
+                              Expanded(
+                                child: OutlinedButton(
+                                  onPressed: busy
+                                      ? null
+                                      : () =>
+                                          _showAddFundsDialog(pmamInvestorId),
+                                  style: OutlinedButton.styleFrom(
+                                    side: BorderSide(
+                                      color: AppColors.primary.withOpacity(0.6),
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8.r),
+                                    ),
+                                    padding:
+                                        EdgeInsets.symmetric(vertical: 8.h),
+                                  ),
+                                  child: Text(
+                                    TranslationUtils.tr(
+                                        'pmam_investor_portal_screen_add_funds'),
+                                    style: AppTextStyles.bodyText.copyWith(
+                                      color: AppColors.primary,
+                                      fontSize: 12.sp,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                            SizedBox(width: 8.w),
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: busy
+                                    ? null
+                                    : () => _confirmUnsubscribe(pmamInvestorId),
+                                style: OutlinedButton.styleFrom(
+                                  side: BorderSide(
+                                    color: AppColors.error.withValues(
+                                      alpha: 0.5,
+                                    ),
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8.r),
+                                  ),
+                                  padding: EdgeInsets.symmetric(vertical: 8.h),
+                                ),
+                                child: Text(
+                                TranslationUtils.tr('pmam_unsubscribe'),
+                                  style: AppTextStyles.bodyText.copyWith(
                                     color: AppColors.error,
                                     fontSize: 12.sp,
                                     fontWeight: FontWeight.w600,
@@ -1600,12 +1478,15 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                             ),
                           ],
                         ],
-                      ),
+                      );
+                      }),
                     ],
                   ),
                 );
               },
             ),
+          SizedBox(height: 14.h),
+          _buildPnlHistorySection(),
           SizedBox(height: 14.h),
           Container(
             decoration: BoxDecoration(
@@ -1627,8 +1508,9 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                 side: BorderSide.none,
               ),
               title: Text(
-                'Fund Entries',
-                style: TextStyle(
+                TranslationUtils.tr(
+                    'pmam_investor_portal_screen_fund_entries'),
+                style: AppTextStyles.bodyText.copyWith(
                   fontSize: 13.sp,
                   fontWeight: FontWeight.w800,
                   color: AppColors.textPrimary,
@@ -1639,8 +1521,13 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                   : Padding(
                       padding: EdgeInsets.only(top: 2.h),
                       child: Text(
-                        '${fundEntries.length} transaction${fundEntries.length == 1 ? '' : 's'} found',
-                        style: TextStyle(
+                        fundEntries.length == 1
+                            ? TranslationUtils.trArgs(
+                                'pmam_transaction_found_one', {'count': '1'})
+                            : TranslationUtils.trArgs(
+                                'pmam_transaction_found_other',
+                                {'count': '${fundEntries.length}'}),
+                        style: AppTextStyles.bodyText.copyWith(
                           fontSize: 10.sp,
                           color: AppColors.textGrey,
                           fontWeight: FontWeight.w600,
@@ -1666,8 +1553,9 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                         SizedBox(width: 10.w),
                         Expanded(
                           child: Text(
-                            'No fund entries found.',
-                            style: TextStyle(
+                  TranslationUtils.tr(
+                      'pmam_investor_portal_screen_no_fund_entries_found'),
+                            style: AppTextStyles.bodyText.copyWith(
                               fontSize: 12.sp,
                               color: AppColors.textGrey,
                               fontWeight: FontWeight.w600,
@@ -1676,7 +1564,7 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                         ),
                         TextButton(
                           onPressed: () => _ctrl.loadInvestorPortal(),
-                          child: const Text('Refresh'),
+                          child: Text(TranslationUtils.tr('common_refresh')),
                         ),
                       ],
                     ),
@@ -1768,7 +1656,7 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                                     children: [
                                       Text(
                                         '$prefixSign $type',
-                                        style: TextStyle(
+                                        style: AppTextStyles.bodyText.copyWith(
                                           fontSize: 13.sp,
                                           color: transactionColor,
                                           fontWeight: FontWeight.w800,
@@ -1776,7 +1664,7 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                                       ),
                                       Text(
                                         amountText,
-                                        style: TextStyle(
+                                        style: AppTextStyles.bodyText.copyWith(
                                           fontSize: 14.sp,
                                           color: AppColors.textPrimary,
                                           fontWeight: FontWeight.w900,
@@ -1795,20 +1683,21 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
                                           text: TextSpan(
-                                            style: TextStyle(
+                                            style: AppTextStyles.bodyText.copyWith(
                                               fontSize: 11.sp,
                                               color: AppColors.textGrey,
                                             ),
                                             children: [
-                                              const TextSpan(
-                                                text: 'Plan: ',
-                                                style: TextStyle(
+                                              TextSpan(
+                                                text: TranslationUtils.tr(
+                                                    'pmam_plan_colon'),
+                                                style: AppTextStyles.bodyText.copyWith(
                                                   fontWeight: FontWeight.w700,
                                                 ),
                                               ),
                                               TextSpan(
                                                 text: plan,
-                                                style: const TextStyle(
+                                                style: AppTextStyles.bodyText.copyWith(
                                                   fontWeight: FontWeight.w500,
                                                 ),
                                               ),
@@ -1833,7 +1722,7 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                                           status == '-'
                                               ? '-'
                                               : status.toUpperCase(),
-                                          style: TextStyle(
+                                          style: AppTextStyles.bodyText.copyWith(
                                             fontSize: 9.sp,
                                             color: statusColor,
                                             fontWeight: FontWeight.w800,
@@ -1862,20 +1751,21 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                                       SizedBox(width: 6.w),
                                       RichText(
                                         text: TextSpan(
-                                          style: TextStyle(
+                                          style: AppTextStyles.bodyText.copyWith(
                                             fontSize: 11.sp,
                                             color: AppColors.textGrey,
                                           ),
                                           children: [
-                                            const TextSpan(
-                                              text: 'Date: ',
-                                              style: TextStyle(
+                                            TextSpan(
+                                              text: TranslationUtils.tr(
+                                                  'pmam_date_colon'),
+                                              style: AppTextStyles.bodyText.copyWith(
                                                 fontWeight: FontWeight.w700,
                                               ),
                                             ),
                                             TextSpan(
                                               text: _fmtDateTimeShort(date),
-                                              style: const TextStyle(
+                                              style: AppTextStyles.bodyText.copyWith(
                                                 fontWeight: FontWeight.w500,
                                               ),
                                             ),
@@ -1917,8 +1807,8 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                   side: BorderSide.none,
                 ),
                 title: Text(
-                  'Open Positions',
-                  style: TextStyle(
+                  TranslationUtils.tr('dashboard_open_positions'),
+                  style: AppTextStyles.bodyText.copyWith(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textPrimary,
@@ -1957,7 +1847,7 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                             children: [
                               Text(
                                 plan,
-                                style: TextStyle(
+                                style: AppTextStyles.bodyText.copyWith(
                                   fontSize: 12.sp,
                                   color: AppColors.primary,
                                   fontWeight: FontWeight.w800,
@@ -1970,7 +1860,7 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                                 children: [
                                   Text(
                                     symbol,
-                                    style: TextStyle(
+                                    style: AppTextStyles.bodyText.copyWith(
                                       fontSize: 12.sp,
                                       color: AppColors.textPrimary,
                                       fontWeight: FontWeight.w700,
@@ -1992,7 +1882,7 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                                     ),
                                     child: Text(
                                       isBuy ? 'BUY' : 'SELL',
-                                      style: TextStyle(
+                                      style: AppTextStyles.bodyText.copyWith(
                                         fontSize: 9.sp,
                                         fontWeight: FontWeight.w800,
                                         color: isBuy
@@ -2003,8 +1893,8 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                                   ),
                                   const Spacer(),
                                   Text(
-                                    'Lot $lot',
-                                    style: TextStyle(
+                      TranslationUtils.trArgs('pmam_lot_value', {'lot': lot}),
+                                    style: AppTextStyles.bodyText.copyWith(
                                       fontSize: 11.sp,
                                       color: AppColors.textGrey,
                                     ),
@@ -2016,8 +1906,9 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                                 children: [
                                   Expanded(
                                     child: Text(
-                                      'Open $openPrice',
-                                      style: TextStyle(
+                      TranslationUtils.trArgs(
+                          'pmam_open_value', {'price': openPrice}),
+                                      style: AppTextStyles.bodyText.copyWith(
                                         fontSize: 11.sp,
                                         color: AppColors.textGrey,
                                       ),
@@ -2025,7 +1916,7 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
                                   ),
                                   Text(
                                     openTime,
-                                    style: TextStyle(
+                                    style: AppTextStyles.bodyText.copyWith(
                                       fontSize: 11.sp,
                                       color: AppColors.textGrey,
                                     ),
@@ -2042,40 +1933,6 @@ class _PmamInvestorPortalScreenState extends State<PmamInvestorPortalScreen>
               ),
             ),
           SizedBox(height: 40.h),
-        ],
-      ),
-    );
-  }
-}
-
-class _PerfChip extends StatelessWidget {
-  final String label;
-  final String value;
-  final Color? color;
-  const _PerfChip({required this.label, required this.value, this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
-      decoration: BoxDecoration(
-        color: AppColors.tradeBackgroundCenterColor,
-        borderRadius: BorderRadius.circular(8.r),
-      ),
-      child: Column(
-        children: [
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 12.sp,
-              fontWeight: FontWeight.w700,
-              color: color ?? AppColors.textPrimary,
-            ),
-          ),
-          Text(
-            label,
-            style: TextStyle(fontSize: 9.sp, color: AppColors.textGrey),
-          ),
         ],
       ),
     );
@@ -2111,7 +1968,7 @@ class _SummaryChip extends StatelessWidget {
         children: [
           Text(
             value,
-            style: TextStyle(
+            style: AppTextStyles.bodyText.copyWith(
               fontSize: 14.sp,
               fontWeight: FontWeight.w700,
               color: valueColor ?? AppColors.textPrimary,
@@ -2120,7 +1977,7 @@ class _SummaryChip extends StatelessWidget {
           SizedBox(height: 2.h),
           Text(
             label,
-            style: TextStyle(fontSize: 10.sp, color: AppColors.textGrey),
+            style: AppTextStyles.bodyText.copyWith(fontSize: 10.sp, color: AppColors.textGrey),
           ),
         ],
       ),
@@ -2153,7 +2010,7 @@ class _SmallFilterChip extends StatelessWidget {
         ),
         child: Text(
           label,
-          style: TextStyle(
+          style: AppTextStyles.bodyText.copyWith(
             fontSize: 12.sp,
             fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
             color: selected
@@ -2183,11 +2040,11 @@ class _InvestmentInfoRow extends StatelessWidget {
         children: [
           Text(
             label,
-            style: TextStyle(fontSize: 12.sp, color: AppColors.textGrey),
+            style: AppTextStyles.bodyText.copyWith(fontSize: 12.sp, color: AppColors.textGrey),
           ),
           Text(
             value,
-            style: TextStyle(
+            style: AppTextStyles.bodyText.copyWith(
               fontSize: 12.sp,
               fontWeight: FontWeight.w600,
               color: valueColor ?? AppColors.textPrimary,

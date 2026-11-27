@@ -27,5 +27,6 @@ class TenaxConfig extends BaseClientConfig {
         apiBaseUrl: 'https://demo3.tenaxcode.com/api/',
         websocketUrl: 'wss://demo3.tenaxcode.com/trade-engine',
         chartBaseUrl: 'https://demo3.tenaxcode.com',
+        useNewDepositWithdrawFlow: true,
       );
 }

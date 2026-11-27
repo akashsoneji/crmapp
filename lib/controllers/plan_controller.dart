@@ -44,6 +44,12 @@ class PlanModel {
   String? groupCategory;
   int? hedgingAllowed;
 
+  /// The client must accept [termsText] before an account can be opened in
+  /// this group.
+  bool termsEnabled;
+  /// Plain text with line breaks; null when [termsEnabled] is false.
+  String? termsText;
+
   PlanModel({
     this.id,
     this.groupName,
@@ -75,6 +81,8 @@ class PlanModel {
     this.currency,
     this.groupCategory,
     this.hedgingAllowed,
+    this.termsEnabled = false,
+    this.termsText,
   });
 
   PlanModel copyWith({
@@ -108,6 +116,8 @@ class PlanModel {
     String? currency,
     String? groupCategory,
     int? hedgingAllowed,
+    bool? termsEnabled,
+    String? termsText,
   }) => PlanModel(
     id: id ?? this.id,
     groupName: groupName ?? this.groupName,
@@ -139,6 +149,8 @@ class PlanModel {
     currency: currency ?? this.currency,
     groupCategory: groupCategory ?? this.groupCategory,
     hedgingAllowed: hedgingAllowed ?? this.hedgingAllowed,
+    termsEnabled: termsEnabled ?? this.termsEnabled,
+    termsText: termsText ?? this.termsText,
   );
 
   factory PlanModel.fromJson(Map<String, dynamic> json) => PlanModel(
@@ -174,7 +186,12 @@ class PlanModel {
     currency: json["currency"]?.toString(),
     groupCategory: json["group_category"]?.toString(),
     hedgingAllowed: json["hedging_allowed"],
+    termsEnabled: _parseBool(json["terms_enabled"]),
+    termsText: json["terms_text"]?.toString(),
   );
+
+  static bool _parseBool(dynamic v) =>
+      v == true || v == 1 || v == '1' || v == 'true';
 
   Map<String, dynamic> toJson() => {
     "id": id,
@@ -207,6 +224,8 @@ class PlanModel {
     "currency": currency,
     "group_category": groupCategory,
     "hedging_allowed": hedgingAllowed,
+    "terms_enabled": termsEnabled,
+    "terms_text": termsText,
   };
 }
 

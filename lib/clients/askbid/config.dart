@@ -16,5 +16,6 @@ class AskbidConfig extends BaseClientConfig {
         apiBaseUrl: 'https://app.askbidfx.com/api/',
         websocketUrl: 'wss://app.askbidfx.com/trade-engine',
         chartBaseUrl: 'https://app.askbidfx.com',
+        useNewDepositWithdrawFlow: false,
       );
 }

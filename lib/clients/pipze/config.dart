@@ -19,5 +19,6 @@ class PipzeConfig extends BaseClientConfig {
         apiBaseUrl: 'https://my.pipze.com/api/',
         websocketUrl: 'wss://my.pipze.com/trade-engine',
         chartBaseUrl: 'https://my.pipze.com',
+        useNewDepositWithdrawFlow: false,
       );
 }

@@ -16,5 +16,6 @@ class OnsaConfig extends BaseClientConfig {
         apiBaseUrl: 'https://member.onsamarket.com/api/',
         websocketUrl: 'wss://member.onsamarket.com/trade-engine',
         chartBaseUrl: 'https://member.onsamarket.com',
+        useNewDepositWithdrawFlow: false,
       );
 }

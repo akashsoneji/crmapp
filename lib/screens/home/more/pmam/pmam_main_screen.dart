@@ -1,5 +1,8 @@
-import 'package:crm_app/widgets/app_svg_back_button.dart';
+
+import 'package:crm_app/constants/text_styles.dart';
+import 'package:crm_app/services/language_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
@@ -9,11 +12,10 @@ import '../../../../widgets/pmam_bottom_navigation.dart';
 import 'pmam_become_manager_screen.dart';
 import 'pmam_explore_managers_screen.dart';
 import 'pmam_investor_portal_screen.dart';
+import '../../../../routes/app_pages.dart';
+import 'pmam_manager_commissions_screen.dart';
 import 'pmam_manager_dashboard_screen.dart';
 import 'pmam_manager_portal_screen.dart';
-import 'pmam_manager_commissions_screen.dart';
-import '../../../../services/language_service.dart';
-import '../../../../flavor_config.dart';
 
 /// Single entry-point for the PAMM module.
 ///
@@ -35,8 +37,24 @@ class PmamMainScreen extends StatefulWidget {
 class _PmamMainScreenState extends State<PmamMainScreen> {
   final PmamController _c = Get.put(PmamController(), permanent: true);
 
-  int _idx = 0;
+  /// Index of the "Explore Fund Managers" tab within [_pagesFor] for a mode.
+  /// • manager  → 5 tabs → Explore is at index 3
+  /// • investor → 3 tabs → Explore is at index 1
+  static const int _exploreIdxForManager = 3;
+  static int get _exploreIdxForInvestor =>
+      PmamBottomNavigation.hidesBecomeManager ? 0 : 1;
+
+  /// Positions in the manager tab set.
+  static const int _dashboardIdx = 0;
+  static const int _myPlansIdx = 1;
+
+  int? _idx; // null until first mode is known → then resolves to Explore
   PmamNavMode? _lastMode;
+
+  /// Default tab index for a given mode — always lands on "Explore".
+  int _defaultIdxFor(PmamNavMode mode) => mode == PmamNavMode.manager
+      ? _exploreIdxForManager
+      : _exploreIdxForInvestor;
 
   @override
   void initState() {
@@ -57,7 +75,7 @@ class _PmamMainScreenState extends State<PmamMainScreen> {
 
   List<Widget> _pagesFor(PmamNavMode mode) {
     if (mode == PmamNavMode.manager) {
-      return const [
+      return [
         PmamManagerDashboardScreen(),
         // Plans tab of the manager portal.
         PmamManagerPortalScreen(initialTab: 1, embedded: true),
@@ -68,31 +86,30 @@ class _PmamMainScreenState extends State<PmamMainScreen> {
         PmamInvestorPortalScreen(initialTab: 1, embedded: true),
       ];
     }
-    final isGtxPrime = FlavorConfig.instance.appName == 'GTX Prime';
     return [
-      if (!isGtxPrime) const PmamBecomeManagerScreen(),
-      const PmamExploreManagersScreen(embedded: true),
-      const PmamInvestorPortalScreen(initialTab: 1, embedded: true),
+      if (!PmamBottomNavigation.hidesBecomeManager) PmamBecomeManagerScreen(),
+      PmamExploreManagersScreen(embedded: true),
+      PmamInvestorPortalScreen(initialTab: 1, embedded: true),
     ];
   }
 
   String _titleFor(PmamNavMode mode, int i) {
     if (mode == PmamNavMode.manager) {
-      return const [
-        'Manager Dashboard',
-        'My Plans',
-        'My Investors',
-        'Explore Fund Managers',
-        'My Investments',
+      return [
+        TranslationUtils.tr('pmam_manager_dashboard_screen_manager_dashboard'),
+        TranslationUtils.tr('copy_trading_nav_my_plans'),
+        TranslationUtils.tr('pmam_main_screen_my_investors'),
+        TranslationUtils.tr(
+            'pmam_explore_managers_screen_explore_fund_managers'),
+        TranslationUtils.tr('my_investments_screen_my_investments'),
       ][i];
     }
-    final isGtxPrime = FlavorConfig.instance.appName == 'GTX Prime';
-    final titles = [
-      if (!isGtxPrime) 'Become a Manager',
-      'Explore Fund Managers',
-      'My Investments',
-    ];
-    return titles[i];
+    return [
+      if (!PmamBottomNavigation.hidesBecomeManager)
+        TranslationUtils.tr('pmam_become_manager_screen_become_manager'),
+      TranslationUtils.tr('pmam_explore_managers_screen_explore_fund_managers'),
+      TranslationUtils.tr('my_investments_screen_my_investments'),
+    ][i];
   }
 
   @override
@@ -101,16 +118,18 @@ class _PmamMainScreenState extends State<PmamMainScreen> {
       final mode = _modeFor(_c.managerStatus.value);
 
       // Reset the active index whenever the tab set changes so we don't end
-      // up pointing at a missing tab.
+      // up pointing at a missing tab. Default lands on "Explore".
       if (_lastMode != mode) {
         _lastMode = mode;
+        final defaultIdx = _defaultIdxFor(mode);
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) setState(() => _idx = 0);
+          if (mounted) setState(() => _idx = defaultIdx);
         });
       }
 
       final pages = _pagesFor(mode);
-      final safeIdx = _idx.clamp(0, pages.length - 1);
+      final int resolvedIdx = _idx ?? _defaultIdxFor(mode);
+      final safeIdx = resolvedIdx.clamp(0, pages.length - 1);
 
       return Scaffold(
         backgroundColor: AppColors.background,
@@ -118,32 +137,65 @@ class _PmamMainScreenState extends State<PmamMainScreen> {
           backgroundColor: AppColors.card,
           elevation: 0,
           centerTitle: false,
-          leading: AppSvgBackButton(
-          onPressed: () => Get.back(closeOverlays: true),
-          iconWidth: 30.w,
-          iconHeight: 30.h,
-        ),
+          // Home closes the whole PAMM stack (plan detail, commissions, …) and
+          // returns to the main shell, which is still on the More tab.
+          leading: IconButton(
+            tooltip: TranslationUtils.tr('more_title'),
+            icon: SvgPicture.asset(
+              'assets/svg/ib_dashboard/home.svg',
+              colorFilter: ColorFilter.mode(
+                AppColors.textPrimary,
+                BlendMode.srcIn,
+              ),
+            ),
+            onPressed: () => Get.until((route) => route.isFirst),
+          ),
           iconTheme: IconThemeData(color: AppColors.textPrimary),
           title: Text(
             _titleFor(mode, safeIdx),
-            style: TextStyle(
+            style: AppTextStyles.bodyText.copyWith(
               fontSize: 16.sp,
               fontWeight: FontWeight.w700,
               color: AppColors.textPrimary,
             ),
           ),
+          // Every tab refreshes by pulling down. Commission History lives on
+          // the Dashboard tab only; New Plan on the My Plans tab only.
           actions: [
-            if (mode == PmamNavMode.manager)
+            if (mode == PmamNavMode.manager && safeIdx == _dashboardIdx)
               IconButton(
                 tooltip: TranslationUtils.tr('pmam_commissions_title'),
                 icon: Icon(Icons.payments_outlined, color: AppColors.textPrimary),
-                onPressed: () => Get.to(() => const PmamManagerCommissionsScreen()),
+                onPressed: () =>
+                    Get.to(() => const PmamManagerCommissionsScreen()),
               ),
-            if (mode == PmamNavMode.manager)
-              IconButton(
-                tooltip: 'Refresh',
-                icon: Icon(Icons.refresh_rounded, color: AppColors.textPrimary),
-                onPressed: () => _c.loadManagerDashboard(),
+            if (mode == PmamNavMode.manager && safeIdx == _myPlansIdx)
+              Padding(
+                padding: EdgeInsetsDirectional.only(end: 12.w),
+                child: TextButton.icon(
+                  onPressed: () => Get.toNamed(AppPages.PMAM_CREATE_PLAN),
+                  icon: Icon(
+                    Icons.add_rounded,
+                    size: 18.sp,
+                    color: AppColors.onColoredBackground,
+                  ),
+                  label: Text(
+                    TranslationUtils.tr('pmam_manager_portal_screen_new_plan'),
+                    style: AppTextStyles.bodyText.copyWith(
+                      color: AppColors.onColoredBackground,
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  style: TextButton.styleFrom(
+                    backgroundColor: AppColors.brandPrimary,
+                    padding: EdgeInsets.symmetric(horizontal: 12.w),
+                    minimumSize: Size(0, 34.h),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.r),
+                    ),
+                  ),
+                ),
               ),
           ],
         ),

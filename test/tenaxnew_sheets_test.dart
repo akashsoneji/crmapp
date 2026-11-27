@@ -339,14 +339,30 @@ void main() {
         expect(find.text('New Price Alert'), findsOneWidget);
         expect(find.text('Alert me when EURUSD ≥ 1.09402'), findsOneWidget);
 
-        final plus = tester.getSize(find.byTooltip('Increase price'));
-        expect(plus.width, greaterThanOrEqualTo(44));
-        expect(plus.height, greaterThanOrEqualTo(44));
+        // "My alerts" must stay readable on the sheet in both themes.
+        final myAlerts =
+            tester.widget<Text>(find.text('My alerts')).style!.color!;
+        final a = myAlerts.computeLuminance();
+        final b = AppColors.sheetSurface.computeLuminance();
+        final ratio = ((a > b ? a : b) + 0.05) / ((a > b ? b : a) + 0.05);
+        expect(ratio, greaterThanOrEqualTo(4.5));
 
-        await tester.tap(find.byTooltip('Increase price'));
+        // Same stepper as the pending order sheet: 40px tap target.
+        final plus = find.bySemanticsLabel('Increase price');
+        expect(tester.getSize(plus).width, greaterThanOrEqualTo(40));
+        expect(tester.getSize(plus).height, greaterThanOrEqualTo(40));
+        expect(find.text('CONDITION'), findsOneWidget);
+        expect(find.text('TARGET PRICE'), findsOneWidget);
+
+        await tester.tap(plus);
         await tester.tap(find.text('Below'));
         await tester.pumpAndSettle();
         expect(find.text('Alert me when EURUSD ≤ 1.09403'), findsOneWidget);
+        expect(find.text('+0.00001 (+0.00%)'), findsOneWidget);
+
+        await tester.tap(find.text('Add a note (optional)'));
+        await tester.pumpAndSettle();
+        expect(find.text('NOTE'), findsOneWidget);
         expect(tester.takeException(), isNull);
       });
 
@@ -430,6 +446,33 @@ void main() {
           tester.getSize(find.byType(AccountCardNew).first).height,
           greaterThanOrEqualTo(44),
         );
+
+        // The gradient outline sits behind the whole card: an active fill
+        // that is not opaque lets it bleed through and hides the text.
+        final activeFill = tester
+            .widget<Material>(
+              find
+                  .descendant(
+                    of: find.byType(AccountCardNew).first,
+                    matching: find.byType(Material),
+                  )
+                  .first,
+            )
+            .color!;
+        expect(activeFill.a, 1.0);
+        final textColor = tester
+            .widget<Text>(find.text('ID: 2000024'))
+            .style!
+            .color!;
+        final lighter = [
+          activeFill.computeLuminance(),
+          textColor.computeLuminance(),
+        ].reduce((a, b) => a > b ? a : b);
+        final darker = [
+          activeFill.computeLuminance(),
+          textColor.computeLuminance(),
+        ].reduce((a, b) => a < b ? a : b);
+        expect((lighter + 0.05) / (darker + 0.05), greaterThanOrEqualTo(4.5));
 
         await tester.tap(find.text('ID: 2000062'));
         expect(tapped, 1);

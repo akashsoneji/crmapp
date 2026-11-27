@@ -13,6 +13,8 @@ import '../../models/order_types.dart';
 import '../../utils/precision_helper.dart';
 import '../../utils/app_logger.dart';
 import '../../services/symbol_details_cache_service.dart';
+import '../../flavor_config.dart';
+import '../../widgets/pending_order/pending_order_widgets_new.dart';
 import 'package:get/get.dart';
 import 'dart:async';
 
@@ -36,6 +38,10 @@ class PendingOrderContent extends StatefulWidget {
   final bool isLoading;
   final Function(double) onVolumeChanged;
 
+  /// New design only: shown at the top of the form's scroll area (quote bar
+  /// and chart), so it scrolls together with the fields.
+  final Widget? scrollHeader;
+
   const PendingOrderContent({
     Key? key,
     required this.selectedPendingOrderType,
@@ -56,6 +62,7 @@ class PendingOrderContent extends StatefulWidget {
     required this.selectedSymbol,
     this.isLoading = false,
     required this.onVolumeChanged,
+    this.scrollHeader,
   }) : super(key: key);
 
   @override
@@ -832,8 +839,11 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
     super.dispose();
   }
 
+
   @override
   Widget build(BuildContext context) {
+    if (FlavorConfig.usesNewHomeDesign) return _buildNewLayout(context);
+
     return GestureDetector(
       onTap: () {
         // Dismiss keyboard when tapping outside text fields
@@ -1742,6 +1752,9 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
     Map<String, dynamic>? pnlData, {
     required bool isProfit,
   }) {
+    if (FlavorConfig.usesNewHomeDesign) {
+      return _buildNewPnLLine(pnlData, isProfit: isProfit);
+    }
     if (pnlData == null || pnlData['pnl'] == null) {
       return SizedBox(height: 20.h); // Fixed height to prevent layout shifts
     }
@@ -1948,6 +1961,593 @@ class _PendingOrderContentState extends State<PendingOrderContent> {
               ),
             ),
           ),
+    );
+  }
+
+  // ── Handlers shared by the old and the new layout ─────────────────────
+  // Moved out of inline closures unchanged so both layouts run the same code.
+
+  void _selectOrderType(String option) {
+    // Update parent's ValueNotifier
+    widget.selectedOrderType.value = option;
+    // Update selectedPendingOrderType based on dropdown selection
+    // 1 = Buy, 0 = Sell
+    if (option.contains('Buy')) {
+      widget.selectedPendingOrderType.value = 1;
+    } else if (option.contains('Sell')) {
+      widget.selectedPendingOrderType.value = 0;
+    }
+  }
+
+  void _decrementVolume() {
+    setState(() {
+      final next = double.parse((volume - 0.01).toStringAsFixed(2));
+      volume = next < _minLot ? _minLot : next;
+      volumeController.text = PrecisionHelper.formatVolume(volume);
+      widget.onVolumeChanged(volume);
+    });
+  }
+
+  void _incrementVolume() {
+    setState(() {
+      final next = double.parse((volume + 0.01).toStringAsFixed(2));
+      volume = next > _maxLot ? _maxLot : next;
+      volumeController.text = volume.toStringAsFixed(2);
+      widget.onVolumeChanged(volume);
+    });
+  }
+
+  List<TextInputFormatter> get _volumeInputFormatters => [
+    FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+    TextInputFormatter.withFunction((oldValue, newValue) {
+      final text = newValue.text;
+      if (text.isEmpty) return newValue;
+
+      // Prevent '00', '01' etc. (allow '0', '0.' only)
+      if (text.length > 1 && text.startsWith('0') && !text.startsWith('0.')) {
+        return oldValue;
+      }
+
+      final newDouble = double.tryParse(text);
+      if (newDouble == null) return oldValue;
+      if (newDouble > _maxLot) return oldValue;
+
+      return newValue;
+    }),
+  ];
+
+  void _onVolumeTextChanged(String value) {
+    if (value.isEmpty) return;
+    // Free typing — just sync volume, no mid-keystroke clamping.
+    final newVolume = PrecisionHelper.parseDouble(value);
+    if (newVolume > 0) {
+      setState(() {
+        volume = newVolume;
+        widget.onVolumeChanged(volume);
+      });
+    }
+  }
+
+  void _onVolumeEditingComplete() {
+    // Clamp to [_minLot, _maxLot] when user leaves the field.
+    final parsed = double.tryParse(volumeController.text);
+    final clamped =
+        (parsed == null || parsed <= 0) ? _minLot : parsed.clamp(_minLot, _maxLot);
+    setState(() {
+      volume = double.parse(clamped.toStringAsFixed(2));
+      widget.onVolumeChanged(volume);
+    });
+    volumeController.text = volume.toStringAsFixed(2);
+    volumeFocusNode.unfocus();
+  }
+
+  void _onPriceTextChanged(String value, ValueNotifier<double> priceNotifier) {
+    isManuallyEditingPrice = true; // User is manually editing
+    final newPrice = PrecisionHelper.parseDouble(value, decimals: currentDigits);
+    if (newPrice > 0) {
+      if (priceNotifier.value != newPrice) {
+        priceNotifier.value = newPrice;
+      }
+      // Trigger setState to ensure UI rebuilds for real-time validation
+      setState(() {});
+    }
+  }
+
+  void _onTakeProfitToggled(bool value) {
+    widget.takeProfitEnabled.value = value;
+    isManuallyEditingTakeProfit = false;
+    if (mounted) {
+      setState(() {
+        _pnlCalculationKey++;
+      });
+    }
+  }
+
+  void _onStopLossToggled(bool value) {
+    widget.stopLossEnabled.value = value;
+    isManuallyEditingStopLoss = false;
+    if (mounted) {
+      setState(() {
+        _pnlCalculationKey++;
+      });
+    }
+  }
+
+  void _stepTpSlPrice(
+    String label,
+    TextEditingController controller,
+    double defaultValue, {
+    required bool isIncrease,
+  }) {
+    final currentValue = double.tryParse(controller.text) ?? defaultValue;
+    final priceIncrement = _getPriceIncrement();
+    final newValue =
+        isIncrease
+            ? currentValue + priceIncrement
+            : (currentValue - priceIncrement).clamp(0.0, double.infinity);
+    setState(() {
+      controller.text = _formatPrice(newValue);
+      if (label == 'Take Profit') {
+        widget.takeProfitPrice.value = newValue;
+      } else if (label == 'Stop Loss') {
+        widget.stopLossPrice.value = newValue;
+      }
+      // Force FutureBuilder to rebuild by incrementing key
+      _pnlCalculationKey++;
+    });
+  }
+
+  void _onTpSlTextChanged(String label, String value) {
+    // Mark as manually editing to prevent auto-updates from datafeed
+    if (label == 'Take Profit') {
+      isManuallyEditingTakeProfit = true;
+    } else if (label == 'Stop Loss') {
+      isManuallyEditingStopLoss = true;
+    }
+
+    // Update the price value when text changes (without setState to avoid keyboard closing and focus loss)
+    final price = double.tryParse(value.replaceAll(',', '')) ?? 0.0;
+    if (price > 0) {
+      if (label == 'Take Profit') {
+        widget.takeProfitPrice.value = price;
+      } else if (label == 'Stop Loss') {
+        widget.stopLossPrice.value = price;
+      }
+    }
+
+    // Debounce P&L calculation to update in real-time while typing
+    // Only update the specific field's P&L, not the entire widget tree
+    _pnlUpdateTimer?.cancel();
+    _pnlUpdateTimer = Timer(const Duration(milliseconds: 100), () {
+      if (mounted) {
+        // Update only the specific P&L widget, not the entire form
+        if (label == 'Take Profit') {
+          _tpPnLUpdateNotifier.value++;
+        } else if (label == 'Stop Loss') {
+          _slPnLUpdateNotifier.value++;
+        }
+      }
+    });
+  }
+
+  void _onTpSlEditingComplete(String label) {
+    // Just update P&L when user finishes editing
+    if (mounted) {
+      setState(() {
+        _pnlCalculationKey++;
+      });
+    }
+    // Clear manual editing flag
+    if (label == 'Take Profit') {
+      isManuallyEditingTakeProfit = false;
+    } else if (label == 'Stop Loss') {
+      isManuallyEditingStopLoss = false;
+    }
+  }
+
+  Widget _buildTakeProfitPnL() {
+    return ValueListenableBuilder<int>(
+      valueListenable: _tpPnLUpdateNotifier,
+      builder: (context, value, child) {
+        return FutureBuilder<Map<String, dynamic>?>(
+          key: ValueKey('tp_pnl_${_pnlCalculationKey}_$value'),
+          future: _calculateTakeProfitPnL(),
+          builder: (context, snapshot) {
+            // Use cached value during recalculation to prevent text disappearing
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return _buildPnLDisplay(
+                'Potential Profit at TP',
+                _lastTPPnL,
+                isProfit: true,
+              );
+            }
+            // Cache the new value
+            if (snapshot.hasData && snapshot.data != null) {
+              _lastTPPnL = snapshot.data;
+            }
+            return _buildPnLDisplay(
+              'Potential Profit at TP',
+              snapshot.data ?? _lastTPPnL,
+              isProfit: true,
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildStopLossPnL() {
+    return ValueListenableBuilder<int>(
+      valueListenable: _slPnLUpdateNotifier,
+      builder: (context, value, child) {
+        return FutureBuilder<Map<String, dynamic>?>(
+          key: ValueKey('sl_pnl_${_pnlCalculationKey}_$value'),
+          future: _calculateStopLossPnL(),
+          builder: (context, snapshot) {
+            // Use cached value during recalculation to prevent text disappearing
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return _buildPnLDisplay(
+                'Potential Loss at SL',
+                _lastSLPnL,
+                isProfit: false,
+              );
+            }
+            // Cache the new value
+            if (snapshot.hasData && snapshot.data != null) {
+              _lastSLPnL = snapshot.data;
+            }
+            return _buildPnLDisplay(
+              'Potential Loss at SL',
+              snapshot.data ?? _lastSLPnL,
+              isProfit: false,
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // ── New design layout (FlavorConfig.usesNewHomeDesign) ─────────────────
+
+  static const List<String> _orderKindOptions = ['Limit', 'Stop', 'Stop Limit'];
+
+  /// Order types are stored as "<Side> <Kind>" (e.g. "Sell Stop Limit"), so
+  /// the two segments recompose the same strings the old dropdown used.
+  void _selectSideAndKind({required bool isSell, required String kind}) {
+    _selectOrderType('${isSell ? 'Sell' : 'Buy'} $kind');
+  }
+
+  Widget _buildNewLayout(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Expanded(
+          child: GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            // Dismiss keyboard when tapping outside text fields
+            onTap: () => FocusScope.of(context).unfocus(),
+            // One scroll area for quote bar, chart and form, so nothing stays
+            // pinned above the keyboard and the whole sheet scrolls together.
+            child: SingleChildScrollView(
+              physics: const ClampingScrollPhysics(),
+              padding: EdgeInsetsDirectional.fromSTEB(16.w, 4.h, 16.w, 16.h),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (widget.scrollHeader != null) ...[
+                    widget.scrollHeader!,
+                    SizedBox(height: 20.h),
+                  ],
+                  const PendingSectionLabelNew('ORDER'),
+                  _buildNewOrderTypeSegments(),
+                  SizedBox(height: 20.h),
+                  const PendingSectionLabelNew('VOLUME (LOTS)'),
+                  PendingStepperFieldNew(
+                    semanticsName: 'volume',
+                    controller: volumeController,
+                    focusNode: volumeFocusNode,
+                    hintText: 'Lots',
+                    inputFormatters: _volumeInputFormatters,
+                    onDecrement: _decrementVolume,
+                    onIncrement: _incrementVolume,
+                    onChanged: _onVolumeTextChanged,
+                    onEditingComplete: _onVolumeEditingComplete,
+                  ),
+                  SizedBox(height: 20.h),
+                  const PendingSectionLabelNew('WHEN PRICE IS'),
+                  _buildNewPriceFields(),
+                  SizedBox(height: 20.h),
+                  const PendingSectionLabelNew('PROTECTION'),
+                  _buildNewTpSlRow(),
+                ],
+              ),
+            ),
+          ),
+        ),
+        _buildNewBottomBar(),
+      ],
+    );
+  }
+
+  Widget _buildNewOrderTypeSegments() {
+    return ValueListenableBuilder<String>(
+      valueListenable: widget.selectedOrderType,
+      builder: (context, selected, child) {
+        final isSell = selected.startsWith('Sell');
+        final kind = selected.replaceFirst(RegExp(r'^(Buy|Sell) '), '');
+        final kindIndex = _orderKindOptions.indexOf(kind);
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            PendingSegmentedNew(
+              options: const ['SELL', 'BUY'],
+              selectedIndex: isSell ? 0 : 1,
+              height: 40.h,
+              semanticsPrefix: 'Side ',
+              thumbColor:
+                  isSell ? AppColors.chartSellAccent : AppColors.chartBuyAccent,
+              selectedTextColor: AppColors.onColoredBackground,
+              onSelected:
+                  (index) => _selectSideAndKind(isSell: index == 0, kind: kind),
+            ),
+            SizedBox(height: 8.h),
+            PendingSegmentedNew(
+              options: _orderKindOptions,
+              selectedIndex: kindIndex < 0 ? 0 : kindIndex,
+              height: 36.h,
+              semanticsPrefix: 'Order type ',
+              thumbColor: AppColors.chartPillButtonBackground,
+              selectedTextColor: AppColors.textPrimary,
+              onSelected:
+                  (index) => _selectSideAndKind(
+                    isSell: isSell,
+                    kind: _orderKindOptions[index],
+                  ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildNewPriceFields() {
+    return ValueListenableBuilder<String>(
+      valueListenable: widget.selectedOrderType,
+      builder: (context, orderTypeStr, child) {
+        final orderType = OrderType.values.firstWhere(
+          (e) => e.displayName == orderTypeStr,
+          orElse: () => OrderType.buyLimit,
+        );
+
+        if (orderType.isStopLimit) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              PendingAdaptivePairNew(
+                sampleValue: _newLayoutPriceSample,
+                first: _buildNewPriceField(
+                  label: 'Trigger',
+                  controller: widget.openPriceController,
+                  priceNotifier: widget.openPrice,
+                  onAdjust: _adjustOpenPrice,
+                ),
+                second: _buildNewPriceField(
+                  label: 'Limit',
+                  controller: widget.limitPriceController,
+                  priceNotifier: widget.limitPrice,
+                  onAdjust: _adjustPrice,
+                ),
+              ),
+              _buildNewValidationNote(),
+            ],
+          );
+        }
+
+        final label =
+            (orderType == OrderType.buyStop || orderType == OrderType.sellStop)
+                ? 'Trigger Price'
+                : 'Price';
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildNewPriceField(
+              label: label,
+              controller: widget.limitPriceController,
+              priceNotifier: widget.limitPrice,
+              onAdjust: _adjustPrice,
+            ),
+            _buildNewValidationNote(),
+          ],
+        );
+      },
+    );
+  }
+
+  /// Widest price a side-by-side field must show: the market price at the
+  /// symbol's digits plus one digit of headroom. Based on the market, not on
+  /// what is being typed, so the TP/SL and Stop Limit pairs never flip layout
+  /// mid-edit.
+  String get _newLayoutPriceSample {
+    final market =
+        chartSocketController.getAskPrice() ?? widget.limitPrice.value;
+    return '${market.toStringAsFixed(_getCurrentDigits())}0';
+  }
+
+  Widget _buildNewTpSlRow() {
+    final takeProfitCard = ValueListenableBuilder<bool>(
+      valueListenable: widget.takeProfitEnabled,
+      builder: (context, enabled, child) {
+        return PendingTpSlCardNew(
+          title: 'Take Profit',
+          isTakeProfit: true,
+          enabled: enabled,
+          onToggle: _onTakeProfitToggled,
+          footer: _buildTakeProfitPnL(),
+          child: _buildNewTpSlField(
+            'Take Profit',
+            widget.takeProfitController,
+            widget.takeProfitPrice.value,
+          ),
+        );
+      },
+    );
+    final stopLossCard = ValueListenableBuilder<bool>(
+      valueListenable: widget.stopLossEnabled,
+      builder: (context, enabled, child) {
+        return PendingTpSlCardNew(
+          title: 'Stop Loss',
+          isTakeProfit: false,
+          enabled: enabled,
+          onToggle: _onStopLossToggled,
+          footer: _buildStopLossPnL(),
+          child: _buildNewTpSlField(
+            'Stop Loss',
+            widget.stopLossController,
+            widget.stopLossPrice.value,
+          ),
+        );
+      },
+    );
+
+    // Re-check the fit once the price is known; the cards are built above so
+    // these rebuilds reuse the same widgets instead of rebuilding them.
+    return ValueListenableBuilder<double>(
+      valueListenable: widget.limitPrice,
+      builder: (context, price, child) {
+        return PendingAdaptivePairNew(
+          sampleValue: _newLayoutPriceSample,
+          // TP/SL card padding (12 + 6), inner end padding (6), border (2).
+          itemChrome: 26.w,
+          first: takeProfitCard,
+          second: stopLossCard,
+        );
+      },
+    );
+  }
+
+  /// Sticky footer: one-line summary + place button, always above the
+  /// keyboard and outside the scroll area.
+  Widget _buildNewBottomBar() {
+    return Container(
+      padding: EdgeInsetsDirectional.fromSTEB(16.w, 10.h, 16.w, 12.h),
+      decoration: BoxDecoration(
+        color: AppColors.homeCardBackground,
+        border: Border(top: BorderSide(color: AppColors.border)),
+      ),
+      child: ListenableBuilder(
+        listenable: Listenable.merge([
+          widget.selectedOrderType,
+          widget.limitPrice,
+          widget.openPrice,
+          widget.whenPriceIsEnabled,
+          widget.limitPriceController,
+        ]),
+        builder: (context, child) {
+          final orderTypeStr = widget.selectedOrderType.value;
+          final isSell = orderTypeStr.contains('Sell');
+          final isValid = _isOrderValid();
+          final priceText = widget.limitPriceController.text.trim();
+
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              PendingOrderSummaryNew(
+                orderType: orderTypeStr,
+                volume: PrecisionHelper.formatVolume(volume),
+                price: priceText.isEmpty ? '—' : priceText,
+                isSell: isSell,
+              ),
+              SizedBox(height: 8.h),
+              PendingPlaceButtonNew(
+                label: isValid ? 'Place $orderTypeStr' : 'Fix validation errors',
+                isSell: isSell,
+                enabled: isValid,
+                isLoading: widget.isLoading,
+                onPressed: widget.onPlaceOrder,
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildNewPnLLine(
+    Map<String, dynamic>? pnlData, {
+    required bool isProfit,
+  }) {
+    final rawPnl = pnlData?['pnl'];
+    String? value;
+    // Same colour rule as _buildPnLDisplay: SL is always a loss (red), TP is
+    // green when positive.
+    var color = AppColors.error;
+    if (rawPnl != null) {
+      final pnl = (rawPnl as num).toDouble();
+      final digits = (pnlData!['digits'] as int?) ?? 2;
+      value = '\$${PrecisionHelper.formatPnL(pnl, decimals: digits)}';
+      if (isProfit && pnl >= 0) color = AppColors.success;
+    }
+    return PendingPnLLineNew(
+      label: isProfit ? 'Est. profit' : 'Est. loss',
+      value: value,
+      color: color,
+    );
+  }
+
+  Widget _buildNewPriceField({
+    required String label,
+    required TextEditingController controller,
+    required ValueNotifier<double> priceNotifier,
+    required void Function(bool) onAdjust,
+  }) {
+    return PendingStepperFieldNew(
+      caption: label,
+      semanticsName: label.toLowerCase(),
+      controller: controller,
+      onDecrement: () => onAdjust(false), // Decrease price by pip
+      onIncrement: () => onAdjust(true), // Increase price by pip
+      onChanged: (value) => _onPriceTextChanged(value, priceNotifier),
+    );
+  }
+
+  Widget _buildNewTpSlField(
+    String label,
+    TextEditingController controller,
+    double defaultValue,
+  ) {
+    return PendingStepperFieldNew(
+      semanticsName: label.toLowerCase(),
+      controller: controller,
+      onDecrement:
+          () => _stepTpSlPrice(
+            label,
+            controller,
+            defaultValue,
+            isIncrease: false,
+          ),
+      onIncrement:
+          () =>
+              _stepTpSlPrice(label, controller, defaultValue, isIncrease: true),
+      onChanged: (value) => _onTpSlTextChanged(label, value),
+      onEditingComplete: () => _onTpSlEditingComplete(label),
+    );
+  }
+
+  Widget _buildNewValidationNote() {
+    return ValueListenableBuilder<double>(
+      valueListenable: widget.limitPrice,
+      builder: (context, price, child) {
+        return ValueListenableBuilder<double>(
+          valueListenable: widget.openPrice,
+          builder: (context, openPrice, child) {
+            final validationError = _validateLimitPrice();
+            if (validationError == null) return const SizedBox.shrink();
+            return PendingValidationNoteNew(message: validationError);
+          },
+        );
+      },
     );
   }
 }

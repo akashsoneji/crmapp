@@ -16,5 +16,6 @@ class AmirifxConfig extends BaseClientConfig {
         apiBaseUrl: 'https://client.amirifx.com/api/',
         websocketUrl: 'wss://client.amirifx.com/trade-engine',
         chartBaseUrl: 'https://client.amirifx.com',
+        useNewDepositWithdrawFlow: false,
       );
 }

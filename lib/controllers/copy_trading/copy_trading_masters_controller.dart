@@ -30,7 +30,6 @@ class CopyTradingMasterListItem {
   final num minInvestment;
   final num minimumCapital;
   final num? commissionPercentage;
-
   /// Master chose to hide copier counts (`hide_copiers`).
   final bool hideCopiers;
 
@@ -303,7 +302,7 @@ class CopyTradingMastersController extends GetxController {
     search.value = '';
   }
 
-  /// Typing again after a pick means a new search, so drop the picked item.
+  /// Typing again after a pick means a new search, so drop the picked master.
   void onSearchTyped(String text) {
     if (selectedMaster.value != null && text != selectedMaster.value!.name) {
       selectedMaster.value = null;

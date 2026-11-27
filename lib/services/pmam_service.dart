@@ -1,18 +1,25 @@
 import 'package:crm_app/services/api_service.dart';
 
 class PmamService {
+
   // ──── Manager APIs ────
 
-  static Future<ApiResponse> getManagerStatus() =>
-      ApiService.get(endpoint: 'user/pmam/manager/status');
+  /// 3.1 — `_t` busts any cached reply, same as web.
+  static Future<ApiResponse> getManagerStatus() {
+    final t = DateTime.now().millisecondsSinceEpoch;
+    return ApiService.get(endpoint: 'user/pmam/manager/status?_t=$t');
+  }
 
   static Future<ApiResponse> applyAsManager() => ApiService.post(
     endpoint: 'user/pmam/manager/apply',
     data: {'terms_accepted': true},
   );
 
-  static Future<ApiResponse> getManagerPlans() =>
-      ApiService.get(endpoint: 'user/pmam/manager/plans');
+  /// 3.3 — `_t` so pull-to-refresh never gets a cached list.
+  static Future<ApiResponse> getManagerPlans() {
+    final t = DateTime.now().millisecondsSinceEpoch;
+    return ApiService.get(endpoint: 'user/pmam/manager/plans?_t=$t');
+  }
 
   static Future<ApiResponse> createPlan(Map<String, dynamic> body) =>
       ApiService.post(endpoint: 'user/pmam/manager/plans', data: body);
@@ -20,10 +27,7 @@ class PmamService {
   static Future<ApiResponse> inactivatePlan(int planId) =>
       ApiService.post(endpoint: 'user/pmam/manager/plans/$planId/inactivate');
 
-  static Future<ApiResponse> getManagerDashboardStats() =>
-      ApiService.get(endpoint: 'user/pmam/manager/dashboard-stats');
-
-  /// Pause a plan — POST /user/pmam/manager/plans/{id}/pause
+  /// Pause a plan
   /// New investor joins + new trade allocations stop; existing positions
   /// stay open but cannot be closed while paused.
   static Future<ApiResponse> pausePlan(int planId) => ApiService.post(
@@ -52,12 +56,43 @@ class PmamService {
   /// of: today | 7d | 30d | 90d | 1y | all.
   static Future<ApiResponse> getManagerDashboardOverview({
     String range = '30d',
+    String? from,
+    String? to,
   }) {
     final t = DateTime.now().millisecondsSinceEpoch;
-    return ApiService.get(
-      endpoint: 'user/pmam/manager/dashboard-overview?range=$range&_t=$t',
-    );
+    var p = 'range=$range&_t=$t';
+    if (range == 'custom' && from != null && to != null) {
+      p += '&from=${Uri.encodeComponent(from)}&to=${Uri.encodeComponent(to)}';
+    }
+    return ApiService.get(endpoint: 'user/pmam/manager/dashboard-overview?$p');
   }
+
+  /// 3.10 — dashboard summary cards (totals, pending_requests,
+  /// recent_commissions).
+  static Future<ApiResponse> getManagerDashboardStats() =>
+      ApiService.get(endpoint: 'user/pmam/manager/dashboard-stats');
+
+  /// 3.12 — plan header numbers.
+  static Future<ApiResponse> getPlanStats(int planId) =>
+      ApiService.get(endpoint: 'user/pmam/manager/plans/$planId/stats');
+
+  /// 3.16 — plan money in/out history.
+  static Future<ApiResponse> getPlanFundEntries(int planId, {int page = 1}) =>
+      ApiService.get(
+        endpoint: 'user/pmam/manager/plans/$planId/fund-entries?page=$page',
+      );
+
+  /// 3.22 — how much of the pool is the master's own, withdrawable money.
+  static Future<ApiResponse> getWithdrawableBalance(int planId) => ApiService.get(
+        endpoint: 'user/pmam/manager/plans/$planId/withdrawable-balance',
+      );
+
+  /// 3.23 — check-only; moves no money.
+  static Future<ApiResponse> validateWithdrawal(int planId, double amount) =>
+      ApiService.post(
+        endpoint: 'user/pmam/manager/plans/$planId/validate-withdrawal',
+        data: {'amount': amount},
+      );
 
   static Future<ApiResponse> getInvestorRequests(int planId) => ApiService.get(
     endpoint: 'user/pmam/manager/plans/$planId/investor-requests',
@@ -71,9 +106,16 @@ class PmamService {
         endpoint: 'user/pmam/manager/investor-requests/$requestId/approve',
       );
 
-  static Future<ApiResponse> rejectInvestorRequest(int requestId) =>
+  static Future<ApiResponse> rejectInvestorRequest(
+    int requestId, {
+    String? reason,
+  }) =>
       ApiService.post(
         endpoint: 'user/pmam/manager/investor-requests/$requestId/reject',
+        data: {
+          if (reason != null && reason.trim().isNotEmpty)
+            'reason': reason.trim(),
+        },
       );
 
   static Future<ApiResponse> getPlanDetail(int planId) =>
@@ -126,53 +168,103 @@ class PmamService {
   static Future<ApiResponse> getManagerInvestorDetail(int investorId) =>
       ApiService.get(endpoint: 'user/pmam/manager/investors/$investorId/detail');
 
-  // ──── Investor APIs ────
+  /// Manager's own trading accounts that can back a new plan
+  /// (web `loadTradingAccounts`).
+  static Future<ApiResponse> getManagerEligibleAccounts() =>
+      ApiService.get(endpoint: 'user/pmam/manager/eligible-accounts');
 
   /// Settled commission rows, paginated:
   /// `data: {data: [...], current_page, last_page, per_page, total}`.
   static Future<ApiResponse> getManagerCommissions({
     int page = 1,
     int perPage = 25,
-  }) =>
-      ApiService.get(
-        endpoint: 'user/pmam/manager/commissions?page=$page&per_page=$perPage',
-      );
+    int? planId,
+    String? fromDate,
+    String? toDate,
+    String? search,
+    String? sortBy,
+    String? sortDir,
+  }) {
+    var p = 'page=$page&per_page=$perPage';
+    if (planId != null) p += '&plan_id=$planId';
+    if (fromDate != null && fromDate.isNotEmpty) {
+      p += '&from_date=${Uri.encodeComponent(fromDate)}';
+    }
+    if (toDate != null && toDate.isNotEmpty) {
+      p += '&to_date=${Uri.encodeComponent(toDate)}';
+    }
+    if (search != null && search.isNotEmpty) {
+      p += '&search=${Uri.encodeComponent(search)}';
+    }
+    if (sortBy != null && sortBy.isNotEmpty) p += '&sort_by=$sortBy';
+    if (sortDir != null && sortDir.isNotEmpty) p += '&sort_dir=$sortDir';
+    return ApiService.get(endpoint: 'user/pmam/manager/commissions?$p');
+  }
 
-  static Future<ApiResponse> getAvailablePlans() =>
-      ApiService.get(endpoint: 'user/pmam/investor/plans');
+  /// 3.25 — commissions as CSV text (optionally between two dates).
+  static Future<ApiResponse> exportCommissions({
+    String? fromDate,
+    String? toDate,
+  }) {
+    final q = <String>[
+      if (fromDate != null && fromDate.isNotEmpty)
+        'from_date=${Uri.encodeComponent(fromDate)}',
+      if (toDate != null && toDate.isNotEmpty)
+        'to_date=${Uri.encodeComponent(toDate)}',
+    ].join('&');
+    return ApiService.get(
+      endpoint: 'user/pmam/manager/commissions/export${q.isEmpty ? '' : '?$q'}',
+    );
+  }
+
+  // ──── Investor APIs ────
 
   static Future<ApiResponse> getEligibleAccounts([int? planId]) => ApiService.get(
     endpoint:
         'user/pmam/investor/eligible-accounts${planId != null ? "?plan_id=$planId" : ""}',
   );
 
-  static Future<ApiResponse> getManagersDataTable({
-    String search = '',
+  /// 1.7 — Explore feed, one row per approved plan. Reply is NOT wrapped:
+  /// `{draw, recordsTotal, recordsFiltered, data: [...]}`.
+  static Future<ApiResponse> getPlansDataTable({
+    String? managerCode,
+    int? planId,
     int start = 0,
-    int length = 50,
+    int length = 100,
     int draw = 1,
   }) => ApiService.post(
-    endpoint: 'user/pmam/managers/datatable',
+    endpoint: 'user/pmam/plans/datatable',
     data: {
       'draw': draw,
       'start': start,
       'length': length,
-      'search[value]': search,
-      'search[regex]': false,
-      'order[0][column]': 6,
-      'order[0][dir]': 'desc',
-      'columns[0][data]': 'manager_name',
-      'columns[0][searchable]': true,
-      'columns[1][data]': 'manager_code',
-      'columns[1][searchable]': true,
-      'columns[2][data]': 'plans_count',
-      'columns[3][data]': 'total_aum',
-      'columns[4][data]': 'total_investors',
-      'columns[5][data]': 'avg_commission',
-      'columns[6][data]': 'profit_percentage',
-      'columns[7][data]': 'member_since',
+      if (managerCode != null && managerCode.isNotEmpty)
+        'manager_code': managerCode,
+      if (planId != null) 'plan_id': planId,
     },
   );
+
+  /// Search-box suggestions on Explore (web `searchManagerOptions`).
+  static Future<ApiResponse> searchManagers(String query) => ApiService.get(
+        endpoint: 'user/pmam/managers/search?q=${Uri.encodeQueryComponent(query)}',
+      );
+
+  /// Search-box plan suggestions on Explore (web `searchPlanOptions`).
+  static Future<ApiResponse> searchPlans(String query, {String? managerCode}) {
+    var p = 'q=${Uri.encodeQueryComponent(query)}';
+    if (managerCode != null && managerCode.isNotEmpty) {
+      p += '&manager_code=${Uri.encodeQueryComponent(managerCode)}';
+    }
+    return ApiService.get(endpoint: 'user/pmam/plans/search?$p');
+  }
+
+  /// 2.4 — paid add-ons for the Invest drawer, plus wallet balance.
+  static Future<ApiResponse> getPurchaseOptions() =>
+      ApiService.get(endpoint: 'user/pmam/investor/purchase-options');
+
+  /// 2.6 — withdraw a still-pending join request; refunds any add-on fee.
+  static Future<ApiResponse> cancelRequest(int enrollmentId) =>
+      ApiService.post(endpoint: 'user/pmam/investor/cancel/$enrollmentId');
 
   static Future<ApiResponse> requestJoin(Map<String, dynamic> body) =>
       ApiService.post(endpoint: 'user/pmam/investor/request-join', data: body);
@@ -183,8 +275,12 @@ class PmamService {
   static Future<ApiResponse> unsubscribe(int investorId) =>
       ApiService.post(endpoint: 'user/pmam/investor/unsubscribe/$investorId');
 
-  static Future<ApiResponse> getPnlHistory() =>
-      ApiService.get(endpoint: 'user/pmam/investor/pnl-history');
+  /// 2.9 — `investor_id` is the enrollment id (optional filter).
+  static Future<ApiResponse> getPnlHistory({int? enrollmentId, int page = 1}) {
+    var p = 'page=$page';
+    if (enrollmentId != null) p += '&investor_id=$enrollmentId';
+    return ApiService.get(endpoint: 'user/pmam/investor/pnl-history?$p');
+  }
 
   static Future<ApiResponse> getMyFundEntries() =>
       ApiService.get(endpoint: 'user/pmam/investor/my-fund-entries');

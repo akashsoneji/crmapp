@@ -4,7 +4,6 @@ import 'package:crm_app/controllers/copy_trading/copy_trading_master_copiers_con
 import 'package:crm_app/routes/app_pages.dart';
 import 'package:crm_app/screens/home/more/copytrading/copier_subscription_history_screen.dart';
 import 'package:crm_app/services/language_service.dart';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';

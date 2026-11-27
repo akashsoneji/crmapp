@@ -16,5 +16,6 @@ class AfxConfig extends BaseClientConfig {
         apiBaseUrl: 'https://member.alibabafx.com/api/',
         websocketUrl: 'wss://member.alibabafx.com/trade-engine',
         chartBaseUrl: 'https://member.alibabafx.com',
+        useNewDepositWithdrawFlow: false,
       );
 }

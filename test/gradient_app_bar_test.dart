@@ -43,6 +43,22 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('paints the gradient over the whole app bar', (tester) async {
+    await _pumpBar(tester, textScale: 1.0);
+
+    final gradientBox = find.byWidgetPredicate(
+      (widget) =>
+          widget is DecoratedBox &&
+          widget.decoration is BoxDecoration &&
+          (widget.decoration as BoxDecoration).gradient != null,
+    );
+    expect(gradientBox, findsOneWidget);
+    expect(
+      tester.getSize(gradientBox),
+      tester.getSize(find.byType(GradientAppBar)),
+    );
+  });
+
   testWidgets('no overflow at 2.0 text scale', (tester) async {
     await _pumpBar(tester, textScale: 2.0);
 

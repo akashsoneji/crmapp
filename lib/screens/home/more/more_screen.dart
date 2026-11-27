@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:crm_app/screens/home/more/finance/payment_methods_screen.dart';
+import 'package:crm_app/screens/finance_v2/finance_flow_switch.dart';
 import 'package:crm_app/screens/home/more/promotional/promotional_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
@@ -19,6 +20,7 @@ import 'package:crm_app/services/one_click_trading_service.dart';
 import 'package:crm_app/screens/home/more/one_click_trading_disclaimer_screen.dart';
 import 'package:crm_app/screens/ibm/view_models/ibm_controller.dart';
 import 'package:crm_app/widgets/brand_logo.dart';
+import 'package:crm_app/widgets/more/more_new_widgets.dart';
 
 import 'package:crm_app/services/secure_storage_service.dart';
 import 'package:crm_app/services/app_lock_service.dart';
@@ -898,6 +900,242 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
     return completion;
   }
 
+  void _openProfile(bool isProfileVerified) {
+    if (isProfileVerified) {
+      Get.toNamed(AppPages.VIEW_PROFILE);
+    } else {
+      Get.toNamed(AppPages.EDIT_PROFILE, arguments: isProfileVerified);
+    }
+  }
+
+  /// New-design (tenaxnew) body. Same data sources and handlers as the
+  /// legacy body below; only the presentation differs.
+  Widget _buildNewDesignBody(AuthController authController) {
+    final quickActions = [
+      MoreQuickAction(
+        svgIcon: 'deposit',
+        label: languageService.tr('general_deposit'),
+        onTap: () => Get.to(
+          () => FinanceFlowSwitch.deposit(
+            accountNumber: '',
+            legacy: () => PaymentMethodsScreen(accountNumber: ''),
+          ),
+        ),
+      ),
+      MoreQuickAction(
+        svgIcon: 'withdrawal',
+        label: languageService.tr('general_withdraw'),
+        onTap: () => Get.toNamed(AppPages.WITHDRAWAL),
+      ),
+      MoreQuickAction(
+        svgIcon: 'internal-transfer',
+        label: languageService.tr('general_transfer'),
+        onTap: () => Get.toNamed(AppPages.INTERNAL_TRANSFER),
+      ),
+      MoreQuickAction(
+        svgIcon: 'clock',
+        label: languageService.tr('general_history'),
+        onTap: () => Get.toNamed(AppPages.TRANSACTION_HISTORY),
+      ),
+    ];
+
+    return SingleChildScrollView(
+      padding: EdgeInsets.fromLTRB(14.w, 10.h, 14.w, 24.h),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Obx(() {
+            final stage = moreController.dashboardModel.value?.data
+                ?.stageCompletion;
+            final completion = _calculateCompletion(stage);
+            final isProfileVerified =
+                (stage?.emailVerified == true) &&
+                (stage?.mobileVerified == true) &&
+                (stage?.personalDetails == true);
+            final name = authController.userFullName ?? '';
+            final email = authController.userEmail ?? '';
+            final showBroker = _isTenaxBrokerFlowEnabled &&
+                (_currentBrokerName ?? '').isNotEmpty;
+            return MoreProfileHero(
+              name: name,
+              email: email,
+              initials: _initialsFor(name.isNotEmpty ? name : email),
+              brokerName: showBroker ? _currentBrokerName : null,
+              isFullyVerified: completion == 100,
+              completion: completion,
+              isProfileVerified: isProfileVerified,
+              onProfileTap: () => _openProfile(isProfileVerified),
+              onSwitchAccount:
+                  _isTenaxBrokerFlowEnabled ? _onTapAccountDropdown : null,
+              quickActions: quickActions,
+            );
+          }),
+          GetBuilder<MoreController>(
+            builder: (controller) {
+              final stage = controller.dashboardModel.value?.data
+                  ?.stageCompletion;
+              if (_calculateCompletion(stage) == 100) {
+                return const SizedBox.shrink();
+              }
+              return Padding(
+                padding: EdgeInsets.only(top: 10.h),
+                child: VerifyAccountCard(
+                  title: languageService.tr('verify_your_account'),
+                  subTitle: languageService.tr(
+                    'complete_verification_to_unlock',
+                  ),
+                  percentage: '',
+                ),
+              );
+            },
+          ),
+          MoreSectionLabel(
+            title: languageService.trf('more_explore', 'Explore'),
+          ),
+          Obx(() {
+            final modulesService = Get.find<EnabledModulesService>();
+            final modules = modulesService.modules.value;
+            return MoreFeatureGrid(
+              items: [
+                MoreFeatureItem(
+                  svgIcon: 'dollar-circle',
+                  label: languageService.tr('general_finance'),
+                  onTap: () async {
+                    await Get.toNamed(AppPages.FINANCE);
+                    if (mounted) _refreshDataIfNeeded();
+                  },
+                ),
+                if (modulesService.isPromotionalMenuVisible)
+                  MoreFeatureItem(
+                    svgIcon: 'promotional',
+                    label: languageService.tr('general_promotional'),
+                    onTap: () => Get.to(
+                      () => const PromotionalScreen(),
+                      transition: Transition.rightToLeft,
+                    ),
+                  ),
+                // `enabled-modules.ib` off → admin hid the IB area.
+                if (EnabledModulesService.flags.ib)
+                  MoreFeatureItem(
+                    svgIcon: 'dashboard',
+                    label: languageService.tr('more_dashboard'),
+                    onTap: () async => await _handleSwitchToIB(),
+                  ),
+                if (modules?.copytrading ?? false)
+                  MoreFeatureItem(
+                    svgIcon: 'copy-trading',
+                    label: languageService.tr('more_copy_trading'),
+                    onTap: () => Get.toNamed(AppPages.COPY_TRADING_MAIN),
+                  ),
+                if (modules?.pmam ?? false)
+                  MoreFeatureItem(
+                    svgIcon: 'dashboard',
+                    label: 'PAMM',
+                    onTap: () => Get.toNamed(AppPages.PMAM_MAIN),
+                  ),
+                if (modules?.tradingCentral ?? false)
+                  MoreFeatureItem(
+                    svgIcon: '',
+                    materialIcon: Icons.insights_rounded,
+                    label: languageService.trf(
+                      'trading_central_title',
+                      'Trading Central',
+                    ),
+                    onTap: () => Get.toNamed(AppPages.TRADING_CENTRAL),
+                  ),
+                MoreFeatureItem(
+                  svgIcon: 'setting/notifications',
+                  label: languageService.trf(
+                    'general_notifications',
+                    'Notifications',
+                  ),
+                  onTap: () => Get.toNamed(AppPages.NOTIFICATIONS),
+                ),
+                MoreFeatureItem(
+                  svgIcon: 'democontest-icon',
+                  label: languageService.tr('more_demo_contest'),
+                  onTap: () => Get.toNamed(AppPages.DEMO_CONTEST),
+                ),
+              ],
+            );
+          }),
+          MoreSectionLabel(
+            title: languageService.tr('general_tradind_settings'),
+          ),
+          const MoreSettingsGroup(children: [_OneClickTradingMenuItem()]),
+          MoreSectionLabel(title: languageService.tr('more_app_settings')),
+          MoreSettingsGroup(
+            children: [
+              MoreSettingsRow(
+                svgIcon: 'settings',
+                label: languageService.tr('more_app_settings'),
+                onTap: () => Get.toNamed(AppPages.SETTING),
+              ),
+            ],
+          ),
+          MoreSectionLabel(
+            title: languageService.tr('general_account_security'),
+          ),
+          // Obx: the live-chat row appears once the broker config loads.
+          Obx(() {
+            final liveChat = LiveChatService.config.value;
+            final showLiveChat = liveChat != null && liveChat.enabled;
+            return MoreSettingsGroup(
+              children: [
+                MoreSettingsRow(
+                  svgIcon: 'support',
+                  label: languageService.tr('ticket_title'),
+                  onTap: () => Get.toNamed(AppPages.TICKET_LIST),
+                ),
+                if (showLiveChat)
+                  MoreSettingsRow(
+                    svgIcon: 'support',
+                    label: liveChat.label.isNotEmpty
+                        ? liveChat.label
+                        : languageService.tr('live_chat'),
+                    onTap: LiveChatService.open,
+                  ),
+                const _BiometricLoginMenuItem(),
+                MoreSettingsRow(
+                  svgIcon: 'two_factor_auth',
+                  label: languageService.tr('two_factor_authentication'),
+                  onTap: () => Get.toNamed(AppPages.TWO_FACTOR_AUTH),
+                ),
+                MoreSettingsRow(
+                  svgIcon: 'personal_info',
+                  label: languageService.tr('delete_account'),
+                  onTap: () => _showDeleteAccountDialog(authController),
+                  isDestructive: true,
+                ),
+              ],
+            );
+          }),
+          SizedBox(height: 16.h),
+          MoreLogoutButton(
+            label: languageService.tr('more_logout'),
+            onTap: () => _showLogoutDialog(authController),
+          ),
+          SizedBox(height: 12.h),
+          FutureBuilder<PackageInfo>(
+            future: PackageInfo.fromPlatform(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) return const SizedBox.shrink();
+              return Text(
+                '${languageService.tr('version_label')} ${snapshot.data!.version}',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 11.sp,
+                  color: AppColors.textGrey,
+                  fontWeight: FontWeight.w500,
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final AuthController authController = Get.find<AuthController>();
@@ -934,7 +1172,9 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                 centerTitle: true,
                 actions: [notificationsAction],
               ),
-      body: SingleChildScrollView(
+      body: useGradientBar
+          ? _buildNewDesignBody(authController)
+          : SingleChildScrollView(
         child: Padding(
           padding: EdgeInsets.fromLTRB(
             16.w,
@@ -1163,8 +1403,12 @@ class _MoreScreenState extends State<MoreScreen> with WidgetsBindingObserver {
                     icon: 'deposit',
                     label: languageService.tr('general_deposit'),
                     color: AppColors.quickActionGreen, // Green
-                    onTap: () =>
-                        Get.to(() => PaymentMethodsScreen(accountNumber: '')),
+                    onTap: () => Get.to(
+                      () => FinanceFlowSwitch.deposit(
+                        accountNumber: '',
+                        legacy: () => PaymentMethodsScreen(accountNumber: ''),
+                      ),
+                    ),
                   ),
                   _QuickActionButton(
                     icon: 'withdrawal',

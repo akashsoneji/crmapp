@@ -16,6 +16,7 @@ import 'package:crm_app/services/trading_websocket_service.dart';
 import 'package:crm_app/services/account_websocket_service.dart';
 import 'package:crm_app/widgets/account_header_widget.dart';
 import 'package:crm_app/widgets/home/account_header_new.dart';
+import 'package:crm_app/widgets/positions/positions_new_widgets.dart';
 import 'package:crm_app/widgets/dashBorder.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
 import 'package:crm_app/screens/home/edit_order_screen.dart';
@@ -367,7 +368,13 @@ class _TradeScreenState extends State<TradeScreen> {
                       final isLoadingHistory = controller.isLoadingHistory;
                       final hasMorePages = controller.hasMoreHistoryPages;
 
-                      final summaryCard = Container(
+                      final summaryCard =
+                          FlavorConfig.usesNewHomeDesign
+                              ? GetBuilder<TradingController>(
+                                id: 'account_info',
+                                builder: (c) => _buildAccountMetricsCard(c),
+                              )
+                              : Container(
                         padding: EdgeInsets.symmetric(
                           horizontal: 16.w,
                           vertical: 12.h,
@@ -405,14 +412,22 @@ class _TradeScreenState extends State<TradeScreen> {
                             controller: _scrollController,
                             slivers: [
                               SliverToBoxAdapter(child: summaryCard),
-                              if (controller.selectedTab == 2)
+                              // New design puts these filters inside the
+                              // metrics card instead.
+                              if (controller.selectedTab == 2 &&
+                                  !FlavorConfig.usesNewHomeDesign)
                                 SliverToBoxAdapter(child: floatingSummary),
                               SliverToBoxAdapter(child: SizedBox(height: 8.h)),
                               if (positions.isEmpty && !isLoadingHistory)
                                 SliverFillRemaining(
                                   hasScrollBody: false,
                                   child: Center(
-                                    child: Column(
+                                    child: FlavorConfig.usesNewHomeDesign
+                                        ? PositionsEmptyState(
+                                          illustration: _buildEmptyIllustration(),
+                                          message: 'You have no data',
+                                        )
+                                        : Column(
                                       mainAxisAlignment:
                                           MainAxisAlignment.center,
                                       children: [
@@ -612,6 +627,25 @@ class _TradeScreenState extends State<TradeScreen> {
   }
 
   Widget _buildTabs(TradingController tradingController) {
+    if (FlavorConfig.usesNewHomeDesign) {
+      return Obx(
+        () => PositionsTabSwitcher(
+          selectedIndex: tradingController.selectedTab,
+          onSelected: tradingController.setSelectedTab,
+          tabs: [
+            PositionsTabData(
+              label: 'Market',
+              count: tradingController.marketPositions.length,
+            ),
+            PositionsTabData(
+              label: 'Pending',
+              count: tradingController.pendingPositions.length,
+            ),
+            const PositionsTabData(label: 'History'),
+          ],
+        ),
+      );
+    }
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 0.w),
       decoration: BoxDecoration(
@@ -733,6 +767,18 @@ class _TradeScreenState extends State<TradeScreen> {
     });
   }
 
+  Widget _buildEmptyIllustration() {
+    return FutureBuilder<Widget>(
+      future: _emptyStateSvgFuture,
+      builder: (context, snapshot) {
+        if (snapshot.hasData) {
+          return snapshot.data!;
+        }
+        return SizedBox(height: 100.h, width: 100.w);
+      },
+    );
+  }
+
   int _getPositionCount(TradingController tradingController, int tabIndex) {
     switch (tabIndex) {
       case 0:
@@ -769,12 +815,20 @@ class _TradeScreenState extends State<TradeScreen> {
         margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
         decoration: BoxDecoration(
-          color: AppColors.cardBackGround,
-          borderRadius: BorderRadius.circular(12.r),
+          color:
+              FlavorConfig.usesNewHomeDesign
+                  ? AppColors.homeCardBackground
+                  : AppColors.cardBackGround,
+          borderRadius: BorderRadius.circular(
+            FlavorConfig.usesNewHomeDesign ? 16.r : 12.r,
+          ),
           border: Border.all(
             width: 1,
             // color: isPositive ? AppColors.success : AppColors.error,
-            color: AppColors.cardBackGround,
+            color:
+                FlavorConfig.usesNewHomeDesign
+                    ? AppColors.homeCardBorder
+                    : AppColors.cardBackGround,
           ),
         ),
         child: Row(
@@ -1175,6 +1229,41 @@ class _TradeScreenState extends State<TradeScreen> {
     // If Close tab, return expandable card with tap functionality and history card design
     if (isCloseTab) {
       final isExpanded = _expandedCardIds.contains(position.orderId);
+      if (FlavorConfig.usesNewHomeDesign) {
+        return GestureDetector(
+          onTap: () {
+            setState(() {
+              if (isExpanded) {
+                _expandedCardIds.remove(position.orderId);
+              } else {
+                _expandedCardIds.add(position.orderId);
+              }
+            });
+          },
+          child: PositionTradeCard(
+            symbol: displaySymbol,
+            isBuy: isBuy,
+            sideLabel: '${position.action.toLowerCase()} ${position.volume}',
+            priceRange: '${position.entryPrice} -> ${position.currentPrice}',
+            caption: _formatHistoryTimestamp(
+              position.closeTime.isNotEmpty
+                  ? position.closeTime
+                  : position.time,
+            ),
+            value: '\$${PrecisionHelper.formatPnL(position.profitLoss)}',
+            valueColor: isPositive ? AppColors.green : AppColors.error,
+            isExpanded: isExpanded,
+            expandedChild: AnimatedSize(
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeInOut,
+              child:
+                  isExpanded
+                      ? _buildExpandedCardContent(position)
+                      : const SizedBox.shrink(),
+            ),
+          ),
+        );
+      }
       return SizedBox(
         width: 40.w,
         child: GestureDetector(
@@ -1343,7 +1432,9 @@ class _TradeScreenState extends State<TradeScreen> {
 
     final cardChild = GestureDetector(
       onTap: () => _showPositionDetailsBottomSheet(tradingController, position),
-      child: Container(
+      child: FlavorConfig.usesNewHomeDesign
+          ? _buildPositionTradeCard(tradingController, position, isPositive)
+          : Container(
         margin: EdgeInsets.only(bottom: 6.h),
         decoration: BoxDecoration(
           color: AppColors.whiteColor,
@@ -1451,6 +1542,32 @@ class _TradeScreenState extends State<TradeScreen> {
     );
   }
 
+  /// New-design card for Market and Pending rows; same content as
+  /// [_buildCardContent].
+  Widget _buildPositionTradeCard(
+    TradingController tradingController,
+    TradePosition position,
+    bool isPositive,
+  ) {
+    final isPendingTab = tradingController.selectedTab == 1;
+    final isBuy = position.action.toLowerCase() == 'buy';
+
+    return PositionTradeCard(
+      symbol: _removeSymbolSuffixForDisplay(position.symbol),
+      isBuy: isBuy,
+      sideLabel: '${position.action.toLowerCase()} ${position.volume}',
+      priceRange: '${position.entryPrice} -> ${position.currentPrice}',
+      value:
+          isPendingTab
+              ? 'placed'
+              : PrecisionHelper.formatPnL(position.profitLoss),
+      valueColor:
+          isPendingTab
+              ? AppColors.textGrey
+              : (isPositive ? AppColors.green : AppColors.error),
+    );
+  }
+
   // Extract card content for Market and Pending tabs
   Widget _buildCardContent(
     TradingController tradingController,
@@ -1546,7 +1663,7 @@ class _TradeScreenState extends State<TradeScreen> {
           return Container(
             height: 350.h,
             decoration: BoxDecoration(
-              color: AppColors.whiteColor,
+              color: FlavorConfig.usesNewHomeDesign ? AppColors.sheetSurface : AppColors.whiteColor,
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(20),
                 topRight: Radius.circular(20),
@@ -1615,9 +1732,17 @@ class _TradeScreenState extends State<TradeScreen> {
                                   );
 
                                   return ListTile(
+                                    dense: FlavorConfig.usesNewHomeDesign,
+                                    visualDensity:
+                                        FlavorConfig.usesNewHomeDesign
+                                            ? VisualDensity.compact
+                                            : null,
                                     leading: _buildPositionFlag(
                                       baseSymbol, // Use base symbol for flag
-                                      size: 24.h,
+                                      size:
+                                          FlavorConfig.usesNewHomeDesign
+                                              ? 20.h
+                                              : 24.h,
                                     ),
                                     title: Text(
                                       baseSymbol,
@@ -1705,10 +1830,19 @@ class _TradeScreenState extends State<TradeScreen> {
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.primary,
+                                elevation:
+                                    FlavorConfig.usesNewHomeDesign ? 0 : null,
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8.r),
+                                  borderRadius: BorderRadius.circular(
+                                    FlavorConfig.usesNewHomeDesign
+                                        ? 12.r
+                                        : 8.r,
+                                  ),
                                 ),
-                                minimumSize: Size(double.infinity, 40.h),
+                                minimumSize: Size(
+                                  double.infinity,
+                                  FlavorConfig.usesNewHomeDesign ? 38.h : 40.h,
+                                ),
                                 // Removed maximumSize to avoid constraint conflicts
                               ),
                               child: Text(
@@ -1743,7 +1877,7 @@ class _TradeScreenState extends State<TradeScreen> {
           ),
           child: Container(
             decoration: BoxDecoration(
-              color: AppColors.whiteColor,
+              color: FlavorConfig.usesNewHomeDesign ? AppColors.sheetSurface : AppColors.whiteColor,
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(20),
                 topRight: Radius.circular(20),
@@ -1752,6 +1886,11 @@ class _TradeScreenState extends State<TradeScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                if (FlavorConfig.usesNewHomeDesign)
+                  PositionsSheetHeader(
+                    title: languageService.tr('trade_direction'),
+                  )
+                else ...[
                 // Drag indicator
                 Container(
                   margin: EdgeInsets.only(top: 10.h, bottom: 8.h),
@@ -1775,6 +1914,7 @@ class _TradeScreenState extends State<TradeScreen> {
                   ),
                 ),
                 Divider(height: 1, color: AppColors.border),
+                ],
                 // Options list
                 SafeArea(
                   child: ListView.builder(
@@ -1790,16 +1930,45 @@ class _TradeScreenState extends State<TradeScreen> {
                         final currentDirection =
                             tradingController.getCurrentDirectionFilter();
                         final isSelected = currentDirection == direction;
+                        if (FlavorConfig.usesNewHomeDesign) {
+                          return PositionsSelectOption(
+                            label: direction,
+                            selected: isSelected,
+                            onTap: () {
+                              final tab = tradingController.selectedTab;
+                              if (tab == 1) {
+                                tradingController.setPendingDirection(
+                                  direction,
+                                );
+                              } else if (tab == 2) {
+                                tradingController.setClosedDirection(direction);
+                              } else {
+                                tradingController.setSelectedDirection(
+                                  direction,
+                                );
+                              }
+                              Get.back(closeOverlays: true);
+                            },
+                          );
+                        }
                         return ListTile(
+                          dense: FlavorConfig.usesNewHomeDesign,
+                          visualDensity:
+                              FlavorConfig.usesNewHomeDesign
+                                  ? VisualDensity.compact
+                                  : null,
                           title: Text(
                             direction,
                             style: AppTextStyles.label.copyWith(
-                              fontSize: 16.sp,
+                              fontSize:
+                                  FlavorConfig.usesNewHomeDesign
+                                      ? 14.sp
+                                      : 16.sp,
                               color: AppColors.textPrimary,
                             ),
                           ),
                           trailing: Transform.scale(
-                            scale: 1.3,
+                            scale: FlavorConfig.usesNewHomeDesign ? 1.0 : 1.3,
                             child: Radio<String>(
                               value: direction,
                               groupValue: currentDirection,
@@ -1845,7 +2014,9 @@ class _TradeScreenState extends State<TradeScreen> {
                             Get.back(closeOverlays: true);
                           },
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8.r),
+                            borderRadius: BorderRadius.circular(
+                              FlavorConfig.usesNewHomeDesign ? 10.r : 8.r,
+                            ),
                           ),
                           tileColor:
                               isSelected
@@ -1905,7 +2076,7 @@ class _TradeScreenState extends State<TradeScreen> {
             ),
             child: Container(
               decoration: BoxDecoration(
-                color: AppColors.whiteColor,
+                color: FlavorConfig.usesNewHomeDesign ? AppColors.sheetSurface : AppColors.whiteColor,
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(20.r),
                   topRight: Radius.circular(20.r),
@@ -1940,7 +2111,8 @@ class _TradeScreenState extends State<TradeScreen> {
                         Text(
                           'Filter History',
                           style: AppTextStyles.heading.copyWith(
-                            fontSize: 18.sp,
+                            fontSize:
+                                FlavorConfig.usesNewHomeDesign ? 15.sp : 18.sp,
                             fontWeight: FontWeight.w700,
                             color: AppColors.textPrimary,
                           ),
@@ -2232,7 +2404,7 @@ class _TradeScreenState extends State<TradeScreen> {
                         Expanded(
                           flex: 2,
                           child: SizedBox(
-                            height: 40.h,
+                            height: FlavorConfig.usesNewHomeDesign ? 38.h : 40.h,
                             child: OutlinedButton(
                               onPressed: () async {
                                 Get.back(closeOverlays: true);
@@ -2264,7 +2436,7 @@ class _TradeScreenState extends State<TradeScreen> {
                         Expanded(
                           flex: 3,
                           child: SizedBox(
-                            height: 40.h,
+                            height: FlavorConfig.usesNewHomeDesign ? 38.h : 40.h,
                             child: ElevatedButton(
                               onPressed: () async {
                                 if (selectedFilter == 'custom' &&
@@ -2338,7 +2510,10 @@ class _TradeScreenState extends State<TradeScreen> {
                                     );
                               },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primary,
+                                backgroundColor:
+                                    FlavorConfig.usesNewHomeDesign
+                                        ? AppColors.homeHeaderGradientEnd
+                                        : AppColors.primary,
                                 padding: EdgeInsets.zero,
                                 elevation: 0,
                                 shape: RoundedRectangleBorder(
@@ -2379,6 +2554,13 @@ class _TradeScreenState extends State<TradeScreen> {
     bool isSelected,
     VoidCallback onTap,
   ) {
+    if (FlavorConfig.usesNewHomeDesign) {
+      return PositionsFilterChip(
+        label: label,
+        selected: isSelected,
+        onTap: onTap,
+      );
+    }
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(10.r),
@@ -2446,7 +2628,7 @@ class _TradeScreenState extends State<TradeScreen> {
   ) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.whiteColor,
+        color: FlavorConfig.usesNewHomeDesign ? AppColors.sheetSurface : AppColors.whiteColor,
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(20),
           topRight: Radius.circular(20),
@@ -2465,8 +2647,22 @@ class _TradeScreenState extends State<TradeScreen> {
             ),
           ),
           // Position Details Header
-          Padding(
-            padding: EdgeInsets.all(16.w),
+          Container(
+            margin:
+                FlavorConfig.usesNewHomeDesign
+                    ? EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 12.h)
+                    : null,
+            padding: EdgeInsets.all(
+              FlavorConfig.usesNewHomeDesign ? 12.w : 16.w,
+            ),
+            decoration:
+                FlavorConfig.usesNewHomeDesign
+                    ? BoxDecoration(
+                      color: AppColors.homeCardBackground,
+                      borderRadius: BorderRadius.circular(14.r),
+                      border: Border.all(color: AppColors.homeCardBorder),
+                    )
+                    : null,
             child: Row(
               children: [
                 _buildPositionFlag(position.symbol, size: 32.h),
@@ -2674,7 +2870,8 @@ class _TradeScreenState extends State<TradeScreen> {
               ],
             ),
           ),
-          Divider(height: 1, color: AppColors.border),
+          if (!FlavorConfig.usesNewHomeDesign)
+            Divider(height: 1, color: AppColors.border),
           // Action Options
           ListView(
             shrinkWrap: true,
@@ -2802,6 +2999,15 @@ class _TradeScreenState extends State<TradeScreen> {
     required VoidCallback onTap,
     required Color color,
   }) {
+    if (FlavorConfig.usesNewHomeDesign) {
+      return PositionsActionTile(
+        icon: icon,
+        title: title,
+        subtitle: subtitle,
+        color: color,
+        onTap: onTap,
+      );
+    }
     return ListTile(
       title: Text(
         title,
@@ -2860,7 +3066,7 @@ class _TradeScreenState extends State<TradeScreen> {
                 maxWidth: screenWidth,
               ),
               decoration: BoxDecoration(
-                color: AppColors.whiteColor,
+                color: FlavorConfig.usesNewHomeDesign ? AppColors.sheetSurface : AppColors.whiteColor,
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(20),
                   topRight: Radius.circular(20),
@@ -2870,12 +3076,20 @@ class _TradeScreenState extends State<TradeScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                    if (FlavorConfig.usesNewHomeDesign)
+                      const PositionsSheetHeader(
+                        title: 'Close positions',
+                        subtitle:
+                            'Which positions would you like to close at market prices?',
+                      )
+                    else
                     Padding(
                       padding: EdgeInsets.all(16.w),
                       child: Text(
                         'Which positions would you like to close at market prices?',
                         style: AppTextStyles.heading.copyWith(
-                          fontSize: 18.sp,
+                          fontSize:
+                              FlavorConfig.usesNewHomeDesign ? 15.sp : 18.sp,
                           fontWeight: FontWeight.w600,
                           color: AppColors.textPrimary,
                         ),
@@ -2965,13 +3179,21 @@ class _TradeScreenState extends State<TradeScreen> {
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(8.r),
                                   ),
-                                  minimumSize: Size(double.infinity, 40.h),
+                                  minimumSize: Size(
+                                    double.infinity,
+                                    FlavorConfig.usesNewHomeDesign
+                                        ? 38.h
+                                        : 40.h,
+                                  ),
                                   // Removed maximumSize to avoid constraint conflicts
                                 ),
                                 child: Text(
                                   'Cancel',
                                   style: AppTextStyles.label.copyWith(
-                                    fontSize: 16.sp,
+                                    fontSize:
+                                        FlavorConfig.usesNewHomeDesign
+                                            ? 14.sp
+                                            : 16.sp,
                                     fontWeight: FontWeight.w600,
                                     color: AppColors.primary,
                                   ),
@@ -3030,14 +3252,21 @@ class _TradeScreenState extends State<TradeScreen> {
                                     padding: EdgeInsets.zero,
                                     backgroundColor:
                                         isPendingTab
-                                            ? AppColors.primary
+                                            ? (FlavorConfig.usesNewHomeDesign
+                                                ? AppColors.homeHeaderGradientEnd
+                                                : AppColors.primary)
                                             : (isPositive
                                                 ? AppColors.success
                                                 : AppColors.error),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(8.r),
                                     ),
-                                    minimumSize: Size(double.infinity, 40.h),
+                                    minimumSize: Size(
+                                      double.infinity,
+                                      FlavorConfig.usesNewHomeDesign
+                                          ? 38.h
+                                          : 40.h,
+                                    ),
                                   ),
                                   child:
                                       tradingController.isLoading
@@ -3049,7 +3278,11 @@ class _TradeScreenState extends State<TradeScreen> {
                                             buttonText,
                                             textAlign: TextAlign.center,
                                             style: AppTextStyles.label.copyWith(
-                                              fontSize: 16.sp,
+                                              fontSize:
+                                                  FlavorConfig
+                                                          .usesNewHomeDesign
+                                                      ? 14.sp
+                                                      : 16.sp,
                                               fontWeight: FontWeight.w600,
                                               color: AppColors.whiteColor,
                                             ),
@@ -3081,6 +3314,30 @@ class _TradeScreenState extends State<TradeScreen> {
     bool isSelected,
     Function(String) onChanged,
   ) {
+    if (FlavorConfig.usesNewHomeDesign) {
+      // Same rule as the radio below: an option with no P/L can't be picked.
+      return Obx(() {
+        final profitLoss = getProfitLoss();
+        final isPositive = profitLoss >= 0;
+        final hasPositions = profitLoss != 0;
+        return PositionsSelectOption(
+          label: title,
+          selected: isSelected,
+          onTap: hasPositions ? () => onChanged(value) : null,
+          trailing: Text(
+            hasPositions ? '\$${PrecisionHelper.formatPnL(profitLoss)}' : '-',
+            style: AppTextStyles.label.copyWith(
+              fontSize: 13.sp,
+              fontWeight: FontWeight.w700,
+              color:
+                  hasPositions
+                      ? (isPositive ? AppColors.success : AppColors.error)
+                      : AppColors.textGrey,
+            ),
+          ),
+        );
+      });
+    }
     return Container(
       margin: EdgeInsets.only(bottom: 0.h),
       child: Row(
@@ -3093,7 +3350,7 @@ class _TradeScreenState extends State<TradeScreen> {
                 Text(
                   title,
                   style: AppTextStyles.label.copyWith(
-                    fontSize: 16.sp,
+                    fontSize: FlavorConfig.usesNewHomeDesign ? 14.sp : 16.sp,
                     fontWeight: FontWeight.w600,
                     color: AppColors.textPrimary,
                   ),
@@ -3600,7 +3857,11 @@ class _TradeScreenState extends State<TradeScreen> {
     return result ?? false;
   }
 
-  Widget _buildAccountMetrics(TradingController tradingController) {
+  /// Metric key + resolved label/value/colour for the current tab, shared by
+  /// the old dashed-row list and the redesigned card.
+  List<(String, PositionsMetric)> _resolveMetrics(
+    TradingController tradingController,
+  ) {
     final currentTab = tradingController.selectedTab;
     final config = TabMetricConfig.forTab(currentTab);
 
@@ -3625,33 +3886,150 @@ class _TradeScreenState extends State<TradeScreen> {
           return true;
         }).toList();
 
-    // Build metric rows - show "0" if data not available
+    return metricKeys.map((key) {
+      String value;
+      Color? valueColor;
+
+      // Get value - defaults to "0" if data not available
+      if (currentTab == 2 && totals != null) {
+        value = _getMetricValue(key, null, totals);
+        valueColor = _getMetricColor(key, null, totals);
+      } else if (currentTab != 2 && accountInfo != null) {
+        value = _getMetricValue(key, accountInfo, null);
+        valueColor = _getMetricColor(key, accountInfo, null);
+      } else {
+        // No data available - show "0" instead of "--"
+        value = '0.00';
+        valueColor = AppColors.textGrey;
+      }
+
+      return (
+        key,
+        PositionsMetric(
+          label: languageService.tr(key),
+          value: value,
+          valueColor: valueColor,
+        ),
+      );
+    }).toList();
+  }
+
+  Widget _buildAccountMetrics(TradingController tradingController) {
     return Column(
       children:
-          metricKeys.map((key) {
-            String value;
-            Color? valueColor;
-
-            // Get value - defaults to "0" if data not available
-            if (currentTab == 2 && totals != null) {
-              value = _getMetricValue(key, null, totals);
-              valueColor = _getMetricColor(key, null, totals);
-            } else if (currentTab != 2 && accountInfo != null) {
-              value = _getMetricValue(key, accountInfo, null);
-              valueColor = _getMetricColor(key, accountInfo, null);
-            } else {
-              // No data available - show "0" instead of "--"
-              value = '0.00';
-              valueColor = AppColors.textGrey;
-            }
-
+          _resolveMetrics(tradingController).map((entry) {
+            final metric = entry.$2;
             return _buildMetricRow(
-              languageService.tr(key),
-              value,
-              valueColor: valueColor,
+              metric.label,
+              metric.value,
+              valueColor: metric.valueColor,
             );
           }).toList(),
     );
+  }
+
+  /// Redesigned summary: equity (or profit on History) as the headline
+  /// figure, the remaining metrics in a grid below it.
+  Widget _buildAccountMetricsCard(TradingController tradingController) {
+    final metrics = _resolveMetrics(tradingController);
+    final heroKey =
+        tradingController.selectedTab == 2
+            ? 'trade_metric_profit'
+            : 'trade_metric_equity';
+    final foundHeroIndex = metrics.indexWhere((entry) => entry.$1 == heroKey);
+    final heroIndex = foundHeroIndex < 0 ? 0 : foundHeroIndex;
+
+    return PositionsMetricsCard(
+      hero: metrics[heroIndex].$2,
+      items: [
+        for (var index = 0; index < metrics.length; index++)
+          if (index != heroIndex) metrics[index].$2,
+      ],
+      trailing:
+          tradingController.selectedTab == 2
+              ? _buildMetricsFilterActions(tradingController)
+              : null,
+    );
+  }
+
+  /// History filters (date, instruments, direction, reset) sized to fit one
+  /// metrics grid cell. Same sheets and reset call as the old filter row.
+  Widget _buildMetricsFilterActions(TradingController tradingController) {
+    return Obx(() {
+      final filteredCount = tradingController.getFilteredCount();
+      final hasDateFilter = tradingController.hasDateFilter;
+      final isInstrumentFilterActive =
+          tradingController.selectedInstruments.isNotEmpty;
+      final isDirectionFilterActive =
+          tradingController.getCurrentDirectionFilter() != 'All';
+      final isAnyActive = tradingController.isAnyFilterActive;
+
+      final buttons = <Widget>[
+          PositionsFilterIconButton(
+            tooltip: 'Date filter',
+            active: hasDateFilter,
+            badgeCount: hasDateFilter ? filteredCount : null,
+            onTap: () => _showFilterBottomSheet(tradingController),
+            iconBuilder:
+                (color) => Icon(Icons.calendar_today, size: 15.r, color: color),
+          ),
+          PositionsFilterIconButton(
+            tooltip: 'Instruments',
+            active: isInstrumentFilterActive,
+            badgeCount: isInstrumentFilterActive ? filteredCount : null,
+            onTap: () => _showInstrumentsBottomSheet(tradingController),
+            iconBuilder:
+                (color) => Transform.rotate(
+                  angle: 1.55,
+                  child: SvgPicture.asset(
+                    "assets/svg/bottom_navigation/candle_bold.svg",
+                    colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+                  ),
+                ),
+          ),
+          PositionsFilterIconButton(
+            tooltip: 'Direction',
+            active: isDirectionFilterActive,
+            badgeCount: isDirectionFilterActive ? filteredCount : null,
+            onTap: () => _showDirectionBottomSheet(tradingController),
+            iconBuilder:
+                (color) => SvgPicture.asset(
+                  "assets/svg/trade/trade_arrow_icon.svg",
+                  colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+                ),
+          ),
+          if (isAnyActive)
+            PositionsFilterIconButton(
+              tooltip: 'Reset filters',
+              active: false,
+              onTap: () async {
+                await tradingController.resetAllFilters();
+              },
+              iconBuilder:
+                  (color) => Icon(
+                    Icons.refresh_rounded,
+                    size: 16.r,
+                    color: AppColors.homeHeaderGradientEnd,
+                  ),
+            ),
+      ];
+
+      // One line only: wrapping onto a second line made the card taller.
+      // scaleDown only kicks in when the reset button makes it too wide.
+      return FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: AlignmentDirectional.centerEnd,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (var index = 0; index < buttons.length; index++) ...[
+              if (index > 0) SizedBox(width: 4.w),
+              buttons[index],
+            ],
+          ],
+        ),
+      );
+    });
   }
 
   String _getMetricValue(

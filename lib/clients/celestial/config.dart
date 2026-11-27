@@ -16,5 +16,6 @@ class CelestialConfig extends BaseClientConfig {
         apiBaseUrl: 'https://client.celestialtrader.com/api/',
         websocketUrl: 'wss://client.celestialtrader.com/trade-engine',
         chartBaseUrl: 'https://client.celestialtrader.com',
+        useNewDepositWithdrawFlow: false,
       );
 }

@@ -33,8 +33,8 @@ class TradingBottomNavigationNew extends StatelessWidget {
     _NavTab('$_iconDir/home-trend-up.svg', 'nav_home', 'Home'),
     _NavTab('$_iconDir/chart.svg', 'nav_markets', 'Markets'),
     _NavTab('$_iconDir/candle.svg', 'nav_positions', 'Positions'),
-    _NavTab('$_iconDir/messenger.svg', 'nav_square', 'Square'),
-    _NavTab('$_iconDir/empty-wallet.svg', 'nav_assets', 'Assets'),
+    _NavTab('$_iconDir/moneys.svg', 'dashboard_title', 'Dashboard'),
+    _NavTab('$_iconDir/empty-wallet.svg', 'setting_title', 'Settings'),
   ];
 
   @override

@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/screens/home/more/finance/deposit_screen.dart';
+import 'package:crm_app/screens/finance_v2/finance_flow_switch.dart';
 
 // --- Models ---
 class WalletResponse {
@@ -362,7 +363,12 @@ class WalletController extends GetxController {
 
     try {
       isLoading.value = true;
-      Get.to(() => DepositScreen(accountNumber: ''));
+      Get.to(
+        () => FinanceFlowSwitch.deposit(
+          accountNumber: '',
+          legacy: () => DepositScreen(accountNumber: ''),
+        ),
+      );
     } catch (e) {
       if (Get.isRegistered<AppNotificationController>()) {
         Get.find<AppNotificationController>().showError(

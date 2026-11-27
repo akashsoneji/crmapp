@@ -1040,6 +1040,41 @@ Placing Order:
     });
   }
 
+  /// New design: pending order form as a full-height sheet that slides up
+  /// with an ease-in-out curve. System back, swipe down and the X button all
+  /// pop the sheet; on success the screen pops it and opens the confirmation
+  /// route exactly as the page version did.
+  void _showPendingOrderSheet() {
+    final topInset = MediaQuery.paddingOf(context).top;
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: false,
+      enableDrag: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black54,
+      sheetAnimationStyle: AnimationStyle(
+        curve: Curves.easeInOut,
+        reverseCurve: Curves.easeInOut,
+        duration: const Duration(milliseconds: 320),
+        reverseDuration: const Duration(milliseconds: 260),
+      ),
+      builder: (sheetContext) {
+        return Padding(
+          padding: EdgeInsetsDirectional.only(top: topInset + 8.h),
+          child: SizedBox(
+            height: MediaQuery.sizeOf(sheetContext).height - topInset - 8.h,
+            child: PendingOrderScreen(
+              symbol: selectedSymbol,
+              onNavigateToTrade: widget.onNavigateToTrade,
+              presentedAsSheet: true,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   void _showPriceAlertDialog() {
     final currentPrice = chartSocketController.getMarketPrice() ?? 1.14252;
 
@@ -2676,14 +2711,7 @@ Placing Order:
       return Padding(
         padding: EdgeInsetsDirectional.only(end: 10.w),
         child: ChartTradeActionsNew(
-          onPendingTap: () {
-            Get.to(
-              () => PendingOrderScreen(
-                symbol: selectedSymbol,
-                onNavigateToTrade: widget.onNavigateToTrade,
-              ),
-            );
-          },
+          onPendingTap: _showPendingOrderSheet,
           onAlertsTap: _showPriceAlertDialog,
           onFullscreenTap: _openLandscapeChart,
         ),

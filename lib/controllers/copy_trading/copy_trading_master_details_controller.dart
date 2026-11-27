@@ -158,13 +158,12 @@ class CopyTradingMasterProfile {
   final int? riskScore;
   final String selectedPlanId;
   final String profileScope;
+  /// Master chose to hide copier counts (`hide_copiers`).
+  final bool hideCopiers;
   final List<CopyTradingPlan> plans;
   final List<CopyTradingTradeItem> tradeHistory;
   final List<CopyTradingTradeItem> openPositions;
   final List<PerformanceSeriesPoint> performanceSeries;
-
-  /// Master chose to hide copier counts (`hide_copiers`).
-  final bool hideCopiers;
 
   const CopyTradingMasterProfile({
     required this.masterCode,
@@ -187,11 +186,11 @@ class CopyTradingMasterProfile {
     required this.riskScore,
     required this.selectedPlanId,
     required this.profileScope,
+    this.hideCopiers = false,
     required this.plans,
     required this.tradeHistory,
     required this.openPositions,
     required this.performanceSeries,
-    this.hideCopiers = false,
   });
 
   factory CopyTradingMasterProfile.fromJson(Map<String, dynamic> json) {
@@ -234,11 +233,11 @@ class CopyTradingMasterProfile {
       riskScore: _parseInt(json['risk_score'], 0),
       selectedPlanId: (json['selected_plan_id']?.toString() ?? ''),
       profileScope: (json['profile_scope'] ?? 'all').toString(),
+      hideCopiers: json['hide_copiers'] == true,
       plans: plansList,
       tradeHistory: tradeHistoryList,
       openPositions: openPositionsList,
       performanceSeries: performanceSeriesList,
-      hideCopiers: json['hide_copiers'] == true,
     );
   }
 }

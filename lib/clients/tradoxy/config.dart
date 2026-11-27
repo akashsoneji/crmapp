@@ -16,5 +16,6 @@ class TradoxyConfig extends BaseClientConfig {
         apiBaseUrl: 'https://member.tradoxy.com/api/',
         websocketUrl: 'wss://member.tradoxy.com/trade-engine',
         chartBaseUrl: 'https://member.tradoxy.com',
+        useNewDepositWithdrawFlow: false,
       );
 }

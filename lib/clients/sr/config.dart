@@ -21,5 +21,6 @@ class SrConfig extends BaseClientConfig {
         apiBaseUrl: 'https://app.srglobalmarkets.com/api/',
         websocketUrl: 'wss://app.srglobalmarkets.com/trade-engine',
         chartBaseUrl: 'https://app.srglobalmarkets.com',
+        useNewDepositWithdrawFlow: false,
       );
 }

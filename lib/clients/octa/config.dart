@@ -16,5 +16,6 @@ class OctaConfig extends BaseClientConfig {
         apiBaseUrl: 'https://api.octa.com',
         websocketUrl: 'wss://api.octa.com',
         chartBaseUrl: 'https://api.octa.com',
+        useNewDepositWithdrawFlow: false,
       );
 }

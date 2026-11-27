@@ -1,11 +1,11 @@
-import 'package:crm_app/widgets/app_svg_back_button.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:crm_app/widgets/responsive_layout.dart';
 import 'package:get/get.dart';
 import 'package:crm_app/constants/color.dart';
 import 'package:crm_app/constants/text_styles.dart';
 import 'package:crm_app/controllers/pmam/pmam_controller.dart';
+import 'package:crm_app/services/language_service.dart';
 import 'package:crm_app/controllers/more/more_controller.dart';
 import 'package:crm_app/widgets/common_loading_widget.dart';
 
@@ -34,7 +34,7 @@ class _PmamBecomeManagerScreenState extends State<PmamBecomeManagerScreen> {
   bool get _emailVerified {
     try {
       final model = Get.find<MoreController>().dashboardModel.value;
-      return model?.data?.stageCompletion?.emailVerified == true;
+      return model?.data?.stageCompletion?.emailVerified != null;
     } catch (_) {
       return false;
     }
@@ -43,7 +43,7 @@ class _PmamBecomeManagerScreenState extends State<PmamBecomeManagerScreen> {
   bool get _mobileVerified {
     try {
       final model = Get.find<MoreController>().dashboardModel.value;
-      return model?.data?.stageCompletion?.mobileVerified == true;
+      return model?.data?.stageCompletion?.mobileVerified != null;
     } catch (_) {
       return false;
     }
@@ -62,11 +62,40 @@ class _PmamBecomeManagerScreenState extends State<PmamBecomeManagerScreen> {
       _ctrl.managerStatus.value == 'pending' ||
       _ctrl.managerStatus.value == 'approved';
 
+  /// Rejected users may re-apply; pending/approved users and closed
+  /// applications (`master_enrollments_enabled == false`) may not.
+  bool get _canApply =>
+      !_pmamApplied && _ctrl.masterEnrollmentsEnabled.value;
+
+  /// Banner text + colour for the current manager status, or null.
+  (String, Color)? get _statusNotice {
+    switch (_ctrl.managerStatus.value) {
+      case 'pending':
+        return (
+          TranslationUtils.tr('pmam_manager_status_pending'),
+          AppColors.warningText,
+        );
+      case 'rejected':
+        return (
+          TranslationUtils.tr('pmam_manager_status_rejected'),
+          AppColors.error,
+        );
+    }
+    if (!_ctrl.masterEnrollmentsEnabled.value) {
+      return (
+        TranslationUtils.tr('pmam_manager_applications_closed'),
+        AppColors.textGrey,
+      );
+    }
+    return null;
+  }
+
   Future<void> _submit() async {
     if (!_emailVerified || !_mobileVerified || !_personalInfoDone) {
       Get.snackbar(
-        'Incomplete Profile',
-        'Please complete all verification steps before applying.',
+        TranslationUtils.tr('pmam_become_manager_screen_incomplete_profile'),
+        TranslationUtils.tr(
+            'pmam_become_manager_complete_verification_steps_first'),
         backgroundColor: AppColors.error,
         colorText: AppColors.onColoredBackground,
         snackPosition: SnackPosition.TOP,
@@ -115,8 +144,9 @@ class _PmamBecomeManagerScreenState extends State<PmamBecomeManagerScreen> {
                 ),
                 SizedBox(height: 12.h),
                 Text(
-                  'PAMM Manager Application',
-                  style: TextStyle(
+                  TranslationUtils.tr(
+                      'pmam_become_manager_screen_pamm_manager_application'),
+                  style: AppTextStyles.bodyText.copyWith(
                     fontSize: 20.sp,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textPrimary,
@@ -125,8 +155,9 @@ class _PmamBecomeManagerScreenState extends State<PmamBecomeManagerScreen> {
                 ),
                 SizedBox(height: 6.h),
                 Text(
-                  'Complete all steps to become a PAMM Manager',
-                  style: TextStyle(fontSize: 13.sp, color: AppColors.textGrey),
+                  TranslationUtils.tr(
+                      'pmam_become_manager_screen_complete_all_steps_to_become_pamm'),
+                  style: AppTextStyles.bodyText.copyWith(fontSize: 13.sp, color: AppColors.textGrey),
                   textAlign: TextAlign.center,
                 ),
                 SizedBox(height: 24.h),
@@ -139,22 +170,23 @@ class _PmamBecomeManagerScreenState extends State<PmamBecomeManagerScreen> {
                     physics: const NeverScrollableScrollPhysics(),
                     crossAxisSpacing: 12.w,
                     mainAxisSpacing: 12.h,
-                    childAspectRatio: 1.6,
+                    childAspectRatio: ResponsiveGrid.aspectRatio(1.6),
                     children: [
                       _StepCard(
-                        label: 'Email Verification',
+                        label: TranslationUtils.tr('email_verification'),
                         done: _emailVerified,
                       ),
                       _StepCard(
-                        label: 'Mobile Verification',
+                        label: TranslationUtils.tr('mobile_verification'),
                         done: _mobileVerified,
                       ),
                       _StepCard(
-                        label: 'Personal Information',
+                        label: TranslationUtils.tr('personal_information'),
                         done: _personalInfoDone,
                       ),
                       _StepCard(
-                        label: 'PAMM Application',
+                        label: TranslationUtils.tr(
+                            'pmam_become_manager_pamm_application'),
                         done: _pmamApplied,
                         notApplied: !_pmamApplied,
                       ),
@@ -186,22 +218,25 @@ class _PmamBecomeManagerScreenState extends State<PmamBecomeManagerScreen> {
                     Expanded(
                       child: RichText(
                         text: TextSpan(
-                          style: TextStyle(
+                          style: AppTextStyles.bodyText.copyWith(
                             fontSize: 13.sp,
                             color: AppColors.textGrey,
                           ),
                           children: [
-                            const TextSpan(text: 'I accept the '),
                             TextSpan(
-                              text: 'PAMM Manager Terms and Conditions',
-                              style: TextStyle(
+                                text: TranslationUtils.tr(
+                                    'pmam_become_manager_i_accept_the')),
+                            TextSpan(
+                              text: TranslationUtils.tr(
+                                  'pmam_become_manager_terms_and_conditions'),
+                              style: AppTextStyles.bodyText.copyWith(
                                 color: AppColors.primary,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
-                            const TextSpan(
-                              text:
-                                  ' and confirm that all information provided is accurate.',
+                            TextSpan(
+                              text: TranslationUtils.tr(
+                                  'pmam_become_manager_and_confirm_info_accurate'),
                             ),
                           ],
                         ),
@@ -221,6 +256,28 @@ class _PmamBecomeManagerScreenState extends State<PmamBecomeManagerScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            Obx(() {
+              final notice = _statusNotice;
+              if (notice == null) return const SizedBox.shrink();
+              return Container(
+                width: double.infinity,
+                margin: EdgeInsets.fromLTRB(22.w, 12.h, 22.w, 0),
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+                decoration: BoxDecoration(
+                  color: notice.$2.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(10.r),
+                  border: Border.all(color: notice.$2.withValues(alpha: 0.3)),
+                ),
+                child: Text(
+                  notice.$1,
+                  style: AppTextStyles.bodyText.copyWith(
+                    fontSize: 12.sp,
+                    color: notice.$2,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              );
+            }),
             Obx(
               () => Padding(
                 padding: EdgeInsets.symmetric(horizontal: 22.w, vertical: 16.h),
@@ -230,7 +287,9 @@ class _PmamBecomeManagerScreenState extends State<PmamBecomeManagerScreen> {
                     width: double.infinity,
                     height: 44.h,
                     child: ElevatedButton(
-                      onPressed: (_termsAccepted && !_ctrl.isLoading.value)
+                      onPressed: (_termsAccepted &&
+                              _canApply &&
+                              !_ctrl.isLoading.value)
                           ? _submit
                           : null,
                       style: ElevatedButton.styleFrom(
@@ -249,8 +308,9 @@ class _PmamBecomeManagerScreenState extends State<PmamBecomeManagerScreen> {
                               color: AppColors.onColoredBackground,
                             )
                           : Text(
-                              'Submit Application',
-                              style: TextStyle(
+                              TranslationUtils.tr(
+                                  'pmam_become_manager_screen_submit_application'),
+                              style: AppTextStyles.bodyText.copyWith(
                                 color: AppColors.onColoredBackground,
                                 fontSize: 15.sp,
                                 fontWeight: FontWeight.w600,
@@ -325,7 +385,7 @@ class _StepCard extends StatelessWidget {
             children: [
               Text(
                 label,
-                style: TextStyle(
+                style: AppTextStyles.bodyText.copyWith(
                   fontSize: 12.sp,
                   fontWeight: FontWeight.w600,
                   color: done ? AppColors.primary : AppColors.textPrimary,
@@ -339,8 +399,12 @@ class _StepCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(6.r),
                 ),
                 child: Text(
-                  done ? 'Completed' : (notApplied ? 'Not Applied' : 'Pending'),
-                  style: TextStyle(
+                  done
+                      ? TranslationUtils.tr('completed')
+                      : (notApplied
+                          ? TranslationUtils.tr('become_master_tab_not_applied')
+                          : TranslationUtils.tr('transaction_history_pending')),
+                  style: AppTextStyles.bodyText.copyWith(
                     fontSize: 10.sp,
                     color: AppColors.isDarkMode
                         ? AppColors.pureBlack

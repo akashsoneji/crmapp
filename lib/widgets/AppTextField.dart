@@ -57,6 +57,10 @@ class AppTextField extends StatelessWidget {
           onChanged: onChanged,
           obscureText: obscureText,
           keyboardType: keyboardType,
+          // Decimal keyboards let the user type '.' repeatedly ("4163....6661").
+          inputFormatters: keyboardType?.decimal == true
+              ? const [SingleDecimalPointFormatter()]
+              : null,
           maxLines: maxLines,
           enabled: enabled,
           focusNode: focusNode,

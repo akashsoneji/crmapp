@@ -16,6 +16,7 @@ class GtxprimeConfig extends BaseClientConfig {
         apiBaseUrl: 'https://member.gtxprime.com/api/',
         websocketUrl: 'wss://member.gtxprime.com/trade-engine',
         chartBaseUrl: 'https://member.gtxprime.com',
+        useNewDepositWithdrawFlow: false,
         // apiBaseUrl: 'https://dev.tenaxcodecrm.com/api/',
         // websocketUrl: 'wss://dev.tenaxcodecrm.com/trade-engine',
         // chartBaseUrl: 'https://dev.tenaxcodecrm.com',

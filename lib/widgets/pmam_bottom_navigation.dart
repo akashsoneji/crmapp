@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import '../constants/text_styles.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../constants/color.dart';
 import '../flavor_config.dart';
+import '../services/language_service.dart';
 
 /// Bottom navigation for the PAMM module.
 ///
@@ -24,25 +26,46 @@ class PmamBottomNavigation extends StatelessWidget {
   final ValueChanged<int> onTap;
   final PmamNavMode mode;
 
-  List<_PmamTab> get _tabs {
-    if (mode == PmamNavMode.manager) {
-      return const [
-        _PmamTab('Dashboard', Icons.dashboard_rounded),
-        _PmamTab('Plans', Icons.layers_rounded),
-        _PmamTab('Investors', Icons.group_rounded),
-        _PmamTab('Explore', Icons.travel_explore_rounded),
-        _PmamTab('Invest', Icons.account_balance_wallet_rounded),
-      ];
-    }
-    
-    final isGtxPrime = FlavorConfig.instance.appName == 'GTX Prime';
-    
-    return [
-      if (!isGtxPrime) const _PmamTab('Become Mgr', Icons.workspace_premium_rounded),
-      const _PmamTab('Explore', Icons.travel_explore_rounded),
-      const _PmamTab('Invest', Icons.account_balance_wallet_rounded),
-    ];
-  }
+  /// GTX Prime does not offer PAMM manager applications, so investors never
+  /// see the "Become a Manager" tab there.
+  static bool get hidesBecomeManager =>
+      FlavorConfig.instance.appName == 'GTX Prime';
+
+  List<_PmamTab> get _tabs => mode == PmamNavMode.manager
+      ? [
+          _PmamTab(
+            TranslationUtils.tr('copy_trading_nav_dashboard'),
+            Icons.dashboard_rounded,
+          ),
+          _PmamTab(TranslationUtils.tr('pmam_nav_plans'), Icons.layers_rounded),
+          _PmamTab(
+            TranslationUtils.tr('pmam_nav_investors'),
+            Icons.group_rounded,
+          ),
+          _PmamTab(
+            TranslationUtils.tr('copy_trading_nav_explore'),
+            Icons.travel_explore_rounded,
+          ),
+          _PmamTab(
+            TranslationUtils.tr('pmam_nav_invest'),
+            Icons.account_balance_wallet_rounded,
+          ),
+        ]
+      : [
+          if (!hidesBecomeManager)
+            _PmamTab(
+              TranslationUtils.tr('pmam_nav_become_mgr'),
+              Icons.workspace_premium_rounded,
+            ),
+          _PmamTab(
+            TranslationUtils.tr('copy_trading_nav_explore'),
+            Icons.travel_explore_rounded,
+          ),
+          _PmamTab(
+            TranslationUtils.tr('pmam_nav_invest'),
+            Icons.account_balance_wallet_rounded,
+          ),
+        ];
 
   @override
   Widget build(BuildContext context) {
@@ -122,7 +145,7 @@ class _NavItem extends StatelessWidget {
               tab.label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(
+              style: AppTextStyles.bodyText.copyWith(
                 fontSize: 11.sp,
                 fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                 color: color,
@@ -134,5 +157,3 @@ class _NavItem extends StatelessWidget {
     );
   }
 }
-
-

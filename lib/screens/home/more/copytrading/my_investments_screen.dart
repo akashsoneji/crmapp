@@ -7,15 +7,13 @@ import 'package:crm_app/controllers/copy_trading/copy_trading_copier_subscriptio
         CopyTradingCopierSubscriptionsController,
         TradeItem;
 import 'package:crm_app/screens/home/more/copytrading/explore_masters_screen.dart';
-import 'package:crm_app/screens/home/more/copytrading/master_details_screen.dart';
 import 'package:crm_app/screens/home/more/copytrading/subscribe_to_plan_screen.dart';
 import 'package:crm_app/screens/copy_trading/subscription_detail_screen.dart';
 import 'package:crm_app/controllers/copy_trading/copy_trading_master_details_controller.dart'
     show CopyTradingPlan;
 import 'package:crm_app/controllers/copy_trading/copy_trading_hub_controller.dart';
-import 'package:crm_app/screens/home/trading_main_screen.dart';
 import 'package:crm_app/services/language_service.dart';
-import 'package:crm_app/widgets/app_svg_back_button.dart';
+import 'package:crm_app/widgets/addon_purchase_line.dart';
 import 'package:crm_app/widgets/custom_toast.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -694,13 +692,13 @@ class _InvestmentRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final status = item.status.toLowerCase();
+    final statusLabel = _isPausedByMaster
+        ? TranslationUtils.tr('master_plan_detail_screen_copying_paused')
+        : _formatStatus(status);
     final canPause = status == 'active';
     final canResume = status == 'paused';
     final canStop = status == 'active' || status == 'paused';
     final canEdit = canPause || canResume;
-    final statusLabel = _isPausedByMaster
-        ? TranslationUtils.tr('master_plan_detail_screen_copying_paused')
-        : _formatStatus(status);
 
     return Container(
       margin: EdgeInsets.only(bottom: 10.h),
@@ -904,6 +902,14 @@ class _InvestmentRow extends StatelessWidget {
                     ),
                   ],
                 ),
+                if (item.hasAddon) ...[
+                  SizedBox(height: 10.h),
+                  AddonPurchaseLine(
+                    name: item.addonName,
+                    fee: item.addonFee,
+                    refunded: item.isAddonRefunded,
+                  ),
+                ],
                 SizedBox(height: 12.h),
 
                 // Action buttons
